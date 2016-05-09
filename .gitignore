@@ -1,0 +1,39 @@
+
+
+# Logs
+logs
+*.log
+
+
+# Coverage directory used by tools like istanbul
+coverage
+
+# OS generated files #
+.DS_Store
+ehthumbs.db
+Icon?
+Thumbs.db
+
+# Node Files #
+/node_modules
+/bower_components
+npm-debug.log
+
+# Coverage #
+/coverage/
+
+# Typing #
+/src/typings/tsd/
+/typings/
+/tsd_typings/
+
+# Build #
+/build/tmp
+
+
+# Doc #
+/doc/
+
+# IDE #
+.idea/
+*.swp

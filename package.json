@@ -1,0 +1,25 @@
+{
+  "name": "webgl-chart",
+  "version": "0.0.1",
+  "description": "line chart based on threejs",
+  "main": "index.js",
+  "dependencies": {
+    "createjs-tweenjs": "^0.6.0",
+    "deepmerge": "^0.2.10",
+    "eventemitter2": "^0.4.11",
+    "gsap": "^1.18.4",
+    "three": "^0.76.1",
+    "ts-loader": "^0.8.2"
+  },
+  "devDependencies": {
+    "typescript": "^1.8.10"
+  },
+  "scripts": {
+    "start": "webpack --watch",
+    "build": "webpack",
+    "postinstall": "typings install",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
