@@ -10,12 +10,8 @@ import {ChartWidget} from "../Widget";
 import Face3 = THREE.Face3;
 import Texture = THREE.Texture;
 import Vector2 = THREE.Vector2;
+import {ITrendOptions, ITrendData, Trend, ITrendItem} from "../Trend";
 import {Utils} from "../Utils";
-import {ITrendOptions} from "../Chart";
-
-
-export interface ITrendItem {xVal: number, yVal: number}
-export interface ITrendData extends Array<ITrendItem>{}
 
 const MAX_VERTICES = 1000;
 
@@ -23,25 +19,89 @@ const MAX_VERTICES = 1000;
 const PART_VERTICES_COUNT = 5;
 const PART_FACES_COUNT = 3;
 
-
 export class TrendGradientWidget extends ChartWidget {
 	static widgetName = 'TrendGradient';
 	private object3D: Object3D;
-	private gradient: Mesh;
-
-	data: ITrendData = [];
-
+	private gradients: {[trendName: string]: TrendGradient} = {};
 
 	constructor (state: ChartState) {
 		super(state);
 		this.object3D = new Object3D();
-		this.appendData(this.chartState.data.trend.data);
-		this.chartState.onTrendChange((to: ITrendOptions, newData: ITrendData) => this.appendData(newData));
+		this.chartState.onTrendsChange(() => this.onTrendsChange());
+		this.chartState.onTrendChange((trendName: string, changedOptions: ITrendOptions, newData: ITrendData) => {
+			this.onTrendChange(trendName, changedOptions, newData)
+		});
+		this.onTrendsChange();
+	}
 
+	private onTrendsChange() {
+		var trendsOptions = this.chartState.data.trends;
+		for (let trendName in trendsOptions) {
+			let trendOptions = trendsOptions[trendName];
+			let trendHasGradient = trendOptions.enabled && trendOptions.hasGradient;
+			if (trendHasGradient && !this.gradients[trendName]) {
+				this.createTrendGradient(trendName);
+			} else if (!trendHasGradient && this.gradients[trendName]) {
+				this.destroyTrendGradient(trendName);
+			}
+		}
+	}
+
+	private onTrendChange(trendName: string, changedOptions: ITrendOptions, newData: ITrendData) {
+		if (!changedOptions.data) return;
+		var trendGradient = this.gradients[trendName];
+		if (!trendGradient) return;
+		trendGradient.appendData(newData);
 	}
 
 	getObject3D(): Object3D {
 		return this.object3D;
+	}
+
+	private createTrendGradient(trendName: string) {
+		var gradient = new TrendGradient(this.chartState, trendName);
+		this.gradients[trendName] = gradient;
+		this.object3D.add(gradient.getObject3D());
+	}
+
+	private destroyTrendGradient(trendName: string) {
+		delete this.gradients[trendName];
+		var gradientObject = this.object3D.getObjectByName(trendName);
+		this.object3D.remove(gradientObject);
+	}
+
+	static generateGradientTexture(): Texture {
+		var w = 1;
+		var h = 512;
+		return Utils.createTexture(w, h, (ctx) => {
+			var grd = ctx.createLinearGradient(0, 0, 0, h);
+			grd.addColorStop(0.5,"rgba(86,119,29, 1)");
+			grd.addColorStop(1,"rgba(86,119,29, 0.1)");
+			ctx.fillStyle = grd;
+			ctx.fillRect(0, 0, w, h);
+		});
+
+	}
+}
+
+
+
+class TrendGradient {
+	private chartState: ChartState;
+	private gradient: Mesh;
+	private trend: Trend;
+
+	data: ITrendData = [];
+
+
+	constructor (chartState: ChartState, trendName: string) {
+		this.chartState = chartState;
+		this.trend = chartState.trends.getTrend(trendName);
+		this.appendData(this.trend.getData());
+	}
+
+	getObject3D(): Object3D {
+		return this.gradient;
 	}
 
 
@@ -52,16 +112,16 @@ export class TrendGradientWidget extends ChartWidget {
 		if (this.data.length == 0) {
 			this.initGradient(newData[0]);
 		}
-
+	
 		this.data.push(...newData);
 		this.updateGradient(newData);
-
+	
 	}
-
+	
 	private initGradient(startItem: ITrendItem) {
 		var geom = new Geometry();
-
-
+	
+	
 		// init arrays of vertices, faces and faceVertexUvs
 		var vertInd = PART_VERTICES_COUNT * MAX_VERTICES;
 		while (vertInd--) {
@@ -72,8 +132,8 @@ export class TrendGradientWidget extends ChartWidget {
 			geom.faces.push(new Face3(0, 0, 0));
 			geom.faceVertexUvs[0][faceInd] = [new Vector2(), new Vector2(), new Vector2()];
 		}
-
-
+	
+	
 		for (let i = 0; i < MAX_VERTICES - 1; i++) {
 			// let item = this.data[i] || this.data[0];
 			// let nextItem = this.data[i + 1] || this.data[0];
@@ -82,7 +142,7 @@ export class TrendGradientWidget extends ChartWidget {
 			let nextItem = startItem;
 			this.setupGradientPart(i, geom, item, nextItem);
 		}
-
+	
 		var texture = TrendGradientWidget.generateGradientTexture();
 		var mesh = new THREE.Mesh(
 			geom,
@@ -90,30 +150,30 @@ export class TrendGradientWidget extends ChartWidget {
 		);
 		mesh.position.z = -1;
 		this.gradient = mesh;
-		this.object3D.add(mesh);
+		this.gradient.name = this.trend.name;
 	}
-
-
+	
+	
 	private updateGradient (newData: ITrendData) {
 		var data = this.data;
 		var startInd = data.length - newData.length;
 		var endInd = data.length - 1;
-
+	
 		for (let ind = startInd; ind <= endInd; ind++) {
 			let item = data[ind];
 			let prevItem = data[ind - 1];
 			if (!prevItem) continue;
 			//let nextItem = {xVal: startItem.xVal + 5, yVal: startItem.yVal};
-
-
+	
+	
 			this.setupGradientPart(ind, this.gradient.geometry as Geometry, prevItem, item);
 		}
 	}
-
-
-
+	
+	
+	
 	private setupGradientPart(partInd: number, gradientGeometry: Geometry, trendItem: ITrendItem, nextTrendItem: ITrendItem) {
-
+	
 		// gradient part scheme:
 		//
 		//           + vert5
@@ -125,12 +185,12 @@ export class TrendGradientWidget extends ChartWidget {
 		// face2 | / | face1
 		// 	     |/  |
 		// vert4 +---+ vert3
-
-
+	
+	
 		let {vertices, faces, faceVertexUvs} = gradientGeometry;
 		let vertex = this.chartState.getPointOnChart(trendItem.xVal, trendItem.yVal);
 		let nextVertex = this.chartState.getPointOnChart(nextTrendItem.xVal, nextTrendItem.yVal);
-
+	
 		// setup vertices
 		let isRise = vertex.y < nextVertex.y;
 		let vert1 = isRise ? vertex.clone() : new Vector3(vertex.x, nextVertex.y);
@@ -143,7 +203,7 @@ export class TrendGradientWidget extends ChartWidget {
 		let vertInd3 = partInd * PART_VERTICES_COUNT + 2;
 		let vertInd4 = partInd * PART_VERTICES_COUNT + 3;
 		let vertInd5 = partInd * PART_VERTICES_COUNT + 4;
-
+	
 		var hasEmptyVertices = (
 			!vertices[vertInd1] ||
 			!vertices[vertInd2] ||
@@ -151,7 +211,7 @@ export class TrendGradientWidget extends ChartWidget {
 			!vertices[vertInd4] ||
 			!vertices[vertInd5]
 		);
-
+	
 		var verticesWasChanged = (
 			hasEmptyVertices ||
 			!vertices[vertInd1].equals(vert1) ||
@@ -160,7 +220,7 @@ export class TrendGradientWidget extends ChartWidget {
 			!vertices[vertInd4].equals(vert4) ||
 			!vertices[vertInd5].equals(vert5)
 		);
-
+	
 		// setup faces
 		let faceInd1 = partInd * PART_FACES_COUNT;
 		let faceInd2 = partInd * PART_FACES_COUNT + 1;
@@ -168,7 +228,7 @@ export class TrendGradientWidget extends ChartWidget {
 		faces[faceInd1] = new Face3(vertInd4, vertInd3, vertInd2);
 		faces[faceInd2] = new Face3(vertInd4, vertInd2, vertInd1);
 		faces[faceInd3] = new Face3(vertInd1, vertInd2, vertInd5);
-
+	
 		// setup textures
 		let gradientStartPos = vert1.y / this.chartState.data.height;
 		let gradientEndPos = vert5.y / this.chartState.data.height;
@@ -178,8 +238,8 @@ export class TrendGradientWidget extends ChartWidget {
 		uvs1[0].set(0, 0); uvs1[1].set(1, 0); uvs1[2].set(1, gradientStartPos);
 		uvs2[0].set(0, 0); uvs2[1].set(1, gradientStartPos); uvs2[2].set(0, gradientStartPos);
 		uvs3[0].set(0, gradientStartPos); uvs3[1].set(1, gradientStartPos); uvs3[2].set(1, gradientEndPos);
-
-
+	
+	
 		if (verticesWasChanged) {
 			var animate = true;
 			var time = this.chartState.data.animations.trendChangeSpeed;
@@ -192,7 +252,7 @@ export class TrendGradientWidget extends ChartWidget {
 				gradientGeometry.verticesNeedUpdate = true;
 				gradientGeometry.uvsNeedUpdate = true;
 			} else {
-
+	
 				if (isRise) {
 					vertices[vertInd1].set(vert1.x, vert1.y, 0);
 					vertices[vertInd2].set(vert1.x, vert1.y, 0);
@@ -204,7 +264,7 @@ export class TrendGradientWidget extends ChartWidget {
 				}
 				vertices[vertInd3].set(vert4.x, vert4.y, 0);
 				vertices[vertInd4].set(vert4.x, vert4.y, 0);
-
+	
 				TweenLite.to(vertices[vertInd1], time, {x: vert1.x, y: vert1.y});
 				TweenLite.to(vertices[vertInd2], time, {x: vert2.x, y: vert2.y});
 				TweenLite.to(vertices[vertInd3], time, {x: vert3.x, y: vert3.y});
@@ -217,18 +277,5 @@ export class TrendGradientWidget extends ChartWidget {
 			}
 		}
 	}
-
-
-	private static generateGradientTexture(): Texture {
-		var w = 1;
-		var h = 512;
-		return Utils.createTexture(w, h, (ctx) => {
-			var grd = ctx.createLinearGradient(0, 0, 0, h);
-			grd.addColorStop(0.5,"rgba(86,119,29, 1)");
-			grd.addColorStop(1,"rgba(86,119,29, 0.1)");
-			ctx.fillStyle = grd;
-			ctx.fillRect(0, 0, w, h);
-		});
-
-	}
+	
 }

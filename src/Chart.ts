@@ -1,18 +1,19 @@
+import {ITrendData} from "./Trend";
 require('./deps');
 
 import PerspectiveCamera = THREE.PerspectiveCamera;
 import Renderer = THREE.Renderer;
 import Scene = THREE.Scene;
 import WebGLRenderer = THREE.WebGLRenderer;
-import {TrendLineWidget, ITrendData} from "./Widgets/TrendLineWidget";
+import {TrendLineWidget} from "./widgets/TrendLineWidget";
 import Object3D = THREE.Object3D; 
 import {ChartState, IChartState} from "./State";
 import {ChartWidget, IChartWidgetConstructor} from "./Widget";
 import {Utils} from "./Utils";
-import {BeaconWidget} from "./Widgets/BeaconWidget";
-import {AxisWidget} from "./Widgets/AxisWidget";
-import {GridWidget} from "./Widgets/Grid";
-import {TrendGradientWidget} from "./Widgets/TrendGradientWidget";
+import {BeaconWidget} from "./widgets/BeaconWidget";
+import {AxisWidget} from "./widgets/AxisWidget";
+import {GridWidget} from "./widgets/GridWidget";
+import {TrendGradientWidget} from "./widgets/TrendGradientWidget";
 
 export enum AXIS_RANGE_TYPE {
 	AUTO,
@@ -35,11 +36,6 @@ export interface IAxisOptions {
 export interface IAnimationsOptions {
 	enabled?: boolean,
 	trendChangeSpeed?: number
-}
-
-export interface ITrendOptions {
-	data?: ITrendData
-	dataset?: ITrendData | number[]
 }
 
 export class Chart {
@@ -119,12 +115,18 @@ export class Chart {
 	}
 
 	/**
-	 * shortcut for Chart.state.appendData
+	 * shortcut for Chart.state.getTrend
 	 */
-	appendData(newData: ITrendData | number[]) {
-		return this.state.appendData(newData);
+	getTrend(trendName: string) {
+		return this.state.getTrend(trendName);
 	}
-
+	
+	/**
+	 * shortcut for Chart.state.setState
+	 */
+	setState(state: IChartState) {
+		return this.state.setState(state);
+	}
 
 
 	zoom(zoomValue: number) {

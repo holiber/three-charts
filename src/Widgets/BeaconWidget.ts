@@ -6,25 +6,23 @@ import {Utils} from "../Utils";
 import Mesh = THREE.Mesh;
 import PlaneBufferGeometry = THREE.PlaneBufferGeometry;
 import MeshBasicMaterial = THREE.MeshBasicMaterial;
-import {ITrendOptions} from "../Chart";
-import {ITrendData} from "./TrendLineWidget";
 import Vector3 = THREE.Vector3;
 
 export class BeaconWidget extends ChartWidget {
 	static widgetName = 'Beacon';
-	private object3D: Mesh;
+	private object3D: Object3D;
 	private animated: boolean;
+	private trendsNames: string[] = [];
 
 	constructor(state: ChartState) {
 		super(state);
 		this.animated = state.data.animations.enabled;
+		
 		this.initObject();
 		if (this.animated) {
 			this.animate();
 		}
-		this.onTrendChange(state.data.trend.data);
-		state.onTrendChange((to: ITrendOptions, data: ITrendData) => this.onTrendChange(data));
-
+		state.onTrendsChange(() => this.onTrendsChange());
 	}
 
 	getObject3D() {
@@ -32,67 +30,87 @@ export class BeaconWidget extends ChartWidget {
 	}
 
 	private initObject() {
+		var trends = this.chartState.trends.items;
+		for (let trendName in trends) {
+			if (trends[trendName].getOptions().hasBeacon) this.trendsNames.push(trendName);
+		}
+		this.object3D = new Object3D();
 
-		// add beacon
-		this.object3D = new Mesh(
-			new PlaneBufferGeometry(32, 32),
-			new MeshBasicMaterial({map: BeaconWidget.createTexture(), transparent: true})
-		);
-		if (this.animated) {
-			this.object3D.scale.set(0.1, 0.1, 1);
-		} else {
-			this.object3D.scale.set(0.2, 0.2, 1);
+		var i = this.trendsNames.length;
+		while (i--) {
+
+			// add beacon
+			let light = new Mesh(
+				new PlaneBufferGeometry(32, 32),
+				new MeshBasicMaterial({map: BeaconWidget.createTexture(), transparent: true})
+			);
+			this.object3D.add(light);
+			if (this.animated) {
+				light.scale.set(0.1, 0.1, 1);
+			} else {
+				light.scale.set(0.2, 0.2, 1);
+			}
+
+			// add dot
+			light.add(new Mesh(
+				new PlaneBufferGeometry(5, 5),
+				new MeshBasicMaterial({map: BeaconWidget.createTexture()})
+			));
 		}
 
-		// add dot
-		this.object3D.add(new Mesh(
-			new PlaneBufferGeometry(5, 5),
-			new MeshBasicMaterial({map: BeaconWidget.createTexture()})
-		));
 	}
 
 	private animate() {
-		var object = this.object3D;
-		var animationObject = {
-			scale: object.scale.x,
-			opacity: object.material.opacity
-		};
+		var objects = this.object3D.children;
+		var i = objects.length;
+		while (i--) {
+			let object = objects[i] as Mesh;
+			var animationObject = {
+				scale: object.scale.x,
+				opacity: object.material.opacity
+			};
 
-		setTimeout(() => {
-			var animation = TweenLite.to(
-				animationObject,
-				1,
-				{scale: 1, opacity: 0}
-			).eventCallback('onUpdate', () => {
-				object.scale.set(animationObject.scale, animationObject.scale, 1);
-				object.material.opacity = animationObject.opacity
-			}).eventCallback('onComplete', () => {
-				animation.restart();
-			});
-		}, 500);
-
+			setTimeout(() => {
+				var animation = TweenLite.to(
+					animationObject,
+					1,
+					{scale: 1, opacity: 0}
+				).eventCallback('onUpdate', () => {
+					object.scale.set(animationObject.scale, animationObject.scale, 1);
+					object.material.opacity = animationObject.opacity
+				}).eventCallback('onComplete', () => {
+					animation.restart();
+				});
+			}, 500);
+		}
 	}
 
-	private onTrendChange(data: ITrendData) {
-		var object = this.object3D;
-		var lastItem = data[data.length - 1];
-		var position = this.chartState.getPointOnChart(lastItem.xVal, lastItem.yVal);
+	private onTrendsChange() {
+		var objects = this.object3D.children;
+		for (let i = 0; i < objects.length; i++) {
+			let object = objects[i] as Mesh;
+			let trendName = this.trendsNames[i];
+			let trendData = this.chartState.data.trends[trendName].data;
+			var lastItem = trendData[trendData.length - 1];
+			var position = this.chartState.getPointOnChart(lastItem.xVal, lastItem.yVal);
 
-		var animation = this.chartState.data.animations;
+			var animation = this.chartState.data.animations;
 
-		if (!animation.enabled) {
-			object.position.set(position.x, position.y, 0);
-			return
+			if (!animation.enabled) {
+				object.position.set(position.x, position.y, 0);
+				return
+			}
+
+			TweenLite.to(
+				object.position,
+				animation.trendChangeSpeed,
+				{
+					x: position.x,
+					y: position.y,
+				}
+			)
 		}
 
-		TweenLite.to(
-			object.position,
-			animation.trendChangeSpeed,
-			{
-				x: position.x,
-				y: position.y,
-			}
-		)
 	}
 
 	private static createTexture() {

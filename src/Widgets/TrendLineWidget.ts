@@ -10,38 +10,78 @@ import {ChartWidget} from "../Widget";
 import Face3 = THREE.Face3;
 import Texture = THREE.Texture;
 import Vector2 = THREE.Vector2;
-import {ITrendOptions} from "../Chart";
-
-
-export interface ITrendItem {xVal: number, yVal: number}
-export interface ITrendData extends Array<ITrendItem>{}
+import {ITrendData, ITrendItem, Trend, ITrendOptions} from "../Trend";
 
 const MAX_VERTICES = 1000;
 
-
 export class TrendLineWidget extends ChartWidget {
 	static widgetName = 'TrendLine';
-	private geometry: Geometry;
-	private material: LineBasicMaterial;
 	private object3D: Object3D;
-	private line: Line;
-	
-	data: ITrendData = [];
-
+	private lines: {[trendName: string]: TrendLine} = {};
 
 	constructor (state: ChartState) {
 		super(state);
-
 		this.object3D = new Object3D();
-		this.geometry = new Geometry();
-		this.material = new LineBasicMaterial( { color: 0xffffff, linewidth: 2 } );
-		this.appendData(this.chartState.data.trend.data);
-		this.chartState.onTrendChange((to: ITrendOptions, newData: ITrendData) => this.appendData(newData));
+		this.chartState.onTrendsChange(() => this.onTrendsChange());
+		this.chartState.onTrendChange((trendName: string, changedOptions: ITrendOptions, newData: ITrendData) => {
+			this.onTrendChange(trendName, changedOptions, newData)
+		});
+		this.onTrendsChange();
+	}
 
+	private onTrendsChange() {
+		var trendsOptions = this.chartState.data.trends;
+		for (let trendName in trendsOptions) {
+			let trendOptions = trendsOptions[trendName];
+			if (trendOptions.enabled && !this.lines[trendName]) {
+				this.createTrendLine(trendName);
+			} else if (!trendOptions.enabled && this.lines[trendName]){
+				this.destroyTrendLine(trendName);
+			}
+		}
+	}
+
+	private onTrendChange(trendName: string, changedOptions: ITrendOptions, newData: ITrendData) {
+		if (!changedOptions.data) return;
+		var trendLine = this.lines[trendName];
+		if (!trendLine) return;
+		trendLine.appendData(newData);
 	}
 
 	getObject3D(): Object3D {
 		return this.object3D;
+	}
+
+	private createTrendLine(trendName: string) {
+		var line = new TrendLine(this.chartState, trendName);
+		this.lines[trendName] = line;
+		this.object3D.add(line.getObject3D());
+	}
+
+	private destroyTrendLine(trendName: string) {
+		delete this.lines[trendName];
+		var lineObject = this.object3D.getObjectByName(trendName);
+		this.object3D.remove(lineObject);
+	}
+}
+
+
+class TrendLine {
+	private chartState: ChartState;
+	private geometry: Geometry;
+	private material: LineBasicMaterial;
+	private line: Line;
+	private trend: Trend;
+	
+	data: ITrendData = [];
+
+	constructor (chartState: ChartState, trendName: string) {
+		this.chartState = chartState;
+		this.geometry = new Geometry();
+		this.trend = chartState.trends.getTrend(trendName);
+		var options = this.trend.getOptions();
+		this.material = new LineBasicMaterial( { color: options.lineColor, linewidth: options.lineWidth } );
+		this.appendData(this.trend.getData());
 	}
 
 	appendData(newData: ITrendData) {
@@ -51,10 +91,13 @@ export class TrendLineWidget extends ChartWidget {
 		if (this.data.length == 0) {
 			this.initLine(newData[0]);
 		}
-
 		this.data.push(...newData);
 		this.updateLine(newData);
 		
+	}
+
+	getObject3D() {
+		return this.line;
 	}
 
 	private updateLine(newData: ITrendData) {
@@ -106,8 +149,8 @@ export class TrendLineWidget extends ChartWidget {
 		geometry.vertices = vertices;
 
 		this.line = new Line(geometry, this.material);
+		this.line.name = this.trend.name;
 		this.line.frustumCulled = false;
-		this.object3D.add(this.line);
 	}
 
 

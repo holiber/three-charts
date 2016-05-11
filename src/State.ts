@@ -1,9 +1,10 @@
+import {ITrendOptions, Trend, ITrendData} from "./Trend";
 var EE = require('EventEmitter2') as typeof EventEmitter2;
-import {IAxisOptions, AXIS_RANGE_TYPE, IAnimationsOptions, ITrendOptions, Chart} from "./Chart";
+import {IAxisOptions, AXIS_RANGE_TYPE, IAnimationsOptions, Chart} from "./Chart";
 import {Utils} from './Utils';
 import Vector3 = THREE.Vector3;
-import {ITrendData} from "./Widgets/TrendLineWidget";
 import {IChartWidgetOptions, ChartWidget} from "./Widget";
+import {Trends, ITrendsOptions} from "./Trends";
 
 
 export interface IChartState {
@@ -14,7 +15,7 @@ export interface IChartState {
 	xAxis?: IAxisOptions,
 	yAxis?: IAxisOptions,
 	animations?: IAnimationsOptions,
-	trend?: ITrendOptions,
+	trends?: ITrendsOptions,
 	widgets?: {[widgetName: string]: IChartWidgetOptions},
 	[key: string]: any; // for "for in" loops
 }
@@ -35,48 +36,38 @@ export class ChartState {
 		animations: {
 			enabled: true,
 			trendChangeSpeed: 0.5
-		},
-		trend: {
-			data: []
 		}
 
 	};
+	trends: Trends;
 	private ee: EventEmitter2;
 
 	constructor(initialState: IChartState) {
 		this.ee = new EE();
-		initialState.trend.data = this.prepareData(initialState.trend.dataset);
 		this.setState(initialState);
-	}
-
-	appendData(newData: ITrendData | number[]) {
-		var data = this.prepareData(newData);
-		this.setState({trend: {data: this.data.trend.data.concat(data)}}, data);
-	}
-
-	private prepareData (newData: ITrendData | number[]): ITrendData {
-		var data: ITrendData = [];
-		if (typeof newData[0] == 'number') {
-			let xVal = 0;
-			for (let yVal of newData as number[]) {
-				data.push({xVal: xVal, yVal: yVal});
-				xVal++;
-			}
-		} else {
-			data = newData as ITrendData;
-		}
-		return data;
+		this.trends = new Trends(this);
+		this.setState({trends: this.trends.calculatedOptions}, null, true);
+		this.recalculateState({});
+		this.initListeners();
 	}
 
 	onChange(cb: (changedProps: IChartState) => void ) {
 		this.ee.on('change', cb);
 	}
 
-	onTrendChange(cb: (trendOptions: ITrendOptions, newData: ITrendData) => void) {
+	onTrendChange(cb: (trendName: string, changedOptions: ITrendOptions, newData: ITrendData) => void) {
 		this.ee.on('trendChange', cb);
 	}
 
-	setState(newState: IChartState, eventData?: any) {
+	onTrendsChange(cb: (trendsOptions: ITrendsOptions) => void) {
+		this.ee.on('trendsChange', cb);
+	}
+	
+	getTrend(trendName: string): Trend {
+		return this.trends.getTrend(trendName);
+	}
+
+	setState(newState: IChartState, eventData?: any, silent = false) {
 		var stateData = this.data;
 		var changedProps: IChartState = {};
 		for (let key in newState) {
@@ -86,8 +77,9 @@ export class ChartState {
 		}
 
 		this.data = Utils.deepMerge(this.data, newState);
-		changedProps = this.recalculateState(changedProps);
+		if (silent) return;
 
+		changedProps = this.recalculateState(changedProps);
 
 		this.ee.emit('change', changedProps, eventData);
 
@@ -98,7 +90,7 @@ export class ChartState {
 		
 	}
 
-	private recalculateState(changedProps: IChartState): IChartState {
+	private recalculateState(changedProps?: IChartState): IChartState {
 		var data = this.data;
 
 		if (!data.$el) {
@@ -126,6 +118,19 @@ export class ChartState {
 		}
 
 		return changedProps;
+	}
+
+	private initListeners() {
+		this.ee.on('trendsChange', (changedTrends: ITrendsOptions, newData: ITrendData) => {
+			this.handleTrendsChange(changedTrends, newData)
+		});
+	}
+
+	private handleTrendsChange(changedTrends: ITrendsOptions, newData: ITrendData) {
+		//var changedTrendsNames = Object.keys(changedTrends);
+		for (let trendName in changedTrends) {
+			this.ee.emit('trendChange', trendName, changedTrends[trendName], newData);
+		}
 	}
 
 	getPointOnXAxis(xVal: number): number {

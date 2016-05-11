@@ -6,11 +6,16 @@
     <script src="build/webpackbundle.js"></script>
 
     <style>
-        body { margin: 0; background-color: #1b1b1b}
+        body { margin: 0; background-color: #1b1b1b; color: white;}
         .center-content {position: absolute; left: 260px; top: 60px}
         .sidebar {position: absolute; top: 60px;}
         .chart {width: 800px; height: 600px;}
         .preview-chart { width: 220px; height: 120px; background-color: darkslategrey; margin: 0 20px 20px 20px}
+        .controls {
+            position: absolute;
+            left: 1100px;
+            top: 60px;
+        }
     </style>
 </head>
 <body>
@@ -21,6 +26,11 @@
     </div>
     <div class="center-content">
         <div class="chart"></div>
+    </div>
+    <div class="controls">
+        <label><input name="maintrend" type="checkbox" checked="checked"/> Main trend</label><br/>
+        <label><input name="redtrend" type="checkbox" /> Red trend</label><br/>
+        <label><input name="bluetrend" type="checkbox" /> Blue trend</label><br/>
     </div>
 </body>
 </html>

@@ -10,7 +10,7 @@ import GridHelper = THREE.GridHelper;
 import {IAxisOptions} from "../Chart";
 import {ChartWidget} from "../Widget";
 import {ChartState} from "../State";
-import {GridWidget} from "./Grid";
+import {GridWidget} from "./GridWidget";
 
 enum AXIS_ORIENTATION {V, H};
 

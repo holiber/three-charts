@@ -1,13 +1,27 @@
 import Texture = THREE.Texture;
 
+export declare type TUid = number;
+
 var deepmerge = require<Function>('deepmerge');
+
 
 export class Utils {
 
+	private static currentId: TUid = 1;
+
+	/**
+	 * deepMerge function https://www.npmjs.com/package/deepmerge
+	 */
 	static deepMerge<T> (obj1: T, obj2: T) {
 		return deepmerge(obj1, obj2) as T;
 	}
 
+	/**
+	 *
+	 * @example
+	 * // returns "000015"
+	 * Utils.toFixed(15, 6);
+	 */
 	static toFixed(num: number, digitsCount: number): string {
 		var numStr = String(num);
 		var lengthDiff = digitsCount - numStr.length;
@@ -16,7 +30,10 @@ export class Utils {
 		}
 		return numStr;
 	}
-	
+
+	/**
+	 * generate texture from canvas context
+	 */
 	static createTexture(width: number, height: number, fn: (ctx: CanvasRenderingContext2D) => void ): Texture {
 		var canvas: HTMLCanvasElement = document.createElement('canvas');
 		canvas.width = width;
@@ -28,16 +45,18 @@ export class Utils {
 		return texture;
 	}
 
+	/**
+	 * throw error
+	 */
 	static error(msg: string) {
 		throw 'Chart: ' + msg;
 	}
 
-	// static scaleToInt(num: number): [number, number] {
-	// 	var afterPoint = Number(String(num % 1).split('.')[1]);
-	// 	if (!afterPoint) return [num, 1];
-	// 	afterPoint = afterPoint.toString().slice(0, 5);
-	// 	var beforePoint = parseInt(String(num));
-	// 	var afterPointLength = String(afterPoint).length;
-	// 	return [beforePoint * Math.pow(10, afterPointLength) + afterPoint, 1 / Math.pow(10, afterPointLength)];
-	// }
+	/**
+	 * @returns new unique id
+	 */
+	static getUid(): TUid {
+		return this.currentId++;
+	}
+	
 }
