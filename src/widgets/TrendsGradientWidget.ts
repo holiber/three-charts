@@ -6,12 +6,12 @@ import Vector3 = THREE.Vector3;
 import Line = THREE.Line;
 import Object3D = THREE.Object3D;
 import {ChartState} from "../State";
-import {ChartWidget} from "../Widget";
 import Face3 = THREE.Face3;
 import Texture = THREE.Texture;
 import Vector2 = THREE.Vector2;
 import {ITrendOptions, ITrendData, Trend, ITrendItem} from "../Trend";
 import {Utils} from "../Utils";
+import {TrendsWidget, TrendWidget} from "./TrendsWidget";
 
 const MAX_VERTICES = 1000;
 
@@ -19,55 +19,10 @@ const MAX_VERTICES = 1000;
 const PART_VERTICES_COUNT = 5;
 const PART_FACES_COUNT = 3;
 
-export class TrendGradientWidget extends ChartWidget {
-	static widgetName = 'TrendGradient';
-	private object3D: Object3D;
-	private gradients: {[trendName: string]: TrendGradient} = {};
-
-	constructor (state: ChartState) {
-		super(state);
-		this.object3D = new Object3D();
-		this.chartState.onTrendsChange(() => this.onTrendsChange());
-		this.chartState.onTrendChange((trendName: string, changedOptions: ITrendOptions, newData: ITrendData) => {
-			this.onTrendChange(trendName, changedOptions, newData)
-		});
-		this.onTrendsChange();
-	}
-
-	private onTrendsChange() {
-		var trendsOptions = this.chartState.data.trends;
-		for (let trendName in trendsOptions) {
-			let trendOptions = trendsOptions[trendName];
-			let trendHasGradient = trendOptions.enabled && trendOptions.hasGradient;
-			if (trendHasGradient && !this.gradients[trendName]) {
-				this.createTrendGradient(trendName);
-			} else if (!trendHasGradient && this.gradients[trendName]) {
-				this.destroyTrendGradient(trendName);
-			}
-		}
-	}
-
-	private onTrendChange(trendName: string, changedOptions: ITrendOptions, newData: ITrendData) {
-		if (!changedOptions.data) return;
-		var trendGradient = this.gradients[trendName];
-		if (!trendGradient) return;
-		trendGradient.appendData(newData);
-	}
-
-	getObject3D(): Object3D {
-		return this.object3D;
-	}
-
-	private createTrendGradient(trendName: string) {
-		var gradient = new TrendGradient(this.chartState, trendName);
-		this.gradients[trendName] = gradient;
-		this.object3D.add(gradient.getObject3D());
-	}
-
-	private destroyTrendGradient(trendName: string) {
-		delete this.gradients[trendName];
-		var gradientObject = this.object3D.getObjectByName(trendName);
-		this.object3D.remove(gradientObject);
+export class TrendsGradientWidget extends TrendsWidget<TrendGradient> {
+	static widgetName = "trendsGradient";
+	protected getTrendWidgetClass() {
+		return TrendGradient;
 	}
 
 	static generateGradientTexture(): Texture {
@@ -86,15 +41,18 @@ export class TrendGradientWidget extends ChartWidget {
 
 
 
-class TrendGradient {
-	private chartState: ChartState;
+class TrendGradient extends TrendWidget {
 	private gradient: Mesh;
-	private trend: Trend;
+	
+	static widgetIsEnabled(trendOptions: ITrendOptions) {
+		return trendOptions.enabled && trendOptions.hasGradient
+	}
 
 	data: ITrendData = [];
 
 
 	constructor (chartState: ChartState, trendName: string) {
+		super(chartState, trendName);
 		this.chartState = chartState;
 		this.trend = chartState.trends.getTrend(trendName);
 		this.appendData(this.trend.getData());
@@ -135,22 +93,19 @@ class TrendGradient {
 	
 	
 		for (let i = 0; i < MAX_VERTICES - 1; i++) {
-			// let item = this.data[i] || this.data[0];
-			// let nextItem = this.data[i + 1] || this.data[0];
-			//let nextItem = {xVal: startItem.xVal + 5, yVal: startItem.yVal};
 			let item = startItem;
 			let nextItem = startItem;
 			this.setupGradientPart(i, geom, item, nextItem);
 		}
 	
-		var texture = TrendGradientWidget.generateGradientTexture();
+		var texture = TrendsGradientWidget.generateGradientTexture();
 		var mesh = new THREE.Mesh(
 			geom,
 			new THREE.MeshBasicMaterial( {transparent: true, map: texture} )
 		);
 		mesh.position.z = -1;
 		this.gradient = mesh;
-		this.gradient.name = this.trend.name;
+		this.gradient.frustumCulled = false;
 	}
 	
 	
@@ -242,7 +197,9 @@ class TrendGradient {
 	
 		if (verticesWasChanged) {
 			var animate = true;
-			var time = this.chartState.data.animations.trendChangeSpeed;
+			var animationOptions = this.chartState.data.animations
+			var time = animationOptions.trendChangeSpeed;
+			var ease = animationOptions.trendChangeEase;
 			if (!animate || hasEmptyVertices) {
 				vertices[vertInd1].set(vert1.x, vert1.y, 0);
 				vertices[vertInd2].set(vert2.x, vert2.y, 0);
@@ -265,11 +222,11 @@ class TrendGradient {
 				vertices[vertInd3].set(vert4.x, vert4.y, 0);
 				vertices[vertInd4].set(vert4.x, vert4.y, 0);
 	
-				TweenLite.to(vertices[vertInd1], time, {x: vert1.x, y: vert1.y});
-				TweenLite.to(vertices[vertInd2], time, {x: vert2.x, y: vert2.y});
-				TweenLite.to(vertices[vertInd3], time, {x: vert3.x, y: vert3.y});
-				TweenLite.to(vertices[vertInd4], time, {x: vert4.x, y: vert4.y});
-				TweenLite.to(vertices[vertInd5], time, {x: vert5.x, y: vert5.y})
+				TweenLite.to(vertices[vertInd1], time, {x: vert1.x, y: vert1.y, ease: ease});
+				TweenLite.to(vertices[vertInd2], time, {x: vert2.x, y: vert2.y, ease: ease});
+				TweenLite.to(vertices[vertInd3], time, {x: vert3.x, y: vert3.y, ease: ease});
+				TweenLite.to(vertices[vertInd4], time, {x: vert4.x, y: vert4.y, ease: ease});
+				TweenLite.to(vertices[vertInd5], time, {x: vert5.x, y: vert5.y, ease: ease})
 					.eventCallback('onUpdate', () => {
 						gradientGeometry.verticesNeedUpdate = true;
 						gradientGeometry.uvsNeedUpdate = true;

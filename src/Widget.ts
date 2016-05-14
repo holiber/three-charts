@@ -13,9 +13,12 @@ export abstract class ChartWidget {
 
 	constructor (chartState: ChartState) {
 		this.chartState = chartState;
+		this.bindEvents();
 	}
 	
 	abstract getObject3D(): Object3D;
+	
+	protected bindEvents() {}
 	
 	static getDefaultOptions(): IChartWidgetOptions {
 		return {enabled: true}

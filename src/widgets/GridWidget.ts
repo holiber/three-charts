@@ -15,14 +15,16 @@ export interface IGridParamsForAxis {
 	end: number,
 	step: number,
 	stepInPx: number,
-	length: number
+	length: number,
+	segmentsCount: number
 }
 
 export class GridWidget extends ChartWidget{
 	static widgetName = 'Grid';
-	private geometry: Geometry;
-	private material: LineBasicMaterial;
 	private lineSegments: LineSegments;
+	private axisXGridParams: IGridParamsForAxis;
+	private axisYGridParams: IGridParamsForAxis;
+	private scrollAnimation: TweenLite;
 
 	constructor (chartState: ChartState) {
 		super(chartState);
@@ -30,29 +32,57 @@ export class GridWidget extends ChartWidget{
 		var geometry = new THREE.Geometry();
 		var material = new THREE.LineBasicMaterial( { linewidth: 1, opacity: 0.1, transparent: true} );
 
-		var size = 50;
-		var step = 20;
-		var color1 = new THREE.Color( 0xFFFFFF);
-		var color2 = new THREE.Color( 0x888888 );
-		var axisXGrid = GridWidget.getGridParamsForAxis(xAxis, width);
-		var axisYGrid = GridWidget.getGridParamsForAxis(yAxis, height);
+		var axisXGrid = this.axisXGridParams = GridWidget.getGridParamsForAxis(xAxis, width);
+		var axisYGrid = this.axisYGridParams = GridWidget.getGridParamsForAxis(yAxis, height);
 
 
-		for ( var i = - axisXGrid.length; i <= axisXGrid.length; i ++) {
+		for ( var i = - axisXGrid.segmentsCount; i <= axisXGrid.segmentsCount * 2; i ++) {
 			var x = i * axisXGrid.stepInPx + 0.5;
 			geometry.vertices.push(
-				new THREE.Vector3(x, height, 0 ), new THREE.Vector3( x, -height, 0 )
+				new THREE.Vector3(x, height * 2, 0 ), new THREE.Vector3( x, -height, 0 )
 			);
 		}
 
-		for ( var i = - axisYGrid.length; i <= axisYGrid.length; i ++) {
+		for ( var i = - axisYGrid.segmentsCount; i < axisYGrid.segmentsCount * 2; i ++) {
 			var y = i * axisYGrid.stepInPx - 0.5;
 			geometry.vertices.push(
-				new THREE.Vector3(width, y, 0 ), new THREE.Vector3( -width, y, 0 )
+				new THREE.Vector3(width * 2, y, 0 ), new THREE.Vector3( -width, y, 0 )
 			);
 		}
 
 		this.lineSegments = new LineSegments(geometry, material);
+	}
+
+	bindEvents() {
+		this.chartState.onXAxisChange((changedOptions: IAxisOptions) => {
+			if (changedOptions.range && changedOptions.range.scroll) this.onScrollChange();
+		});
+	}
+
+	private onScrollChange() {
+		var state = this.chartState;
+		var animations = state.data.animations;
+		var time = animations.trendChangeSpeed;
+		var ease = animations.trendChangeEase;
+		var canAnimate = animations.enabled && !state.data.cursor.dragMode;
+		var object = this.lineSegments;
+		if (this.scrollAnimation) this.scrollAnimation.kill();
+		if (canAnimate) {
+			var objToAnimate = {x: state.data.prevState.xAxis.range.scroll};
+			this.scrollAnimation = TweenLite.to(objToAnimate, time, {x: state.data.xAxis.range.scroll, ease: ease});
+			this.scrollAnimation.eventCallback('onUpdate', () =>{
+				this.setScrollX(objToAnimate.x);
+				//object.position.x = state.data.xAxis.range.scroll % this.axisXGridParams.stepInPx;
+
+			})
+		} else {
+			this.setScrollX(state.data.xAxis.range.scroll);
+			//object.position.x = state.data.xAxis.range.scroll % this.axisXGridParams.stepInPx;
+		}
+	}
+
+	private setScrollX(scrollX: number) {
+		this.lineSegments.position.x = scrollX % this.axisXGridParams.stepInPx;
 	}
 
 	// TODO: create unit tests : {from: 80, to: 90}, {from: 0, to: 100}, {from: 0.01, to: 2}, {from: 20, to: 180, minGridSize: 50}
@@ -110,7 +140,14 @@ export class GridWidget extends ChartWidget{
 			gridEnd = Number(toStr.slice(0, digitPos)) * multiplier * 10 + Number(toStr[digitPos] || 0) * multiplier;
 			break;
 		}
-		return {start: gridStart, end: gridEnd, step: gridStep, stepInPx: gridStepInPixels, length: gridEnd - gridStart}
+		return {
+			start: gridStart,
+			end: gridEnd,
+			step: gridStep,
+			stepInPx: gridStepInPixels,
+			length: gridEnd - gridStart,
+			segmentsCount: Math.round((gridEnd - gridStart) / gridStep)
+		}
 	}
 
 	getObject3D() {

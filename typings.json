@@ -5,9 +5,7 @@
   },
   "ambientDependencies": {
     "eventemitter2": "registry:dt/eventemitter2#0.14.4+20160316155526",
-    "gsap/core": "registry:dt/gsap/core#0.0.0+20160316155526",
-    "gsap/ease": "registry:dt/gsap/ease#0.0.0+20160316155526",
-    "gsap/tweenlite": "registry:dt/gsap/tweenlite#0.0.0+20160316155526",
+    "greensock": "registry:dt/greensock#1.15.1+20160316155526",
     "stats": "registry:dt/stats#0.0.0+20160316155526",
     "three": "registry:dt/three#0.0.0+20160417141754",
     "webpack-env": "registry:dt/webpack-env#1.12.2+20160316155526"

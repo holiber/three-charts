@@ -1,19 +1,22 @@
-import {ITrendData} from "./Trend";
+// deps must be always on top
 require('./deps');
 
+import {TrendsIndicatorWidget} from "./widgets/TrendsIndicatorWidget";
+import {TrendsLineWidget} from "./widgets/TrendsLineWidget";
 import PerspectiveCamera = THREE.PerspectiveCamera;
 import Renderer = THREE.Renderer;
 import Scene = THREE.Scene;
 import WebGLRenderer = THREE.WebGLRenderer;
-import {TrendLineWidget} from "./widgets/TrendLineWidget";
 import Object3D = THREE.Object3D; 
 import {ChartState, IChartState} from "./State";
 import {ChartWidget, IChartWidgetConstructor} from "./Widget";
 import {Utils} from "./Utils";
-import {BeaconWidget} from "./widgets/BeaconWidget";
+import {TrendsBeaconWidget} from "./widgets/TrendsBeaconWidget";
 import {AxisWidget} from "./widgets/AxisWidget";
 import {GridWidget} from "./widgets/GridWidget";
-import {TrendGradientWidget} from "./widgets/TrendGradientWidget";
+import {TrendsGradientWidget} from "./widgets/TrendsGradientWidget";
+
+export const MAX_DATA_LENGTH = 1000;
 
 export enum AXIS_RANGE_TYPE {
 	AUTO,
@@ -30,12 +33,18 @@ export interface IAxisRange {
 
 export interface IAxisOptions {
 	range: IAxisRange,
-	gridMinSize?: number
+	gridMinSize?: number,
+	autoScroll?: boolean,
+	padding?: {
+		start?: number,
+		end?: number
+	}
 }
 
 export interface IAnimationsOptions {
 	enabled?: boolean,
-	trendChangeSpeed?: number
+	trendChangeSpeed?: number,
+	trendChangeEase?: Ease | Linear,
 }
 
 export class Chart {
@@ -45,12 +54,6 @@ export class Chart {
 	private renderer: Renderer;
 	private scene: Scene;
 	private widgets: Array<ChartWidget> = [];
-	private mouseState = {
-		dragMode: false,
-		x: 0,
-		y: 0
-	};
-	
 
 	static devicePixelRatio = window.devicePixelRatio;
 	static installedWidgets: {[name: string]: typeof ChartWidget} = {};
@@ -93,7 +96,7 @@ export class Chart {
 			this.widgets.push(widget);
 		}
 
-		this.attachEvents();
+		this.bindEvents();
 
 		var render = (time: number) => {
 			stats.begin();
@@ -134,8 +137,8 @@ export class Chart {
 	}
 
 	private onZoom(zoomValue: number) {
-		//var trendPos = this.trend.getObject3D().position;
-		//TweenLite.to(trendPos, 0.3, {z: zoomValue});
+		var cameraPos = this.camera.position;
+		//TweenLite.to(cameraPos, 0.3, {z: zoomValue});
 	}
 
 	private initCamera() {
@@ -144,7 +147,7 @@ export class Chart {
 		// setup pixel-perfect camera
 		var FOV = 75;
 		var vFOV = FOV * (Math.PI / 180);
-		var camera = this.camera = new PerspectiveCamera(FOV, w / h, 0.1, 1000);
+		var camera = this.camera = new PerspectiveCamera(FOV, w / h, 0.1, 5000);
 		camera.position.z = h / (2 * Math.tan(vFOV / 2) );
 
 		// move 0,0 to left-bottom corner
@@ -152,7 +155,7 @@ export class Chart {
 		camera.position.y = h / 2;
 	}
 
-	private attachEvents() {
+	private bindEvents() {
 		var $el = this.$el;
 		$el.addEventListener('mousewheel', (ev: MouseWheelEvent) => {
 			ev.stopPropagation();
@@ -171,30 +174,55 @@ export class Chart {
 		this.state.onChange((changedProps: IChartState)  => {
 			changedProps.zoom && this.onZoom(changedProps.zoom);
 		});
+		
+		this.state.onTrendsChange(() => this.onTrendsChange());
+		this.state.onScrollStop(() => this.onScrollStop());
+	}
+	
+	private onTrendsChange() {
+		var state = this.state;
+		var oldTrendsMaxX = state.data.prevState.computedData.trends.maxX;
+		var trendsMaxXDelta = state.data.computedData.trends.maxX - oldTrendsMaxX;
+		if (trendsMaxXDelta > 0) {
+			var maxVisibleX = this.state.getMaxVisibleX();
+			var paddingRightX = this.state.getPaddingRight();
+			var currentScroll = state.data.xAxis.range.scroll;
+			if (oldTrendsMaxX < paddingRightX || oldTrendsMaxX > maxVisibleX) {
+				return;
+			}
+			var scrollDelta = state.getPointOnXAxis(trendsMaxXDelta);
+			this.setState({xAxis: {range: {scroll: currentScroll - scrollDelta}}});
+		}
+	}
+	
+	private onScrollStop() {
+		var tendsXMax = this.state.data.computedData.trends.maxX;
+		var paddingRightX = this.state.getPaddingRight();
+		if (tendsXMax < paddingRightX) {
+			this.state.scrollToEnd();
+		}
 	}
 
 	private onMouseDown(ev: MouseEvent) {
-		this.mouseState = {dragMode: true, x: ev.clientX, y: ev.clientY};
+		this.setState({cursor: {dragMode: true, x: ev.clientX, y: ev.clientY}});
 	}
+	
 	private onMouseUp(ev: MouseEvent) {
-		this.mouseState.dragMode = false;
+		this.setState({cursor: {dragMode: false}});
 	}
 
 	private onMouseMove(ev: MouseEvent) {
-		var mouseState = this.mouseState;
-		if (!mouseState.dragMode) return;
-		var dx = mouseState.x - ev.clientX;
-		var dy = ev.clientY - mouseState.y;
-		this.camera.position.x += dx;
-		this.camera.position.y += dy;
-		this.mouseState = {dragMode: true, x: ev.clientX, y: ev.clientY}
+		if (this.state.data.cursor.dragMode) {
+			this.setState({cursor: {dragMode: true, x: ev.clientX, y: ev.clientY}});
+		}
 	}
 
 }
 
 // install built-in widgets
-Chart.installWidget(TrendLineWidget);
+Chart.installWidget(TrendsLineWidget);
 Chart.installWidget(AxisWidget);
 Chart.installWidget(GridWidget);
-Chart.installWidget(BeaconWidget);
-Chart.installWidget(TrendGradientWidget);
+Chart.installWidget(TrendsBeaconWidget);
+Chart.installWidget(TrendsIndicatorWidget);
+Chart.installWidget(TrendsGradientWidget);

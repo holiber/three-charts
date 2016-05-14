@@ -10,10 +10,17 @@ export class Utils {
 	private static currentId: TUid = 1;
 
 	/**
-	 * deepMerge function https://www.npmjs.com/package/deepmerge
+	 * deepMerge based on https://www.npmjs.com/package/deepmerge
 	 */
 	static deepMerge<T> (obj1: T, obj2: T) {
 		return deepmerge(obj1, obj2) as T;
+	}
+
+	/**
+	 * deepCopy based on JSON.stringify function
+	 */
+	static deepCopy<T> (obj: T) {
+		return JSON.parse(JSON.stringify(obj)) as T;
 	}
 
 	/**

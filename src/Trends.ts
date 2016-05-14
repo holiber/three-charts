@@ -26,4 +26,18 @@ export class Trends {
 	getTrend(trendName: string) {
 		return this.items[trendName];
 	}
+
+	getMaxX(): number {
+		var items = this.items;
+		var lastVals: number[] = [];
+		for (let trendName in items) {
+			let trend = items[trendName];
+			if (!trend.getOptions().enabled) continue;
+			let trendData = trend.getData();
+			let trendLength = trendData.length;
+			if (trendData.length == 0) continue;
+			lastVals.push(trendData[trendLength - 1].xVal);
+		}
+		return Math.max(...lastVals);
+	}
 }

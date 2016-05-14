@@ -11,6 +11,7 @@ export interface ITrendOptions {
 	lineWidth?: number,
 	lineColor?: number,
 	hasGradient?: boolean,
+	hasIndicator?: boolean,
 	hasBeacon?: boolean
 }
 
