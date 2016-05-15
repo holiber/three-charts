@@ -95,7 +95,7 @@ class TrendGradient extends TrendWidget {
 		for (let i = 0; i < MAX_VERTICES - 1; i++) {
 			let item = startItem;
 			let nextItem = startItem;
-			this.setupGradientPart(i, geom, item, nextItem);
+			this.setupGradientPart(i, geom, item, nextItem, nextItem);
 		}
 	
 		var texture = TrendsGradientWidget.generateGradientTexture();
@@ -113,6 +113,7 @@ class TrendGradient extends TrendWidget {
 		var data = this.data;
 		var startInd = data.length - newData.length;
 		var endInd = data.length - 1;
+		var startItem = newData[0];
 	
 		for (let ind = startInd; ind <= endInd; ind++) {
 			let item = data[ind];
@@ -121,13 +122,19 @@ class TrendGradient extends TrendWidget {
 			//let nextItem = {xVal: startItem.xVal + 5, yVal: startItem.yVal};
 	
 	
-			this.setupGradientPart(ind, this.gradient.geometry as Geometry, prevItem, item);
+			this.setupGradientPart(ind, this.gradient.geometry as Geometry, prevItem, item, startItem);
 		}
 	}
 	
 	
 	
-	private setupGradientPart(partInd: number, gradientGeometry: Geometry, trendItem: ITrendItem, nextTrendItem: ITrendItem) {
+	private setupGradientPart(
+		partInd: number,
+		gradientGeometry: Geometry,
+		trendItem: ITrendItem,
+		nextTrendItem: ITrendItem,
+	    startItem: ITrendItem
+	) {
 	
 		// gradient part scheme:
 		//
@@ -209,7 +216,6 @@ class TrendGradient extends TrendWidget {
 				gradientGeometry.verticesNeedUpdate = true;
 				gradientGeometry.uvsNeedUpdate = true;
 			} else {
-	
 				if (isRise) {
 					vertices[vertInd1].set(vert1.x, vert1.y, 0);
 					vertices[vertInd2].set(vert1.x, vert1.y, 0);

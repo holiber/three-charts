@@ -170,6 +170,8 @@ export class Chart {
 		$el.addEventListener('mousemove', (ev: MouseEvent) => {this.onMouseMove(ev)});
 		$el.addEventListener('mousedown', (ev: MouseEvent) => this.onMouseDown(ev));
 		$el.addEventListener('mouseup', (ev: MouseEvent) => this.onMouseUp(ev));
+		$el.addEventListener('touchmove', (ev: TouchEvent) => {this.onTouchMove(ev)});
+		$el.addEventListener('touchend', (ev: TouchEvent) => {this.onTouchEnd(ev)});
 
 		this.state.onChange((changedProps: IChartState)  => {
 			changedProps.zoom && this.onZoom(changedProps.zoom);
@@ -215,6 +217,14 @@ export class Chart {
 		if (this.state.data.cursor.dragMode) {
 			this.setState({cursor: {dragMode: true, x: ev.clientX, y: ev.clientY}});
 		}
+	}
+
+	private onTouchMove(ev: TouchEvent) {
+		this.setState({cursor: {dragMode: true, x: ev.touches[0].clientX, y: ev.touches[0].clientY}});
+	}
+
+	private onTouchEnd(ev: TouchEvent) {
+		this.setState({cursor: {dragMode: false}});
 	}
 
 }

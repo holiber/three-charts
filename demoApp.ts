@@ -10,7 +10,7 @@ class DataSourse {
 		let sec = 0;
 		let val = 70;
 
-		while (sec < 45) {
+		while (sec < 80) {
 			this.data.push(val);
 			val += Math.random() * 14 - 7;
 			sec++;

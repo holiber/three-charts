@@ -52,7 +52,7 @@
 	        this.data = [];
 	        var sec = 0;
 	        var val = 70;
-	        while (sec < 45) {
+	        while (sec < 80) {
 	            this.data.push(val);
 	            val += Math.random() * 14 - 7;
 	            sec++;
@@ -295,6 +295,8 @@
 	        $el.addEventListener('mousemove', function (ev) { _this.onMouseMove(ev); });
 	        $el.addEventListener('mousedown', function (ev) { return _this.onMouseDown(ev); });
 	        $el.addEventListener('mouseup', function (ev) { return _this.onMouseUp(ev); });
+	        $el.addEventListener('touchmove', function (ev) { _this.onTouchMove(ev); });
+	        $el.addEventListener('touchend', function (ev) { _this.onTouchEnd(ev); });
 	        this.state.onChange(function (changedProps) {
 	            changedProps.zoom && _this.onZoom(changedProps.zoom);
 	        });
@@ -333,6 +335,12 @@
 	        if (this.state.data.cursor.dragMode) {
 	            this.setState({ cursor: { dragMode: true, x: ev.clientX, y: ev.clientY } });
 	        }
+	    };
+	    Chart.prototype.onTouchMove = function (ev) {
+	        this.setState({ cursor: { dragMode: true, x: ev.touches[0].clientX, y: ev.touches[0].clientY } });
+	    };
+	    Chart.prototype.onTouchEnd = function (ev) {
+	        this.setState({ cursor: { dragMode: false } });
 	    };
 	    Chart.devicePixelRatio = window.devicePixelRatio;
 	    Chart.installedWidgets = {};
@@ -47714,7 +47722,7 @@
 	        for (var i = 0; i < MAX_VERTICES - 1; i++) {
 	            var item = startItem;
 	            var nextItem = startItem;
-	            this.setupGradientPart(i, geom, item, nextItem);
+	            this.setupGradientPart(i, geom, item, nextItem, nextItem);
 	        }
 	        var texture = TrendsGradientWidget.generateGradientTexture();
 	        var mesh = new THREE.Mesh(geom, new THREE.MeshBasicMaterial({ transparent: true, map: texture }));
@@ -47726,16 +47734,17 @@
 	        var data = this.data;
 	        var startInd = data.length - newData.length;
 	        var endInd = data.length - 1;
+	        var startItem = newData[0];
 	        for (var ind = startInd; ind <= endInd; ind++) {
 	            var item = data[ind];
 	            var prevItem = data[ind - 1];
 	            if (!prevItem)
 	                continue;
 	            //let nextItem = {xVal: startItem.xVal + 5, yVal: startItem.yVal};
-	            this.setupGradientPart(ind, this.gradient.geometry, prevItem, item);
+	            this.setupGradientPart(ind, this.gradient.geometry, prevItem, item, startItem);
 	        }
 	    };
-	    TrendGradient.prototype.setupGradientPart = function (partInd, gradientGeometry, trendItem, nextTrendItem) {
+	    TrendGradient.prototype.setupGradientPart = function (partInd, gradientGeometry, trendItem, nextTrendItem, startItem) {
 	        // gradient part scheme:
 	        //
 	        //           + vert5
