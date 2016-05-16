@@ -30,7 +30,7 @@ export class GridWidget extends ChartWidget{
 		super(chartState);
 		var {yAxis, xAxis, width, height} = this.chartState.data;
 		var geometry = new THREE.Geometry();
-		var material = new THREE.LineBasicMaterial( { linewidth: 1, opacity: 0.1, transparent: true} );
+		var material = new THREE.LineBasicMaterial( { linewidth: 1, opacity: 0.07, transparent: true} );
 
 		var axisXGrid = this.axisXGridParams = GridWidget.getGridParamsForAxis(xAxis, width);
 		var axisYGrid = this.axisYGridParams = GridWidget.getGridParamsForAxis(yAxis, height);
@@ -54,36 +54,19 @@ export class GridWidget extends ChartWidget{
 	}
 
 	bindEvents() {
-		this.chartState.onXAxisChange((changedOptions: IAxisOptions) => {
-			if (changedOptions.range && changedOptions.range.scroll) this.onScrollChange();
+		this.chartState.onScroll(() => {
+			this.onScrollChange();
 		});
 	}
 
 	private onScrollChange() {
-		var state = this.chartState;
-		var animations = state.data.animations;
-		var time = animations.autoScrollSpeed;
-		var ease = animations.autoScrollEase;
-		var canAnimate = animations.enabled && !state.data.cursor.dragMode;
-		var object = this.lineSegments;
-		if (this.scrollAnimation) this.scrollAnimation.kill();
-		if (canAnimate) {
-			var objToAnimate = {x: state.data.prevState.xAxis.range.scroll};
-			this.scrollAnimation = TweenLite.to(objToAnimate, time, {x: state.data.xAxis.range.scroll, ease: ease});
-			this.scrollAnimation.eventCallback('onUpdate', () =>{
-				this.setScrollX(objToAnimate.x);
-				//object.position.x = state.data.xAxis.range.scroll % this.axisXGridParams.stepInPx;
-
-			})
-		} else {
-			this.setScrollX(state.data.xAxis.range.scroll);
-			//object.position.x = state.data.xAxis.range.scroll % this.axisXGridParams.stepInPx;
-		}
+		// move grid behind the camera
+		var stepX = this.axisXGridParams.stepInPx;
+		var scrollX = this.chartState.data.xAxis.range.scroll;
+		var steps = Math.round(scrollX / stepX);
+		this.lineSegments.position.x = Math.round(stepX * steps);
 	}
 
-	private setScrollX(scrollX: number) {
-		this.lineSegments.position.x = scrollX % this.axisXGridParams.stepInPx;
-	}
 
 	// TODO: create unit tests : {from: 80, to: 90}, {from: 0, to: 100}, {from: 0.01, to: 2}, {from: 20, to: 180, minGridSize: 50}
 	static getGridParamsForAxis(axisOptions: IAxisOptions, axisWidth: number): IGridParamsForAxis {

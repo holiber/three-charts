@@ -109,7 +109,11 @@ export class ChartState {
 	}
 
 	onScroll(cb: (scrollOptions: {deltaX: number}) => void) {
-		this.ee.on('onScroll', cb);
+		this.ee.on('scroll', cb);
+	}
+
+	onCameraChange(cb: (cameraOptions: {scrollX: number}) => void) {
+		this.ee.on('cameraChange', cb);
 	}
 	
 	getTrend(trendName: string): Trend {
@@ -135,17 +139,13 @@ export class ChartState {
 		var recalculateResult = this.recalculateState(changedProps);
 		changedProps = recalculateResult.changedProps;
 		
+		this.emitChangedStateEvents(changedProps, eventData);
 
-		this.ee.emit('change', changedProps, eventData);
+	}
 
-		// emit event for each changed state property
-		for (let key in changedProps) {
-			this.ee.emit(key + 'Change', changedProps[key], eventData);
-		}
-		
-		for (var event of recalculateResult.eventsToEmit) {
-			this.ee.emit(event.name, event.data);
-		}
+	// dirty hack, use only for performance improvements such camera position change
+	emit(eventName: string, data: any) {
+		this.ee.emit(eventName, data);
 	}
 
 	private recalculateState(changedProps?: IChartState): IRecalcualteStateResult {
@@ -184,13 +184,8 @@ export class ChartState {
 			var oldX = data.prevState.cursor.x;
 			var currentX =  cursorOptions.x;
 			var currentScroll = data.xAxis.range.scroll;
-			var deltaX = currentX - oldX;
+			var deltaX = oldX - currentX;
 			patch.xAxis = {range: {scroll: currentScroll + deltaX}};
-			eventsToEmit.push(new ScrollEvent({deltaX: deltaX}));
-		}
-		// check scrollStop
-		if (cursorOptions && cursorOptions.dragMode === false) {
-			eventsToEmit.push(new ScrollStopEvent());
 		}
 
 		this.savePrevState(patch);
@@ -227,6 +222,35 @@ export class ChartState {
 		}
 	}
 
+	private emitChangedStateEvents(changedProps: IChartState, eventData: any) {
+		var prevState = this.data.prevState;
+
+		// emit common change event
+		this.ee.emit('change', changedProps, eventData);
+
+		// emit event for each changed state property
+		for (let key in changedProps) {
+			this.ee.emit(key + 'Change', changedProps[key], eventData);
+		}
+
+
+		// emit special events based on changed state
+		var scrollStopEventNeeded = (
+			changedProps.cursor &&
+			changedProps.cursor.dragMode === false &&
+			prevState.cursor.dragMode === true
+		);
+		scrollStopEventNeeded && this.ee.emit('scrollStop');
+
+		var scrollChangeEventsNeeded = (
+			changedProps.xAxis &&
+			changedProps.xAxis.range &&
+			changedProps.xAxis.range.scroll
+		);
+		scrollChangeEventsNeeded && this.ee.emit('scroll');
+
+	}
+
 	private initListeners() {
 		this.ee.on('trendsChange', (changedTrends: ITrendsOptions, newData: ITrendData) => {
 			this.handleTrendsChange(changedTrends, newData)
@@ -255,7 +279,7 @@ export class ChartState {
 		var w = this.data.width;
 		var {from, to, scroll} = this.data.xAxis.range;
 		var pxCoast = (to - from) / w;
-		return pxCoast * x - scroll * pxCoast;
+		return pxCoast * x + scroll * pxCoast;
 	}
 
 	getPxCoast() {

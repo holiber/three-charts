@@ -1,4 +1,5 @@
 // deps must be always on top
+import Vector3 = THREE.Vector3;
 require('./deps');
 
 import {TrendsIndicatorWidget} from "./widgets/TrendsIndicatorWidget";
@@ -15,6 +16,7 @@ import {TrendsBeaconWidget} from "./widgets/TrendsBeaconWidget";
 import {AxisWidget} from "./widgets/AxisWidget";
 import {GridWidget} from "./widgets/GridWidget";
 import {TrendsGradientWidget} from "./widgets/TrendsGradientWidget";
+import {Screen} from "./Screen";
 
 export const MAX_DATA_LENGTH = 1000;
 
@@ -52,10 +54,11 @@ export interface IAnimationsOptions {
 export class Chart {
 	state: ChartState;
 	private $el: HTMLElement;
-	private camera: PerspectiveCamera;
+	private screen: Screen;
 	private renderer: Renderer;
 	private scene: Scene;
 	private widgets: Array<ChartWidget> = [];
+	private stats: Stats;
 
 	static devicePixelRatio = window.devicePixelRatio;
 	static installedWidgets: {[name: string]: typeof ChartWidget} = {};
@@ -73,9 +76,9 @@ export class Chart {
 	}
 
 	private init() {
-		var {width: w, height: h, $el} = this.state.data;
-
-		var scene = this.scene = new THREE.Scene();
+		var state = this.state;
+		var {width: w, height: h, $el} = state.data;
+		this.scene = new THREE.Scene();
 
 		var renderer = this.renderer = new WebGLRenderer({antialias: true}); //new THREE.CanvasRenderer();
 		renderer.setPixelRatio(Chart.devicePixelRatio);
@@ -83,10 +86,11 @@ export class Chart {
 		$el.appendChild(renderer.domElement);
 		this.$el = renderer.domElement;
 
-		var stats = new Stats();
-		$el.appendChild(stats.domElement);
+		this.stats = new Stats();
+		$el.appendChild(this.stats.domElement);
 
-		this.initCamera();
+		this.screen = new Screen(state);
+		this.scene.add(this.screen.camera);
 
 		// init widgets
 		for (let widgetName in Chart.installedWidgets) {
@@ -99,20 +103,22 @@ export class Chart {
 		}
 
 		this.bindEvents();
+		this.render(Date.now());
+	}
+	
+	render(time: number) {
+		this.stats.begin();
+		this.renderer.render(this.scene, this.screen.camera);
 
-		var render = (time: number) => {
-			stats.begin();
-			renderer.render(scene, this.camera);
-			
-			//uncomment for 30fps
-			var renderDelay = this.state.data.animations.enabled ? 25 : 1000;
-			//setTimeout(() => requestAnimationFrame(render), renderDelay);
-			requestAnimationFrame(render);
-
-			stats.end();
-		};
-		render(Date.now());
-
+		var renderDelay = this.state.data.animations.enabled ? 0 : 1000;
+		if (renderDelay) {
+			setTimeout(() => requestAnimationFrame((time) => this.render(time)), renderDelay);
+		} else {
+			requestAnimationFrame((time) => this.render(time));
+		}
+		// this.screen.camera.rotation.z += 0.01;
+		// this.screen.camera.rotation.y += 0.01;
+		this.stats.end();
 	}
 	
 	getState(): IChartState {
@@ -139,22 +145,8 @@ export class Chart {
 	}
 
 	private onZoom(zoomValue: number) {
-		var cameraPos = this.camera.position;
-		//TweenLite.to(cameraPos, 0.3, {z: zoomValue});
-	}
-
-	private initCamera() {
-		var {width: w, height: h} = this.state.data;
-
-		// setup pixel-perfect camera
-		var FOV = 75;
-		var vFOV = FOV * (Math.PI / 180);
-		var camera = this.camera = new PerspectiveCamera(FOV, w / h, 0.1, 5000);
-		camera.position.z = h / (2 * Math.tan(vFOV / 2) );
-
-		// move 0,0 to left-bottom corner
-		camera.position.x = w / 2;
-		camera.position.y = h / 2;
+		var cameraPos = this.screen.camera.position;
+		TweenLite.to(cameraPos, 0.3, {z: zoomValue});
 	}
 
 	private bindEvents() {
@@ -179,11 +171,11 @@ export class Chart {
 			changedProps.zoom && this.onZoom(changedProps.zoom);
 		});
 		
-		this.state.onTrendsChange(() => this.onTrendsChange());
+		this.state.onTrendsChange(() => this.autoscroll());
 		this.state.onScrollStop(() => this.onScrollStop());
 	}
 	
-	private onTrendsChange() {
+	private autoscroll() {
 		var state = this.state;
 		var oldTrendsMaxX = state.data.prevState.computedData.trends.maxX;
 		var trendsMaxXDelta = state.data.computedData.trends.maxX - oldTrendsMaxX;
@@ -195,16 +187,16 @@ export class Chart {
 				return;
 			}
 			var scrollDelta = state.getPointOnXAxis(trendsMaxXDelta);
-			this.setState({xAxis: {range: {scroll: currentScroll - scrollDelta}}});
+			this.setState({xAxis: {range: {scroll: currentScroll + scrollDelta}}});
 		}
 	}
 	
 	private onScrollStop() {
-		var tendsXMax = this.state.data.computedData.trends.maxX;
-		var paddingRightX = this.state.getPaddingRight();
-		if (tendsXMax < paddingRightX) {
-			//this.state.scrollToEnd();
-		}
+		// var tendsXMax = this.state.data.computedData.trends.maxX;
+		// var paddingRightX = this.state.getPaddingRight();
+		// if (tendsXMax < paddingRightX) {
+		// 	//this.state.scrollToEnd();
+		// }
 	}
 
 	private onMouseDown(ev: MouseEvent) {
@@ -227,6 +219,22 @@ export class Chart {
 
 	private onTouchEnd(ev: TouchEvent) {
 		this.setState({cursor: {dragMode: false}});
+	}
+
+	/**
+	 * creates simple chart without animations and minimal widgets set
+	 */
+	static createPreviewChart(userOptions: IChartState): Chart {
+		var previewChartOptions: IChartState = {
+			animations: {enabled: false},
+			widgets: {
+				Grid: {enabled: false},
+				Axis: {enabled: false},
+				TrendsGradient: {enabled: false}
+			}
+		};
+		var options = Utils.deepMerge(userOptions, previewChartOptions);
+		return new Chart(options);
 	}
 
 }

@@ -10,7 +10,7 @@ class DataSourse {
 		let sec = 0;
 		let val = 70;
 
-		while (sec < 80) {
+		while (sec < 20) {
 			this.data.push(val);
 			val += Math.random() * 14 - 7;
 			sec++;
@@ -39,7 +39,7 @@ window.onload = function () {
 			range: {type: AXIS_RANGE_TYPE.FIXED, from: 20, to: 150}
 		},
 		xAxis: {
-			range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 100},
+			range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 30},
 		},
 		trends: {
 			'main': {dataset: dsMain.data, hasBeacon: true, hasIndicator: true},
@@ -50,7 +50,7 @@ window.onload = function () {
 	
 	(<any>window)['chart'] = chart;
 
-	var previewChart1 = new Chart({
+	var previewChart1 = Chart.createPreviewChart({
 		$el: document.querySelectorAll('.preview-chart')[0],
 		yAxis: {
 			range: {type: AXIS_RANGE_TYPE.FIXED, from: 20, to: 150}
@@ -60,16 +60,10 @@ window.onload = function () {
 		},
 		trends: {
 			'main': {dataset: dsMain.data, hasBeacon: true}
-		},
-		animations: {enabled: false},
-		widgets: {
-			Grid: {enabled: false},
-			Axis: {enabled: false},
-			trendsGradient: {enabled: false}
 		}
 	});
 
-	var previewChart2 = new Chart({
+	var previewChart2 = Chart.createPreviewChart({
 		$el: document.querySelectorAll('.preview-chart')[1],
 		yAxis: {
 			range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 200}
@@ -80,15 +74,10 @@ window.onload = function () {
 		trends: {
 			'main': {dataset: dsMain.data, hasBeacon: true}
 		},
-		animations: {enabled: false},
-		widgets: {
-			Grid: {enabled: false},
-			Axis: {enabled: false},
-			trendsGradient: {enabled: false}
-		}
+
 	});
 
-	var previewChart3 = new Chart({
+	var previewChart3 = Chart.createPreviewChart({
 		$el: document.querySelectorAll('.preview-chart')[2],
 		yAxis: {
 			range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 100}
@@ -99,12 +88,6 @@ window.onload = function () {
 		trends: {
 			'main': {dataset: dsMain.data, hasBeacon: true},
 			'red': {dataset: dsRed.data, lineColor: 0xFF2222},
-		},
-		animations: {enabled: false},
-		widgets: {
-			Grid: {enabled: false},
-			Axis: {enabled: false},
-			trendsGradient: {enabled: false}
 		}
 	});
 

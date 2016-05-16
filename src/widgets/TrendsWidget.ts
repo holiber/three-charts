@@ -76,19 +76,19 @@ export abstract class TrendsWidget<TrendWidgetType extends TrendWidget> extends 
 	}
 
 	private onScrollChange() {
-		var state = this.chartState;
-		var scrollX = state.data.xAxis.range.scroll;
-		var cursor = state.data.cursor;
-		var animations = state.data.animations;
-		var time = animations.autoScrollSpeed;
-		var ease = animations.autoScrollEase;
-		var canAnimate = animations.enabled && !cursor.dragMode;
-		if (this.scrollAnimation) this.scrollAnimation.kill();
-		if (canAnimate) {
-			this.scrollAnimation = TweenLite.to(this.object3D.position, time, {x: scrollX, ease: ease});
-		} else {
-			this.object3D.position.x = scrollX;
-		}
+		// var state = this.chartState;
+		// var scrollX = state.data.xAxis.range.scroll;
+		// var cursor = state.data.cursor;
+		// var animations = state.data.animations;
+		// var time = animations.autoScrollSpeed;
+		// var ease = animations.autoScrollEase;
+		// var canAnimate = animations.enabled && !cursor.dragMode;
+		// if (this.scrollAnimation) this.scrollAnimation.kill();
+		// if (canAnimate) {
+		// 	this.scrollAnimation = TweenLite.to(this.object3D.position, time, {x: scrollX, ease: ease});
+		// } else {
+		// 	this.object3D.position.x = scrollX;
+		// }
 	}
 
 	getObject3D(): Object3D {

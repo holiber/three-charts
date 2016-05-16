@@ -20,7 +20,7 @@ const PART_VERTICES_COUNT = 5;
 const PART_FACES_COUNT = 3;
 
 export class TrendsGradientWidget extends TrendsWidget<TrendGradient> {
-	static widgetName = "trendsGradient";
+	static widgetName = "TrendsGradient";
 	protected getTrendWidgetClass() {
 		return TrendGradient;
 	}

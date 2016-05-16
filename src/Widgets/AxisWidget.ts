@@ -17,6 +17,10 @@ import MeshBasicMaterial = THREE.MeshBasicMaterial;
 
 enum AXIS_ORIENTATION {V, H};
 
+
+// canvas drawing is expensive operation, so we redraw xAxis only once per second
+var REDRAW_AXIS_X_INTERVAL = 1000;
+
 export class AxisWidget extends ChartWidget {
 	static widgetName = 'Axis';
 	private object3D: Object3D;
@@ -24,7 +28,7 @@ export class AxisWidget extends ChartWidget {
 	private axisYObject: Object3D;
 	private axisXOptions: IAxisOptions;
 	private axisYOptions: IAxisOptions;
-	private scrollAnimation: TweenLite;
+	private axisXLastRedrawTime = 0;
 	
 	constructor (state: ChartState) {
 		super(state);
@@ -40,34 +44,16 @@ export class AxisWidget extends ChartWidget {
 	}
 
 	bindEvents() {
-		this.chartState.onXAxisChange((changedOptions: IAxisOptions) => {
-			if (changedOptions.range && changedOptions.range.scroll) this.onScrollChange();
-		});
-		this.chartState.onScrollStop(() => {
-			this.updateAxis(AXIS_ORIENTATION.H);
+		this.chartState.onCameraChange((cameraPos: {scrollX: number}) => {
+			this.onScrollChange(cameraPos);
 		});
 	}
 
-	private onScrollChange() {
-
-		var state = this.chartState;
-		var currentScrollX = this.chartState.data.xAxis.range.scroll;
-		var oldScrollX = this.chartState.data.prevState.xAxis.range.scroll;
-		var delta = currentScrollX - oldScrollX;
-		var animations = state.data.animations;
-		var time = animations.autoScrollSpeed;
-		var ease = animations.autoScrollEase;
-		var canAnimate = animations.enabled && !state.data.cursor.dragMode;
-		var object = this.axisXObject.children[0];
-		if (this.scrollAnimation) this.scrollAnimation.kill();
-		if (canAnimate) {
-			var targetX = object.position.x + delta;
-			this.scrollAnimation = TweenLite.to(object.position, time, {x: targetX, ease: ease});
-			this.scrollAnimation.eventCallback('onComplete', () =>{
-				this.updateAxis(AXIS_ORIENTATION.H);
-			})
-		} else {
-			object.position.x += delta;
+	private onScrollChange(cameraPos: {scrollX: number}) {
+		// axis y always fixed
+		this.axisYObject.position.x = cameraPos.scrollX;
+		if (Date.now() - this.axisXLastRedrawTime >= REDRAW_AXIS_X_INTERVAL) {
+			this.updateAxis(AXIS_ORIENTATION.H);
 		}
 	}
 
@@ -145,7 +131,7 @@ export class AxisWidget extends ChartWidget {
 		ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
 		if (isXAxis) {
-			axisMesh.position.x = canvasWidth / 2 - visibleWidth;
+			axisMesh.position.x = canvasWidth / 2 - visibleWidth + scrollX;
 		}
 
 
@@ -153,12 +139,13 @@ export class AxisWidget extends ChartWidget {
 		var segmentsInScroll = Math.round(scrollX / axisGridParams.stepInPx);
 		var scrollOffset = segmentsInScroll * axisGridParams.step;
 		var edgeOffset = axisGridParams.segmentsCount * axisGridParams.step;
-		var startVal = axisGridParams.start - edgeOffset - scrollOffset;
-		var endVal = axisGridParams.end + edgeOffset - scrollOffset;
+		var startVal = axisGridParams.start + scrollOffset - edgeOffset;
+		var endVal = axisGridParams.end + scrollOffset + edgeOffset;
+
 		ctx.beginPath();
 		for (let val = startVal; val <= endVal; val += axisGridParams.step) {
 			if (isXAxis) {
-				let pxVal = this.chartState.getPointOnXAxis(val) + visibleWidth + scrollX;
+				let pxVal = this.chartState.getPointOnXAxis(val) - scrollX + visibleWidth;
 				ctx.moveTo(pxVal + 0.5, canvasHeight);
 				ctx.lineTo(pxVal + 0.5, canvasHeight - 5);
 				ctx.fillText(Number(val.toFixed(14)).toString(), pxVal - 5, canvasHeight - 10);
@@ -171,9 +158,10 @@ export class AxisWidget extends ChartWidget {
 			ctx.stroke();
 		}
 		// uncomment to preview canvas borders
-		// ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+		//ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 		ctx.stroke();
 		ctx.closePath();
 		texture.needsUpdate = true;
+		this.axisXLastRedrawTime = Date.now();
 	}
 }

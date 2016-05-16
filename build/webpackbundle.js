@@ -52,7 +52,7 @@
 	        this.data = [];
 	        var sec = 0;
 	        var val = 70;
-	        while (sec < 80) {
+	        while (sec < 20) {
 	            this.data.push(val);
 	            val += Math.random() * 14 - 7;
 	            sec++;
@@ -77,7 +77,7 @@
 	            range: { type: Chart_1.AXIS_RANGE_TYPE.FIXED, from: 20, to: 150 }
 	        },
 	        xAxis: {
-	            range: { type: Chart_1.AXIS_RANGE_TYPE.FIXED, from: 0, to: 100 },
+	            range: { type: Chart_1.AXIS_RANGE_TYPE.FIXED, from: 0, to: 30 },
 	        },
 	        trends: {
 	            'main': { dataset: dsMain.data, hasBeacon: true, hasIndicator: true },
@@ -86,7 +86,7 @@
 	        }
 	    });
 	    window['chart'] = chart;
-	    var previewChart1 = new Chart_1.Chart({
+	    var previewChart1 = Chart_1.Chart.createPreviewChart({
 	        $el: document.querySelectorAll('.preview-chart')[0],
 	        yAxis: {
 	            range: { type: Chart_1.AXIS_RANGE_TYPE.FIXED, from: 20, to: 150 }
@@ -96,15 +96,9 @@
 	        },
 	        trends: {
 	            'main': { dataset: dsMain.data, hasBeacon: true }
-	        },
-	        animations: { enabled: false },
-	        widgets: {
-	            Grid: { enabled: false },
-	            Axis: { enabled: false },
-	            trendsGradient: { enabled: false }
 	        }
 	    });
-	    var previewChart2 = new Chart_1.Chart({
+	    var previewChart2 = Chart_1.Chart.createPreviewChart({
 	        $el: document.querySelectorAll('.preview-chart')[1],
 	        yAxis: {
 	            range: { type: Chart_1.AXIS_RANGE_TYPE.FIXED, from: 0, to: 200 }
@@ -115,14 +109,8 @@
 	        trends: {
 	            'main': { dataset: dsMain.data, hasBeacon: true }
 	        },
-	        animations: { enabled: false },
-	        widgets: {
-	            Grid: { enabled: false },
-	            Axis: { enabled: false },
-	            trendsGradient: { enabled: false }
-	        }
 	    });
-	    var previewChart3 = new Chart_1.Chart({
+	    var previewChart3 = Chart_1.Chart.createPreviewChart({
 	        $el: document.querySelectorAll('.preview-chart')[2],
 	        yAxis: {
 	            range: { type: Chart_1.AXIS_RANGE_TYPE.FIXED, from: 0, to: 100 }
@@ -133,12 +121,6 @@
 	        trends: {
 	            'main': { dataset: dsMain.data, hasBeacon: true },
 	            'red': { dataset: dsRed.data, lineColor: 0xFF2222 },
-	        },
-	        animations: { enabled: false },
-	        widgets: {
-	            Grid: { enabled: false },
-	            Axis: { enabled: false },
-	            trendsGradient: { enabled: false }
 	        }
 	    });
 	    setInterval(function () {
@@ -181,18 +163,17 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	// deps must be always on top
 	__webpack_require__(2);
 	var TrendsIndicatorWidget_1 = __webpack_require__(9);
 	var TrendsLineWidget_1 = __webpack_require__(14);
-	var PerspectiveCamera = THREE.PerspectiveCamera;
 	var WebGLRenderer = THREE.WebGLRenderer;
 	var State_1 = __webpack_require__(15);
 	var Utils_1 = __webpack_require__(10);
-	var TrendsBeaconWidget_1 = __webpack_require__(20);
-	var AxisWidget_1 = __webpack_require__(21);
-	var GridWidget_1 = __webpack_require__(22);
-	var TrendsGradientWidget_1 = __webpack_require__(23);
+	var TrendsBeaconWidget_1 = __webpack_require__(19);
+	var AxisWidget_1 = __webpack_require__(20);
+	var GridWidget_1 = __webpack_require__(21);
+	var TrendsGradientWidget_1 = __webpack_require__(22);
+	var Screen_1 = __webpack_require__(23);
 	exports.MAX_DATA_LENGTH = 1000;
 	(function (AXIS_RANGE_TYPE) {
 	    AXIS_RANGE_TYPE[AXIS_RANGE_TYPE["AUTO"] = 0] = "AUTO";
@@ -214,17 +195,18 @@
 	        this.installedWidgets[Widget.widgetName] = Widget;
 	    };
 	    Chart.prototype.init = function () {
-	        var _this = this;
-	        var _a = this.state.data, w = _a.width, h = _a.height, $el = _a.$el;
-	        var scene = this.scene = new THREE.Scene();
+	        var state = this.state;
+	        var _a = state.data, w = _a.width, h = _a.height, $el = _a.$el;
+	        this.scene = new THREE.Scene();
 	        var renderer = this.renderer = new WebGLRenderer({ antialias: true }); //new THREE.CanvasRenderer();
 	        renderer.setPixelRatio(Chart.devicePixelRatio);
 	        renderer.setSize(w, h);
 	        $el.appendChild(renderer.domElement);
 	        this.$el = renderer.domElement;
-	        var stats = new Stats();
-	        $el.appendChild(stats.domElement);
-	        this.initCamera();
+	        this.stats = new Stats();
+	        $el.appendChild(this.stats.domElement);
+	        this.screen = new Screen_1.Screen(state);
+	        this.scene.add(this.screen.camera);
 	        // init widgets
 	        for (var widgetName in Chart.installedWidgets) {
 	            var widgetOptions = this.state.data.widgets[widgetName];
@@ -236,16 +218,22 @@
 	            this.widgets.push(widget);
 	        }
 	        this.bindEvents();
-	        var render = function (time) {
-	            stats.begin();
-	            renderer.render(scene, _this.camera);
-	            //uncomment for 30fps
-	            var renderDelay = _this.state.data.animations.enabled ? 25 : 1000;
-	            //setTimeout(() => requestAnimationFrame(render), renderDelay);
-	            requestAnimationFrame(render);
-	            stats.end();
-	        };
-	        render(Date.now());
+	        this.render(Date.now());
+	    };
+	    Chart.prototype.render = function (time) {
+	        var _this = this;
+	        this.stats.begin();
+	        this.renderer.render(this.scene, this.screen.camera);
+	        var renderDelay = this.state.data.animations.enabled ? 0 : 1000;
+	        if (renderDelay) {
+	            setTimeout(function () { return requestAnimationFrame(function (time) { return _this.render(time); }); }, renderDelay);
+	        }
+	        else {
+	            requestAnimationFrame(function (time) { return _this.render(time); });
+	        }
+	        // this.screen.camera.rotation.z += 0.01;
+	        // this.screen.camera.rotation.y += 0.01;
+	        this.stats.end();
 	    };
 	    Chart.prototype.getState = function () {
 	        return this.state.data;
@@ -266,19 +254,8 @@
 	        this.state.setState({ zoom: this.state.data.zoom + zoomValue });
 	    };
 	    Chart.prototype.onZoom = function (zoomValue) {
-	        var cameraPos = this.camera.position;
-	        //TweenLite.to(cameraPos, 0.3, {z: zoomValue});
-	    };
-	    Chart.prototype.initCamera = function () {
-	        var _a = this.state.data, w = _a.width, h = _a.height;
-	        // setup pixel-perfect camera
-	        var FOV = 75;
-	        var vFOV = FOV * (Math.PI / 180);
-	        var camera = this.camera = new PerspectiveCamera(FOV, w / h, 0.1, 5000);
-	        camera.position.z = h / (2 * Math.tan(vFOV / 2));
-	        // move 0,0 to left-bottom corner
-	        camera.position.x = w / 2;
-	        camera.position.y = h / 2;
+	        var cameraPos = this.screen.camera.position;
+	        TweenLite.to(cameraPos, 0.3, { z: zoomValue });
 	    };
 	    Chart.prototype.bindEvents = function () {
 	        var _this = this;
@@ -300,10 +277,10 @@
 	        this.state.onChange(function (changedProps) {
 	            changedProps.zoom && _this.onZoom(changedProps.zoom);
 	        });
-	        this.state.onTrendsChange(function () { return _this.onTrendsChange(); });
+	        this.state.onTrendsChange(function () { return _this.autoscroll(); });
 	        this.state.onScrollStop(function () { return _this.onScrollStop(); });
 	    };
-	    Chart.prototype.onTrendsChange = function () {
+	    Chart.prototype.autoscroll = function () {
 	        var state = this.state;
 	        var oldTrendsMaxX = state.data.prevState.computedData.trends.maxX;
 	        var trendsMaxXDelta = state.data.computedData.trends.maxX - oldTrendsMaxX;
@@ -315,14 +292,15 @@
 	                return;
 	            }
 	            var scrollDelta = state.getPointOnXAxis(trendsMaxXDelta);
-	            this.setState({ xAxis: { range: { scroll: currentScroll - scrollDelta } } });
+	            this.setState({ xAxis: { range: { scroll: currentScroll + scrollDelta } } });
 	        }
 	    };
 	    Chart.prototype.onScrollStop = function () {
-	        var tendsXMax = this.state.data.computedData.trends.maxX;
-	        var paddingRightX = this.state.getPaddingRight();
-	        if (tendsXMax < paddingRightX) {
-	        }
+	        // var tendsXMax = this.state.data.computedData.trends.maxX;
+	        // var paddingRightX = this.state.getPaddingRight();
+	        // if (tendsXMax < paddingRightX) {
+	        // 	//this.state.scrollToEnd();
+	        // }
 	    };
 	    Chart.prototype.onMouseDown = function (ev) {
 	        this.setState({ cursor: { dragMode: true, x: ev.clientX, y: ev.clientY } });
@@ -340,6 +318,21 @@
 	    };
 	    Chart.prototype.onTouchEnd = function (ev) {
 	        this.setState({ cursor: { dragMode: false } });
+	    };
+	    /**
+	     * creates simple chart without animations and minimal widgets set
+	     */
+	    Chart.createPreviewChart = function (userOptions) {
+	        var previewChartOptions = {
+	            animations: { enabled: false },
+	            widgets: {
+	                Grid: { enabled: false },
+	                Axis: { enabled: false },
+	                TrendsGradient: { enabled: false }
+	            }
+	        };
+	        var options = Utils_1.Utils.deepMerge(userOptions, previewChartOptions);
+	        return new Chart(options);
 	    };
 	    Chart.devicePixelRatio = window.devicePixelRatio;
 	    Chart.installedWidgets = {};
@@ -46141,21 +46134,19 @@
 	            widget.appendData(newData);
 	    };
 	    TrendsWidget.prototype.onScrollChange = function () {
-	        var state = this.chartState;
-	        var scrollX = state.data.xAxis.range.scroll;
-	        var cursor = state.data.cursor;
-	        var animations = state.data.animations;
-	        var time = animations.autoScrollSpeed;
-	        var ease = animations.autoScrollEase;
-	        var canAnimate = animations.enabled && !cursor.dragMode;
-	        if (this.scrollAnimation)
-	            this.scrollAnimation.kill();
-	        if (canAnimate) {
-	            this.scrollAnimation = TweenLite.to(this.object3D.position, time, { x: scrollX, ease: ease });
-	        }
-	        else {
-	            this.object3D.position.x = scrollX;
-	        }
+	        // var state = this.chartState;
+	        // var scrollX = state.data.xAxis.range.scroll;
+	        // var cursor = state.data.cursor;
+	        // var animations = state.data.animations;
+	        // var time = animations.autoScrollSpeed;
+	        // var ease = animations.autoScrollEase;
+	        // var canAnimate = animations.enabled && !cursor.dragMode;
+	        // if (this.scrollAnimation) this.scrollAnimation.kill();
+	        // if (canAnimate) {
+	        // 	this.scrollAnimation = TweenLite.to(this.object3D.position, time, {x: scrollX, ease: ease});
+	        // } else {
+	        // 	this.object3D.position.x = scrollX;
+	        // }
 	    };
 	    TrendsWidget.prototype.getObject3D = function () {
 	        return this.object3D;
@@ -46307,7 +46298,6 @@
 	var Vector3 = THREE.Vector3;
 	var Widget_1 = __webpack_require__(13);
 	var Trends_1 = __webpack_require__(17);
-	var Events_1 = __webpack_require__(19);
 	var ChartState = (function () {
 	    function ChartState(initialState) {
 	        this.data = {
@@ -46362,7 +46352,10 @@
 	        this.ee.on('scrollStop', cb);
 	    };
 	    ChartState.prototype.onScroll = function (cb) {
-	        this.ee.on('onScroll', cb);
+	        this.ee.on('scroll', cb);
+	    };
+	    ChartState.prototype.onCameraChange = function (cb) {
+	        this.ee.on('cameraChange', cb);
 	    };
 	    ChartState.prototype.getTrend = function (trendName) {
 	        return this.trends.getTrend(trendName);
@@ -46383,15 +46376,11 @@
 	        // recalculate all dynamic state props
 	        var recalculateResult = this.recalculateState(changedProps);
 	        changedProps = recalculateResult.changedProps;
-	        this.ee.emit('change', changedProps, eventData);
-	        // emit event for each changed state property
-	        for (var key in changedProps) {
-	            this.ee.emit(key + 'Change', changedProps[key], eventData);
-	        }
-	        for (var _i = 0, _a = recalculateResult.eventsToEmit; _i < _a.length; _i++) {
-	            var event = _a[_i];
-	            this.ee.emit(event.name, event.data);
-	        }
+	        this.emitChangedStateEvents(changedProps, eventData);
+	    };
+	    // dirty hack, use only for performance improvements such camera position change
+	    ChartState.prototype.emit = function (eventName, data) {
+	        this.ee.emit(eventName, data);
 	    };
 	    ChartState.prototype.recalculateState = function (changedProps) {
 	        var data = this.data;
@@ -46425,13 +46414,8 @@
 	            var oldX = data.prevState.cursor.x;
 	            var currentX = cursorOptions.x;
 	            var currentScroll = data.xAxis.range.scroll;
-	            var deltaX = currentX - oldX;
+	            var deltaX = oldX - currentX;
 	            patch.xAxis = { range: { scroll: currentScroll + deltaX } };
-	            eventsToEmit.push(new Events_1.ScrollEvent({ deltaX: deltaX }));
-	        }
-	        // check scrollStop
-	        if (cursorOptions && cursorOptions.dragMode === false) {
-	            eventsToEmit.push(new Events_1.ScrollStopEvent());
 	        }
 	        this.savePrevState(patch);
 	        var allChangedProps = Utils_1.Utils.deepMerge(changedProps, patch);
@@ -46464,6 +46448,24 @@
 	            prevState[propName] = Utils_1.Utils.deepCopy(this.data[propName]);
 	        }
 	    };
+	    ChartState.prototype.emitChangedStateEvents = function (changedProps, eventData) {
+	        var prevState = this.data.prevState;
+	        // emit common change event
+	        this.ee.emit('change', changedProps, eventData);
+	        // emit event for each changed state property
+	        for (var key in changedProps) {
+	            this.ee.emit(key + 'Change', changedProps[key], eventData);
+	        }
+	        // emit special events based on changed state
+	        var scrollStopEventNeeded = (changedProps.cursor &&
+	            changedProps.cursor.dragMode === false &&
+	            prevState.cursor.dragMode === true);
+	        scrollStopEventNeeded && this.ee.emit('scrollStop');
+	        var scrollChangeEventsNeeded = (changedProps.xAxis &&
+	            changedProps.xAxis.range &&
+	            changedProps.xAxis.range.scroll);
+	        scrollChangeEventsNeeded && this.ee.emit('scroll');
+	    };
 	    ChartState.prototype.initListeners = function () {
 	        var _this = this;
 	        this.ee.on('trendsChange', function (changedTrends, newData) {
@@ -46489,7 +46491,7 @@
 	        var w = this.data.width;
 	        var _a = this.data.xAxis.range, from = _a.from, to = _a.to, scroll = _a.scroll;
 	        var pxCoast = (to - from) / w;
-	        return pxCoast * x - scroll * pxCoast;
+	        return pxCoast * x + scroll * pxCoast;
 	    };
 	    ChartState.prototype.getPxCoast = function () {
 	        var w = this.data.width;
@@ -47201,52 +47203,6 @@
 
 /***/ },
 /* 19 */
-/***/ function(module, exports) {
-
-	"use strict";
-	var __extends = (this && this.__extends) || function (d, b) {
-	    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-	    function __() { this.constructor = d; }
-	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-	};
-	var ChartEvent = (function () {
-	    function ChartEvent() {
-	        this.name = 'unnamed event';
-	    }
-	    return ChartEvent;
-	}());
-	exports.ChartEvent = ChartEvent;
-	var ChartEventWidthArgs = (function (_super) {
-	    __extends(ChartEventWidthArgs, _super);
-	    function ChartEventWidthArgs(data) {
-	        _super.call(this);
-	        this.data = data;
-	    }
-	    return ChartEventWidthArgs;
-	}(ChartEvent));
-	exports.ChartEventWidthArgs = ChartEventWidthArgs;
-	var ScrollEvent = (function (_super) {
-	    __extends(ScrollEvent, _super);
-	    function ScrollEvent() {
-	        _super.apply(this, arguments);
-	        this.name = 'scroll';
-	    }
-	    return ScrollEvent;
-	}(ChartEventWidthArgs));
-	exports.ScrollEvent = ScrollEvent;
-	var ScrollStopEvent = (function (_super) {
-	    __extends(ScrollStopEvent, _super);
-	    function ScrollStopEvent() {
-	        _super.apply(this, arguments);
-	        this.name = 'scrollStop';
-	    }
-	    return ScrollStopEvent;
-	}(ChartEvent));
-	exports.ScrollStopEvent = ScrollStopEvent;
-
-
-/***/ },
-/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -47346,7 +47302,7 @@
 
 
 /***/ },
-/* 21 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -47358,7 +47314,7 @@
 	var Mesh = THREE.Mesh;
 	var Object3D = THREE.Object3D;
 	var Widget_1 = __webpack_require__(13);
-	var GridWidget_1 = __webpack_require__(22);
+	var GridWidget_1 = __webpack_require__(21);
 	var Utils_1 = __webpack_require__(10);
 	var AXIS_ORIENTATION;
 	(function (AXIS_ORIENTATION) {
@@ -47366,10 +47322,13 @@
 	    AXIS_ORIENTATION[AXIS_ORIENTATION["H"] = 1] = "H";
 	})(AXIS_ORIENTATION || (AXIS_ORIENTATION = {}));
 	;
+	// canvas drawing is expensive operation, so we redraw xAxis only once per second
+	var REDRAW_AXIS_X_INTERVAL = 1000;
 	var AxisWidget = (function (_super) {
 	    __extends(AxisWidget, _super);
 	    function AxisWidget(state) {
 	        _super.call(this, state);
+	        this.axisXLastRedrawTime = 0;
 	        this.object3D = new Object3D();
 	        this.axisXOptions = this.chartState.data.xAxis;
 	        this.axisYOptions = this.chartState.data.yAxis;
@@ -47382,36 +47341,15 @@
 	    }
 	    AxisWidget.prototype.bindEvents = function () {
 	        var _this = this;
-	        this.chartState.onXAxisChange(function (changedOptions) {
-	            if (changedOptions.range && changedOptions.range.scroll)
-	                _this.onScrollChange();
-	        });
-	        this.chartState.onScrollStop(function () {
-	            _this.updateAxis(AXIS_ORIENTATION.H);
+	        this.chartState.onCameraChange(function (cameraPos) {
+	            _this.onScrollChange(cameraPos);
 	        });
 	    };
-	    AxisWidget.prototype.onScrollChange = function () {
-	        var _this = this;
-	        var state = this.chartState;
-	        var currentScrollX = this.chartState.data.xAxis.range.scroll;
-	        var oldScrollX = this.chartState.data.prevState.xAxis.range.scroll;
-	        var delta = currentScrollX - oldScrollX;
-	        var animations = state.data.animations;
-	        var time = animations.autoScrollSpeed;
-	        var ease = animations.autoScrollEase;
-	        var canAnimate = animations.enabled && !state.data.cursor.dragMode;
-	        var object = this.axisXObject.children[0];
-	        if (this.scrollAnimation)
-	            this.scrollAnimation.kill();
-	        if (canAnimate) {
-	            var targetX = object.position.x + delta;
-	            this.scrollAnimation = TweenLite.to(object.position, time, { x: targetX, ease: ease });
-	            this.scrollAnimation.eventCallback('onComplete', function () {
-	                _this.updateAxis(AXIS_ORIENTATION.H);
-	            });
-	        }
-	        else {
-	            object.position.x += delta;
+	    AxisWidget.prototype.onScrollChange = function (cameraPos) {
+	        // axis y always fixed
+	        this.axisYObject.position.x = cameraPos.scrollX;
+	        if (Date.now() - this.axisXLastRedrawTime >= REDRAW_AXIS_X_INTERVAL) {
+	            this.updateAxis(AXIS_ORIENTATION.H);
 	        }
 	    };
 	    AxisWidget.prototype.initAxis = function (orientation) {
@@ -47474,18 +47412,18 @@
 	        var ctx = texture.image.getContext('2d');
 	        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 	        if (isXAxis) {
-	            axisMesh.position.x = canvasWidth / 2 - visibleWidth;
+	            axisMesh.position.x = canvasWidth / 2 - visibleWidth + scrollX;
 	        }
 	        // TODO: draw text and lines in different loops
 	        var segmentsInScroll = Math.round(scrollX / axisGridParams.stepInPx);
 	        var scrollOffset = segmentsInScroll * axisGridParams.step;
 	        var edgeOffset = axisGridParams.segmentsCount * axisGridParams.step;
-	        var startVal = axisGridParams.start - edgeOffset - scrollOffset;
-	        var endVal = axisGridParams.end + edgeOffset - scrollOffset;
+	        var startVal = axisGridParams.start + scrollOffset - edgeOffset;
+	        var endVal = axisGridParams.end + scrollOffset + edgeOffset;
 	        ctx.beginPath();
 	        for (var val = startVal; val <= endVal; val += axisGridParams.step) {
 	            if (isXAxis) {
-	                var pxVal = this.chartState.getPointOnXAxis(val) + visibleWidth + scrollX;
+	                var pxVal = this.chartState.getPointOnXAxis(val) - scrollX + visibleWidth;
 	                ctx.moveTo(pxVal + 0.5, canvasHeight);
 	                ctx.lineTo(pxVal + 0.5, canvasHeight - 5);
 	                ctx.fillText(Number(val.toFixed(14)).toString(), pxVal - 5, canvasHeight - 10);
@@ -47499,10 +47437,11 @@
 	            ctx.stroke();
 	        }
 	        // uncomment to preview canvas borders
-	        // ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+	        //ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 	        ctx.stroke();
 	        ctx.closePath();
 	        texture.needsUpdate = true;
+	        this.axisXLastRedrawTime = Date.now();
 	    };
 	    AxisWidget.widgetName = 'Axis';
 	    return AxisWidget;
@@ -47511,7 +47450,7 @@
 
 
 /***/ },
-/* 22 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -47529,7 +47468,7 @@
 	        _super.call(this, chartState);
 	        var _a = this.chartState.data, yAxis = _a.yAxis, xAxis = _a.xAxis, width = _a.width, height = _a.height;
 	        var geometry = new THREE.Geometry();
-	        var material = new THREE.LineBasicMaterial({ linewidth: 1, opacity: 0.1, transparent: true });
+	        var material = new THREE.LineBasicMaterial({ linewidth: 1, opacity: 0.07, transparent: true });
 	        var axisXGrid = this.axisXGridParams = GridWidget.getGridParamsForAxis(xAxis, width);
 	        var axisYGrid = this.axisYGridParams = GridWidget.getGridParamsForAxis(yAxis, height);
 	        for (var i = -axisXGrid.segmentsCount; i <= axisXGrid.segmentsCount * 2; i++) {
@@ -47544,35 +47483,16 @@
 	    }
 	    GridWidget.prototype.bindEvents = function () {
 	        var _this = this;
-	        this.chartState.onXAxisChange(function (changedOptions) {
-	            if (changedOptions.range && changedOptions.range.scroll)
-	                _this.onScrollChange();
+	        this.chartState.onScroll(function () {
+	            _this.onScrollChange();
 	        });
 	    };
 	    GridWidget.prototype.onScrollChange = function () {
-	        var _this = this;
-	        var state = this.chartState;
-	        var animations = state.data.animations;
-	        var time = animations.autoScrollSpeed;
-	        var ease = animations.autoScrollEase;
-	        var canAnimate = animations.enabled && !state.data.cursor.dragMode;
-	        var object = this.lineSegments;
-	        if (this.scrollAnimation)
-	            this.scrollAnimation.kill();
-	        if (canAnimate) {
-	            var objToAnimate = { x: state.data.prevState.xAxis.range.scroll };
-	            this.scrollAnimation = TweenLite.to(objToAnimate, time, { x: state.data.xAxis.range.scroll, ease: ease });
-	            this.scrollAnimation.eventCallback('onUpdate', function () {
-	                _this.setScrollX(objToAnimate.x);
-	                //object.position.x = state.data.xAxis.range.scroll % this.axisXGridParams.stepInPx;
-	            });
-	        }
-	        else {
-	            this.setScrollX(state.data.xAxis.range.scroll);
-	        }
-	    };
-	    GridWidget.prototype.setScrollX = function (scrollX) {
-	        this.lineSegments.position.x = scrollX % this.axisXGridParams.stepInPx;
+	        // move grid behind the camera
+	        var stepX = this.axisXGridParams.stepInPx;
+	        var scrollX = this.chartState.data.xAxis.range.scroll;
+	        var steps = Math.round(scrollX / stepX);
+	        this.lineSegments.position.x = Math.round(stepX * steps);
 	    };
 	    // TODO: create unit tests : {from: 80, to: 90}, {from: 0, to: 100}, {from: 0.01, to: 2}, {from: 20, to: 180, minGridSize: 50}
 	    GridWidget.getGridParamsForAxis = function (axisOptions, axisWidth) {
@@ -47641,7 +47561,7 @@
 
 
 /***/ },
-/* 23 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -47678,7 +47598,7 @@
 	            ctx.fillRect(0, 0, w, h);
 	        });
 	    };
-	    TrendsGradientWidget.widgetName = "trendsGradient";
+	    TrendsGradientWidget.widgetName = "TrendsGradient";
 	    return TrendsGradientWidget;
 	}(TrendsWidget_1.TrendsWidget));
 	exports.TrendsGradientWidget = TrendsGradientWidget;
@@ -47846,6 +47766,62 @@
 	    };
 	    return TrendGradient;
 	}(TrendsWidget_1.TrendWidget));
+
+
+/***/ },
+/* 23 */
+/***/ function(module, exports) {
+
+	"use strict";
+	var PerspectiveCamera = THREE.PerspectiveCamera;
+	/**
+	 * manage camera, and contains methods for transforming pixels to values
+	 */
+	var Screen = (function () {
+	    function Screen(chartState) {
+	        this.chartState = chartState;
+	        var _a = chartState.data, w = _a.width, h = _a.height;
+	        // setup pixel-perfect camera
+	        var FOV = 75;
+	        var vFOV = FOV * (Math.PI / 180);
+	        var camera = this.camera = new PerspectiveCamera(FOV, w / h, 0.1, 5000);
+	        camera.position.z = h / (2 * Math.tan(vFOV / 2));
+	        // move 0,0 to left-bottom corner
+	        camera.position.x = w / 2;
+	        camera.position.y = h / 2;
+	        this.cameraInitialPosition = camera.position.clone();
+	        this.cameraScrollX = 0;
+	        this.bindEvents();
+	    }
+	    Screen.prototype.bindEvents = function () {
+	        var _this = this;
+	        this.chartState.onScroll(function () { return _this.onScroll(); });
+	    };
+	    Screen.prototype.onScroll = function () {
+	        var _this = this;
+	        var state = this.chartState;
+	        var isDragMode = state.data.cursor.dragMode;
+	        var animations = state.data.animations;
+	        var canAnimate = !isDragMode && animations.enabled;
+	        var targetX = this.cameraInitialPosition.x + state.data.xAxis.range.scroll;
+	        if (this.cameraAnimation)
+	            this.cameraAnimation.kill();
+	        if (canAnimate) {
+	            this.cameraAnimation = TweenLite.to(this.camera.position, animations.autoScrollSpeed, { x: targetX, ease: animations.autoScrollEase });
+	            this.cameraAnimation.eventCallback('onUpdate', function () {
+	                _this.cameraScrollX = _this.camera.position.x - _this.cameraInitialPosition.x;
+	                state.emit('cameraChange', { scrollX: _this.cameraScrollX });
+	            });
+	            return;
+	        }
+	        this.cameraScrollX = state.data.xAxis.range.scroll;
+	        // dirty hack, used only for performance reasons, in ideal world we always must use ChartState.setState
+	        state.emit('cameraChange', { scrollX: this.cameraScrollX });
+	        this.camera.position.x = targetX;
+	    };
+	    return Screen;
+	}());
+	exports.Screen = Screen;
 
 
 /***/ }
