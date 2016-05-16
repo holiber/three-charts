@@ -63,7 +63,9 @@ export class ChartState {
 		animations: {
 			enabled: true,
 			trendChangeSpeed: 0.5,
-			trendChangeEase: void 0
+			trendChangeEase: void 0, //Linear.easeNone
+			autoScrollSpeed: 1,
+			autoScrollEase: Linear.easeNone
 		},
 		cursor: {
 			dragMode: false,

@@ -322,7 +322,6 @@
 	        var tendsXMax = this.state.data.computedData.trends.maxX;
 	        var paddingRightX = this.state.getPaddingRight();
 	        if (tendsXMax < paddingRightX) {
-	            this.state.scrollToEnd();
 	        }
 	    };
 	    Chart.prototype.onMouseDown = function (ev) {
@@ -46146,8 +46145,8 @@
 	        var scrollX = state.data.xAxis.range.scroll;
 	        var cursor = state.data.cursor;
 	        var animations = state.data.animations;
-	        var time = animations.trendChangeSpeed;
-	        var ease = animations.trendChangeEase;
+	        var time = animations.autoScrollSpeed;
+	        var ease = animations.autoScrollEase;
 	        var canAnimate = animations.enabled && !cursor.dragMode;
 	        if (this.scrollAnimation)
 	            this.scrollAnimation.kill();
@@ -46328,7 +46327,9 @@
 	            animations: {
 	                enabled: true,
 	                trendChangeSpeed: 0.5,
-	                trendChangeEase: void 0
+	                trendChangeEase: void 0,
+	                autoScrollSpeed: 1,
+	                autoScrollEase: Linear.easeNone
 	            },
 	            cursor: {
 	                dragMode: false,
@@ -47396,8 +47397,8 @@
 	        var oldScrollX = this.chartState.data.prevState.xAxis.range.scroll;
 	        var delta = currentScrollX - oldScrollX;
 	        var animations = state.data.animations;
-	        var time = animations.trendChangeSpeed;
-	        var ease = animations.trendChangeEase;
+	        var time = animations.autoScrollSpeed;
+	        var ease = animations.autoScrollEase;
 	        var canAnimate = animations.enabled && !state.data.cursor.dragMode;
 	        var object = this.axisXObject.children[0];
 	        if (this.scrollAnimation)
@@ -47552,8 +47553,8 @@
 	        var _this = this;
 	        var state = this.chartState;
 	        var animations = state.data.animations;
-	        var time = animations.trendChangeSpeed;
-	        var ease = animations.trendChangeEase;
+	        var time = animations.autoScrollSpeed;
+	        var ease = animations.autoScrollEase;
 	        var canAnimate = animations.enabled && !state.data.cursor.dragMode;
 	        var object = this.lineSegments;
 	        if (this.scrollAnimation)

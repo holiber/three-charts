@@ -80,8 +80,8 @@ export abstract class TrendsWidget<TrendWidgetType extends TrendWidget> extends 
 		var scrollX = state.data.xAxis.range.scroll;
 		var cursor = state.data.cursor;
 		var animations = state.data.animations;
-		var time = animations.trendChangeSpeed;
-		var ease = animations.trendChangeEase;
+		var time = animations.autoScrollSpeed;
+		var ease = animations.autoScrollEase;
 		var canAnimate = animations.enabled && !cursor.dragMode;
 		if (this.scrollAnimation) this.scrollAnimation.kill();
 		if (canAnimate) {

@@ -62,8 +62,8 @@ export class GridWidget extends ChartWidget{
 	private onScrollChange() {
 		var state = this.chartState;
 		var animations = state.data.animations;
-		var time = animations.trendChangeSpeed;
-		var ease = animations.trendChangeEase;
+		var time = animations.autoScrollSpeed;
+		var ease = animations.autoScrollEase;
 		var canAnimate = animations.enabled && !state.data.cursor.dragMode;
 		var object = this.lineSegments;
 		if (this.scrollAnimation) this.scrollAnimation.kill();

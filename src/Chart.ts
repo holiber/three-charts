@@ -45,6 +45,8 @@ export interface IAnimationsOptions {
 	enabled?: boolean,
 	trendChangeSpeed?: number,
 	trendChangeEase?: Ease | Linear,
+	autoScrollSpeed?: number,
+	autoScrollEase?: Ease | Linear,
 }
 
 export class Chart {
@@ -201,7 +203,7 @@ export class Chart {
 		var tendsXMax = this.state.data.computedData.trends.maxX;
 		var paddingRightX = this.state.getPaddingRight();
 		if (tendsXMax < paddingRightX) {
-			this.state.scrollToEnd();
+			//this.state.scrollToEnd();
 		}
 	}
 
