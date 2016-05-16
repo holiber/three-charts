@@ -19,6 +19,9 @@ export interface IGridParamsForAxis {
 	segmentsCount: number
 }
 
+/**
+ * widget for drawing chart grid
+ */
 export class GridWidget extends ChartWidget{
 	static widgetName = 'Grid';
 	private lineSegments: LineSegments;

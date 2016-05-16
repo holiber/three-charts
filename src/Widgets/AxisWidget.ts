@@ -21,6 +21,9 @@ enum AXIS_ORIENTATION {V, H};
 // canvas drawing is expensive operation, so we redraw xAxis only once per second
 var REDRAW_AXIS_X_INTERVAL = 1000;
 
+/**
+ * widget for drawing axis
+ */
 export class AxisWidget extends ChartWidget {
 	static widgetName = 'Axis';
 	private object3D: Object3D;

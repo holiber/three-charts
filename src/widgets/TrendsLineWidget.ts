@@ -13,7 +13,9 @@ import {ITrendData, ITrendItem} from "../Trend";
 import {MAX_DATA_LENGTH} from "../Chart";
 import {TrendsWidget, TrendWidget} from "./TrendsWidget";
 
-
+/**
+ * widget for drawing trends lines
+ */
 export class TrendsLineWidget extends TrendsWidget<TrendLine> {
 	static widgetName = "trendsLine";
 	protected getTrendWidgetClass() {

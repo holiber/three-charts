@@ -9,6 +9,10 @@ import Vector3 = THREE.Vector3;
 import {TrendWidget, TrendsWidget} from "./TrendsWidget";
 import {ITrendOptions} from "../Trend";
 
+/**
+ * widget adds blinking beacon on trends end
+ * activated when trend.hasBeacon = true
+ */
 export class TrendsBeaconWidget extends TrendsWidget<TrendBeacon> {
 	static widgetName = 'trendsBeacon';
 	protected getTrendWidgetClass() {

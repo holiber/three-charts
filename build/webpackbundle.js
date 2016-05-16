@@ -352,6 +352,7 @@
 /* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
+	// TODO: think about different bundles build
 	window.THREE = __webpack_require__(3);
 	window.Stats = __webpack_require__(4);
 	window.TweenLite = __webpack_require__(5);
@@ -45938,6 +45939,9 @@
 
 	"use strict";
 	var deepmerge = __webpack_require__(11);
+	/**
+	 * project utils static class
+	 */
 	var Utils = (function () {
 	    function Utils() {
 	    }
@@ -45969,6 +45973,9 @@
 	    };
 	    /**
 	     * generate texture from canvas context
+	     * @example
+	     * 	// create texture with rect
+	     *  var texture = Utils.createTexture(20, 20, (ctx) => {ctx.fillRect(0, 0, 10, 10)});
 	     */
 	    Utils.createTexture = function (width, height, fn) {
 	        var canvas = document.createElement('canvas');
@@ -46204,6 +46211,9 @@
 	var Line = THREE.Line;
 	var Chart_1 = __webpack_require__(1);
 	var TrendsWidget_1 = __webpack_require__(12);
+	/**
+	 * widget for drawing trends lines
+	 */
 	var TrendsLineWidget = (function (_super) {
 	    __extends(TrendsLineWidget, _super);
 	    function TrendsLineWidget() {
@@ -47216,6 +47226,10 @@
 	var PlaneBufferGeometry = THREE.PlaneBufferGeometry;
 	var MeshBasicMaterial = THREE.MeshBasicMaterial;
 	var TrendsWidget_1 = __webpack_require__(12);
+	/**
+	 * widget adds blinking beacon on trends end
+	 * activated when trend.hasBeacon = true
+	 */
 	var TrendsBeaconWidget = (function (_super) {
 	    __extends(TrendsBeaconWidget, _super);
 	    function TrendsBeaconWidget() {
@@ -47324,6 +47338,9 @@
 	;
 	// canvas drawing is expensive operation, so we redraw xAxis only once per second
 	var REDRAW_AXIS_X_INTERVAL = 1000;
+	/**
+	 * widget for drawing axis
+	 */
 	var AxisWidget = (function (_super) {
 	    __extends(AxisWidget, _super);
 	    function AxisWidget(state) {
@@ -47462,6 +47479,9 @@
 	var Widget_1 = __webpack_require__(13);
 	var LineSegments = THREE.LineSegments;
 	var Utils_1 = __webpack_require__(10);
+	/**
+	 * widget for drawing chart grid
+	 */
 	var GridWidget = (function (_super) {
 	    __extends(GridWidget, _super);
 	    function GridWidget(chartState) {

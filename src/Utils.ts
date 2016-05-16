@@ -4,7 +4,9 @@ export declare type TUid = number;
 
 var deepmerge = require<Function>('deepmerge');
 
-
+/**
+ * project utils static class
+ */
 export class Utils {
 
 	private static currentId: TUid = 1;
@@ -40,6 +42,9 @@ export class Utils {
 
 	/**
 	 * generate texture from canvas context
+	 * @example
+	 * 	// create texture with rect
+	 *  var texture = Utils.createTexture(20, 20, (ctx) => {ctx.fillRect(0, 0, 10, 10)});
 	 */
 	static createTexture(width: number, height: number, fn: (ctx: CanvasRenderingContext2D) => void ): Texture {
 		var canvas: HTMLCanvasElement = document.createElement('canvas');

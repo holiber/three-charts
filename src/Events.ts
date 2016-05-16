@@ -1,3 +1,4 @@
+// TODO not sure that class will be needed to future
 export interface IChartEvent {
 	name?: string;
 	data?: {[key: string]: any}
