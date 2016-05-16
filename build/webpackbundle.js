@@ -241,8 +241,8 @@
 	            renderer.render(scene, _this.camera);
 	            //uncomment for 30fps
 	            var renderDelay = _this.state.data.animations.enabled ? 25 : 1000;
-	            setTimeout(function () { return requestAnimationFrame(render); }, renderDelay);
-	            //requestAnimationFrame(render);
+	            //setTimeout(() => requestAnimationFrame(render), renderDelay);
+	            requestAnimationFrame(render);
 	            stats.end();
 	        };
 	        render(Date.now());

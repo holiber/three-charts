@@ -106,8 +106,8 @@ export class Chart {
 			
 			//uncomment for 30fps
 			var renderDelay = this.state.data.animations.enabled ? 25 : 1000;
-			setTimeout(() => requestAnimationFrame(render), renderDelay);
-			//requestAnimationFrame(render);
+			//setTimeout(() => requestAnimationFrame(render), renderDelay);
+			requestAnimationFrame(render);
 
 			stats.end();
 		};
