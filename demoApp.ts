@@ -35,14 +35,18 @@ window.onload = function () {
 
 	chart = new Chart({
 		$el: document.querySelector('.chart'),
-		yAxis: {
-			range: {type: AXIS_RANGE_TYPE.FIXED, from: 20, to: 150}
-		},
+		// yAxis: {
+		// 	range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 100}
+		// },
 		xAxis: {
 			range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 30},
+			// range: {
+			// 	from: 80,
+			// 	to: 90
+			// }
 		},
 		trends: {
-			'main': {dataset: dsMain.data, hasBeacon: true, hasIndicator: true},
+			'main': {dataset: dsMain.data, hasBeacon: true, hasIndicator: true, hasGradient: false},
 			'red': {dataset: dsRed.data, lineColor: 0xFF2222, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
 			'blue': {dataset: dsBlue.data, lineColor: 0x2222FF, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
 		}

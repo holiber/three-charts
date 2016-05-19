@@ -9,7 +9,7 @@ import UVMapping = THREE.UVMapping;
 import GridHelper = THREE.GridHelper;
 import {IAxisOptions} from "../Chart";
 import {ChartWidget} from "../Widget";
-import {ChartState} from "../State";
+import {ChartState, IChartState} from "../State";
 import {GridWidget, IGridParamsForAxis} from "./GridWidget";
 import {Utils} from "../Utils";
 import PlaneGeometry = THREE.PlaneGeometry;
@@ -29,27 +29,27 @@ export class AxisWidget extends ChartWidget {
 	private object3D: Object3D;
 	private axisXObject: Object3D;
 	private axisYObject: Object3D;
-	private axisXOptions: IAxisOptions;
-	private axisYOptions: IAxisOptions;
 	private axisXLastRedrawTime = 0;
+	private showAxisXTimeout = 0;
+	private showAxisYTimeout = 0;
 	
 	constructor (state: ChartState) {
 		super(state);
 		this.object3D = new Object3D();
-		this.axisXOptions = this.chartState.data.xAxis;
-		this.axisYOptions = this.chartState.data.yAxis;
 		this.axisXObject = new Object3D();
 		this.axisYObject = new Object3D();
 		this.object3D.add(this.axisXObject);
 		this.object3D.add(this.axisYObject);
-		this.initAxis(AXIS_ORIENTATION.V);
 		this.initAxis(AXIS_ORIENTATION.H);
+		this.initAxis(AXIS_ORIENTATION.V);
 	}
 
 	bindEvents() {
-		this.chartState.onCameraChange((cameraPos: {scrollX: number}) => {
+		var state = this.chartState;
+		state.onCameraChange((cameraPos: {scrollX: number}) => {
 			this.onScrollChange(cameraPos);
 		});
+		state.onZoom((changedProps: IChartState) => {this.onZoom(changedProps)})
 	}
 
 	private onScrollChange(cameraPos: {scrollX: number}) {
@@ -118,11 +118,11 @@ export class AxisWidget extends ChartWidget {
 
 		if (isXAxis) {
 			axisMesh = this.axisXObject.children[0] as Mesh;
-			axisOptions = this.axisXOptions;
+			axisOptions = this.chartState.data.xAxis;
 			axisGridParams = GridWidget.getGridParamsForAxis(axisOptions, visibleWidth);
 		} else {
 			axisMesh = this.axisYObject.children[0] as Mesh;
-			axisOptions = this.axisYOptions;
+			axisOptions = this.chartState.data.yAxis;
 			axisGridParams = GridWidget.getGridParamsForAxis(axisOptions, visibleHeight);
 		}
 
@@ -139,8 +139,11 @@ export class AxisWidget extends ChartWidget {
 
 
 		// TODO: draw text and lines in different loops
-		var segmentsInScroll = Math.round(scrollX / axisGridParams.stepInPx);
-		var scrollOffset = segmentsInScroll * axisGridParams.step;
+		var scrollOffset = 0;
+		if (isXAxis) {
+			let segmentsInScroll = Math.round(scrollX / axisGridParams.stepInPx);
+			scrollOffset = segmentsInScroll * axisGridParams.step;
+		}
 		var edgeOffset = axisGridParams.segmentsCount * axisGridParams.step;
 		var startVal = axisGridParams.start + scrollOffset - edgeOffset;
 		var endVal = axisGridParams.end + scrollOffset + edgeOffset;
@@ -161,10 +164,48 @@ export class AxisWidget extends ChartWidget {
 			ctx.stroke();
 		}
 		// uncomment to preview canvas borders
-		//ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+		// ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 		ctx.stroke();
 		ctx.closePath();
 		texture.needsUpdate = true;
 		this.axisXLastRedrawTime = Date.now();
+	}
+
+	private onZoom(changedProps: IChartState) {
+		if (changedProps.xAxis) {
+			this.temporaryHideAxis(AXIS_ORIENTATION.H)
+		}
+		if (changedProps.yAxis) {
+			this.temporaryHideAxis(AXIS_ORIENTATION.V)
+		}
+	}
+
+	private temporaryHideAxis(orientation: AXIS_ORIENTATION) {
+		var isXAxis = orientation == AXIS_ORIENTATION.H;
+		var timeoutId = setTimeout(() => {
+				this.showAxis(orientation);
+		}, 200);
+
+		if (isXAxis) {
+			(this.axisXObject.children[0] as Mesh).material.opacity = 0;
+			clearTimeout(this.showAxisXTimeout);
+			this.showAxisXTimeout =	timeoutId;
+		} else {
+			clearTimeout(this.showAxisYTimeout);
+			(this.axisYObject.children[0] as Mesh).material.opacity = 0;
+			this.showAxisYTimeout = timeoutId;
+		}
+	}
+
+	private showAxis(orientation: AXIS_ORIENTATION) {
+		var isXAxis = orientation == AXIS_ORIENTATION.H;
+		var material: MeshBasicMaterial;
+		if (isXAxis) {
+			material = (this.axisXObject.children[0] as Mesh).material as MeshBasicMaterial;
+		} else {
+			material = (this.axisYObject.children[0] as Mesh).material as MeshBasicMaterial;
+		}
+		this.updateAxis(orientation);
+		TweenLite.to(material, 0.3, {opacity: 1});
 	}
 }

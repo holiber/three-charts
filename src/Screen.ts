@@ -1,6 +1,6 @@
 import PerspectiveCamera = THREE.PerspectiveCamera;
 import Vector3 = THREE.Vector3;
-import {ChartState} from "./State";
+import {ChartState, IChartState} from "./State";
 
 /**
  * manage camera, and contains methods for transforming pixels to values
@@ -28,17 +28,24 @@ export class Screen {
 		this.cameraInitialPosition = camera.position.clone();
 		this.cameraScrollX = 0;
 		this.bindEvents();
+
+		//camera.position.z = 2000;
 	}
 
 	private bindEvents() {
-		this.chartState.onScroll(() => this.onScroll());
+		this.chartState.onScroll((changedProps: IChartState) => this.onScroll(changedProps));
 	}
 
-	private onScroll() {
+	private onScroll(changedProps: IChartState) {
 		var state = this.chartState;
 		var isDragMode = state.data.cursor.dragMode;
 		var animations =  state.data.animations;
-		var canAnimate = !isDragMode && animations.enabled;
+		var canAnimate = (
+			!isDragMode &&
+			animations.enabled &&
+			changedProps.xAxis.range.from == void 0 &&
+			changedProps.xAxis.range.to == void 0
+		);
 		var targetX = this.cameraInitialPosition.x + state.data.xAxis.range.scroll;
 		if (this.cameraAnimation) this.cameraAnimation.kill();
 		if (canAnimate) {

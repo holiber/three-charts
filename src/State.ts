@@ -6,9 +6,10 @@ import Vector3 = THREE.Vector3;
 import {IChartWidgetOptions, ChartWidget} from "./Widget";
 import {Trends, ITrendsOptions} from "./Trends";
 import {IChartEvent, ScrollStopEvent, ScrollEvent} from "./Events";
+import {TrendsAnimationManager} from "./TrendsAnimationManager";
 
 
-interface IRecalcualteStateResult {
+interface IRecalculatedStateResult {
 	changedProps: IChartState,
 	patch: IChartState,
 	eventsToEmit: IChartEvent[]
@@ -51,19 +52,20 @@ export class ChartState {
 		$el: null,
 		zoom: 0,
 		xAxis: {
-			range: {type: AXIS_RANGE_TYPE.ALL, scroll: 0},
+			range: {type: AXIS_RANGE_TYPE.ALL, from: 0, to: 0, scroll: 0, padding: {start: 0, end: 200}},
 			gridMinSize: 120,
 			autoScroll: true,
-			padding: {start: 0, end: 200}
 		},
 		yAxis: {
-			range: {type: AXIS_RANGE_TYPE.AUTO, scroll: 0},
-			gridMinSize: 60,
+			range: {type: AXIS_RANGE_TYPE.RELATIVE_END, from: 0, to: 0, padding: {start: 100, end: 100}},
+			gridMinSize: 60
 		},
 		animations: {
 			enabled: true,
 			trendChangeSpeed: 0.5,
 			trendChangeEase: void 0, //Linear.easeNone
+			zoomSpeed: 1,
+			zoomEase: void 0,//Linear.easeNone,
 			autoScrollSpeed: 1,
 			autoScrollEase: Linear.easeNone
 		},
@@ -75,16 +77,18 @@ export class ChartState {
 
 	};
 	trends: Trends;
+	trendsAnimationManager: TrendsAnimationManager;
 	private ee: EventEmitter2;
 
 	constructor(initialState: IChartState) {
 		this.ee = new EE();
+		this.trends = new Trends(this, initialState);
+		initialState.trends = this.trends.calculatedOptions;
 		this.setState(initialState);
-		this.trends = new Trends(this);
-		this.setState({trends: this.trends.calculatedOptions}, null, true);
 		this.setState({computedData: this.getComputedData()});
-		this.recalculateState({});
+		//this.recalculateState({});
 		this.savePrevState();
+		this.trendsAnimationManager = new TrendsAnimationManager(this);
 		this.initListeners();
 	}
 
@@ -110,6 +114,10 @@ export class ChartState {
 
 	onScroll(cb: (scrollOptions: {deltaX: number}) => void) {
 		this.ee.on('scroll', cb);
+	}
+
+	onZoom(cb: (changedProps: IChartState) => void) {
+		this.ee.on('zoom', cb);
 	}
 
 	onCameraChange(cb: (cameraOptions: {scrollX: number}) => void) {
@@ -143,12 +151,12 @@ export class ChartState {
 
 	}
 
-	// dirty hack, use only for performance improvements such camera position change
+	// emit event on state. Dirty hack, use only for performance improvements such camera position change
 	emit(eventName: string, data: any) {
 		this.ee.emit(eventName, data);
 	}
 
-	private recalculateState(changedProps?: IChartState): IRecalcualteStateResult {
+	private recalculateState(changedProps?: IChartState): IRecalculatedStateResult {
 		var data = this.data;
 		var patch: IChartState = {};
 		var eventsToEmit: IChartEvent[] = [];
@@ -188,6 +196,17 @@ export class ChartState {
 			patch.xAxis = {range: {scroll: currentScroll + deltaX}};
 		}
 
+		// recalculate axis "from" and "to" for dynamics AXIS_RANGE_TYPE
+		var needToRecalculateAxis = (
+			data.yAxis.range.type === AXIS_RANGE_TYPE.RELATIVE_END &&
+			(scrollChanged || changedProps.trends || changedProps.yAxis)
+		);
+		if (needToRecalculateAxis){
+			var newYAxisOptions = this.recalculateYAxis(changedProps.yAxis);
+			if (newYAxisOptions) patch.yAxis = newYAxisOptions;
+		}
+		// TODO: recalculate xAxis
+
 		this.savePrevState(patch);
 		var allChangedProps = Utils.deepMerge(changedProps, patch);
 		patch.computedData = this.getComputedData(allChangedProps);
@@ -201,7 +220,7 @@ export class ChartState {
 		var computedData: IChartStateComputedData = {};
 		if (computeAll || changedProps.trends && this.trends) {
 			computedData.trends = {
-				maxX: this.trends.getMaxX()
+				maxX: this.trends.getEndXVal()
 			}
 		}
 		return computedData;
@@ -240,14 +259,25 @@ export class ChartState {
 			changedProps.cursor.dragMode === false &&
 			prevState.cursor.dragMode === true
 		);
-		scrollStopEventNeeded && this.ee.emit('scrollStop');
+		scrollStopEventNeeded && this.ee.emit('scrollStop', changedProps);
 
 		var scrollChangeEventsNeeded = (
 			changedProps.xAxis &&
 			changedProps.xAxis.range &&
-			changedProps.xAxis.range.scroll
+			changedProps.xAxis.range.scroll !== void 0
 		);
-		scrollChangeEventsNeeded && this.ee.emit('scroll');
+		scrollChangeEventsNeeded && this.ee.emit('scroll', changedProps);
+
+		var zoomEventsNeeded = (
+			(changedProps.xAxis &&
+			changedProps.xAxis.range &&
+			(changedProps.xAxis.range.from || changedProps.xAxis.range.to))
+			||
+			(changedProps.yAxis &&
+			changedProps.yAxis.range &&
+			(changedProps.yAxis.range.from || changedProps.yAxis.range.to))
+		);
+		zoomEventsNeeded && this.ee.emit('zoom', changedProps);
 
 	}
 
@@ -262,6 +292,40 @@ export class ChartState {
 			this.ee.emit('trendChange', trendName, changedTrends[trendName], newData);
 		}
 	}
+	
+	private recalculateYAxis(changedAxisOptions: IAxisOptions): IAxisOptions {
+		var trends = this.trends;
+		if (!trends) return null;
+		var axisOptions = this.data.yAxis;
+		axisOptions = Utils.deepMerge(axisOptions, changedAxisOptions || {} as IAxisOptions);
+		var fromValue = this.getScreenLeftVal();
+		var toValue = this.getScreenRightVal();
+		var maxY = trends.getMaxYVal(fromValue, toValue);
+		var minY = trends.getMinYVal(fromValue, toValue);
+
+		if (axisOptions.range.from == minY && axisOptions.range.to == maxY) {
+			return null;
+		}
+		var padding = this.data.yAxis.range.padding;
+		axisOptions.range.from = minY// - this.ge;
+		axisOptions.range.to = maxY;
+		return axisOptions;
+	}
+
+	zoom(zoomValue: number) {
+		var {from, to} = this.data.xAxis.range;
+		var rangeLength = to - from;
+		var zoomLength = rangeLength * zoomValue;
+		var zoomDiff = zoomLength - rangeLength;
+		var middleScreenValue = this.getValueByScreenX(this.data.width / 2);
+		var leftScreenValue = this.getValueByScreenX(0);
+		var rightScreenValue = this.getValueByScreenX(this.data.width);
+		var newTo = middleScreenValue + (rightScreenValue - middleScreenValue) * zoomValue;
+		var newFrom = middleScreenValue - (middleScreenValue - leftScreenValue) * zoomValue;
+		this.setState(
+			{xAxis: {range: {from: newFrom, to: newTo, scroll: 0}}}
+		);
+	}
 
 	getPointOnXAxis(xVal: number): number {
 		var w = this.data.width;
@@ -275,11 +339,25 @@ export class ChartState {
 		return h * ((yVal - from) / (to - from));
 	}
 
+	getPxByValueOnXAxis(xVal: number) {
+		var w = this.data.width;
+		var {from, to} = this.data.xAxis.range;
+		return xVal * (w / (to - from));
+	}
+
+
 	getValueByScreenX(x: number): number {
 		var w = this.data.width;
 		var {from, to, scroll} = this.data.xAxis.range;
 		var pxCoast = (to - from) / w;
-		return pxCoast * x + scroll * pxCoast;
+		return from + pxCoast * x + scroll * pxCoast;
+	}
+
+	getValueByScreenY(y: number): number {
+		var h = this.data.height;
+		var {from, to} = this.data.yAxis.range;
+		var pxCoast = (to - from) / h;
+		return from + pxCoast * y;
 	}
 
 	getPxCoast() {
@@ -293,16 +371,21 @@ export class ChartState {
 		return new Vector3(this.getPointOnXAxis(xVal), this.getPointOnYAxis(yVal), 0);
 	}
 
-	getMaxVisibleX() {
+	getScreenLeftVal() {
+		return this.getValueByScreenX(0);
+	}
+
+	getScreenRightVal() {
 		return this.getValueByScreenX(this.data.width);
 	}
 
+
 	getPaddingRight(): number {
-		return this.getValueByScreenX(this.data.width - this.data.xAxis.padding.end);
+		return this.getValueByScreenX(this.data.width - this.data.xAxis.range.padding.end);
 	}
 
 	scrollToEnd() {
-		var rightPadding = this.data.xAxis.padding.end;
+		var rightPadding = this.data.xAxis.range.padding.end;
 		var scrollPos = -this.getPointOnXAxis(this.data.computedData.trends.maxX) + this.data.width - rightPadding;
 		this.setState({xAxis: {range: {scroll: scrollPos}}})
 	}

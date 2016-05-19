@@ -3,28 +3,15 @@ import {ChartWidget} from "../Widget";
 import Object3D = THREE.Object3D;
 import {ChartState} from "../State";
 import {ITrendOptions, ITrendData, Trend} from "../Trend";
-import {IAxisOptions} from "../Chart";
+import {IAxisOptions, MAX_DATA_LENGTH} from "../Chart";
+import Vector2 = THREE.Vector2;
+import Vector3 = THREE.Vector3;
+import {TrendAnimationState} from "../TrendsAnimationManager";
 
 
 interface ITrendWidgetClass<TrendWidgetType> {
 	new (chartState: ChartState, trendName: string): TrendWidgetType;
 	widgetIsEnabled(trendOptions: ITrendOptions): boolean;
-}
-
-/**
- * based class for all trends widgets
- */
-export abstract class TrendWidget {
-	protected trend: Trend;
-	constructor (protected chartState: ChartState, protected trendName: string) {
-		this.trend = chartState.trends.getTrend(trendName);
-	}
-	abstract getObject3D(): Object3D;
-	static widgetIsEnabled(trendOptions: ITrendOptions) {
-		return trendOptions.enabled;
-	}
-	appendData(newData: ITrendData) {};
-	onTrendChange(changedOptions?: ITrendOptions) {}
 }
 
 /**
@@ -76,19 +63,7 @@ export abstract class TrendsWidget<TrendWidgetType extends TrendWidget> extends 
 	}
 
 	private onScrollChange() {
-		// var state = this.chartState;
-		// var scrollX = state.data.xAxis.range.scroll;
-		// var cursor = state.data.cursor;
-		// var animations = state.data.animations;
-		// var time = animations.autoScrollSpeed;
-		// var ease = animations.autoScrollEase;
-		// var canAnimate = animations.enabled && !cursor.dragMode;
-		// if (this.scrollAnimation) this.scrollAnimation.kill();
-		// if (canAnimate) {
-		// 	this.scrollAnimation = TweenLite.to(this.object3D.position, time, {x: scrollX, ease: ease});
-		// } else {
-		// 	this.object3D.position.x = scrollX;
-		// }
+
 	}
 
 	getObject3D(): Object3D {
@@ -105,8 +80,39 @@ export abstract class TrendsWidget<TrendWidgetType extends TrendWidget> extends 
 	}
 
 	private destroyTrendWidget(trendName: string) {
+		this.widgets[trendName].onDestroy();
 		delete this.widgets[trendName];
 		var widgetObject = this.object3D.getObjectByName(trendName);
 		this.object3D.remove(widgetObject);
 	}
+}
+
+/**
+ * based class for all trends widgets
+ */
+export abstract class TrendWidget {
+	protected trend: Trend;
+	private unsubscribers: Function[] = [];
+
+	constructor (protected chartState: ChartState, protected trendName: string) {
+		this.trend = chartState.trends.getTrend(trendName);
+		this.unsubscribers.push(this.chartState.trendsAnimationManager.onAnimate(
+			trendName,
+			(animationState: TrendAnimationState) => this.onTrendAnimate(animationState)
+		));
+	}
+	abstract getObject3D(): Object3D;
+	static widgetIsEnabled(trendOptions: ITrendOptions) {
+		return trendOptions.enabled;
+	}
+	appendData(newData: ITrendData) {};
+	onTrendChange(changedOptions?: ITrendOptions) {}
+	onDestroy() {
+		for (let unsubscriber of this.unsubscribers) {
+			unsubscriber();
+		}
+	}
+	protected onTrendAnimate(animationState: TrendAnimationState) {
+	}
+
 }

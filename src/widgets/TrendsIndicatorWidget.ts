@@ -10,6 +10,10 @@ import {TrendWidget, TrendsWidget} from "./TrendsWidget";
 import {ITrendOptions} from "../Trend";
 import PlaneGeometry = THREE.PlaneGeometry;
 import Color = THREE.Color;
+import {TrendAnimationState} from "../TrendsAnimationManager";
+
+const CANVAS_WIDTH = 80;
+const CANVAS_HEIGHT = 30;
 
 export class TrendsIndicatorWidget extends TrendsWidget<TrendIndicator> {
 	static widgetName = 'trendsIndicator';
@@ -36,10 +40,8 @@ class TrendIndicator extends TrendWidget {
 	}
 
 	private initObject() {
-		var canvasWidth = 80;
-		var canvasHeight = 30;
 		var color = new Color(this.trend.getOptions().lineColor);
-		var texture = Utils.createTexture(canvasWidth, canvasHeight, (ctx) => {
+		var texture = Utils.createTexture(CANVAS_WIDTH, CANVAS_HEIGHT, (ctx) => {
 			ctx.beginPath();
 			ctx.font = "15px Arial";
 			ctx.fillStyle = color.getStyle();
@@ -54,48 +56,35 @@ class TrendIndicator extends TrendWidget {
 		material.transparent = true;
 
 		this.mesh = new Mesh(
-			new THREE.PlaneGeometry(canvasWidth, canvasHeight),
+			new THREE.PlaneGeometry(CANVAS_WIDTH, CANVAS_HEIGHT),
 			material
 		);
 
 	}
 
 	onTrendChange() {
-		let object = this.mesh;
+		// update canvas value
 		let trendData = this.trend.getData();
 		var lastItem = trendData[trendData.length - 1];
-		var geometry = this.mesh.geometry as PlaneGeometry;
-		var canvasWidth = geometry.parameters.width;
-		var canvasHeight = geometry.parameters.height;
 		var texture = (this.mesh.material as MeshBasicMaterial).map;
 		var ctx = texture.image.getContext('2d');
-		ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-		//ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+		ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 		ctx.fillText(lastItem.yVal.toFixed(4), 0, 15);
 		texture.needsUpdate = true;
-
-
-		var position = this.chartState.getPointOnChart(lastItem.xVal, lastItem.yVal);
-		position.x += canvasWidth / 2;
-		position.y += canvasHeight / 2 + 10;
-
-		var animation = this.chartState.data.animations;
-
-		if (!animation.enabled) {
-			object.position.set(position.x, position.y, 0);
-			return
-		}
-
-		TweenLite.to(
-			object.position,
-			animation.trendChangeSpeed,
-			{
-				x: position.x,
-				y: position.y,
-				ease: animation.trendChangeEase
-			}
-		)
-
 	}
+
+	protected onTrendAnimate(animationState: TrendAnimationState) {
+		// set new widget position
+		var lastInd = this.trend.getData().length - 1;
+		var newX = animationState.current['x' + lastInd];
+		var newY = animationState.current['y' + lastInd];
+		if (newX !== void 0) {
+			this.mesh.position.x = newX + CANVAS_WIDTH / 2;
+		}
+		if (newY !== void 0) {
+			this.mesh.position.y = newY + CANVAS_HEIGHT / 2 + 10;;
+		}
+	}
+
 
 }

@@ -7,6 +7,11 @@ export interface IChartWidgetConstructor {
 	getDefaultOptions(): IChartWidgetOptions;
 }
 
+/**
+ * base class for all widgets
+ * widgets must not change state!
+ * each widget must have widgetName static property
+ */
 export abstract class ChartWidget {
 	static widgetName = '';
 	protected chartState: ChartState;

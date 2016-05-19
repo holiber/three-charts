@@ -1,7 +1,8 @@
 // deps must be always on top
-import Vector3 = THREE.Vector3;
 require('./deps');
 
+export * from './interfaces';
+import Vector3 = THREE.Vector3;
 import {TrendsIndicatorWidget} from "./widgets/TrendsIndicatorWidget";
 import {TrendsLineWidget} from "./widgets/TrendsLineWidget";
 import PerspectiveCamera = THREE.PerspectiveCamera;
@@ -19,37 +20,6 @@ import {TrendsGradientWidget} from "./widgets/TrendsGradientWidget";
 import {Screen} from "./Screen";
 
 export const MAX_DATA_LENGTH = 1000;
-
-export enum AXIS_RANGE_TYPE {
-	AUTO,
-	ALL,
-	FIXED
-}
-
-export interface IAxisRange {
-	type?: AXIS_RANGE_TYPE,
-	from?: number,
-	to?: number,
-	scroll?: number
-}
-
-export interface IAxisOptions {
-	range: IAxisRange,
-	gridMinSize?: number,
-	autoScroll?: boolean,
-	padding?: {
-		start?: number,
-		end?: number
-	}
-}
-
-export interface IAnimationsOptions {
-	enabled?: boolean,
-	trendChangeSpeed?: number,
-	trendChangeEase?: Ease | Linear,
-	autoScrollSpeed?: number,
-	autoScrollEase?: Ease | Linear,
-}
 
 export class Chart {
 	state: ChartState;
@@ -140,53 +110,32 @@ export class Chart {
 	}
 
 
-	zoom(zoomValue: number) {
-		this.state.setState({zoom: this.state.data.zoom + zoomValue});
-	}
-
-	private onZoom(zoomValue: number) {
-		var cameraPos = this.screen.camera.position;
-		TweenLite.to(cameraPos, 0.3, {z: zoomValue});
-	}
-
 	private bindEvents() {
 		var $el = this.$el;
-		$el.addEventListener('mousewheel', (ev: MouseWheelEvent) => {
-			ev.stopPropagation();
-			ev.preventDefault();
-
-			console.log('onZoom', ev.wheelDeltaY);
-			//if (Math.abs(ev.wheelDeltaY) < 50) return;
-			this.zoom(ev.wheelDeltaY)
-			//ev.wheelDeltaY > 0 ? this.zoom(ev.wheelDeltaY) : this.zoom(ev.wheelDeltaY);
-			console.log(ev.wheelDeltaY)
-		});
+		$el.addEventListener('mousewheel', (ev: MouseWheelEvent) => {this.onMouseWheel(ev)});
 		$el.addEventListener('mousemove', (ev: MouseEvent) => {this.onMouseMove(ev)});
 		$el.addEventListener('mousedown', (ev: MouseEvent) => this.onMouseDown(ev));
 		$el.addEventListener('mouseup', (ev: MouseEvent) => this.onMouseUp(ev));
 		$el.addEventListener('touchmove', (ev: TouchEvent) => {this.onTouchMove(ev)});
 		$el.addEventListener('touchend', (ev: TouchEvent) => {this.onTouchEnd(ev)});
 
-		this.state.onChange((changedProps: IChartState)  => {
-			changedProps.zoom && this.onZoom(changedProps.zoom);
-		});
-		
 		this.state.onTrendsChange(() => this.autoscroll());
 		this.state.onScrollStop(() => this.onScrollStop());
 	}
 	
 	private autoscroll() {
 		var state = this.state;
+		if (state.data.cursor.dragMode) return;
 		var oldTrendsMaxX = state.data.prevState.computedData.trends.maxX;
 		var trendsMaxXDelta = state.data.computedData.trends.maxX - oldTrendsMaxX;
 		if (trendsMaxXDelta > 0) {
-			var maxVisibleX = this.state.getMaxVisibleX();
+			var maxVisibleX = this.state.getScreenRightVal();
 			var paddingRightX = this.state.getPaddingRight();
 			var currentScroll = state.data.xAxis.range.scroll;
 			if (oldTrendsMaxX < paddingRightX || oldTrendsMaxX > maxVisibleX) {
 				return;
 			}
-			var scrollDelta = state.getPointOnXAxis(trendsMaxXDelta);
+			var scrollDelta = state.getPxByValueOnXAxis(trendsMaxXDelta);
 			this.setState({xAxis: {range: {scroll: currentScroll + scrollDelta}}});
 		}
 	}
@@ -211,6 +160,24 @@ export class Chart {
 		if (this.state.data.cursor.dragMode) {
 			this.setState({cursor: {dragMode: true, x: ev.clientX, y: ev.clientY}});
 		}
+	}
+
+	private onMouseWheel(ev: MouseWheelEvent) {
+		ev.stopPropagation();
+		ev.preventDefault();
+		if (ev.wheelDeltaY > 0) {
+			this.state.zoom(1.01);
+			//this.state.zoom(2);
+		} else {
+			this.state.zoom(0.99);
+			//this.state.zoom(0.5);
+		}
+
+		// console.log('onZoom', ev.wheelDeltaY);
+		// //if (Math.abs(ev.wheelDeltaY) < 50) return;
+		// this.zoom(ev.wheelDeltaY)
+		// //ev.wheelDeltaY > 0 ? this.zoom(ev.wheelDeltaY) : this.zoom(ev.wheelDeltaY);
+		// console.log(ev.wheelDeltaY)
 	}
 
 	private onTouchMove(ev: TouchEvent) {

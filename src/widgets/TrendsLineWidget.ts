@@ -9,9 +9,10 @@ import {ChartState} from "../State";
 import Face3 = THREE.Face3;
 import Texture = THREE.Texture;
 import Vector2 = THREE.Vector2;
-import {ITrendData, ITrendItem} from "../Trend";
-import {MAX_DATA_LENGTH} from "../Chart";
+import {ITrendData} from "../Trend";
 import {TrendsWidget, TrendWidget} from "./TrendsWidget";
+import {TrendAnimationState} from "../TrendsAnimationManager";
+import LineSegments = THREE.LineSegments;
 
 /**
  * widget for drawing trends lines
@@ -25,89 +26,70 @@ export class TrendsLineWidget extends TrendsWidget<TrendLine> {
 
 
 class TrendLine extends TrendWidget {
-	private geometry: Geometry;
 	private material: LineBasicMaterial;
-	private line: Line;
+	private lineSegments: LineSegments;
 	
 	data: ITrendData = [];
 
 	constructor (chartState: ChartState, trendName: string) {
 		super(chartState, trendName);
 		this.chartState = chartState;
-		this.geometry = new Geometry();
 		this.trend = chartState.trends.getTrend(trendName);
 		var options = this.trend.getOptions();
 		this.material = new LineBasicMaterial( { color: options.lineColor, linewidth: options.lineWidth } );
+		this.initLine();
 		this.appendData(this.trend.getData());
-	}
-
-	appendData(newData: ITrendData) {
-		if (this.data.length > MAX_DATA_LENGTH) {
-			throw 'max data length reached'
-		}
-		if (this.data.length == 0) {
-			this.initLine(newData[0]);
-		}
-		this.data.push(...newData);
-		this.updateLine(newData);
 		
 	}
 
 	getObject3D() {
-		return this.line;
+		return this.lineSegments;
 	}
 
-	private updateLine(newData: ITrendData) {
-		var vertices = this.geometry.vertices;
-		var newDataLen = newData.length;
-		var newVertices = vertices.splice(0, newDataLen);
-		var lastVertix = vertices[vertices.length - 1];
-
-		for (let i = 0; i < newData.length; i++) {
-			let item = newData[i];
-			let vertex = newVertices[i];
-
-
-			var animationEndPoint = this.chartState.getPointOnChart(item.xVal, item.yVal);
-
-			if (!this.chartState.data.animations.enabled) {
-				vertex.set(animationEndPoint.x, animationEndPoint.y, 0);
-				continue;
+	protected onTrendAnimate(animationState: TrendAnimationState) {
+		var trendData = this.trend.getData();
+		var geometry = this.lineSegments.geometry as Geometry;
+		var vertices = geometry.vertices;
+		var {current} = animationState;
+		var lastInd = trendData.length - 1;
+		for (var vertexParam in current) {
+			let firstChar = vertexParam.charAt(0);
+			if (firstChar !== 'x' && firstChar !== 'y') continue;
+			let isX = firstChar == 'x';
+			let ind = Number(vertexParam.substr(1));
+			if (ind > lastInd) continue;
+			let value = current[vertexParam];
+			let currentVertex = vertices[ind * 2];
+			let prevVertex = vertices[ind * 2 - 1];
+			if (isX) {
+				currentVertex.setX(value);
+				prevVertex && prevVertex.setX(value);
+				if (ind == lastInd) vertices[ind * 2 + 1].setX(value);
+			} else {
+				currentVertex.setY(value);
+				prevVertex && prevVertex.setY(value);
+				if (ind == lastInd) vertices[ind * 2 + 1].setY(value);
 			}
-
-			// set animation start point
-			vertex.set(lastVertix.x, lastVertix.y, 0);
-
-			var animationOptions = this.chartState.data.animations;
-			TweenLite.to(
-				vertex, animationOptions.trendChangeSpeed,
-				{
-					x: animationEndPoint.x,
-					y: animationEndPoint.y,
-					ease: animationOptions.trendChangeEase
-				}
-			).eventCallback('onUpdate', () => {
-				this.geometry.verticesNeedUpdate = true;
-			});
 		}
-
-		vertices.push(...newVertices);
-		this.geometry.verticesNeedUpdate = true;
+		geometry.verticesNeedUpdate = true;
 	}
 
-	private initLine(startItem: ITrendItem) {
-		// init array of vertices
-		var geometry = this.geometry;
-		var i = MAX_DATA_LENGTH;
-		var vertices: Array<Vector3> = [];
-		var startPoint = this.chartState.getPointOnChart(startItem.xVal, startItem.yVal);
-		while (i--) {
-			vertices.push(startPoint.clone());
-		}
-		geometry.vertices = vertices;
+	private initLine() {
+		var geometry = new Geometry();
+		var animationState = this.chartState.trendsAnimationManager.getState(this.trendName);
+		var trendData = this.trend.getData();
+		var points = animationState.points;
+		for (var vertInd = 0; vertInd < points.length; vertInd++) {
+			let vert1 = points[vertInd];
+			let vert2 = points[vertInd + 1];
+			if (!vert1 || !vert2) break;
+			if (vertInd == trendData.length - 1) vert2 = vert1.clone();
+			geometry.vertices.push(vert1.clone(), vert2.clone());
 
-		this.line = new Line(geometry, this.material);
-		this.line.frustumCulled = false;
+		}
+
+		this.lineSegments = new LineSegments(geometry, this.material);
+		this.lineSegments.frustumCulled = false;
 	}
 
 

@@ -32,12 +32,22 @@ export class Utils {
 	 * Utils.toFixed(15, 6);
 	 */
 	static toFixed(num: number, digitsCount: number): string {
-		var numStr = String(num);
-		var lengthDiff = digitsCount - numStr.length;
+		var maxDigits = 15;
+		var result = '';
+		var intVal = Math.floor(num);
+		var intStr = intVal.toString();
+		var lengthDiff = digitsCount - intStr.length;
 		if (lengthDiff > 0 ) {
-			return (<any>'0').repeat(lengthDiff) + numStr as string;
+			result = (<any>'0').repeat(lengthDiff) + intStr;
+		} else {
+			result = intStr;
 		}
-		return numStr;
+		var afterPointDigitsCount = maxDigits - intStr.length;
+		var afterPointStr = num.toString().split('.')[1];
+		if (afterPointStr) {
+			result += '.' + afterPointStr.substr(0, afterPointDigitsCount);
+		}
+		return result;
 	}
 
 	/**

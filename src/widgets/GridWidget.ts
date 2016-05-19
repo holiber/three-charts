@@ -19,6 +19,14 @@ export interface IGridParamsForAxis {
 	segmentsCount: number
 }
 
+interface ILinesValues {
+	x: number[],
+	y: number[]
+}
+
+// update lines is expensive operation, so we do it only once per second
+var UPDATE_LINES_INTERVAL = 1000;
+
 /**
  * widget for drawing chart grid
  */
@@ -27,105 +35,144 @@ export class GridWidget extends ChartWidget{
 	private lineSegments: LineSegments;
 	private axisXGridParams: IGridParamsForAxis;
 	private axisYGridParams: IGridParamsForAxis;
-	private scrollAnimation: TweenLite;
+	private linesValues: ILinesValues = {x: [], y: []};
+	private scrollInSegments: number;
+	private gridSizeH: number;
+	private gridSizeV: number;
+	private linesLastUpdateTime = 0;
 
 	constructor (chartState: ChartState) {
 		super(chartState);
-		var {yAxis, xAxis, width, height} = this.chartState.data;
+		this.updateGridParams();
+		var {width, height} = chartState.data;
+		this.gridSizeH = Math.floor(width / chartState.data.xAxis.gridMinSize) * 3;
+		this.gridSizeV = Math.floor(height / chartState.data.yAxis.gridMinSize) * 3;
+		this.linesValues = this.getCurrentLinesValues();
 		var geometry = new THREE.Geometry();
 		var material = new THREE.LineBasicMaterial( { linewidth: 1, opacity: 0.07, transparent: true} );
-
-		var axisXGrid = this.axisXGridParams = GridWidget.getGridParamsForAxis(xAxis, width);
-		var axisYGrid = this.axisYGridParams = GridWidget.getGridParamsForAxis(yAxis, height);
-
-
-		for ( var i = - axisXGrid.segmentsCount; i <= axisXGrid.segmentsCount * 2; i ++) {
-			var x = i * axisXGrid.stepInPx + 0.5;
-			geometry.vertices.push(
-				new THREE.Vector3(x, height * 2, 0 ), new THREE.Vector3( x, -height, 0 )
-			);
-		}
-
-		for ( var i = - axisYGrid.segmentsCount; i < axisYGrid.segmentsCount * 2; i ++) {
-			var y = i * axisYGrid.stepInPx - 0.5;
-			geometry.vertices.push(
-				new THREE.Vector3(width * 2, y, 0 ), new THREE.Vector3( -width, y, 0 )
-			);
-		}
-
+		for (let xVal of this.linesValues.x) geometry.vertices.push(...this.getVerticalLineSegment(xVal));
+		for (let yVal of this.linesValues.y) geometry.vertices.push(...this.getHorizontalLineSegment(yVal));
 		this.lineSegments = new LineSegments(geometry, material);
+	}
+
+	private updateGridParams() {
+		var {yAxis, xAxis, width, height} = this.chartState.data;
+		this.axisXGridParams = GridWidget.getGridParamsForAxis(xAxis, width);
+		this.axisYGridParams = GridWidget.getGridParamsForAxis(yAxis, height);
+		this.scrollInSegments = Math.ceil(xAxis.range.scroll / this.axisXGridParams.stepInPx);
+	}
+
+	private getCurrentLinesValues(): ILinesValues {
+		var linesValues: ILinesValues = {x: [], y: []};
+		var axisXGrid = this.axisXGridParams;
+		var axisYGrid = this.axisYGridParams;
+		var startX = axisXGrid.start + this.scrollInSegments * axisXGrid.step;
+		var startY = axisYGrid.start;
+
+		for (let i =  -this.gridSizeH / 3; i < this.gridSizeH * 2/3; i++) {
+			linesValues.x.push(startX + i * axisXGrid.step);
+		}
+
+		for (let i =  -this.gridSizeV / 3; i < this.gridSizeV * 2/3; i++) {
+			linesValues.y.push(startY + i * axisYGrid.step);
+		}
+		
+		return linesValues;
+	}
+
+	private getHorizontalLineSegment(yVal: number): Vector3[] {
+		var {width} = this.chartState.data;
+		var y = this.chartState.getPointOnYAxis(yVal);
+		var scrollX = this.scrollInSegments * this.axisXGridParams.stepInPx;
+		return [new THREE.Vector3(width * 2 + scrollX, y, 0 ), new THREE.Vector3( -width + scrollX, y, 0 )];
+	}
+
+	private getVerticalLineSegment(xVal: number): Vector3[] {
+		var {height} = this.chartState.data;
+		var x = this.chartState.getPointOnXAxis(xVal);
+		return [new THREE.Vector3(x, height * 2, 0 ), new THREE.Vector3(x, -height, 0 )];
 	}
 
 	bindEvents() {
 		this.chartState.onScroll(() => {
 			this.onScrollChange();
 		});
+		this.chartState.onScrollStop(() => this.updateLines());
+		this.chartState.onZoom(() => this.onZoom());
 	}
 
 	private onScrollChange() {
-		// move grid behind the camera
-		var stepX = this.axisXGridParams.stepInPx;
-		var scrollX = this.chartState.data.xAxis.range.scroll;
-		var steps = Math.round(scrollX / stepX);
-		this.lineSegments.position.x = Math.round(stepX * steps);
+		if (Date.now() - this.linesLastUpdateTime >= UPDATE_LINES_INTERVAL) {
+			this.updateLines();
+		}
 	}
 
+	private onZoom() {
+		this.updateLines();
+	}
 
-	// TODO: create unit tests : {from: 80, to: 90}, {from: 0, to: 100}, {from: 0.01, to: 2}, {from: 20, to: 180, minGridSize: 50}
+	private updateLines() {
+		this.updateGridParams();
+		this.linesValues = this.getCurrentLinesValues();
+		var horizontalLines = this.linesValues.x;
+		var verticalLines = this.linesValues.y;
+		var geometry = this.lineSegments.geometry as Geometry;
+		var verticalValuesOffset = this.gridSizeH * 2;
+
+		for (let i = 0; i < horizontalLines.length; i++) {
+			let lineSegment = this.getVerticalLineSegment(horizontalLines[i]);
+			geometry.vertices[i * 2].set(lineSegment[0].x, lineSegment[0].y, 0);
+			geometry.vertices[i * 2 + 1].set(lineSegment[1].x, lineSegment[1].y, 0);
+		}
+		for (let i = 0; i < verticalLines.length; i++) {
+			let lineSegment = this.getHorizontalLineSegment(verticalLines[i]);
+			geometry.vertices[verticalValuesOffset + i * 2].set(lineSegment[0].x, lineSegment[0].y, 0);
+			geometry.vertices[verticalValuesOffset + i * 2 + 1].set(lineSegment[1].x, lineSegment[1].y, 0);
+		}
+		geometry.verticesNeedUpdate = true;
+		this.linesLastUpdateTime = Date.now();
+	}
+
 	static getGridParamsForAxis(axisOptions: IAxisOptions, axisWidth: number): IGridParamsForAxis {
 		var {from, to} = axisOptions.range;
-		var gridStart = 0;
-		var gridEnd = 0;
+		var axisLength = to - from;
 		var gridStep = 0;
 		var gridStepInPixels = 0;
 		var minGridStepInPixels = axisOptions.gridMinSize;
-		var fromStr = String(from);
-		var toStr = String(to);
-		var fromStrPointPos = fromStr.indexOf('.');
-		var toStrPointPos = toStr.indexOf('.');
-		var intPartLength = Math.max(
-			fromStrPointPos !== -1 ? fromStrPointPos : fromStr.length,
-			toStrPointPos !== -1 ? toStrPointPos : toStr.length
-		);
-		var canSkipEqualsDigits = true;
-		var gridStepFound = false;
-		fromStr = Utils.toFixed(from, intPartLength);
-		toStr = Utils.toFixed(to, intPartLength);
-		fromStr = fromStr.replace('.', '');
-		toStr = toStr.replace('.', '');
+		var axisLengthStr = String(axisLength);
+		var axisLengthPointPosition = axisLengthStr.indexOf('.');
+		var intPartLength = axisLengthPointPosition !== -1 ? axisLengthPointPosition : axisLengthStr.length;
 
+		var gridStepFound = false;
 		var digitPos = 0;
 		while (!gridStepFound) {
-
-			if (canSkipEqualsDigits && fromStr[digitPos] == toStr[digitPos]) {
-				continue;
-			}
-			canSkipEqualsDigits = false;
 
 			let power = intPartLength - digitPos - 1;
 			let multiplier = (Math.pow(10, power) || 1);
 			let dividers = [1, 2, 5];
 			for (let dividerInd = 0; dividerInd < dividers.length; dividerInd++) {
-				let nextGridStep =  multiplier/ dividers[dividerInd];
-				let nextGridStepInPixels = nextGridStep / (to - from) * axisWidth;
+				let nextGridStep = multiplier / dividers[dividerInd];
+				let nextGridStepInPixels = nextGridStep / axisLength * axisWidth;
 				if (nextGridStepInPixels >= minGridStepInPixels) {
 					gridStep = nextGridStep;
 					gridStepInPixels = nextGridStepInPixels;
 				} else {
 					gridStepFound = true;
+					if (gridStep === 0) {
+						gridStep = nextGridStep;
+						gridStepInPixels = nextGridStepInPixels;
+					}
 					break;
 				}
 			}
 
-			if (!gridStepFound) {
-				digitPos++;
-				continue;
-			}
+			if (!gridStepFound) digitPos++
 
-			gridStart = Number(fromStr.slice(0, digitPos)) * multiplier * 10 + Number(fromStr[digitPos] || 0) * multiplier;
-			gridEnd = Number(toStr.slice(0, digitPos)) * multiplier * 10 + Number(toStr[digitPos] || 0) * multiplier;
-			break;
 		}
+
+		var gridStart = Math.floor(from / gridStep) * gridStep;
+		var gridEnd = Math.floor(to / gridStep) * gridStep;
+
 		return {
 			start: gridStart,
 			end: gridEnd,

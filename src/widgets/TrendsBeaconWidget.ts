@@ -8,6 +8,7 @@ import MeshBasicMaterial = THREE.MeshBasicMaterial;
 import Vector3 = THREE.Vector3;
 import {TrendWidget, TrendsWidget} from "./TrendsWidget";
 import {ITrendOptions} from "../Trend";
+import {TrendAnimationState} from "../TrendsAnimationManager";
 
 /**
  * widget adds blinking beacon on trends end
@@ -36,7 +37,6 @@ class TrendBeacon extends TrendWidget {
 		if (this.animated) {
 			this.animate();
 		}
-		this.onTrendChange();
 	}
 
 	getObject3D() {
@@ -88,31 +88,6 @@ class TrendBeacon extends TrendWidget {
 	
 	}
 
-	onTrendChange() {
-		let object = this.mesh;
-		let trendData = this.trend.getData();
-		var lastItem = trendData[trendData.length - 1];
-		var position = this.chartState.getPointOnChart(lastItem.xVal, lastItem.yVal);
-
-		var animation = this.chartState.data.animations;
-
-		if (!animation.enabled) {
-			object.position.set(position.x, position.y, 0);
-			return
-		}
-
-		TweenLite.to(
-			object.position,
-			animation.trendChangeSpeed,
-			{
-				x: position.x,
-				y: position.y,
-				ease: animation.trendChangeEase
-			}
-		)
-
-	}
-
 	private static createTexture() {
 		var h = 32, w = 32;
 		return Utils.createTexture(h, w, (ctx: CanvasRenderingContext2D) => {
@@ -121,5 +96,18 @@ class TrendBeacon extends TrendWidget {
 			ctx.fillStyle = 'white';
 			ctx.fill();
 		});
+	}
+
+	protected onTrendAnimate(animationState: TrendAnimationState) {
+		// set new widget position
+		var lastInd = this.trend.getData().length - 1;
+		var newX = animationState.current['x' + lastInd];
+		var newY = animationState.current['y' + lastInd];
+		if (newX !== void 0) {
+			this.mesh.position.x = newX;
+		}
+		if (newY !== void 0) {
+			this.mesh.position.y = newY;
+		}
 	}
 }
