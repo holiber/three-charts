@@ -5,7 +5,7 @@ import {Utils} from './Utils';
 import Vector3 = THREE.Vector3;
 import {IChartWidgetOptions, ChartWidget} from "./Widget";
 import {Trends, ITrendsOptions} from "./Trends";
-import {IChartEvent, ScrollStopEvent, ScrollEvent} from "./Events";
+import {IChartEvent} from "./Events";
 import {TrendsAnimationManager} from "./TrendsAnimationManager";
 
 
@@ -21,7 +21,8 @@ interface IRecalculatedStateResult {
  */
 interface IChartStateComputedData {
 	trends?: {
-		maxX: number
+		maxXVal: number,
+		minXVal: number
 	}
 }
 
@@ -82,6 +83,16 @@ export class ChartState {
 
 	constructor(initialState: IChartState) {
 		this.ee = new EE();
+
+		if (!initialState.$el) {
+			Utils.error('$el must be set');
+		}
+
+		// calculate chart size
+		let style = getComputedStyle(initialState.$el);
+		initialState.width = parseInt(style.width);
+		initialState.height = parseInt(style.height);
+
 		this.trends = new Trends(this, initialState);
 		initialState.trends = this.trends.calculatedOptions;
 		this.setState(initialState);
@@ -114,6 +125,9 @@ export class ChartState {
 
 	onScroll(cb: (scrollOptions: {deltaX: number}) => void) {
 		this.ee.on('scroll', cb);
+		return () => {
+			this.ee.off('scroll', cb);
+		}
 	}
 
 	onZoom(cb: (changedProps: IChartState) => void) {
@@ -161,18 +175,6 @@ export class ChartState {
 		var patch: IChartState = {};
 		var eventsToEmit: IChartEvent[] = [];
 
-		if (!data.$el) {
-			Utils.error('$el must be set');
-		}
-
-		// recalculate chart size
-		var needInitChartSize = changedProps.$el && (!data.width || !data.height);
-		if (needInitChartSize) {
-			let style = getComputedStyle(changedProps.$el);
-			patch.width = parseInt(style.width);
-			patch.height = parseInt(style.height);
-		}
-
 		// recalculate widgets
 		if (changedProps.widgets || !data.widgets) {
 			patch.widgets = {};
@@ -198,7 +200,7 @@ export class ChartState {
 
 		// recalculate axis "from" and "to" for dynamics AXIS_RANGE_TYPE
 		var needToRecalculateAxis = (
-			data.yAxis.range.type === AXIS_RANGE_TYPE.RELATIVE_END &&
+			(data.yAxis.range.type === AXIS_RANGE_TYPE.RELATIVE_END || data.yAxis.range.type === AXIS_RANGE_TYPE.AUTO) &&
 			(scrollChanged || changedProps.trends || changedProps.yAxis)
 		);
 		if (needToRecalculateAxis){
@@ -220,7 +222,8 @@ export class ChartState {
 		var computedData: IChartStateComputedData = {};
 		if (computeAll || changedProps.trends && this.trends) {
 			computedData.trends = {
-				maxX: this.trends.getEndXVal()
+				maxXVal: this.trends.getEndXVal(),
+				minXVal: this.trends.getStartXVal()
 			}
 		}
 		return computedData;
@@ -292,31 +295,65 @@ export class ChartState {
 			this.ee.emit('trendChange', trendName, changedTrends[trendName], newData);
 		}
 	}
-	
+
+
 	private recalculateYAxis(changedAxisOptions: IAxisOptions): IAxisOptions {
+		// TODO: make tests
 		var trends = this.trends;
 		if (!trends) return null;
-		var axisOptions = this.data.yAxis;
+		var state = this.data;
+		var axisOptions = state.yAxis;
 		axisOptions = Utils.deepMerge(axisOptions, changedAxisOptions || {} as IAxisOptions);
-		var fromValue = this.getScreenLeftVal();
-		var toValue = this.getScreenRightVal();
-		var maxY = trends.getMaxYVal(fromValue, toValue);
-		var minY = trends.getMinYVal(fromValue, toValue);
+		var xFromValue = this.getScreenLeftVal();
+		var xToValue = this.getScreenRightVal();
+		var xRangeLength = xToValue - xFromValue;
+		var trendsEndXVal = trends.getEndXVal();
+		var trendsStartXVal = trends.getStartXVal();
 
-		if (axisOptions.range.from == minY && axisOptions.range.to == maxY) {
-			return null;
+		// check situation when chart was scrolled behind trends end or before trends start
+		if (xToValue > trendsEndXVal) {
+			xToValue = trendsEndXVal;
+			xFromValue = xToValue - xRangeLength;
+		} else if (xFromValue < trendsStartXVal) {
+			xFromValue = trendsStartXVal;
+			xToValue = xFromValue + xRangeLength;
 		}
-		var padding = this.data.yAxis.range.padding;
-		axisOptions.range.from = minY// - this.ge;
-		axisOptions.range.to = maxY;
+
+		var padding = state.yAxis.range.padding;
+		var maxY = trends.getMaxYVal(xFromValue, xToValue);
+		var minY = trends.getMinYVal(xFromValue, xToValue);
+		var trendLastY = trends.getMaxYVal(trendsEndXVal, trendsEndXVal);
+
+		if (state.yAxis.range.type == AXIS_RANGE_TYPE.RELATIVE_END) {
+			if (trendLastY > maxY) maxY = trendLastY;
+			if (trendLastY < minY) minY = trendLastY;
+		}
+
+		if (isNaN(maxY) || isNaN(minY) || maxY == minY) return null;
+
+		var maxScreenY = Math.round(this.getScreenYByValue(maxY));
+		var minScreenY = Math.round(this.getScreenYByValue(minY));
+
+		var needToZoom = (
+			maxScreenY > state.height ||
+			maxScreenY < state.height - padding.end ||
+			minScreenY < 0 || minScreenY > padding.start
+		);
+
+		if (!needToZoom) return null;
+
+		var rangeLength = maxY - minY;
+		var paddingTopInPercents = padding.end / state.height;
+		var paddingBottomInPercents = padding.start / state.height;
+
+		axisOptions.range.to = maxY + paddingTopInPercents * rangeLength;
+		axisOptions.range.from = minY - paddingBottomInPercents * rangeLength;
 		return axisOptions;
 	}
 
 	zoom(zoomValue: number) {
 		var {from, to} = this.data.xAxis.range;
 		var rangeLength = to - from;
-		var zoomLength = rangeLength * zoomValue;
-		var zoomDiff = zoomLength - rangeLength;
 		var middleScreenValue = this.getValueByScreenX(this.data.width / 2);
 		var leftScreenValue = this.getValueByScreenX(0);
 		var rightScreenValue = this.getValueByScreenX(this.data.width);
@@ -327,37 +364,116 @@ export class ChartState {
 		);
 	}
 
+	/**
+	 *  returns offset in pixels from xAxis.range.from to xVal
+	 */
 	getPointOnXAxis(xVal: number): number {
 		var w = this.data.width;
 		var {from, to} = this.data.xAxis.range;
 		return w * ((xVal - from) / (to - from));
 	}
 
+	/**
+	 *  returns offset in pixels from yAxis.range.from to yVal
+	 */
 	getPointOnYAxis(yVal: number): number {
 		var h = this.data.height;
 		var {from, to} = this.data.yAxis.range;
 		return h * ((yVal - from) / (to - from));
 	}
 
-	getPxByValueOnXAxis(xVal: number) {
+	/**
+	 * returns value by offset in pixels from xAxis.range.from
+	 */
+	getValueOnXAxis(x: number): number {
+		var {from} = this.data.xAxis.range;
+		return from + this.pxToValueByXAxis(x);
+	}
+
+
+	/**
+	 *  convert value to pixels by using settings from xAxis.range
+	 */
+	valueToPxByXAxis(xVal: number) {
 		var w = this.data.width;
 		var {from, to} = this.data.xAxis.range;
 		return xVal * (w / (to - from));
 	}
 
 
+	/**
+	 *  convert value to pixels by using settings from yAxis.range
+	 */
+	valueToPxByYAxis(y: number) {
+		var h = this.data.height;
+		var {from, to} = this.data.yAxis.range;
+		return y * ((to - from) / h );
+	}
+
+	/**
+	 *  convert pixels to value by using settings from xAxis.range
+	 */
+	pxToValueByXAxis(xVal: number) {
+		var w = this.data.width;
+		var {from, to} = this.data.xAxis.range;
+		return xVal * ((to - from) / w);
+	}
+
+	/**
+	 *  returns x value by screen x coordinate
+	 */
 	getValueByScreenX(x: number): number {
 		var w = this.data.width;
 		var {from, to, scroll} = this.data.xAxis.range;
 		var pxCoast = (to - from) / w;
-		return from + pxCoast * x + scroll * pxCoast;
+		return from + pxCoast * (x + scroll);
 	}
 
+
+	/**
+	 *  returns y value by screen y coordinate
+	 */
 	getValueByScreenY(y: number): number {
 		var h = this.data.height;
 		var {from, to} = this.data.yAxis.range;
 		var pxCoast = (to - from) / h;
 		return from + pxCoast * y;
+	}
+
+
+	/**
+	 *  returns screen x value by screen y coordinate
+	 */
+	getScreenXByValue(xVal: number): number {
+		var w = this.data.width;
+		var {from, to, scroll} = this.data.xAxis.range;
+		var valCoast =  w / (to - from);
+		return valCoast * (xVal - from) - scroll;
+	}
+
+	/**
+	 *  returns screen y value by screen y coordinate
+	 */
+	getScreenYByValue(yVal: number): number {
+		var h = this.data.height;
+		var {from, to} = this.data.yAxis.range;
+		var valCoast = h / (to - from);
+		return valCoast * (yVal - from);
+	}
+
+
+	/**
+	 * returns screen x coordinate by offset in pixels from xAxis.range.from value
+	 */
+	getScreenXByPoint(xVal: number): number {
+		return this.getScreenXByValue(this.getValueOnXAxis(xVal));
+	}
+
+	/**
+	 * returns offset in pixels from xAxis.range.from value by screen x coordinate
+	 */
+	getPointByScreenX(screenX: number): number {
+		return this.getPointOnXAxis(this.getValueByScreenX(screenX));
 	}
 
 	getPxCoast() {
@@ -371,9 +487,11 @@ export class ChartState {
 		return new Vector3(this.getPointOnXAxis(xVal), this.getPointOnYAxis(yVal), 0);
 	}
 
+
 	getScreenLeftVal() {
 		return this.getValueByScreenX(0);
 	}
+
 
 	getScreenRightVal() {
 		return this.getValueByScreenX(this.data.width);
@@ -386,7 +504,7 @@ export class ChartState {
 
 	scrollToEnd() {
 		var rightPadding = this.data.xAxis.range.padding.end;
-		var scrollPos = -this.getPointOnXAxis(this.data.computedData.trends.maxX) + this.data.width - rightPadding;
+		var scrollPos = -this.getPointOnXAxis(this.data.computedData.trends.maxXVal) + this.data.width - rightPadding;
 		this.setState({xAxis: {range: {scroll: scrollPos}}})
 	}
 

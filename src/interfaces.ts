@@ -44,3 +44,7 @@ export interface IAnimationsOptions {
 	zoomSpeed?: number,
 	zoomEase?: TEase,
 }
+
+export interface PromiseExecutor<T> {
+	(resolve: (data: T) => void, reject: (data: T) => void): void;
+}

@@ -11,7 +11,7 @@ import {TrendAnimationState} from "../TrendsAnimationManager";
 
 interface ITrendWidgetClass<TrendWidgetType> {
 	new (chartState: ChartState, trendName: string): TrendWidgetType;
-	widgetIsEnabled(trendOptions: ITrendOptions): boolean;
+	widgetIsEnabled(trendOptions: ITrendOptions, chartState: ChartState): boolean;
 }
 
 /**
@@ -21,13 +21,11 @@ export abstract class TrendsWidget<TrendWidgetType extends TrendWidget> extends 
 	protected abstract getTrendWidgetClass(): ITrendWidgetClass<TrendWidgetType>;
 	protected object3D: Object3D;
 	protected widgets: {[trendName: string]: TrendWidgetType} = {};
-	protected scrollAnimation: TweenLite;
 
 	constructor (state: ChartState) {
 		super(state);
 		this.object3D = new Object3D();
 		this.onTrendsChange();
-		this.onScrollChange();
 	}
 
 	protected bindEvents() {
@@ -36,9 +34,6 @@ export abstract class TrendsWidget<TrendWidgetType extends TrendWidget> extends 
 		state.onTrendChange((trendName: string, changedOptions: ITrendOptions, newData: ITrendData) => {
 			this.onTrendChange(trendName, changedOptions, newData)
 		});
-		state.onXAxisChange((changedOptions: IAxisOptions) => {
-			if (changedOptions.range && changedOptions.range.scroll) this.onScrollChange();
-		});
 	}
 
 	protected onTrendsChange() {
@@ -46,7 +41,7 @@ export abstract class TrendsWidget<TrendWidgetType extends TrendWidget> extends 
 		var TrendWidgetClass = this.getTrendWidgetClass();
 		for (let trendName in trendsOptions) {
 			let trendOptions = trendsOptions[trendName];
-			if (TrendWidgetClass.widgetIsEnabled(trendOptions) && !this.widgets[trendName]) {
+			if (TrendWidgetClass.widgetIsEnabled(trendOptions, this.chartState) && !this.widgets[trendName]) {
 				this.createTrendWidget(trendName);
 			} else if (!trendOptions.enabled && this.widgets[trendName]){
 				this.destroyTrendWidget(trendName);
@@ -59,11 +54,11 @@ export abstract class TrendsWidget<TrendWidgetType extends TrendWidget> extends 
 		var widget = this.widgets[trendName];
 		if (!widget) return;
 		widget.onTrendChange(changedOptions);
-		if (newData) widget.appendData(newData);
-	}
-
-	private onScrollChange() {
-
+		if (newData) {
+			var data = this.chartState.getTrend(trendName).getData();
+			var isAppend = (!data.length || data[0].xVal < newData[0].xVal);
+			isAppend ? widget.appendData(newData) : widget.prependData(newData);
+		}
 	}
 
 	getObject3D(): Object3D {
@@ -100,12 +95,14 @@ export abstract class TrendWidget {
 			trendName,
 			(animationState: TrendAnimationState) => this.onTrendAnimate(animationState)
 		));
+		this.bindEvents();
 	}
 	abstract getObject3D(): Object3D;
-	static widgetIsEnabled(trendOptions: ITrendOptions) {
+	static widgetIsEnabled(trendOptions: ITrendOptions, chartState: ChartState) {
 		return trendOptions.enabled;
 	}
 	appendData(newData: ITrendData) {};
+	prependData(newData: ITrendData) {};
 	onTrendChange(changedOptions?: ITrendOptions) {}
 	onDestroy() {
 		for (let unsubscriber of this.unsubscribers) {
@@ -113,6 +110,10 @@ export abstract class TrendWidget {
 		}
 	}
 	protected onTrendAnimate(animationState: TrendAnimationState) {
+	}
+	protected bindEvents() {};
+	protected bindEvent(unsubscriber: Function) {
+		this.unsubscribers.push(unsubscriber);
 	}
 
 }

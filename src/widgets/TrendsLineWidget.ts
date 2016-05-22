@@ -52,23 +52,31 @@ class TrendLine extends TrendWidget {
 		var vertices = geometry.vertices;
 		var {current} = animationState;
 		var lastInd = trendData.length - 1;
-		for (var vertexParam in current) {
-			let firstChar = vertexParam.charAt(0);
+		for (var vertexValue in current) {
+			let firstChar = vertexValue.charAt(0);
 			if (firstChar !== 'x' && firstChar !== 'y') continue;
 			let isX = firstChar == 'x';
-			let ind = Number(vertexParam.substr(1));
+			let ind = Number(vertexValue.substr(1));
 			if (ind > lastInd) continue;
-			let value = current[vertexParam];
+			let point = animationState.points[ind];
+			let prevPoint = point.getPrev();
+			let nextPoint = point.getNext();
+			let value = current[vertexValue];
 			let currentVertex = vertices[ind * 2];
-			let prevVertex = vertices[ind * 2 - 1];
 			if (isX) {
 				currentVertex.setX(value);
-				prevVertex && prevVertex.setX(value);
-				if (ind == lastInd) vertices[ind * 2 + 1].setX(value);
+				if (nextPoint) {
+					vertices[ind * 2 + 1].setX(nextPoint.getCurrentVec().x);
+				} else {
+					vertices[ind * 2 + 1].setX(value);
+				}
 			} else {
 				currentVertex.setY(value);
-				prevVertex && prevVertex.setY(value);
-				if (ind == lastInd) vertices[ind * 2 + 1].setY(value);
+				if (nextPoint) {
+					vertices[ind * 2 + 1].setY(nextPoint.getCurrentVec().y);
+				} else {
+					vertices[ind * 2 + 1].setY(value);
+				}
 			}
 		}
 		geometry.verticesNeedUpdate = true;
@@ -77,14 +85,16 @@ class TrendLine extends TrendWidget {
 	private initLine() {
 		var geometry = new Geometry();
 		var animationState = this.chartState.trendsAnimationManager.getState(this.trendName);
-		var trendData = this.trend.getData();
 		var points = animationState.points;
-		for (var vertInd = 0; vertInd < points.length; vertInd++) {
-			let vert1 = points[vertInd];
-			let vert2 = points[vertInd + 1];
-			if (!vert1 || !vert2) break;
-			if (vertInd == trendData.length - 1) vert2 = vert1.clone();
-			geometry.vertices.push(vert1.clone(), vert2.clone());
+
+		for (let pointId in points) {
+			let point = points[pointId];
+			let nextPoint = points[Number(pointId) + 1];
+			if (!nextPoint) break;
+			let vert1 = point.vector.clone();
+			let vert2 = nextPoint.vector.clone();
+			if (!nextPoint.item) vert2 = vert1.clone();
+			geometry.vertices.push(vert1, vert2);
 
 		}
 

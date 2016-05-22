@@ -8,7 +8,7 @@ import MeshBasicMaterial = THREE.MeshBasicMaterial;
 import Vector3 = THREE.Vector3;
 import {TrendWidget, TrendsWidget} from "./TrendsWidget";
 import {ITrendOptions} from "../Trend";
-import {TrendAnimationState} from "../TrendsAnimationManager";
+import {TrendAnimationState, TrendPoint} from "../TrendsAnimationManager";
 
 /**
  * widget adds blinking beacon on trends end
@@ -24,6 +24,7 @@ export class TrendsBeaconWidget extends TrendsWidget<TrendBeacon> {
 class TrendBeacon extends TrendWidget {
 	private mesh: Mesh;
 	private animated: boolean;
+	private point: TrendPoint;
 
 	static widgetIsEnabled(trendOptions: ITrendOptions) {
 		return trendOptions.enabled && trendOptions.hasBeacon;
@@ -41,6 +42,9 @@ class TrendBeacon extends TrendWidget {
 
 	getObject3D() {
 		return this.mesh;
+	}
+	protected bindEvents() {
+		this.bindEvent(this.chartState.onScroll(() => this.updatePosition()));
 	}
 
 	private initObject() {
@@ -100,14 +104,17 @@ class TrendBeacon extends TrendWidget {
 
 	protected onTrendAnimate(animationState: TrendAnimationState) {
 		// set new widget position
-		var lastInd = this.trend.getData().length - 1;
-		var newX = animationState.current['x' + lastInd];
-		var newY = animationState.current['y' + lastInd];
-		if (newX !== void 0) {
-			this.mesh.position.x = newX;
-		}
-		if (newY !== void 0) {
-			this.mesh.position.y = newY;
-		}
+		this.point = animationState.getEndPoint();
+		this.updatePosition();
+	}
+
+	private updatePosition() {
+		var endPointVector = this.point.getCurrentVec();
+		var screenWidth = this.chartState.data.width;
+		var x = endPointVector.x;
+		var screenX = this.chartState.getScreenXByPoint(endPointVector.x);
+		if (screenX < 0) x = this.chartState.getPointByScreenX(0);
+		if (screenX > screenWidth) x = this.chartState.getPointByScreenX(screenWidth);
+		this.mesh.position.set(x, endPointVector.y, 0);
 	}
 }

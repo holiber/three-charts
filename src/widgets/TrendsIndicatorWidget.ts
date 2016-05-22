@@ -10,10 +10,10 @@ import {TrendWidget, TrendsWidget} from "./TrendsWidget";
 import {ITrendOptions} from "../Trend";
 import PlaneGeometry = THREE.PlaneGeometry;
 import Color = THREE.Color;
-import {TrendAnimationState} from "../TrendsAnimationManager";
+import {TrendAnimationState, TrendPoint} from "../TrendsAnimationManager";
 
-const CANVAS_WIDTH = 80;
-const CANVAS_HEIGHT = 30;
+const CANVAS_WIDTH = 128;
+const CANVAS_HEIGHT = 64;
 
 export class TrendsIndicatorWidget extends TrendsWidget<TrendIndicator> {
 	static widgetName = 'trendsIndicator';
@@ -24,6 +24,7 @@ export class TrendsIndicatorWidget extends TrendsWidget<TrendIndicator> {
 
 class TrendIndicator extends TrendWidget {
 	private mesh: Mesh;
+	private point: TrendPoint;
 
 	static widgetIsEnabled(trendOptions: ITrendOptions) {
 		return trendOptions.enabled && trendOptions.hasIndicator;
@@ -39,18 +40,32 @@ class TrendIndicator extends TrendWidget {
 		return this.mesh;
 	}
 
+	onTrendChange() {
+		// update canvas value
+		let trendData = this.trend.getData();
+		var lastItem = trendData[trendData.length - 1];
+		var texture = (this.mesh.material as MeshBasicMaterial).map;
+		var ctx = texture.image.getContext('2d');
+		ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+		// uncomment to preview indicator rect
+		// ctx.fillStyle = "rgba(255,255,255,0.5)";
+		// ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+		ctx.fillText(lastItem.yVal.toFixed(4), 0, 15);
+		texture.needsUpdate = true;
+	}
+	
+	protected bindEvents() {
+		this.bindEvent(this.chartState.onScroll(() => this.updatePosition()));
+	}
+
 	private initObject() {
 		var color = new Color(this.trend.getOptions().lineColor);
-		var texture = Utils.createTexture(CANVAS_WIDTH, CANVAS_HEIGHT, (ctx) => {
+		var texture = Utils.createPixelPerfectTexture(CANVAS_WIDTH, CANVAS_HEIGHT, (ctx) => {
 			ctx.beginPath();
 			ctx.font = "15px Arial";
 			ctx.fillStyle = color.getStyle();
 			ctx.strokeStyle = "rgba(255,255,255,0.95)";
-			ctx.fillText('1.5673', 0, 10);
 		});
-
-		texture.magFilter = THREE.NearestFilter;
-		texture.minFilter = THREE.NearestFilter;
 
 		var material = new THREE.MeshBasicMaterial( {map: texture, side: THREE.FrontSide} );
 		material.transparent = true;
@@ -62,29 +77,25 @@ class TrendIndicator extends TrendWidget {
 
 	}
 
-	onTrendChange() {
-		// update canvas value
-		let trendData = this.trend.getData();
-		var lastItem = trendData[trendData.length - 1];
-		var texture = (this.mesh.material as MeshBasicMaterial).map;
-		var ctx = texture.image.getContext('2d');
-		ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-		ctx.fillText(lastItem.yVal.toFixed(4), 0, 15);
-		texture.needsUpdate = true;
-	}
-
 	protected onTrendAnimate(animationState: TrendAnimationState) {
 		// set new widget position
-		var lastInd = this.trend.getData().length - 1;
-		var newX = animationState.current['x' + lastInd];
-		var newY = animationState.current['y' + lastInd];
-		if (newX !== void 0) {
-			this.mesh.position.x = newX + CANVAS_WIDTH / 2;
-		}
-		if (newY !== void 0) {
-			this.mesh.position.y = newY + CANVAS_HEIGHT / 2 + 10;;
-		}
+		this.point = animationState.getEndPoint();
+		this.updatePosition();
 	}
 
+	private updatePosition() {
+		var endPointVector = this.point.getCurrentVec();
+		var screenWidth = this.chartState.data.width;
+		var x = endPointVector.x;
+		var y = endPointVector.y;
+		var screenX = this.chartState.getScreenXByPoint(endPointVector.x);
+		if (screenX < 0 || screenX > screenWidth) {
+			if (screenX < 0) x = this.chartState.getPointByScreenX(0) + 20;
+			if (screenX > screenWidth) x = this.chartState.getPointByScreenX(screenWidth) - CANVAS_WIDTH / 2 - 10;
+			y -= 25;
+		}
+		this.mesh.position.set(x + CANVAS_WIDTH / 2, y + CANVAS_HEIGHT / 2  - 30, 0);
+	}
 
+	
 }

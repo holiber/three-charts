@@ -40,6 +40,8 @@ export class GridWidget extends ChartWidget{
 	private gridSizeH: number;
 	private gridSizeV: number;
 	private linesLastUpdateTime = 0;
+	private linesXAnimation: TweenLite;
+	private linesYAnimation: TweenLite;
 
 	constructor (chartState: ChartState) {
 		super(chartState);
@@ -97,23 +99,41 @@ export class GridWidget extends ChartWidget{
 		this.chartState.onScroll(() => {
 			this.onScrollChange();
 		});
-		this.chartState.onScrollStop(() => this.updateLines());
+		this.chartState.onScrollStop(() => this.recalculateLines());
 		this.chartState.onZoom(() => this.onZoom());
 	}
 
 	private onScrollChange() {
 		if (Date.now() - this.linesLastUpdateTime >= UPDATE_LINES_INTERVAL) {
-			this.updateLines();
+			this.recalculateLines();
 		}
 	}
 
 	private onZoom() {
-		this.updateLines();
+		// var newLineValues = this.getCurrentLinesValues();
+		// var animations = this.chartState.data.animations;
+		// var time = animations.enabled ? animations.zoomSpeed : 0;
+		// if (this.linesXAnimation) this.linesXAnimation.pause();
+		// if (this.linesYAnimation) this.linesYAnimation.pause();
+		// this.linesXAnimation = TweenLite.to(this.linesValues.x, time, newLineValues.x);
+		// this.linesYAnimation = TweenLite.to(this.linesValues.y, time, newLineValues.y);
+		// this.linesXAnimation.eventCallback('onUpdate', () => {
+		// 	this.updateLinesSegments();
+		// });
+		// this.linesXAnimation.eventCallback('onComplete', () => {
+		// 	this.recalculateLines();
+		// });
+		this.recalculateLines();
 	}
 
-	private updateLines() {
+	private recalculateLines() {
 		this.updateGridParams();
 		this.linesValues = this.getCurrentLinesValues();
+		this.updateLinesSegments();
+		this.linesLastUpdateTime = Date.now();
+	}
+
+	private updateLinesSegments() {
 		var horizontalLines = this.linesValues.x;
 		var verticalLines = this.linesValues.y;
 		var geometry = this.lineSegments.geometry as Geometry;
@@ -130,7 +150,6 @@ export class GridWidget extends ChartWidget{
 			geometry.vertices[verticalValuesOffset + i * 2 + 1].set(lineSegment[1].x, lineSegment[1].y, 0);
 		}
 		geometry.verticesNeedUpdate = true;
-		this.linesLastUpdateTime = Date.now();
 	}
 
 	static getGridParamsForAxis(axisOptions: IAxisOptions, axisWidth: number): IGridParamsForAxis {

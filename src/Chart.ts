@@ -13,13 +13,14 @@ import Object3D = THREE.Object3D;
 import {ChartState, IChartState} from "./State";
 import {ChartWidget, IChartWidgetConstructor} from "./Widget";
 import {Utils} from "./Utils";
+import {Screen} from "./Screen";
 import {TrendsBeaconWidget} from "./widgets/TrendsBeaconWidget";
 import {AxisWidget} from "./widgets/AxisWidget";
 import {GridWidget} from "./widgets/GridWidget";
 import {TrendsGradientWidget} from "./widgets/TrendsGradientWidget";
-import {Screen} from "./Screen";
+import {TrendsLoadingWidget} from "./widgets/TrendsLoadingWidget";
 
-export const MAX_DATA_LENGTH = 1000;
+export const MAX_DATA_LENGTH = 1280;
 
 export class Chart {
 	state: ChartState;
@@ -126,8 +127,8 @@ export class Chart {
 	private autoscroll() {
 		var state = this.state;
 		if (state.data.cursor.dragMode) return;
-		var oldTrendsMaxX = state.data.prevState.computedData.trends.maxX;
-		var trendsMaxXDelta = state.data.computedData.trends.maxX - oldTrendsMaxX;
+		var oldTrendsMaxX = state.data.prevState.computedData.trends.maxXVal;
+		var trendsMaxXDelta = state.data.computedData.trends.maxXVal - oldTrendsMaxX;
 		if (trendsMaxXDelta > 0) {
 			var maxVisibleX = this.state.getScreenRightVal();
 			var paddingRightX = this.state.getPaddingRight();
@@ -135,7 +136,7 @@ export class Chart {
 			if (oldTrendsMaxX < paddingRightX || oldTrendsMaxX > maxVisibleX) {
 				return;
 			}
-			var scrollDelta = state.getPxByValueOnXAxis(trendsMaxXDelta);
+			var scrollDelta = state.valueToPxByXAxis(trendsMaxXDelta);
 			this.setState({xAxis: {range: {scroll: currentScroll + scrollDelta}}});
 		}
 	}
@@ -144,7 +145,7 @@ export class Chart {
 		// var tendsXMax = this.state.data.computedData.trends.maxX;
 		// var paddingRightX = this.state.getPaddingRight();
 		// if (tendsXMax < paddingRightX) {
-		// 	//this.state.scrollToEnd();
+		// 	this.state.scrollToEnd();
 		// }
 	}
 
@@ -165,19 +166,7 @@ export class Chart {
 	private onMouseWheel(ev: MouseWheelEvent) {
 		ev.stopPropagation();
 		ev.preventDefault();
-		if (ev.wheelDeltaY > 0) {
-			this.state.zoom(1.01);
-			//this.state.zoom(2);
-		} else {
-			this.state.zoom(0.99);
-			//this.state.zoom(0.5);
-		}
-
-		// console.log('onZoom', ev.wheelDeltaY);
-		// //if (Math.abs(ev.wheelDeltaY) < 50) return;
-		// this.zoom(ev.wheelDeltaY)
-		// //ev.wheelDeltaY > 0 ? this.zoom(ev.wheelDeltaY) : this.zoom(ev.wheelDeltaY);
-		// console.log(ev.wheelDeltaY)
+		this.state.zoom(1 + ev.wheelDeltaY * 0.0001);
 	}
 
 	private onTouchMove(ev: TouchEvent) {
@@ -213,3 +202,4 @@ Chart.installWidget(GridWidget);
 Chart.installWidget(TrendsBeaconWidget);
 Chart.installWidget(TrendsIndicatorWidget);
 Chart.installWidget(TrendsGradientWidget);
+Chart.installWidget(TrendsLoadingWidget);

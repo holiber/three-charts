@@ -1,5 +1,5 @@
 
-import {Chart, AXIS_RANGE_TYPE} from './src/Chart';
+import {Chart, AXIS_RANGE_TYPE} from '../src/Chart';
 
 var chart: Chart;
 
@@ -10,7 +10,7 @@ class DataSourse {
 		let sec = 0;
 		let val = 70;
 
-		while (sec < 20) {
+		while (sec < 50) {
 			this.data.push(val);
 			val += Math.random() * 14 - 7;
 			sec++;
@@ -34,7 +34,7 @@ class DataSourse {
 
 window.onload = function () {
 
-	initListeners();
+	//initListeners();
 
 	var dsMain = new DataSourse();
 	var dsRed = new DataSourse();
@@ -46,7 +46,7 @@ window.onload = function () {
 		// 	range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 100}
 		// },
 		xAxis: {
-			range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 30},
+			range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 100},
 			// range: {
 			// 	from: 80,
 			// 	to: 90
@@ -144,19 +144,19 @@ window.onload = function () {
 };
 
 
-function initListeners() {
-	var $checkboxMaintrend = document.querySelector('input[name="maintrend"]') as HTMLInputElement;
-	$checkboxMaintrend.addEventListener('change', () => {
-		chart.setState({trends: {main: {enabled: $checkboxMaintrend.checked}}});
-	});
-	var $checkboxRedtrend = document.querySelector('input[name="redtrend"]') as HTMLInputElement;
-	$checkboxRedtrend.addEventListener('change', () => {
-		chart.setState({trends: {red: {enabled: $checkboxRedtrend.checked}}});
-	});
-	var $checkboxBluetrend = document.querySelector('input[name="bluetrend"]') as HTMLInputElement;
-	$checkboxBluetrend.addEventListener('change', () => {
-		chart.setState({trends: {blue: {enabled: $checkboxBluetrend.checked}}});
-	});
-}
+// function initListeners() {
+// 	var $checkboxMaintrend = document.querySelector('input[name="maintrend"]') as HTMLInputElement;
+// 	$checkboxMaintrend.addEventListener('change', () => {
+// 		chart.setState({trends: {main: {enabled: $checkboxMaintrend.checked}}});
+// 	});
+// 	var $checkboxRedtrend = document.querySelector('input[name="redtrend"]') as HTMLInputElement;
+// 	$checkboxRedtrend.addEventListener('change', () => {
+// 		chart.setState({trends: {red: {enabled: $checkboxRedtrend.checked}}});
+// 	});
+// 	var $checkboxBluetrend = document.querySelector('input[name="bluetrend"]') as HTMLInputElement;
+// 	$checkboxBluetrend.addEventListener('change', () => {
+// 		chart.setState({trends: {blue: {enabled: $checkboxBluetrend.checked}}});
+// 	});
+// }
 
 

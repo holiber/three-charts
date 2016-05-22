@@ -67,6 +67,7 @@ export class Trends {
 			var trendYValues = trendData.map((dataItem) => dataItem.yVal);
 			result = compareFn(result, ...trendYValues);
 		}
+		if (result == Infinity || result == -Infinity) result = NaN;
 		return result;
 	}
 

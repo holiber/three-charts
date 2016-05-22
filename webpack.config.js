@@ -1,7 +1,15 @@
+var CommonsPlugin = new require("webpack/lib/optimize/CommonsChunkPlugin");
+
 module.exports = {
-    entry: './demoApp.ts',
+    entry: {
+        'demoApp': './demoApp.ts',
+        'previewApp': './demo/previewApp.ts'
+    },
     output: {
-        filename: 'build/webpackbundle.js'
+        path: __dirname + '/build',
+        filename: '[name].js',
+        library: '[name]'
+        //filename: 'build/webpackbundle.js'
     },
     resolve: {
         // Add `.ts` and `.tsx` as a resolvable extension.
@@ -10,7 +18,17 @@ module.exports = {
     devtool: 'source-map',
     module: {
         loaders: [
-            { test: /\.ts$/, loader: 'ts-loader' }
+            {
+                test: /\.ts$/,
+                loader: 'ts-loader', //awesome-typescript-loader
+
+            }
         ]
-    }
-}
+    },
+
+    plugins: [
+        new CommonsPlugin({
+            name: "chart"
+        })
+    ]
+};

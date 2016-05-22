@@ -68,9 +68,23 @@ export class Utils {
 	}
 
 	/**
+	 * generate texture from canvas context with NearestFilter
+	 * @example
+	 * 	// create texture with rect
+	 *  var texture = Utils.createTexture(20, 20, (ctx) => {ctx.fillRect(0, 0, 10, 10)});
+	 */
+	static createPixelPerfectTexture(width: number, height: number, fn: (ctx: CanvasRenderingContext2D) => void ): Texture{
+		var texture = this.createTexture(width, height, fn);
+		texture.magFilter = THREE.NearestFilter;
+		texture.minFilter = THREE.NearestFilter;
+		return texture;
+	}
+
+	/**
 	 * throw error
 	 */
 	static error(msg: string) {
+		console.error('Chart error: ' + msg);
 		throw 'Chart: ' + msg;
 	}
 
@@ -79,6 +93,18 @@ export class Utils {
 	 */
 	static getUid(): TUid {
 		return this.currentId++;
+	}
+	
+	static eq(num1: number, num2: number) {
+		return Math.abs(num1 - num2) < 0.01
+	}
+	
+	static gte(num1: number, num2: number) {
+		return this.eq(num1, num2) || num1 > num2;
+	}
+
+	static lte(num1: number, num2: number) {
+		return this.eq(num1, num2) || num1 < num2;
 	}
 	
 }

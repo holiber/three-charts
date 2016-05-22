@@ -77,8 +77,8 @@ export class AxisWidget extends ChartWidget {
 		var texture = Utils.createTexture(canvasWidth, canvasHeight, (ctx) => {
 			ctx.beginPath();
 			ctx.font = "10px Arial";
-			ctx.fillStyle = "rgba(255,255,255,0.5)";
-			ctx.strokeStyle = "rgba(255,255,255,0.95)";
+			ctx.fillStyle = "rgba(255,255,255,0.3)";
+			ctx.strokeStyle = "rgba(255,255,255,0.1)";
 		});
 
 		texture.magFilter = THREE.NearestFilter;
@@ -96,7 +96,7 @@ export class AxisWidget extends ChartWidget {
 			axisMesh.position.set(canvasWidth / 2, canvasHeight / 2, 0);
 			this.axisXObject.add(axisMesh);
 		} else {
-			axisMesh.position.set(canvasWidth / 2, canvasHeight / 2, 0);
+			axisMesh.position.set(visibleWidth - canvasWidth / 2, canvasHeight / 2, 0);
 			this.axisYObject.add(axisMesh);
 		}
 
@@ -152,14 +152,23 @@ export class AxisWidget extends ChartWidget {
 		for (let val = startVal; val <= endVal; val += axisGridParams.step) {
 			if (isXAxis) {
 				let pxVal = this.chartState.getPointOnXAxis(val) - scrollX + visibleWidth;
-				ctx.moveTo(pxVal + 0.5, canvasHeight);
-				ctx.lineTo(pxVal + 0.5, canvasHeight - 5);
-				ctx.fillText(Number(val.toFixed(14)).toString(), pxVal - 5, canvasHeight - 10);
+				ctx.textAlign = "center";
+				// uncomment for dots
+				// ctx.moveTo(pxVal + 0.5, canvasHeight);
+				// ctx.lineTo(pxVal + 0.5, canvasHeight - 5);
+				ctx.fillText(Number(val.toFixed(14)).toString(), pxVal, canvasHeight - 10);
 			} else {
 				let pxVal = canvasHeight - this.chartState.getPointOnYAxis(val);
-				ctx.moveTo(0, pxVal + 0.5);
-				ctx.lineTo(5, pxVal + 0.5);
-				ctx.fillText(Number(val.toFixed(14)).toString(), 15 , pxVal + 3);
+				ctx.textAlign = "right";
+				// uncomment for dots
+				// ctx.moveTo(canvasWidth, pxVal + 0.5);
+				// ctx.lineTo(canvasWidth - 5, pxVal + 0.5);
+				ctx.fillText(Number(val.toFixed(14)).toString(), canvasWidth - 15 , pxVal + 3);
+
+				// uncomment for left-side axis
+				// ctx.moveTo(0, pxVal + 0.5);
+				// ctx.lineTo(5, pxVal + 0.5);
+				// ctx.fillText(Number(val.toFixed(14)).toString(), 15 , pxVal + 3);
 			}
 			ctx.stroke();
 		}
@@ -172,11 +181,16 @@ export class AxisWidget extends ChartWidget {
 	}
 
 	private onZoom(changedProps: IChartState) {
-		if (changedProps.xAxis) {
-			this.temporaryHideAxis(AXIS_ORIENTATION.H)
+		var currentXRange = this.chartState.data.xAxis.range;
+		var prevXRange = this.chartState.data.prevState.xAxis.range;
+		var xRangeLengthCanged = (currentXRange.to - currentXRange.from !== prevXRange.to - prevXRange.from);
+		if (xRangeLengthCanged) {
+			this.updateAxis(AXIS_ORIENTATION.H);
+			//this.temporaryHideAxis(AXIS_ORIENTATION.H)
 		}
 		if (changedProps.yAxis) {
-			this.temporaryHideAxis(AXIS_ORIENTATION.V)
+			this.updateAxis(AXIS_ORIENTATION.V);
+			//this.temporaryHideAxis(AXIS_ORIENTATION.V)
 		}
 	}
 
