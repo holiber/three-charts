@@ -91,6 +91,15 @@ export class Trend {
 		return filteredData;
 	}
 
+	getFirstItem(): ITrendItem {
+		return this.getOptions().data[0];
+	}
+	
+	getLastItem(): ITrendItem {
+		var data = this.getOptions().data;
+		return data[data.length - 1];
+	}
+
 	getOptions() {
 		return this.chartState.data.trends[this.name]
 	}
@@ -103,9 +112,17 @@ export class Trend {
 		}
 	}
 
+	onChange(cb: (changedOptions: ITrendOptions, newData: ITrendData) => void): Function {
+		this.ee.on('change', cb);
+		return () => {
+			this.ee.off('change', cb);
+		}
+	}
+
 	private bindEvents() {
 		this.chartState.onScrollStop(() => this.checkForPrependRequest());
 		this.chartState.onZoom(() => this.checkForPrependRequest());
+		this.chartState.onTrendChange((trendName, changedOptions, newData) => this.ee.emit('change', changedOptions, newData))
 	}
 
 	private checkForPrependRequest() {

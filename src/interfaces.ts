@@ -1,3 +1,6 @@
+
+
+
 /**
  * defines how axis range will be calculated
  * FIXED - directly use range.from and range.to value
@@ -5,10 +8,11 @@
  * RELATIVE_END - same as AUTO but trend end always present in range
  * ALL - automatically sets range.from and range.to by all values of opposite axis
  */
+import {IAxisMarkOptions} from "./AxisMarks";
 export enum AXIS_RANGE_TYPE {
 	FIXED,
 	RELATIVE_END,
-	AUTO, // TODO: AXIS_RANGE_TYPE.AUTO
+	AUTO,
 	ALL // TODO: AXIS_RANGE_TYPE.ALL
 }
 
@@ -17,6 +21,7 @@ export enum AXIS_RANGE_TYPE {
  */
 export declare type TEase = Ease | Linear;
 
+export enum AXIS_TYPE {X, Y}
 
 export interface IAxisRange {
 	type?: AXIS_RANGE_TYPE,
@@ -33,6 +38,7 @@ export interface IAxisOptions {
 	range: IAxisRange,
 	gridMinSize?: number,
 	autoScroll?: boolean,
+	marks?: IAxisMarkOptions[]
 }
 
 export interface IAnimationsOptions {

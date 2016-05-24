@@ -7,6 +7,8 @@ import {IChartWidgetOptions, ChartWidget} from "./Widget";
 import {Trends, ITrendsOptions} from "./Trends";
 import {IChartEvent} from "./Events";
 import {TrendsAnimationManager} from "./TrendsAnimationManager";
+import {AxisMarks} from "./AxisMarks";
+import {AXIS_TYPE} from "./interfaces";
 
 
 interface IRecalculatedStateResult {
@@ -56,16 +58,18 @@ export class ChartState {
 			range: {type: AXIS_RANGE_TYPE.ALL, from: 0, to: 0, scroll: 0, padding: {start: 0, end: 200}},
 			gridMinSize: 120,
 			autoScroll: true,
+			marks: []
 		},
 		yAxis: {
 			range: {type: AXIS_RANGE_TYPE.RELATIVE_END, from: 0, to: 0, padding: {start: 100, end: 100}},
-			gridMinSize: 60
+			gridMinSize: 60,
+			marks: []
 		},
 		animations: {
 			enabled: true,
 			trendChangeSpeed: 0.5,
 			trendChangeEase: void 0, //Linear.easeNone
-			zoomSpeed: 1,
+			zoomSpeed: 0.5,
 			zoomEase: void 0,//Linear.easeNone,
 			autoScrollSpeed: 1,
 			autoScrollEase: Linear.easeNone
@@ -79,6 +83,7 @@ export class ChartState {
 	};
 	trends: Trends;
 	trendsAnimationManager: TrendsAnimationManager;
+	xAxisMarks: AxisMarks;
 	private ee: EventEmitter2;
 
 	constructor(initialState: IChartState) {
@@ -97,9 +102,9 @@ export class ChartState {
 		initialState.trends = this.trends.calculatedOptions;
 		this.setState(initialState);
 		this.setState({computedData: this.getComputedData()});
-		//this.recalculateState({});
 		this.savePrevState();
 		this.trendsAnimationManager = new TrendsAnimationManager(this);
+		this.xAxisMarks = new AxisMarks(this, AXIS_TYPE.X);
 		this.initListeners();
 	}
 
@@ -418,6 +423,16 @@ export class ChartState {
 		var {from, to} = this.data.xAxis.range;
 		return xVal * ((to - from) / w);
 	}
+
+	/**
+	 *  convert pixels to value by using settings from yAxis.range
+	 */
+	pxToValueByYAxis(yVal: number) {
+		var h = this.data.height;
+		var {from, to} = this.data.yAxis.range;
+		return yVal * ((to - from) / h);
+	}
+
 
 	/**
 	 *  returns x value by screen x coordinate

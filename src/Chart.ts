@@ -19,6 +19,7 @@ import {AxisWidget} from "./widgets/AxisWidget";
 import {GridWidget} from "./widgets/GridWidget";
 import {TrendsGradientWidget} from "./widgets/TrendsGradientWidget";
 import {TrendsLoadingWidget} from "./widgets/TrendsLoadingWidget";
+import {AxisMarksWidget} from "./widgets/AxisMarksWidget";
 
 export const MAX_DATA_LENGTH = 1280;
 
@@ -203,3 +204,4 @@ Chart.installWidget(TrendsBeaconWidget);
 Chart.installWidget(TrendsIndicatorWidget);
 Chart.installWidget(TrendsGradientWidget);
 Chart.installWidget(TrendsLoadingWidget);
+Chart.installWidget(AxisMarksWidget);

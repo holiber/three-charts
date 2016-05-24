@@ -47,6 +47,10 @@ window.onload = function () {
 		// },
 		xAxis: {
 			range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 30},
+			marks: [
+				{value: 25, name: 'deadline', title: 'DEADLINE', lineColor: '#ff6600', type: 'timeleft'},
+				{value: 35, name: 'close', title: 'CLOSE', lineColor: '#005187', type: 'timeleft'}
+			]
 			// range: {
 			// 	from: 80,
 			// 	to: 90
@@ -60,6 +64,19 @@ window.onload = function () {
 	});
 	
 	(<any>window)['chart'] = chart;
+
+	var mainTrend = chart.getTrend('main');
+	var deadlineMark = chart.state.xAxisMarks.getItem('deadline');
+	var closeMark = chart.state.xAxisMarks.getItem('close');
+
+	mainTrend.onChange(() => {
+		var closeValue = closeMark.options.value;
+		if (mainTrend.getLastItem().xVal >= closeValue) {
+			deadlineMark.setOptions({value: closeValue + 15})
+			closeMark.setOptions({value: closeValue + 25})
+		}
+	});
+
 
 	// var previewChart1 = Chart.createPreviewChart({
 	// 	$el: document.querySelectorAll('.preview-chart')[0],
