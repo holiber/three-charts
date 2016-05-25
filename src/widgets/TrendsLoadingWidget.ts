@@ -8,7 +8,7 @@ import MeshBasicMaterial = THREE.MeshBasicMaterial;
 import Vector3 = THREE.Vector3;
 import {TrendWidget, TrendsWidget} from "./TrendsWidget";
 import {ITrendOptions} from "../Trend";
-import {TrendAnimationState} from "../TrendsAnimationManager";
+import {TrendPoints} from "../TrendPoints";
 
 /**
  * widget adds loading indicator
@@ -87,7 +87,7 @@ class TrendLoading extends TrendWidget {
 		});
 	}
 	
-	protected onTrendAnimate(animationState: TrendAnimationState) {
+	protected onTrendAnimate(animationState: TrendPoints) {
 		// set new widget position
 		var pointVector = animationState.getStartPoint().getCurrentVec();
 		this.mesh.position.set(pointVector.x, pointVector.y, 0);

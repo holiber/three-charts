@@ -9,9 +9,8 @@ import {ChartState} from "../State";
 import Face3 = THREE.Face3;
 import Texture = THREE.Texture;
 import Vector2 = THREE.Vector2;
-import {ITrendData} from "../Trend";
 import {TrendsWidget, TrendWidget} from "./TrendsWidget";
-import {TrendAnimationState} from "../TrendsAnimationManager";
+import {TrendPoints} from "../TrendPoints";
 import LineSegments = THREE.LineSegments;
 
 /**
@@ -29,24 +28,40 @@ class TrendLine extends TrendWidget {
 	private material: LineBasicMaterial;
 	private lineSegments: LineSegments;
 	
-	data: ITrendData = [];
-
 	constructor (chartState: ChartState, trendName: string) {
 		super(chartState, trendName);
-		this.chartState = chartState;
-		this.trend = chartState.trends.getTrend(trendName);
 		var options = this.trend.getOptions();
 		this.material = new LineBasicMaterial( { color: options.lineColor, linewidth: options.lineWidth } );
 		this.initLine();
-		this.appendData(this.trend.getData());
 		
 	}
 
 	getObject3D() {
 		return this.lineSegments;
 	}
+	
+	private initLine() {
+		var geometry = new Geometry();
+		var animationState = this.trend.points;
+		var points = animationState.points;
 
-	protected onTrendAnimate(animationState: TrendAnimationState) {
+		for (let pointId in points) {
+			let point = points[pointId];
+			let nextPoint = points[Number(pointId) + 1];
+			if (!nextPoint) break;
+			let vert1 = point.vector.clone();
+			let vert2 = nextPoint.vector.clone();
+			if (!nextPoint.hasValue) vert2 = vert1.clone();
+			geometry.vertices.push(vert1, vert2);
+
+		}
+
+		this.lineSegments = new LineSegments(geometry, this.material);
+		this.lineSegments.frustumCulled = false;
+	}
+
+
+	protected onTrendAnimate(animationState: TrendPoints) {
 		var trendData = this.trend.getData();
 		var geometry = this.lineSegments.geometry as Geometry;
 		var vertices = geometry.vertices;
@@ -59,7 +74,6 @@ class TrendLine extends TrendWidget {
 			let ind = Number(vertexValue.substr(1));
 			if (ind > lastInd) continue;
 			let point = animationState.points[ind];
-			let prevPoint = point.getPrev();
 			let nextPoint = point.getNext();
 			let value = current[vertexValue];
 			let currentVertex = vertices[ind * 2];
@@ -81,27 +95,6 @@ class TrendLine extends TrendWidget {
 		}
 		geometry.verticesNeedUpdate = true;
 	}
-
-	private initLine() {
-		var geometry = new Geometry();
-		var animationState = this.chartState.trendsAnimationManager.getState(this.trendName);
-		var points = animationState.points;
-
-		for (let pointId in points) {
-			let point = points[pointId];
-			let nextPoint = points[Number(pointId) + 1];
-			if (!nextPoint) break;
-			let vert1 = point.vector.clone();
-			let vert2 = nextPoint.vector.clone();
-			if (!nextPoint.item) vert2 = vert1.clone();
-			geometry.vertices.push(vert1, vert2);
-
-		}
-
-		this.lineSegments = new LineSegments(geometry, this.material);
-		this.lineSegments.frustumCulled = false;
-	}
-
 
 
 }

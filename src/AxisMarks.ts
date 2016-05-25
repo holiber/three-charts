@@ -62,6 +62,7 @@ export class AxisMarks {
 	}
 
 	private onTrendChange(trendName: string, newData: ITrendData) {
+		if (!newData) return;
 		var startVal = newData[0].xVal;
 		var endVal = newData[newData.length - 1].xVal;
 		var marks = this.items;

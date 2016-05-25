@@ -6,7 +6,7 @@ import {ITrendOptions, ITrendData, Trend} from "../Trend";
 import {IAxisOptions, MAX_DATA_LENGTH} from "../Chart";
 import Vector2 = THREE.Vector2;
 import Vector3 = THREE.Vector3;
-import {TrendAnimationState} from "../TrendsAnimationManager";
+import {TrendPoints} from "../TrendPoints";
 
 
 interface ITrendWidgetClass<TrendWidgetType> {
@@ -91,9 +91,8 @@ export abstract class TrendWidget {
 
 	constructor (protected chartState: ChartState, protected trendName: string) {
 		this.trend = chartState.trends.getTrend(trendName);
-		this.unsubscribers.push(this.chartState.trendsAnimationManager.onAnimate(
-			trendName,
-			(animationState: TrendAnimationState) => this.onTrendAnimate(animationState)
+		this.unsubscribers.push(this.trend.points.onAnimationFrame(
+			(trendPoints: TrendPoints) => this.onTrendAnimate(trendPoints)
 		));
 		this.bindEvents();
 	}
@@ -109,7 +108,7 @@ export abstract class TrendWidget {
 			unsubscriber();
 		}
 	}
-	protected onTrendAnimate(animationState: TrendAnimationState) {
+	protected onTrendAnimate(trendPoints: TrendPoints) {
 	}
 	protected bindEvents() {};
 	protected bindEvent(unsubscriber: Function) {

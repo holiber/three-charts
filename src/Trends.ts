@@ -12,8 +12,10 @@ export interface ITrendsOptions {
 export class Trends {
 	items: {[name: string]: Trend} = {};
 	calculatedOptions: ITrendsOptions;
+	private chartState: ChartState;
 	
 	constructor(state: ChartState, initialState: IChartState) {
+		this.chartState = state;
 		var trendsCalculatedOptions: ITrendsOptions = {};
 		for (let trendName in initialState.trends) {
 			let trend = new Trend(state, trendName, initialState);

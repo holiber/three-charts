@@ -168,6 +168,11 @@ export class Utils {
 		var s =  Math.floor(timestamp / 1000);
 		return h + ':' + m + ':' + s;
 	}
+	
+	static getRandomItem<T>(arr: Array<T>): T {
+		var ind = Math.floor(Math.random() * arr.length);
+		return arr[ind];
+	}
 
 }
 

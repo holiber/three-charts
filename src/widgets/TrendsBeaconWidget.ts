@@ -8,7 +8,7 @@ import MeshBasicMaterial = THREE.MeshBasicMaterial;
 import Vector3 = THREE.Vector3;
 import {TrendWidget, TrendsWidget} from "./TrendsWidget";
 import {ITrendOptions} from "../Trend";
-import {TrendAnimationState, TrendPoint} from "../TrendsAnimationManager";
+import {TrendPoints, TrendPoint} from "../TrendPoints";
 
 /**
  * widget adds blinking beacon on trends end
@@ -102,7 +102,7 @@ class TrendBeacon extends TrendWidget {
 		});
 	}
 
-	protected onTrendAnimate(animationState: TrendAnimationState) {
+	protected onTrendAnimate(animationState: TrendPoints) {
 		// set new widget position
 		this.point = animationState.getEndPoint();
 		this.updatePosition();

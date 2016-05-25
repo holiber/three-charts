@@ -3,13 +3,13 @@ require('./deps');
 
 export * from './interfaces';
 import Vector3 = THREE.Vector3;
-import {TrendsIndicatorWidget} from "./widgets/TrendsIndicatorWidget";
-import {TrendsLineWidget} from "./widgets/TrendsLineWidget";
 import PerspectiveCamera = THREE.PerspectiveCamera;
 import Renderer = THREE.Renderer;
 import Scene = THREE.Scene;
 import WebGLRenderer = THREE.WebGLRenderer;
-import Object3D = THREE.Object3D; 
+import Object3D = THREE.Object3D;
+import {TrendsIndicatorWidget} from "./widgets/TrendsIndicatorWidget";
+import {TrendsLineWidget} from "./widgets/TrendsLineWidget";
 import {ChartState, IChartState} from "./State";
 import {ChartWidget, IChartWidgetConstructor} from "./Widget";
 import {Utils} from "./Utils";
@@ -20,6 +20,7 @@ import {GridWidget} from "./widgets/GridWidget";
 import {TrendsGradientWidget} from "./widgets/TrendsGradientWidget";
 import {TrendsLoadingWidget} from "./widgets/TrendsLoadingWidget";
 import {AxisMarksWidget} from "./widgets/AxisMarksWidget";
+import {TrendsMarksWidget} from "./widgets/TrendsMarksWidget";
 
 export const MAX_DATA_LENGTH = 1280;
 
@@ -205,3 +206,4 @@ Chart.installWidget(TrendsIndicatorWidget);
 Chart.installWidget(TrendsGradientWidget);
 Chart.installWidget(TrendsLoadingWidget);
 Chart.installWidget(AxisMarksWidget);
+Chart.installWidget(TrendsMarksWidget);

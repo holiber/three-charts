@@ -2,6 +2,8 @@ import {ChartState, IChartState} from "./State";
 import {Utils} from "./Utils";
 import {Promise} from "es6-promise/dist/es6-promise";
 import {MAX_DATA_LENGTH} from "./Chart";
+import {ITrendMarkOptions, TrendMarks} from "./TrendMarks";
+import {TrendPoints} from "./TrendPoints";
 var EventEmitter = require<typeof EventEmitter2>('EventEmitter2');
 
 export interface IPrependPromiseExecutor {
@@ -20,12 +22,14 @@ export interface ITrendOptions {
 	hasGradient?: boolean,
 	hasIndicator?: boolean,
 	hasBeacon?: boolean,
+	marks?: ITrendMarkOptions[],
 	onPrependRequest?: IPrependPromiseExecutor;
 }
 
 const DEFAULT_OPTIONS: ITrendOptions = {
 	enabled: true,
 	data: [],
+	marks: [],
 	lineWidth: 2,
 	lineColor: 0xFFFFFF,
 	hasGradient: true,
@@ -34,6 +38,8 @@ const DEFAULT_OPTIONS: ITrendOptions = {
 
 export class Trend {
 	name: string;
+	marks: TrendMarks;
+	points: TrendPoints;
 	private chartState: ChartState;
 	private calculatedOptions: ITrendOptions;
 	private prependRequest: Promise<TTrendRawData>;
@@ -51,7 +57,20 @@ export class Trend {
 		this.canRequestPrepend = !!options.onPrependRequest;
 		this.bindEvents();
 	}
-	
+
+	private onInitialStateApplied() {
+		this.points = new TrendPoints(this.chartState, this, MAX_DATA_LENGTH, this.getData()[0]);
+		this.marks = new TrendMarks(this.chartState, this);
+	}
+
+	private bindEvents() {
+		var chartState = this.chartState;
+		chartState.onInitialStateApplied(() => this.onInitialStateApplied());
+		chartState.onScrollStop(() => this.checkForPrependRequest());
+		chartState.onZoom(() => this.checkForPrependRequest());
+		chartState.onTrendChange((trendName, changedOptions, newData) => this.ee.emit('change', changedOptions, newData))
+	}
+
 	getCalculatedOptions() {
 		return this.calculatedOptions;
 	}
@@ -73,7 +92,8 @@ export class Trend {
 	private changeData(allData: ITrendData, newData: ITrendData) {
 		if (allData.length > MAX_DATA_LENGTH) Utils.error('max data length reached')
 		var options = this.getOptions();
-		this.chartState.setState({trends: {[options.name]: {data: allData}}}, newData);
+		var statePatch: IChartState = {trends: {[options.name]: {data: allData}}};
+		this.chartState.setState(statePatch, newData);
 	}
 	
 	getData(fromX?: number, toX?: number): ITrendData {
@@ -112,6 +132,9 @@ export class Trend {
 		}
 	}
 
+	/**
+	 * shortcut for ChartState.onTrendChange
+	 */
 	onChange(cb: (changedOptions: ITrendOptions, newData: ITrendData) => void): Function {
 		this.ee.on('change', cb);
 		return () => {
@@ -119,10 +142,14 @@ export class Trend {
 		}
 	}
 
-	private bindEvents() {
-		this.chartState.onScrollStop(() => this.checkForPrependRequest());
-		this.chartState.onZoom(() => this.checkForPrependRequest());
-		this.chartState.onTrendChange((trendName, changedOptions, newData) => this.ee.emit('change', changedOptions, newData))
+	onDataChange(cb: (newData: ITrendData) => void): Function {
+		var onChangeCb = (changedOptions: ITrendOptions, newData: ITrendData) => {
+			if (changedOptions.data) cb(newData);
+		};
+		this.ee.on('change', onChangeCb);
+		return () => {
+			this.ee.off('change', onChangeCb);
+		}
 	}
 
 	private checkForPrependRequest() {

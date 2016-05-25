@@ -1,5 +1,7 @@
 
 import {Chart, AXIS_RANGE_TYPE} from './src/Chart';
+import {ITrendMarkOptions} from "./src/TrendMarks";
+import {Utils} from "./src/Utils";
 
 var chart: Chart;
 
@@ -32,6 +34,23 @@ class DataSourse {
 	}
 }
 
+class MarksSource {
+	static getNext(val: number): ITrendMarkOptions {
+		if (Math.random() > 0.3) return null;
+		return this.generate(val);
+	}
+
+	static generate(val: number): ITrendMarkOptions {
+		return {
+			value: val,
+			title: Utils.getRandomItem(['Alex Malcon', 'Serg Morrs', 'Harry Potter']),
+			description: Utils.getRandomItem(['$10 -> 20$', '$15 -> 30$', '40$ -> 80$']),
+			icon: Utils.getRandomItem(['AM', 'SM', 'HP']),
+			iconColor: Utils.getRandomItem(['rgb(255, 102, 217)', 'rgb(69,67,130)', 'rgb(124,39,122)']),
+		}
+	}
+}
+
 window.onload = function () {
 
 	initListeners();
@@ -57,7 +76,13 @@ window.onload = function () {
 			// }
 		},
 		trends: {
-			'main': {dataset: dsMain.data, hasBeacon: true, hasIndicator: true, hasGradient: false},
+			'main': {
+				dataset: dsMain.data,
+				hasBeacon: true,
+				hasIndicator: true,
+				hasGradient: false,
+				marks: [MarksSource.generate(5), MarksSource.generate(15)]
+			},
 			// 'red': {dataset: dsRed.data, lineColor: 0xFF2222, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
 			// 'blue': {dataset: dsBlue.data, lineColor: 0x2222FF, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
 		}
@@ -69,12 +94,16 @@ window.onload = function () {
 	var deadlineMark = chart.state.xAxisMarks.getItem('deadline');
 	var closeMark = chart.state.xAxisMarks.getItem('close');
 
-	mainTrend.onChange(() => {
+	mainTrend.onDataChange(() => {
 		var closeValue = closeMark.options.value;
 		if (mainTrend.getLastItem().xVal >= closeValue) {
 			deadlineMark.setOptions({value: closeValue + 15})
 			closeMark.setOptions({value: closeValue + 25})
 		}
+		var markOptions = MarksSource.getNext(mainTrend.getLastItem().xVal);
+		if (markOptions) setTimeout(() => {
+			mainTrend.marks.createMark(markOptions);
+		}, 500);
 	});
 
 

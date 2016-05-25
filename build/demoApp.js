@@ -5,6 +5,7 @@ webpackJsonp_name_([0],[
 
 	"use strict";
 	var Chart_1 = __webpack_require__(1);
+	var Utils_1 = __webpack_require__(11);
 	var chart;
 	var DataSourse = (function () {
 	    function DataSourse() {
@@ -31,6 +32,25 @@ webpackJsonp_name_([0],[
 	    };
 	    return DataSourse;
 	}());
+	var MarksSource = (function () {
+	    function MarksSource() {
+	    }
+	    MarksSource.getNext = function (val) {
+	        if (Math.random() > 0.3)
+	            return null;
+	        return this.generate(val);
+	    };
+	    MarksSource.generate = function (val) {
+	        return {
+	            value: val,
+	            title: Utils_1.Utils.getRandomItem(['Alex Malcon', 'Serg Morrs', 'Harry Potter']),
+	            description: Utils_1.Utils.getRandomItem(['$10 -> 20$', '$15 -> 30$', '40$ -> 80$']),
+	            icon: Utils_1.Utils.getRandomItem(['AM', 'SM', 'HP']),
+	            iconColor: Utils_1.Utils.getRandomItem(['rgb(255, 102, 217)', 'rgb(69,67,130)', 'rgb(124,39,122)']),
+	        };
+	    };
+	    return MarksSource;
+	}());
 	window.onload = function () {
 	    initListeners();
 	    var dsMain = new DataSourse();
@@ -49,19 +69,30 @@ webpackJsonp_name_([0],[
 	            ]
 	        },
 	        trends: {
-	            'main': { dataset: dsMain.data, hasBeacon: true, hasIndicator: true, hasGradient: false },
+	            'main': {
+	                dataset: dsMain.data,
+	                hasBeacon: true,
+	                hasIndicator: true,
+	                hasGradient: false,
+	                marks: [MarksSource.generate(5), MarksSource.generate(15)]
+	            },
 	        }
 	    });
 	    window['chart'] = chart;
 	    var mainTrend = chart.getTrend('main');
 	    var deadlineMark = chart.state.xAxisMarks.getItem('deadline');
 	    var closeMark = chart.state.xAxisMarks.getItem('close');
-	    mainTrend.onChange(function () {
+	    mainTrend.onDataChange(function () {
 	        var closeValue = closeMark.options.value;
 	        if (mainTrend.getLastItem().xVal >= closeValue) {
 	            deadlineMark.setOptions({ value: closeValue + 15 });
 	            closeMark.setOptions({ value: closeValue + 25 });
 	        }
+	        var markOptions = MarksSource.getNext(mainTrend.getLastItem().xVal);
+	        if (markOptions)
+	            setTimeout(function () {
+	                mainTrend.marks.createMark(markOptions);
+	            }, 500);
 	    });
 	    // var previewChart1 = Chart.createPreviewChart({
 	    // 	$el: document.querySelectorAll('.preview-chart')[0],

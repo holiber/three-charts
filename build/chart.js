@@ -103,18 +103,19 @@
 	// deps must be always on top
 	__webpack_require__(2);
 	__export(__webpack_require__(9));
+	var WebGLRenderer = THREE.WebGLRenderer;
 	var TrendsIndicatorWidget_1 = __webpack_require__(10);
 	var TrendsLineWidget_1 = __webpack_require__(15);
-	var WebGLRenderer = THREE.WebGLRenderer;
 	var State_1 = __webpack_require__(16);
 	var Utils_1 = __webpack_require__(11);
-	var Screen_1 = __webpack_require__(26);
-	var TrendsBeaconWidget_1 = __webpack_require__(27);
-	var AxisWidget_1 = __webpack_require__(28);
-	var GridWidget_1 = __webpack_require__(29);
-	var TrendsGradientWidget_1 = __webpack_require__(30);
-	var TrendsLoadingWidget_1 = __webpack_require__(31);
-	var AxisMarksWidget_1 = __webpack_require__(32);
+	var Screen_1 = __webpack_require__(28);
+	var TrendsBeaconWidget_1 = __webpack_require__(29);
+	var AxisWidget_1 = __webpack_require__(30);
+	var GridWidget_1 = __webpack_require__(31);
+	var TrendsGradientWidget_1 = __webpack_require__(32);
+	var TrendsLoadingWidget_1 = __webpack_require__(33);
+	var AxisMarksWidget_1 = __webpack_require__(34);
+	var TrendsMarksWidget_1 = __webpack_require__(35);
 	exports.MAX_DATA_LENGTH = 1280;
 	var Chart = (function () {
 	    function Chart(state) {
@@ -272,6 +273,7 @@
 	Chart.installWidget(TrendsGradientWidget_1.TrendsGradientWidget);
 	Chart.installWidget(TrendsLoadingWidget_1.TrendsLoadingWidget);
 	Chart.installWidget(AxisMarksWidget_1.AxisMarksWidget);
+	Chart.installWidget(TrendsMarksWidget_1.TrendsMarksWidget);
 
 
 /***/ },
@@ -51782,6 +51784,10 @@
 	        var s = Math.floor(timestamp / 1000);
 	        return h + ':' + m + ':' + s;
 	    };
+	    Utils.getRandomItem = function (arr) {
+	        var ind = Math.floor(Math.random() * arr.length);
+	        return arr[ind];
+	    };
 	    Utils.currentId = 1;
 	    return Utils;
 	}());
@@ -51934,7 +51940,7 @@
 	        this.trendName = trendName;
 	        this.unsubscribers = [];
 	        this.trend = chartState.trends.getTrend(trendName);
-	        this.unsubscribers.push(this.chartState.trendsAnimationManager.onAnimate(trendName, function (animationState) { return _this.onTrendAnimate(animationState); }));
+	        this.unsubscribers.push(this.trend.points.onAnimationFrame(function (trendPoints) { return _this.onTrendAnimate(trendPoints); }));
 	        this.bindEvents();
 	    }
 	    TrendWidget.widgetIsEnabled = function (trendOptions, chartState) {
@@ -51951,7 +51957,7 @@
 	            unsubscriber();
 	        }
 	    };
-	    TrendWidget.prototype.onTrendAnimate = function (animationState) {
+	    TrendWidget.prototype.onTrendAnimate = function (trendPoints) {
 	    };
 	    TrendWidget.prototype.bindEvents = function () { };
 	    ;
@@ -52021,16 +52027,30 @@
 	    __extends(TrendLine, _super);
 	    function TrendLine(chartState, trendName) {
 	        _super.call(this, chartState, trendName);
-	        this.data = [];
-	        this.chartState = chartState;
-	        this.trend = chartState.trends.getTrend(trendName);
 	        var options = this.trend.getOptions();
 	        this.material = new LineBasicMaterial({ color: options.lineColor, linewidth: options.lineWidth });
 	        this.initLine();
-	        this.appendData(this.trend.getData());
 	    }
 	    TrendLine.prototype.getObject3D = function () {
 	        return this.lineSegments;
+	    };
+	    TrendLine.prototype.initLine = function () {
+	        var geometry = new Geometry();
+	        var animationState = this.trend.points;
+	        var points = animationState.points;
+	        for (var pointId in points) {
+	            var point = points[pointId];
+	            var nextPoint = points[Number(pointId) + 1];
+	            if (!nextPoint)
+	                break;
+	            var vert1 = point.vector.clone();
+	            var vert2 = nextPoint.vector.clone();
+	            if (!nextPoint.hasValue)
+	                vert2 = vert1.clone();
+	            geometry.vertices.push(vert1, vert2);
+	        }
+	        this.lineSegments = new LineSegments(geometry, this.material);
+	        this.lineSegments.frustumCulled = false;
 	    };
 	    TrendLine.prototype.onTrendAnimate = function (animationState) {
 	        var trendData = this.trend.getData();
@@ -52047,7 +52067,6 @@
 	            if (ind > lastInd)
 	                continue;
 	            var point = animationState.points[ind];
-	            var prevPoint = point.getPrev();
 	            var nextPoint = point.getNext();
 	            var value = current[vertexValue];
 	            var currentVertex = vertices[ind * 2];
@@ -52072,24 +52091,6 @@
 	        }
 	        geometry.verticesNeedUpdate = true;
 	    };
-	    TrendLine.prototype.initLine = function () {
-	        var geometry = new Geometry();
-	        var animationState = this.chartState.trendsAnimationManager.getState(this.trendName);
-	        var points = animationState.points;
-	        for (var pointId in points) {
-	            var point = points[pointId];
-	            var nextPoint = points[Number(pointId) + 1];
-	            if (!nextPoint)
-	                break;
-	            var vert1 = point.vector.clone();
-	            var vert2 = nextPoint.vector.clone();
-	            if (!nextPoint.item)
-	                vert2 = vert1.clone();
-	            geometry.vertices.push(vert1, vert2);
-	        }
-	        this.lineSegments = new LineSegments(geometry, this.material);
-	        this.lineSegments.frustumCulled = false;
-	    };
 	    return TrendLine;
 	}(TrendsWidget_1.TrendWidget));
 
@@ -52105,8 +52106,7 @@
 	var Vector3 = THREE.Vector3;
 	var Widget_1 = __webpack_require__(14);
 	var Trends_1 = __webpack_require__(18);
-	var TrendsAnimationManager_1 = __webpack_require__(25);
-	var AxisMarks_1 = __webpack_require__(33);
+	var AxisMarks_1 = __webpack_require__(27);
 	var interfaces_1 = __webpack_require__(9);
 	var ChartState = (function () {
 	    function ChartState(initialState) {
@@ -52141,6 +52141,7 @@
 	            }
 	        };
 	        this.ee = new EE();
+	        this.ee.setMaxListeners(15);
 	        if (!initialState.$el) {
 	            Utils_1.Utils.error('$el must be set');
 	        }
@@ -52153,10 +52154,27 @@
 	        this.setState(initialState);
 	        this.setState({ computedData: this.getComputedData() });
 	        this.savePrevState();
-	        this.trendsAnimationManager = new TrendsAnimationManager_1.TrendsAnimationManager(this);
 	        this.xAxisMarks = new AxisMarks_1.AxisMarks(this, interfaces_1.AXIS_TYPE.X);
 	        this.initListeners();
+	        // message to other modules that ChartState.data is ready for use 
+	        this.ee.emit('initialStateApplied', initialState);
+	        // message to other modules that ChartState is ready for use 
+	        this.ee.emit('ready', initialState);
 	    }
+	    ChartState.prototype.onInitialStateApplied = function (cb) {
+	        var _this = this;
+	        this.ee.on('initialStateApplied', cb);
+	        return function () {
+	            _this.ee.off('initialStateApplied', cb);
+	        };
+	    };
+	    ChartState.prototype.onReady = function (cb) {
+	        var _this = this;
+	        this.ee.on('ready', cb);
+	        return function () {
+	            _this.ee.off('ready', cb);
+	        };
+	    };
 	    ChartState.prototype.onChange = function (cb) {
 	        this.ee.on('change', cb);
 	    };
@@ -53092,6 +53110,7 @@
 	var Trends = (function () {
 	    function Trends(state, initialState) {
 	        this.items = {};
+	        this.chartState = state;
 	        var trendsCalculatedOptions = {};
 	        for (var trendName in initialState.trends) {
 	            var trend = new Trend_1.Trend(state, trendName, initialState);
@@ -53158,10 +53177,13 @@
 	var Utils_1 = __webpack_require__(11);
 	var es6_promise_1 = __webpack_require__(20);
 	var Chart_1 = __webpack_require__(1);
+	var TrendMarks_1 = __webpack_require__(25);
+	var TrendPoints_1 = __webpack_require__(26);
 	var EventEmitter = __webpack_require__(17);
 	var DEFAULT_OPTIONS = {
 	    enabled: true,
 	    data: [],
+	    marks: [],
 	    lineWidth: 2,
 	    lineColor: 0xFFFFFF,
 	    hasGradient: true,
@@ -53180,6 +53202,18 @@
 	        this.canRequestPrepend = !!options.onPrependRequest;
 	        this.bindEvents();
 	    }
+	    Trend.prototype.onInitialStateApplied = function () {
+	        this.points = new TrendPoints_1.TrendPoints(this.chartState, this, Chart_1.MAX_DATA_LENGTH, this.getData()[0]);
+	        this.marks = new TrendMarks_1.TrendMarks(this.chartState, this);
+	    };
+	    Trend.prototype.bindEvents = function () {
+	        var _this = this;
+	        var chartState = this.chartState;
+	        chartState.onInitialStateApplied(function () { return _this.onInitialStateApplied(); });
+	        chartState.onScrollStop(function () { return _this.checkForPrependRequest(); });
+	        chartState.onZoom(function () { return _this.checkForPrependRequest(); });
+	        chartState.onTrendChange(function (trendName, changedOptions, newData) { return _this.ee.emit('change', changedOptions, newData); });
+	    };
 	    Trend.prototype.getCalculatedOptions = function () {
 	        return this.calculatedOptions;
 	    };
@@ -53199,7 +53233,8 @@
 	        if (allData.length > Chart_1.MAX_DATA_LENGTH)
 	            Utils_1.Utils.error('max data length reached');
 	        var options = this.getOptions();
-	        this.chartState.setState({ trends: (_a = {}, _a[options.name] = { data: allData }, _a) }, newData);
+	        var statePatch = { trends: (_a = {}, _a[options.name] = { data: allData }, _a) };
+	        this.chartState.setState(statePatch, newData);
 	        var _a;
 	    };
 	    Trend.prototype.getData = function (fromX, toX) {
@@ -53237,6 +53272,9 @@
 	            _this.ee.off('prependRequest', cb);
 	        };
 	    };
+	    /**
+	     * shortcut for ChartState.onTrendChange
+	     */
 	    Trend.prototype.onChange = function (cb) {
 	        var _this = this;
 	        this.ee.on('change', cb);
@@ -53244,11 +53282,16 @@
 	            _this.ee.off('change', cb);
 	        };
 	    };
-	    Trend.prototype.bindEvents = function () {
+	    Trend.prototype.onDataChange = function (cb) {
 	        var _this = this;
-	        this.chartState.onScrollStop(function () { return _this.checkForPrependRequest(); });
-	        this.chartState.onZoom(function () { return _this.checkForPrependRequest(); });
-	        this.chartState.onTrendChange(function (trendName, changedOptions, newData) { return _this.ee.emit('change', changedOptions, newData); });
+	        var onChangeCb = function (changedOptions, newData) {
+	            if (changedOptions.data)
+	                cb(newData);
+	        };
+	        this.ee.on('change', onChangeCb);
+	        return function () {
+	            _this.ee.off('change', onChangeCb);
+	        };
 	    };
 	    Trend.prototype.checkForPrependRequest = function () {
 	        var _this = this;
@@ -53307,7 +53350,7 @@
 /* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_RESULT__;var require;/* WEBPACK VAR INJECTION */(function(process, global, module) {/*!
+	var require;var __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(process, global, module) {/*!
 	 * @overview es6-promise - a tiny implementation of Promises/A+.
 	 * @copyright Copyright (c) 2014 Yehuda Katz, Tom Dale, Stefan Penner and contributors (Conversion to ES6 API by Jake Archibald)
 	 * @license   Licensed under MIT license
@@ -54403,19 +54446,168 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var Chart_1 = __webpack_require__(1);
-	var EE = __webpack_require__(17);
+	var Utils_1 = __webpack_require__(11);
+	var EventEmitter = __webpack_require__(17);
+	var TREND_MARK_SIDE;
+	(function (TREND_MARK_SIDE) {
+	    TREND_MARK_SIDE[TREND_MARK_SIDE["TOP"] = 0] = "TOP";
+	    TREND_MARK_SIDE[TREND_MARK_SIDE["BOTTOM"] = 1] = "BOTTOM";
+	})(TREND_MARK_SIDE || (TREND_MARK_SIDE = {}));
+	var AXIS_MARK_DEFAULT_OPTIONS = {
+	    title: '',
+	    description: '',
+	    value: 0,
+	    iconColor: 'rgb(255, 102, 217)',
+	    orientation: TREND_MARK_SIDE.TOP
+	};
+	var TrendMarks = (function () {
+	    function TrendMarks(chartState, trend) {
+	        this.items = {};
+	        this.chartState = chartState;
+	        this.ee = new EventEmitter();
+	        this.trend = trend;
+	        this.onMarksChange();
+	        this.bindEvents();
+	    }
+	    TrendMarks.prototype.bindEvents = function () {
+	        var _this = this;
+	        this.trend.onDataChange(function () { return _this.updateMarksPoints(); });
+	        this.trend.onChange(function (changedOptions) { return _this.onTrendChange(changedOptions); });
+	    };
+	    TrendMarks.prototype.onTrendChange = function (changedOptions) {
+	        if (!changedOptions.marks)
+	            return;
+	        this.onMarksChange();
+	        this.ee.emit('change');
+	    };
+	    TrendMarks.prototype.onChange = function (cb) {
+	        var _this = this;
+	        this.ee.on('change', cb);
+	        return function () {
+	            _this.ee.off('change', cb);
+	        };
+	    };
+	    TrendMarks.prototype.updateMarksPoints = function () {
+	        var marks = this.items;
+	        var marksArr = [];
+	        var xVals = [];
+	        for (var markName in marks) {
+	            var mark = marks[markName];
+	            xVals.push(mark.options.value);
+	            marksArr.push(mark);
+	            mark.setPoint(null);
+	        }
+	        marksArr.sort(function (a, b) { return a.options.value - b.options.value; });
+	        var points = this.trend.points.getPointsForXValues(xVals.sort(function (a, b) { return a - b; }));
+	        for (var markInd = 0; markInd < marksArr.length; markInd++) {
+	            marksArr[markInd].setPoint(points[markInd]);
+	        }
+	    };
+	    TrendMarks.prototype.onMarksChange = function () {
+	        var trendsMarksOptions = this.trend.getOptions().marks;
+	        for (var _i = 0, trendsMarksOptions_1 = trendsMarksOptions; _i < trendsMarksOptions_1.length; _i++) {
+	            var options = trendsMarksOptions_1[_i];
+	            var marks = this.items;
+	            // set mark name
+	            if (!options.name) {
+	                options.name = Utils_1.Utils.getUid().toString();
+	                if (marks[options.name])
+	                    Utils_1.Utils.error('duplicated mark name ' + options.name);
+	            }
+	            else if (marks[options.name]) {
+	                continue;
+	            }
+	            options = Utils_1.Utils.deepMerge(AXIS_MARK_DEFAULT_OPTIONS, options);
+	            var mark = new TrendMark(this.chartState, options, this.trend);
+	            marks[options.name] = mark;
+	        }
+	        this.updateMarksPoints();
+	    };
+	    TrendMarks.prototype.createMark = function (options) {
+	        var marksOptions = this.trend.getOptions().marks;
+	        var newMarkOptions = marksOptions.concat([options]);
+	        this.chartState.setState({ trends: (_a = {}, _a[this.trend.name] = { marks: newMarkOptions }, _a) });
+	        var _a;
+	    };
+	    TrendMarks.prototype.getItems = function () {
+	        return this.items;
+	    };
+	    TrendMarks.prototype.getItem = function (markName) {
+	        return this.items[markName];
+	    };
+	    return TrendMarks;
+	}());
+	exports.TrendMarks = TrendMarks;
+	var TrendMark = (function () {
+	    function TrendMark(chartState, options, trend) {
+	        this.renderOnTrendsChange = false;
+	        this.ee = new EventEmitter();
+	        this.options = options;
+	        this.chartState = chartState;
+	        this.trend = trend;
+	    }
+	    TrendMark.prototype.onAnimationFrame = function (cb) {
+	        var _this = this;
+	        this.ee.on('onAnimationFrame', cb);
+	        return function () {
+	            _this.ee.off('onAnimationFrame', cb);
+	        };
+	    };
+	    /**
+	     * only for internal usage
+	     */
+	    TrendMark.prototype.setPoint = function (point) {
+	        this.point = point;
+	    };
+	    TrendMark.prototype.onZoom = function () {
+	        // var chartState = this.chartState;
+	        // var animations = this.chartState.data.animations;
+	        // var time = animations.enabled ? animations.zoomSpeed : 0;
+	        // var prevRange = chartState.data.prevState.xAxis.range;
+	        // var currentRange = chartState.data.xAxis.range;
+	        // var zoomDistanceInPx = chartState.valueToPxByXAxis(currentRange.from - prevRange.from);
+	        // var fromPosition = this.position - zoomDistanceInPx;
+	        // this.animate(this.getPosition(), time, animations.zoomEase, fromPosition);
+	    };
+	    TrendMark.prototype.animate = function (toPosition, time, ease, fromPosition) {
+	        // if (this.animation) this.animation.kill();
+	        // fromPosition = fromPosition !== void 0 ? fromPosition : this.position;
+	        // var current = {position: fromPosition};
+	        // var target = {position: toPosition, ease: ease};
+	        // var animation = TweenLite.to(current, time, target);
+	        // animation.eventCallback('onUpdate', () => {
+	        // 	this.position = current.position;
+	        // 	this.ee.emit('onAnimationFrame');
+	        // });
+	        // this.animation = animation;
+	    };
+	    return TrendMark;
+	}());
+	exports.TrendMark = TrendMark;
+
+
+/***/ },
+/* 26 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var EventEmmiter = __webpack_require__(17);
 	var Vector3 = THREE.Vector3;
 	var Utils_1 = __webpack_require__(11);
-	var TrendAnimationState = (function () {
-	    function TrendAnimationState(pointsCount, initialVector) {
+	var TrendPoints = (function () {
+	    function TrendPoints(chartState, trend, pointsCount, initialItem) {
 	        this.points = {};
+	        //pointsByXVal: {[xVal: string]: TrendPoint} = {};
 	        // objects like {x0: 1, y0: 2, x1: 2, y2: 3, ...}
 	        this.current = {};
 	        this.targets = {};
 	        this.nextEmptyId = 0;
 	        this.startPointId = 0;
 	        this.endPointId = 0;
+	        var initialVector = chartState.getPointOnChart(initialItem.xVal, initialItem.yVal);
+	        this.chartState = chartState;
+	        this.trend = trend;
+	        this.ee = new EventEmmiter();
 	        var point;
 	        for (var i = 0; i < pointsCount; i++) {
 	            var id = i;
@@ -54424,42 +54616,188 @@
 	            this.current['x' + id] = initialVector.x;
 	            this.current['y' + id] = initialVector.y;
 	        }
+	        this.appendData(this.trend.getData());
+	        this.bindEvents();
 	    }
-	    TrendAnimationState.prototype.getEndPoint = function () {
+	    TrendPoints.prototype.bindEvents = function () {
+	        var _this = this;
+	        var state = this.chartState;
+	        this.trend.onChange(function (changedOptions, newData) {
+	            if (newData) {
+	                var data = _this.trend.getData();
+	                var isAppend = (!data.length || data[0].xVal < newData[0].xVal);
+	                isAppend ? _this.appendData(newData) : _this.prependData(newData);
+	            }
+	        });
+	        state.onZoom(function () { return _this.updatePoints(); });
+	    };
+	    TrendPoints.prototype.getEndPoint = function () {
 	        return this.points[this.endPointId];
 	    };
-	    TrendAnimationState.prototype.getStartPoint = function () {
+	    TrendPoints.prototype.getStartPoint = function () {
 	        return this.points[this.startPointId];
 	    };
-	    TrendAnimationState.prototype.appendPoint = function (item, vector) {
+	    /**
+	     * returns array of points for values array
+	     * values must be sorted!
+	     */
+	    TrendPoints.prototype.getPointsForXValues = function (values) {
+	        var valueInd = 0;
+	        var value = values[valueInd];
+	        var lastValueInd = values.length - 1;
+	        var results = [];
+	        var point = this.getStartPoint();
+	        if (!point.hasValue)
+	            return [];
+	        while (point) {
+	            while (value < point.startXVal) {
+	                results.push(void 0);
+	                value = values[++valueInd];
+	            }
+	            while (value > point.endXVal) {
+	                point = point.getNext();
+	                if (!point)
+	                    break;
+	            }
+	            var valueInPoint = (point.startXVal == value || point.endXVal == value ||
+	                (point.startXVal < value && point.endXVal < value));
+	            if (valueInPoint) {
+	                results.push(point);
+	                value = values[++valueInd];
+	            }
+	            if (valueInd > lastValueInd)
+	                break;
+	        }
+	        return results;
+	    };
+	    TrendPoints.prototype.onAnimationFrame = function (cb) {
+	        var _this = this;
+	        var eventName = 'animationFrame';
+	        this.ee.on('animationFrame', cb);
+	        return function () {
+	            _this.ee.removeListener(eventName, cb);
+	        };
+	    };
+	    TrendPoints.prototype.appendPoint = function (item, vector) {
 	        var id = this.nextEmptyId++;
 	        var point = this.points[id];
 	        var prevPoint = this.points[this.endPointId];
-	        if (prevPoint.item) {
+	        if (prevPoint.hasValue) {
 	            prevPoint.nextId = id;
 	            point.prevId = prevPoint.id;
 	        }
-	        point.item = item;
+	        point.hasValue = true;
+	        point.startXVal = item.xVal;
+	        point.endXVal = item.xVal;
+	        point.xVal = item.xVal;
+	        point.yVal = item.yVal;
 	        point.vector = vector;
 	        this.endPointId = id;
 	        return point;
 	    };
-	    TrendAnimationState.prototype.prependPoint = function (item, vector) {
+	    TrendPoints.prototype.prependPoint = function (item, vector) {
 	        var id = this.nextEmptyId++;
 	        var point = this.points[id];
 	        var nextPoint = this.points[this.startPointId];
-	        if (nextPoint.item) {
+	        if (nextPoint.hasValue) {
 	            nextPoint.prevId = id;
 	            point.nextId = nextPoint.id;
 	        }
-	        point.item = item;
 	        point.vector = vector;
+	        point.hasValue = true;
+	        point.startXVal = item.xVal;
+	        point.endXVal = item.xVal;
+	        point.xVal = item.xVal;
+	        point.yVal = item.yVal;
 	        this.startPointId = id;
 	        return point;
 	    };
-	    return TrendAnimationState;
+	    TrendPoints.prototype.prependData = function (newData) {
+	        var chartState = this.chartState;
+	        var trendData = this.trend.getData();
+	        var animationsOptions = chartState.data.animations;
+	        var startItemInd = newData.length;
+	        var startItem = trendData[startItemInd] || newData[0];
+	        var current = {};
+	        var targets = {};
+	        for (var itemInd = startItemInd - 1; itemInd >= 0; itemInd--) {
+	            var trendItem = trendData[itemInd];
+	            var startPoint = chartState.getPointOnChart(startItem.xVal, startItem.yVal);
+	            var targetPoint = chartState.getPointOnChart(trendItem.xVal, trendItem.yVal);
+	            var point = this.prependPoint(trendItem, startPoint);
+	            var id = point.id;
+	            current['x' + id] = startPoint.x;
+	            current['y' + id] = startPoint.y;
+	            targets['x' + id] = targetPoint.x;
+	            targets['y' + id] = targetPoint.y;
+	        }
+	        targets.ease = animationsOptions.trendChangeEase;
+	        var time = animationsOptions.enabled ? animationsOptions.trendChangeSpeed : 0;
+	        this.animate(time, targets, current);
+	    };
+	    TrendPoints.prototype.appendData = function (newData) {
+	        var chartState = this.chartState;
+	        var trendData = this.trend.getData();
+	        var animationsOptions = chartState.data.animations;
+	        var startItemInd = trendData.length - newData.length;
+	        var startItem = trendData[startItemInd - 1] || newData[0];
+	        var current = {};
+	        var targets = {};
+	        for (var itemInd = startItemInd; itemInd < trendData.length; itemInd++) {
+	            var trendItem = trendData[itemInd];
+	            var startPoint = chartState.getPointOnChart(startItem.xVal, startItem.yVal);
+	            var targetPoint = chartState.getPointOnChart(trendItem.xVal, trendItem.yVal);
+	            var point = this.appendPoint(trendItem, startPoint);
+	            var id = point.id;
+	            current['x' + id] = startPoint.x;
+	            current['y' + id] = startPoint.y;
+	            targets['x' + id] = targetPoint.x;
+	            targets['y' + id] = targetPoint.y;
+	        }
+	        targets.ease = animationsOptions.trendChangeEase;
+	        var time = animationsOptions.enabled ? animationsOptions.trendChangeSpeed : 0;
+	        this.animate(time, targets, current);
+	    };
+	    TrendPoints.prototype.updatePoints = function () {
+	        var chartState = this.chartState;
+	        var targets = {};
+	        var currents = {};
+	        var currentXFrom = chartState.data.xAxis.range.from;
+	        var prevXFrom = chartState.data.prevState.xAxis.range.from;
+	        var xFromDiff = currentXFrom - prevXFrom;
+	        var point = this.getStartPoint();
+	        do {
+	            var targetPoint = chartState.getPointOnChart(point.xVal, point.yVal);
+	            point.vector = targetPoint;
+	            if (xFromDiff) {
+	                currents['x' + point.id] = targetPoint.x;
+	            }
+	            targets['x' + point.id] = targetPoint.x;
+	            targets['y' + point.id] = targetPoint.y;
+	        } while (point = point.getNext());
+	        var animationsOptions = chartState.data.animations;
+	        targets.ease = animationsOptions.zoomEase;
+	        var time = animationsOptions.enabled ? animationsOptions.zoomSpeed : 0;
+	        this.animate(time, targets, currents);
+	    };
+	    TrendPoints.prototype.animate = function (time, newTargets, current) {
+	        var _this = this;
+	        if (this.currentAnimation)
+	            this.currentAnimation.pause();
+	        if (current)
+	            this.current = Utils_1.Utils.deepMerge(this.current, current);
+	        this.targets = Utils_1.Utils.deepMerge(this.targets, newTargets);
+	        var animation = this.currentAnimation = TweenLite.to(this.current, time, this.targets);
+	        animation.eventCallback('onUpdate', function () {
+	            _this.ee.emit('animationFrame', _this);
+	        });
+	        animation.eventCallback('onComplete', function () {
+	            _this.targets = { ease: void 0 };
+	        });
+	    };
+	    return TrendPoints;
 	}());
-	exports.TrendAnimationState = TrendAnimationState;
+	exports.TrendPoints = TrendPoints;
 	var TrendPoint = (function () {
 	    function TrendPoint(animationState, id, vector) {
 	        this.animationState = animationState;
@@ -54468,11 +54806,11 @@
 	    }
 	    TrendPoint.prototype.getNext = function () {
 	        var nextPoint = this.animationState.points[this.nextId];
-	        return nextPoint && nextPoint.item ? nextPoint : null;
+	        return nextPoint && nextPoint.hasValue ? nextPoint : null;
 	    };
 	    TrendPoint.prototype.getPrev = function () {
 	        var prevPoint = this.animationState.points[this.prevId];
-	        return prevPoint && prevPoint.item ? prevPoint : null;
+	        return prevPoint && prevPoint.hasValue ? prevPoint : null;
 	    };
 	    TrendPoint.prototype.getCurrentVec = function () {
 	        var current = this.animationState.current;
@@ -54486,174 +54824,371 @@
 	    return TrendPoint;
 	}());
 	exports.TrendPoint = TrendPoint;
-	/**
-	 * class helps widgets to animate trends points on chart
-	 */
-	var TrendsAnimationManager = (function () {
-	    function TrendsAnimationManager(chartState) {
-	        this.chartState = chartState;
-	        this.trendsAnimationStates = {};
-	        this.ee = new EE();
-	        this.onTrendsChange();
-	        this.bindEvents();
-	    }
-	    TrendsAnimationManager.prototype.getState = function (trendName) {
-	        return this.trendsAnimationStates[trendName];
-	    };
-	    TrendsAnimationManager.prototype.onAnimate = function (trendName, cb) {
-	        var _this = this;
-	        var eventName = 'animate.' + trendName;
-	        this.ee.on('animate.' + trendName, cb);
-	        return function () {
-	            _this.ee.removeListener(eventName, cb);
-	        };
-	    };
-	    TrendsAnimationManager.prototype.bindEvents = function () {
-	        var _this = this;
-	        var state = this.chartState;
-	        state.onTrendsChange(function () { return _this.onTrendsChange(); });
-	        state.onTrendChange(function (trendName, changedOptions, newData) {
-	            if (newData) {
-	                var data = _this.chartState.getTrend(trendName).getData();
-	                var isAppend = (!data.length || data[0].xVal < newData[0].xVal);
-	                isAppend ? _this.appendData(trendName, newData) : _this.prependData(trendName, newData);
-	            }
-	        });
-	        state.onZoom(function () { return _this.updateAllTrends(); });
-	    };
-	    TrendsAnimationManager.prototype.onTrendsChange = function () {
-	        var trendsOptions = this.chartState.data.trends;
-	        for (var trendName in trendsOptions) {
-	            var trendOptions = trendsOptions[trendName];
-	            if (trendOptions.enabled && !this.trendsAnimationStates[trendName]) {
-	                this.createAnimationPoints(trendName);
-	            }
-	            else if (!trendOptions.enabled && this.trendsAnimationStates[trendName]) {
-	                this.destroyAnimationPoints(trendName);
-	            }
-	        }
-	    };
-	    TrendsAnimationManager.prototype.createAnimationPoints = function (trendName) {
-	        var trendData = this.chartState.getTrend(trendName).getData();
-	        var firstItem = trendData[0];
-	        var firstPointVector = this.chartState.getPointOnChart(firstItem.xVal, firstItem.yVal);
-	        this.trendsAnimationStates[trendName] = new TrendAnimationState(Chart_1.MAX_DATA_LENGTH, firstPointVector);
-	        this.appendData(trendName, trendData);
-	    };
-	    TrendsAnimationManager.prototype.destroyAnimationPoints = function (trendName) {
-	        var animationPoints = this.trendsAnimationStates[trendName];
-	        if (animationPoints.currentAnimation)
-	            animationPoints.currentAnimation.kill();
-	        delete this.trendsAnimationStates[trendName];
-	    };
-	    TrendsAnimationManager.prototype.prependData = function (trendName, newData) {
-	        var animationPoints = this.trendsAnimationStates[trendName];
-	        if (!animationPoints)
-	            return;
-	        var chartState = this.chartState;
-	        var trendData = chartState.getTrend(trendName).getData();
-	        var animationsOptions = chartState.data.animations;
-	        var startItemInd = newData.length;
-	        var startItem = trendData[startItemInd] || newData[0];
-	        var current = {};
-	        var targets = {};
-	        for (var itemInd = startItemInd - 1; itemInd >= 0; itemInd--) {
-	            var trendItem = trendData[itemInd];
-	            var startPoint = chartState.getPointOnChart(startItem.xVal, startItem.yVal);
-	            var targetPoint = chartState.getPointOnChart(trendItem.xVal, trendItem.yVal);
-	            var point = animationPoints.prependPoint(trendItem, startPoint);
-	            var id = point.id;
-	            current['x' + id] = startPoint.x;
-	            current['y' + id] = startPoint.y;
-	            targets['x' + id] = targetPoint.x;
-	            targets['y' + id] = targetPoint.y;
-	        }
-	        targets.ease = animationsOptions.trendChangeEase;
-	        var time = animationsOptions.enabled ? animationsOptions.trendChangeSpeed : 0;
-	        this.animate(trendName, time, targets, current);
-	    };
-	    TrendsAnimationManager.prototype.appendData = function (trendName, newData) {
-	        var animationPoints = this.trendsAnimationStates[trendName];
-	        if (!animationPoints)
-	            return;
-	        var chartState = this.chartState;
-	        var trendData = chartState.getTrend(trendName).getData();
-	        var animationsOptions = chartState.data.animations;
-	        var startItemInd = trendData.length - newData.length;
-	        var startItem = trendData[startItemInd - 1] || newData[0];
-	        var current = {};
-	        var targets = {};
-	        for (var itemInd = startItemInd; itemInd < trendData.length; itemInd++) {
-	            var trendItem = trendData[itemInd];
-	            var startPoint = chartState.getPointOnChart(startItem.xVal, startItem.yVal);
-	            var targetPoint = chartState.getPointOnChart(trendItem.xVal, trendItem.yVal);
-	            var point = animationPoints.appendPoint(trendItem, startPoint);
-	            var id = point.id;
-	            current['x' + id] = startPoint.x;
-	            current['y' + id] = startPoint.y;
-	            targets['x' + id] = targetPoint.x;
-	            targets['y' + id] = targetPoint.y;
-	        }
-	        targets.ease = animationsOptions.trendChangeEase;
-	        var time = animationsOptions.enabled ? animationsOptions.trendChangeSpeed : 0;
-	        this.animate(trendName, time, targets, current);
-	    };
-	    TrendsAnimationManager.prototype.updateAllTrends = function () {
-	        for (var trendName in this.trendsAnimationStates) {
-	            this.updateAllTrendPoints(trendName);
-	        }
-	    };
-	    TrendsAnimationManager.prototype.updateAllTrendPoints = function (trendName) {
-	        var chartState = this.chartState;
-	        var targets = {};
-	        var currents = {};
-	        var currentXFrom = chartState.data.xAxis.range.from;
-	        var prevXFrom = chartState.data.prevState.xAxis.range.from;
-	        var xFromDiff = currentXFrom - prevXFrom;
-	        var point = this.trendsAnimationStates[trendName].getStartPoint();
-	        do {
-	            var trendItem = point.item;
-	            var targetPoint = chartState.getPointOnChart(trendItem.xVal, trendItem.yVal);
-	            point.vector = targetPoint;
-	            if (xFromDiff) {
-	                currents['x' + point.id] = targetPoint.x;
-	            }
-	            targets['x' + point.id] = targetPoint.x;
-	            targets['y' + point.id] = targetPoint.y;
-	        } while (point = point.getNext());
-	        var animationsOptions = chartState.data.animations;
-	        targets.ease = animationsOptions.zoomEase;
-	        var time = animationsOptions.enabled ? animationsOptions.zoomSpeed : 0;
-	        this.animate(trendName, time, targets, currents);
-	    };
-	    TrendsAnimationManager.prototype.animate = function (trendName, time, newTargets, current) {
-	        var _this = this;
-	        var animationState = this.trendsAnimationStates[trendName];
-	        if (animationState.currentAnimation)
-	            animationState.currentAnimation.pause();
-	        if (current)
-	            animationState.current = Utils_1.Utils.deepMerge(animationState.current, current);
-	        animationState.targets = Utils_1.Utils.deepMerge(animationState.targets, newTargets);
-	        // for (var key in animationState.current) {
-	        // 	var nan = isNaN(animationState.current[key]) && (typeof (animationState.current[key]) == 'number');
-	        // 	var b = 1;
-	        // 	//if (nan) Utils.error('nan');
-	        // }
-	        var animation = animationState.currentAnimation = TweenLite.to(animationState.current, time, animationState.targets);
-	        animation.eventCallback('onUpdate', function () {
-	            _this.ee.emit('animate.' + trendName, animationState);
-	        });
-	        animation.eventCallback('onComplete', function () {
-	            animationState.targets = { ease: void 0 };
-	        });
-	    };
-	    return TrendsAnimationManager;
-	}());
-	exports.TrendsAnimationManager = TrendsAnimationManager;
+	//
+	// /**
+	//  * class helps widgets to animate trends points on chart
+	//  */
+	// export class TrendsAnimationManager {
+	//
+	// 	private trendsAnimationStates: {[trendName: string]: TrendPoints} = {};
+	// 	private ee: EventEmitter2;
+	//
+	// 	constructor (private chartState: ChartState) {
+	// 		this.ee = new EE();
+	// 		this.onTrendsChange();
+	// 		this.bindEvents();
+	// 	}
+	//
+	// 	getPoints(trendName: string): TrendPoints {
+	// 		return this.trendsAnimationStates[trendName];
+	// 	}
+	//
+	// 	onAnimationFrame(trendName: string, cb: (animationState: TrendPoints) => void): Function {
+	// 		var eventName = 'animationFrame.' + trendName;
+	// 		this.ee.on('animationFrame.' + trendName, cb);
+	// 		return () => {
+	// 			this.ee.removeListener(eventName, cb);
+	// 		}
+	// 	}
+	//
+	// 	protected bindEvents() {
+	// 		var state = this.chartState;
+	// 		state.onTrendsChange(() => this.onTrendsChange());
+	// 		state.onTrendChange((trendName: string, changedOptions: ITrendOptions, newData: ITrendData) => {
+	// 			if (newData) {
+	// 				var data = this.chartState.getTrend(trendName).getData();
+	// 				var isAppend = (!data.length || data[0].xVal < newData[0].xVal);
+	// 				isAppend ? this.appendData(trendName, newData) : this.prependData(trendName, newData);
+	// 			}
+	// 		});
+	// 		state.onZoom(() => this.updateAllTrends());
+	// 	}
+	//
+	// 	private onTrendsChange() {
+	// 		var trendsOptions = this.chartState.data.trends;
+	// 		for (let trendName in trendsOptions) {
+	// 			let trendOptions = trendsOptions[trendName];
+	// 			if (trendOptions.enabled && !this.trendsAnimationStates[trendName]) {
+	// 				this.createAnimationPoints(trendName);
+	// 			} else if (!trendOptions.enabled && this.trendsAnimationStates[trendName]) {
+	// 				this.destroyAnimationPoints(trendName);
+	// 			}
+	// 		}
+	// 	}
+	//
+	// 	private createAnimationPoints(trendName: string) {
+	// 		var trendData = this.chartState.getTrend(trendName).getData();
+	// 		var firstItem = trendData[0];
+	// 		var firstPointVector = this.chartState.getPointOnChart(firstItem.xVal, firstItem.yVal);
+	// 		this.trendsAnimationStates[trendName] = new TrendPoints(MAX_DATA_LENGTH, firstPointVector);
+	// 		this.appendData(trendName, trendData);
+	// 	}
+	//
+	// 	private destroyAnimationPoints(trendName: string) {
+	// 		var animationPoints = this.trendsAnimationStates[trendName];
+	// 		if (animationPoints.currentAnimation) animationPoints.currentAnimation.kill();
+	// 		delete this.trendsAnimationStates[trendName];
+	// 	}
+	//
+	// 	private prependData(trendName: string, newData: ITrendData) {
+	// 		var animationPoints = this.trendsAnimationStates[trendName];
+	// 		if (!animationPoints) return;
+	// 		var chartState = this.chartState;
+	// 		var trendData = chartState.getTrend(trendName).getData();
+	// 		var animationsOptions = chartState.data.animations;
+	//
+	// 		var startItemInd = newData.length;
+	// 		var startItem = trendData[startItemInd] || newData[0];
+	// 		var current: ICurrent = {};
+	// 		var targets: ITargets = {};
+	// 		for (let itemInd = startItemInd - 1; itemInd >= 0; itemInd--) {
+	// 			let trendItem = trendData[itemInd];
+	// 			let startPoint = chartState.getPointOnChart(startItem.xVal, startItem.yVal);
+	// 			let targetPoint = chartState.getPointOnChart(trendItem.xVal, trendItem.yVal);
+	// 			let point = animationPoints.prependPoint(trendItem, startPoint);
+	// 			let id = point.id;
+	// 			current['x' + id] = startPoint.x;
+	// 			current['y' + id] = startPoint.y;
+	// 			targets['x' + id] = targetPoint.x;
+	// 			targets['y' + id] = targetPoint.y;
+	// 		}
+	// 		targets.ease = animationsOptions.trendChangeEase;
+	// 		var time = animationsOptions.enabled ? animationsOptions.trendChangeSpeed : 0;
+	// 		this.animate(trendName, time, targets, current);
+	// 	}
+	//
+	// 	private appendData(trendName: string, newData: ITrendData) {
+	// 		var animationPoints = this.trendsAnimationStates[trendName];
+	// 		if (!animationPoints) return;
+	// 		var chartState = this.chartState;
+	// 		var trendData = chartState.getTrend(trendName).getData();
+	// 		var animationsOptions = chartState.data.animations;
+	//
+	// 		var startItemInd = trendData.length - newData.length;
+	// 		var startItem = trendData[startItemInd - 1] || newData[0];
+	// 		var current: ICurrent = {};
+	// 		var targets: ITargets = {};
+	// 		for (let itemInd = startItemInd; itemInd < trendData.length; itemInd++) {
+	// 			let trendItem = trendData[itemInd];
+	// 			let startPoint = chartState.getPointOnChart(startItem.xVal, startItem.yVal);
+	// 			let targetPoint = chartState.getPointOnChart(trendItem.xVal, trendItem.yVal);
+	// 			let point = animationPoints.appendPoint(trendItem, startPoint);
+	// 			let id = point.id;
+	// 			current['x' + id] = startPoint.x;
+	// 			current['y' + id] = startPoint.y;
+	// 			targets['x' + id] = targetPoint.x;
+	// 			targets['y' + id] = targetPoint.y;
+	// 		}
+	// 		targets.ease = animationsOptions.trendChangeEase;
+	// 		var time = animationsOptions.enabled ? animationsOptions.trendChangeSpeed : 0;
+	// 		this.animate(trendName, time, targets, current);
+	// 	}
+	//
+	// 	private updateAllTrends() {
+	// 		for (let trendName in this.trendsAnimationStates) {
+	// 			this.updateAllTrendPoints(trendName);
+	// 		}
+	// 	}
+	//
+	// 	private updateAllTrendPoints(trendName: string) {
+	// 		var chartState = this.chartState;
+	// 		var targets: ITargets = {};
+	// 		var currents: ICurrent = {};
+	//
+	// 		var currentXFrom = chartState.data.xAxis.range.from;
+	// 		var prevXFrom = chartState.data.prevState.xAxis.range.from;
+	// 		var xFromDiff = currentXFrom - prevXFrom;
+	//
+	// 		var point = this.trendsAnimationStates[trendName].getStartPoint();
+	// 		do {
+	// 			let targetPoint = chartState.getPointOnChart(point.xVal, point.yVal);
+	// 			point.vector = targetPoint;
+	// 			if (xFromDiff) {
+	// 				currents['x' + point.id] = targetPoint.x;
+	// 			}
+	// 			targets['x' + point.id] = targetPoint.x;
+	// 			targets['y' + point.id] = targetPoint.y;
+	// 		} while (point = point.getNext());
+	//
+	// 		var animationsOptions = chartState.data.animations;
+	// 		targets.ease = animationsOptions.zoomEase;
+	// 		var time = animationsOptions.enabled ? animationsOptions.zoomSpeed : 0;
+	// 		this.animate(trendName, time, targets, currents);
+	// 	}
+	//
+	//
+	// 	private animate(trendName: string, time: number, newTargets: Object, current?: Object) {
+	// 		var animationState = this.trendsAnimationStates[trendName];
+	// 		if (animationState.currentAnimation) animationState.currentAnimation.pause();
+	// 		if (current) animationState.current = Utils.deepMerge(animationState.current, current) as {[key: string]: number};
+	// 		animationState.targets = Utils.deepMerge(animationState.targets, newTargets) as ITargets;
+	//
+	// 		var animation = animationState.currentAnimation = TweenLite.to(animationState.current, time, animationState.targets);
+	// 		animation.eventCallback('onUpdate', () => {
+	// 			this.ee.emit('animationFrame.' + trendName, animationState);
+	// 		});
+	// 		animation.eventCallback('onComplete', () => {
+	// 			animationState.targets = {ease: void 0};
+	// 		});
+	// 	}
+	// } 
 
 
 /***/ },
-/* 26 */
+/* 27 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var __extends = (this && this.__extends) || function (d, b) {
+	    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+	    function __() { this.constructor = d; }
+	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+	};
+	var Utils_1 = __webpack_require__(11);
+	var interfaces_1 = __webpack_require__(9);
+	var EventEmitter = __webpack_require__(17);
+	var AXIS_MARK_DEFAULT_OPTIONS = {
+	    type: 'simple',
+	    lineWidth: 2,
+	    value: 0
+	};
+	var AxisMarks = (function () {
+	    function AxisMarks(chartState, axisType) {
+	        this.items = {};
+	        if (axisType == interfaces_1.AXIS_TYPE.Y) {
+	            // TODO: axis mark on Y axis
+	            Utils_1.Utils.error('axis mark on Y axis not supported yet');
+	            return;
+	        }
+	        this.chartState = chartState;
+	        this.ee = new EventEmitter();
+	        this.axisType = axisType;
+	        var marks = this.items;
+	        var axisMarksOptions = chartState.data.xAxis.marks;
+	        for (var _i = 0, axisMarksOptions_1 = axisMarksOptions; _i < axisMarksOptions_1.length; _i++) {
+	            var options = axisMarksOptions_1[_i];
+	            var axisMark = void 0;
+	            options = Utils_1.Utils.deepMerge(AXIS_MARK_DEFAULT_OPTIONS, options);
+	            // set mark name
+	            if (!options.name)
+	                options.name = Utils_1.Utils.getUid().toString();
+	            if (marks[options.name])
+	                Utils_1.Utils.error('duplicated mark name ' + options.name);
+	            // create mark instance based on type option
+	            if (options.type == 'timeleft') {
+	                axisMark = new AxisTimeleftMark(chartState, interfaces_1.AXIS_TYPE.X, options);
+	            }
+	            else {
+	                axisMark = new AxisMark(chartState, interfaces_1.AXIS_TYPE.X, options);
+	            }
+	            marks[options.name] = axisMark;
+	        }
+	        this.bindEvents();
+	    }
+	    AxisMarks.prototype.onTrendChange = function (trendName, newData) {
+	        if (!newData)
+	            return;
+	        var startVal = newData[0].xVal;
+	        var endVal = newData[newData.length - 1].xVal;
+	        var marks = this.items;
+	        for (var markName in marks) {
+	            var mark = marks[markName];
+	            var markVal = mark.options.value;
+	            var markWasCrossed = (startVal == markVal || endVal == markVal || (startVal < markVal && endVal > markVal));
+	            if (markWasCrossed)
+	                this.ee.emit('onMarkCrossed', trendName, newData);
+	        }
+	    };
+	    AxisMarks.prototype.bindEvents = function () {
+	        var _this = this;
+	        this.chartState.onTrendChange(function (trendName, changedOptions, newData) { return _this.onTrendChange(trendName, newData); });
+	    };
+	    AxisMarks.prototype.getItems = function () {
+	        return this.items;
+	    };
+	    AxisMarks.prototype.getItem = function (markName) {
+	        return this.items[markName];
+	    };
+	    return AxisMarks;
+	}());
+	exports.AxisMarks = AxisMarks;
+	var AxisMark = (function () {
+	    function AxisMark(chartState, axisType, options) {
+	        this.renderOnTrendsChange = false;
+	        if (axisType == interfaces_1.AXIS_TYPE.Y) {
+	            // TODO: axis mark on Y axis
+	            Utils_1.Utils.error('axis mark on Y axis not supported yet');
+	        }
+	        this.ee = new EventEmitter();
+	        this.options = options;
+	        this.axisType = axisType;
+	        this.chartState = chartState;
+	        this.position = this.getPosition();
+	        this.bindEvents();
+	    }
+	    AxisMark.prototype.setOptions = function (newOptions) {
+	        this.options = Utils_1.Utils.deepMerge(this.options, newOptions);
+	        this.updatePosition();
+	        this.ee.emit('onDisplayedValueChange');
+	    };
+	    AxisMark.prototype.getDisplayedVal = function () {
+	        return String(this.options.value);
+	    };
+	    AxisMark.prototype.getPosition = function () {
+	        if (this.axisType == interfaces_1.AXIS_TYPE.X) {
+	            return this.chartState.getPointOnXAxis(this.options.value);
+	        }
+	        Utils_1.Utils.error('not implemented');
+	        return 0;
+	    };
+	    AxisMark.prototype.onAnimationFrame = function (cb) {
+	        var _this = this;
+	        this.ee.on('onAnimationFrame', cb);
+	        return function () {
+	            _this.ee.off('onAnimationFrame', cb);
+	        };
+	    };
+	    AxisMark.prototype.onMarkCrossed = function (cb) {
+	        var _this = this;
+	        this.ee.on('onMarkCrossed', cb);
+	        return function () {
+	            _this.ee.off('onMarkCrossed', cb);
+	        };
+	    };
+	    AxisMark.prototype.onDisplayedValueChange = function (cb) {
+	        var _this = this;
+	        this.ee.on('onDisplayedValueChange', cb);
+	        return function () {
+	            _this.ee.off('onDisplayedValueChange', cb);
+	        };
+	    };
+	    AxisMark.prototype.updatePosition = function () {
+	        var animations = this.chartState.data.animations;
+	        var time = animations.enabled ? animations.trendChangeSpeed : 0;
+	        this.animate(this.getPosition(), time, animations.trendChangeEase);
+	    };
+	    AxisMark.prototype.bindEvents = function () {
+	        var _this = this;
+	        this.chartState.onZoom(function () { return _this.onZoom(); });
+	    };
+	    AxisMark.prototype.onZoom = function () {
+	        var chartState = this.chartState;
+	        var animations = this.chartState.data.animations;
+	        var time = animations.enabled ? animations.zoomSpeed : 0;
+	        var prevRange = chartState.data.prevState.xAxis.range;
+	        var currentRange = chartState.data.xAxis.range;
+	        var zoomDistanceInPx = chartState.valueToPxByXAxis(currentRange.from - prevRange.from);
+	        var fromPosition = this.position - zoomDistanceInPx;
+	        this.animate(this.getPosition(), time, animations.zoomEase, fromPosition);
+	    };
+	    AxisMark.prototype.animate = function (toPosition, time, ease, fromPosition) {
+	        var _this = this;
+	        if (this.animation)
+	            this.animation.kill();
+	        fromPosition = fromPosition !== void 0 ? fromPosition : this.position;
+	        var current = { position: fromPosition };
+	        var target = { position: toPosition, ease: ease };
+	        var animation = TweenLite.to(current, time, target);
+	        animation.eventCallback('onUpdate', function () {
+	            _this.position = current.position;
+	            _this.ee.emit('onAnimationFrame');
+	        });
+	        this.animation = animation;
+	    };
+	    AxisMark.typeName = 'simple';
+	    return AxisMark;
+	}());
+	exports.AxisMark = AxisMark;
+	var AxisTimeleftMark = (function (_super) {
+	    __extends(AxisTimeleftMark, _super);
+	    function AxisTimeleftMark() {
+	        _super.apply(this, arguments);
+	        this.renderOnTrendsChange = true;
+	    }
+	    AxisTimeleftMark.prototype.getDisplayedVal = function () {
+	        var markVal = this.options.value;
+	        var maxXVal = this.chartState.data.computedData.trends.maxXVal;
+	        var time = markVal - maxXVal;
+	        if (time < 0)
+	            time = 0;
+	        return Utils_1.Utils.msToTimeString(time * 1000);
+	    };
+	    AxisTimeleftMark.prototype.bindEvents = function () {
+	        var _this = this;
+	        _super.prototype.bindEvents.call(this);
+	        this.chartState.onTrendsChange(function () { return _this.onTrendsChange(); });
+	    };
+	    AxisTimeleftMark.prototype.onTrendsChange = function () {
+	        this.ee.emit('onDisplayedValueChange');
+	    };
+	    AxisTimeleftMark.typeName = 'timeleft';
+	    return AxisTimeleftMark;
+	}(AxisMark));
+	exports.AxisTimeleftMark = AxisTimeleftMark;
+
+
+/***/ },
+/* 28 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -54713,7 +55248,7 @@
 
 
 /***/ },
-/* 27 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -54820,7 +55355,7 @@
 
 
 /***/ },
-/* 28 */
+/* 30 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -54832,7 +55367,7 @@
 	var Mesh = THREE.Mesh;
 	var Object3D = THREE.Object3D;
 	var Widget_1 = __webpack_require__(14);
-	var GridWidget_1 = __webpack_require__(29);
+	var GridWidget_1 = __webpack_require__(31);
 	var Utils_1 = __webpack_require__(11);
 	var AXIS_ORIENTATION;
 	(function (AXIS_ORIENTATION) {
@@ -55020,7 +55555,7 @@
 
 
 /***/ },
-/* 29 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -55198,7 +55733,7 @@
 
 
 /***/ },
-/* 30 */
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -55406,7 +55941,7 @@
 
 
 /***/ },
-/* 31 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -55498,7 +56033,7 @@
 
 
 /***/ },
-/* 32 */
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -55622,7 +56157,7 @@
 
 
 /***/ },
-/* 33 */
+/* 35 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -55631,185 +56166,157 @@
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
+	var Mesh = THREE.Mesh;
+	var Object3D = THREE.Object3D;
+	var TrendsWidget_1 = __webpack_require__(13);
 	var Utils_1 = __webpack_require__(11);
-	var interfaces_1 = __webpack_require__(9);
-	var EventEmitter = __webpack_require__(17);
-	var AXIS_MARK_DEFAULT_OPTIONS = {
-	    type: 'simple',
-	    lineWidth: 2,
-	    value: 0
-	};
-	var AxisMarks = (function () {
-	    function AxisMarks(chartState, axisType) {
-	        this.items = {};
-	        if (axisType == interfaces_1.AXIS_TYPE.Y) {
-	            // TODO: axis mark on Y axis
-	            Utils_1.Utils.error('axis mark on Y axis not supported yet');
-	            return;
-	        }
-	        this.chartState = chartState;
-	        this.ee = new EventEmitter();
-	        this.axisType = axisType;
-	        var marks = this.items;
-	        var axisMarksOptions = chartState.data.xAxis.marks;
-	        for (var _i = 0, axisMarksOptions_1 = axisMarksOptions; _i < axisMarksOptions_1.length; _i++) {
-	            var options = axisMarksOptions_1[_i];
-	            var axisMark = void 0;
-	            options = Utils_1.Utils.deepMerge(AXIS_MARK_DEFAULT_OPTIONS, options);
-	            // set mark name
-	            if (!options.name)
-	                options.name = Utils_1.Utils.getUid().toString();
-	            if (marks[options.name])
-	                Utils_1.Utils.error('duplicated mark name ' + options.name);
-	            // create mark instance based on type option
-	            if (options.type == 'timeleft') {
-	                axisMark = new AxisTimeleftMark(chartState, interfaces_1.AXIS_TYPE.X, options);
-	            }
-	            else {
-	                axisMark = new AxisMark(chartState, interfaces_1.AXIS_TYPE.X, options);
-	            }
-	            marks[options.name] = axisMark;
-	        }
-	        this.bindEvents();
-	    }
-	    AxisMarks.prototype.onTrendChange = function (trendName, newData) {
-	        var startVal = newData[0].xVal;
-	        var endVal = newData[newData.length - 1].xVal;
-	        var marks = this.items;
-	        for (var markName in marks) {
-	            var mark = marks[markName];
-	            var markVal = mark.options.value;
-	            var markWasCrossed = (startVal == markVal || endVal == markVal || (startVal < markVal && endVal > markVal));
-	            if (markWasCrossed)
-	                this.ee.emit('onMarkCrossed', trendName, newData);
-	        }
-	    };
-	    AxisMarks.prototype.bindEvents = function () {
-	        var _this = this;
-	        this.chartState.onTrendChange(function (trendName, changedOptions, newData) { return _this.onTrendChange(trendName, newData); });
-	    };
-	    AxisMarks.prototype.getItems = function () {
-	        return this.items;
-	    };
-	    AxisMarks.prototype.getItem = function (markName) {
-	        return this.items[markName];
-	    };
-	    return AxisMarks;
-	}());
-	exports.AxisMarks = AxisMarks;
-	var AxisMark = (function () {
-	    function AxisMark(chartState, axisType, options) {
-	        this.renderOnTrendsChange = false;
-	        if (axisType == interfaces_1.AXIS_TYPE.Y) {
-	            // TODO: axis mark on Y axis
-	            Utils_1.Utils.error('axis mark on Y axis not supported yet');
-	        }
-	        this.ee = new EventEmitter();
-	        this.options = options;
-	        this.axisType = axisType;
-	        this.chartState = chartState;
-	        this.position = this.getPosition();
-	        this.bindEvents();
-	    }
-	    AxisMark.prototype.setOptions = function (newOptions) {
-	        this.options = Utils_1.Utils.deepMerge(this.options, newOptions);
-	        this.updatePosition();
-	        this.ee.emit('onDisplayedValueChange');
-	    };
-	    AxisMark.prototype.getDisplayedVal = function () {
-	        return String(this.options.value);
-	    };
-	    AxisMark.prototype.getPosition = function () {
-	        if (this.axisType == interfaces_1.AXIS_TYPE.X) {
-	            return this.chartState.getPointOnXAxis(this.options.value);
-	        }
-	        Utils_1.Utils.error('not implemented');
-	        return 0;
-	    };
-	    AxisMark.prototype.onAnimationFrame = function (cb) {
-	        var _this = this;
-	        this.ee.on('onAnimationFrame', cb);
-	        return function () {
-	            _this.ee.off('onAnimationFrame', cb);
-	        };
-	    };
-	    AxisMark.prototype.onMarkCrossed = function (cb) {
-	        var _this = this;
-	        this.ee.on('onMarkCrossed', cb);
-	        return function () {
-	            _this.ee.off('onMarkCrossed', cb);
-	        };
-	    };
-	    AxisMark.prototype.onDisplayedValueChange = function (cb) {
-	        var _this = this;
-	        this.ee.on('onDisplayedValueChange', cb);
-	        return function () {
-	            _this.ee.off('onDisplayedValueChange', cb);
-	        };
-	    };
-	    AxisMark.prototype.updatePosition = function () {
-	        var animations = this.chartState.data.animations;
-	        var time = animations.enabled ? animations.trendChangeSpeed : 0;
-	        this.animate(this.getPosition(), time, animations.trendChangeEase);
-	    };
-	    AxisMark.prototype.bindEvents = function () {
-	        var _this = this;
-	        this.chartState.onZoom(function () { return _this.onZoom(); });
-	    };
-	    AxisMark.prototype.onZoom = function () {
-	        var chartState = this.chartState;
-	        var animations = this.chartState.data.animations;
-	        var time = animations.enabled ? animations.zoomSpeed : 0;
-	        var prevRange = chartState.data.prevState.xAxis.range;
-	        var currentRange = chartState.data.xAxis.range;
-	        var zoomDistanceInPx = chartState.valueToPxByXAxis(currentRange.from - prevRange.from);
-	        var fromPosition = this.position - zoomDistanceInPx;
-	        this.animate(this.getPosition(), time, animations.zoomEase, fromPosition);
-	    };
-	    AxisMark.prototype.animate = function (toPosition, time, ease, fromPosition) {
-	        var _this = this;
-	        if (this.animation)
-	            this.animation.kill();
-	        fromPosition = fromPosition !== void 0 ? fromPosition : this.position;
-	        var current = { position: fromPosition };
-	        var target = { position: toPosition, ease: ease };
-	        var animation = TweenLite.to(current, time, target);
-	        animation.eventCallback('onUpdate', function () {
-	            _this.position = current.position;
-	            _this.ee.emit('onAnimationFrame');
-	        });
-	        this.animation = animation;
-	    };
-	    AxisMark.typeName = 'simple';
-	    return AxisMark;
-	}());
-	exports.AxisMark = AxisMark;
-	var AxisTimeleftMark = (function (_super) {
-	    __extends(AxisTimeleftMark, _super);
-	    function AxisTimeleftMark() {
+	/**
+	 * widget for drawing trends marks for all trends
+	 */
+	var TrendsMarksWidget = (function (_super) {
+	    __extends(TrendsMarksWidget, _super);
+	    function TrendsMarksWidget() {
 	        _super.apply(this, arguments);
-	        this.renderOnTrendsChange = true;
 	    }
-	    AxisTimeleftMark.prototype.getDisplayedVal = function () {
-	        var markVal = this.options.value;
-	        var maxXVal = this.chartState.data.computedData.trends.maxXVal;
-	        var time = markVal - maxXVal;
-	        if (time < 0)
-	            time = 0;
-	        return Utils_1.Utils.msToTimeString(time * 1000);
+	    TrendsMarksWidget.prototype.getTrendWidgetClass = function () {
+	        return TrendMarksWidget;
 	    };
-	    AxisTimeleftMark.prototype.bindEvents = function () {
+	    TrendsMarksWidget.widgetName = "trendsMarks";
+	    return TrendsMarksWidget;
+	}(TrendsWidget_1.TrendsWidget));
+	exports.TrendsMarksWidget = TrendsMarksWidget;
+	/**
+	 * widget for drawing trend marks for one trend
+	 */
+	var TrendMarksWidget = (function (_super) {
+	    __extends(TrendMarksWidget, _super);
+	    function TrendMarksWidget(chartState, trendName) {
+	        _super.call(this, chartState, trendName);
+	        this.marksWidgets = {};
+	        this.object3D = new Object3D();
+	        this.onMarksChange();
+	    }
+	    TrendMarksWidget.prototype.getObject3D = function () {
+	        return this.object3D;
+	    };
+	    TrendMarksWidget.prototype.bindEvents = function () {
 	        var _this = this;
-	        _super.prototype.bindEvents.call(this);
-	        this.chartState.onTrendsChange(function () { return _this.onTrendsChange(); });
+	        this.trend.marks.onChange(function () { return _this.onMarksChange(); });
 	    };
-	    AxisTimeleftMark.prototype.onTrendsChange = function () {
-	        this.ee.emit('onDisplayedValueChange');
+	    TrendMarksWidget.prototype.onMarksChange = function () {
+	        var marksItems = this.trend.marks.getItems();
+	        var widgets = this.marksWidgets;
+	        for (var markName in marksItems) {
+	            if (!widgets[markName])
+	                this.createMarkWidget(marksItems[markName]);
+	        }
 	    };
-	    AxisTimeleftMark.typeName = 'timeleft';
-	    return AxisTimeleftMark;
-	}(AxisMark));
-	exports.AxisTimeleftMark = AxisTimeleftMark;
+	    TrendMarksWidget.prototype.createMarkWidget = function (mark) {
+	        var markWidget = new TrendMarkWidget(this.chartState, mark);
+	        this.marksWidgets[mark.options.name] = markWidget;
+	        this.object3D.add(markWidget.getObject3D());
+	    };
+	    TrendMarksWidget.prototype.onTrendAnimate = function () {
+	        var widgets = this.marksWidgets;
+	        for (var markName in widgets) {
+	            widgets[markName].onTrendAnimate();
+	        }
+	    };
+	    return TrendMarksWidget;
+	}(TrendsWidget_1.TrendWidget));
+	/**
+	 * widget for drawing one trend mark
+	 */
+	var TrendMarkWidget = (function () {
+	    function TrendMarkWidget(chartState, trendMark) {
+	        this.markHeight = 74;
+	        this.markWidth = 150;
+	        this.position = { lineHeight: 30, x: 0, y: 0 };
+	        this.chartState = chartState;
+	        this.mark = trendMark;
+	        this.initObject();
+	        this.show();
+	    }
+	    TrendMarkWidget.prototype.initObject = function () {
+	        this.object3D = new Object3D();
+	        //this.line = this.createLine();
+	        //this.object3D.add(this.line);
+	        this.markMesh = this.createMarkMesh();
+	        this.object3D.add(this.markMesh);
+	    };
+	    // protected createLine(): Line {
+	    // 	// var lineGeometry = new Geometry();
+	    // 	//
+	    // 	// lineGeometry.vertices.push(new Vector3(0,0,0), new Vector3(0, this.position.lineHeight, 0));
+	    // 	// return new Line(
+	    // 	// 	lineGeometry,
+	    // 	// 	new LineDashedMaterial()
+	    // 	// );
+	    // }
+	    TrendMarkWidget.prototype.createMarkMesh = function () {
+	        var _a = this, markHeight = _a.markHeight, markWidth = _a.markWidth;
+	        var lineHeight = this.position.lineHeight;
+	        var meshHeight = markHeight + lineHeight;
+	        var meshWidth = markWidth;
+	        var mark = this.mark.options;
+	        var texture = Utils_1.Utils.createPixelPerfectTexture(meshWidth, meshHeight, function (ctx) {
+	            var circleOffset = 30;
+	            var circleR = 22;
+	            var circleX = markWidth / 2;
+	            var circleY = circleOffset + circleR;
+	            // title and description
+	            ctx.beginPath();
+	            ctx.textAlign = 'center';
+	            ctx.font = "11px Arial";
+	            ctx.fillStyle = 'rgb(129,129,129)';
+	            ctx.fillText(mark.title, circleX, 10);
+	            ctx.fillStyle = 'rgb(40,136,75)';
+	            ctx.fillText(mark.description, circleX, 22);
+	            // icon circle
+	            ctx.beginPath();
+	            ctx.fillStyle = mark.iconColor;
+	            ctx.arc(circleX, circleY, circleR, 0, 2 * Math.PI);
+	            ctx.fill();
+	            // icon text
+	            ctx.font = "19px Arial";
+	            ctx.fillStyle = 'rgb(255, 255, 255)';
+	            ctx.fillText(mark.icon, circleX, circleY + 5);
+	            // line
+	            ctx.beginPath();
+	            ctx.strokeStyle = 'rgb(255, 255, 255)';
+	            ctx.lineWidth = 1;
+	            ctx.setLineDash([1, 4]);
+	            ctx.moveTo(markWidth / 2 + 0.5, circleY + circleR);
+	            ctx.lineTo(markWidth / 2 + 0.5, meshHeight);
+	            ctx.stroke();
+	        });
+	        var material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.FrontSide });
+	        material.transparent = true;
+	        var mesh = new Mesh(new THREE.PlaneGeometry(meshWidth, meshHeight), material);
+	        mesh.position.setY(meshHeight / 2);
+	        return mesh;
+	    };
+	    TrendMarkWidget.prototype.getObject3D = function () {
+	        return this.object3D;
+	    };
+	    TrendMarkWidget.prototype.onTrendAnimate = function () {
+	        if (!this.mark.point)
+	            return;
+	        var pos = this.mark.point.getCurrentVec();
+	        this.object3D.position.set(pos.x, pos.y, 0);
+	    };
+	    TrendMarkWidget.prototype.show = function () {
+	        if (!this.mark.point)
+	            return;
+	        var pos = this.mark.point.getCurrentVec();
+	        this.object3D.position.set(pos.x, pos.y, 0);
+	        var animations = this.chartState.data.animations;
+	        var time = animations.enabled ? 1 : 0;
+	        this.object3D.scale.set(0.01, 0.01, 1);
+	        TweenLite.to(this.object3D.scale, time, { x: 1, y: 1, ease: Elastic.easeOut });
+	    };
+	    return TrendMarkWidget;
+	}());
 
 
 /***/ }

@@ -6,7 +6,6 @@ import Vector3 = THREE.Vector3;
 import {IChartWidgetOptions, ChartWidget} from "./Widget";
 import {Trends, ITrendsOptions} from "./Trends";
 import {IChartEvent} from "./Events";
-import {TrendsAnimationManager} from "./TrendsAnimationManager";
 import {AxisMarks} from "./AxisMarks";
 import {AXIS_TYPE} from "./interfaces";
 
@@ -82,12 +81,12 @@ export class ChartState {
 
 	};
 	trends: Trends;
-	trendsAnimationManager: TrendsAnimationManager;
 	xAxisMarks: AxisMarks;
 	private ee: EventEmitter2;
 
 	constructor(initialState: IChartState) {
 		this.ee = new EE();
+		this.ee.setMaxListeners(15);
 
 		if (!initialState.$el) {
 			Utils.error('$el must be set');
@@ -103,9 +102,28 @@ export class ChartState {
 		this.setState(initialState);
 		this.setState({computedData: this.getComputedData()});
 		this.savePrevState();
-		this.trendsAnimationManager = new TrendsAnimationManager(this);
 		this.xAxisMarks = new AxisMarks(this, AXIS_TYPE.X);
 		this.initListeners();
+		
+		// message to other modules that ChartState.data is ready for use 
+		this.ee.emit('initialStateApplied', initialState);
+		
+		// message to other modules that ChartState is ready for use 
+		this.ee.emit('ready', initialState);
+	}
+
+	onInitialStateApplied(cb: (initialState: IChartState) => void ): Function {
+		this.ee.on('initialStateApplied', cb);
+		return () => {
+			this.ee.off('initialStateApplied', cb);
+		}
+	}
+
+	onReady(cb: (initialState: IChartState) => void ): Function {
+		this.ee.on('ready', cb);
+		return () => {
+			this.ee.off('ready', cb);
+		}
 	}
 
 	onChange(cb: (changedProps: IChartState) => void ) {

@@ -10,7 +10,7 @@ import {TrendWidget, TrendsWidget} from "./TrendsWidget";
 import {ITrendOptions} from "../Trend";
 import PlaneGeometry = THREE.PlaneGeometry;
 import Color = THREE.Color;
-import {TrendAnimationState, TrendPoint} from "../TrendsAnimationManager";
+import {TrendPoints, TrendPoint} from "../TrendPoints";
 
 const CANVAS_WIDTH = 128;
 const CANVAS_HEIGHT = 64;
@@ -77,7 +77,7 @@ class TrendIndicator extends TrendWidget {
 
 	}
 
-	protected onTrendAnimate(animationState: TrendAnimationState) {
+	protected onTrendAnimate(animationState: TrendPoints) {
 		// set new widget position
 		this.point = animationState.getEndPoint();
 		this.updatePosition();
