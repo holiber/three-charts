@@ -11,7 +11,7 @@ import Texture = THREE.Texture;
 import Vector2 = THREE.Vector2;
 import {TrendsWidget, TrendWidget} from "./TrendsWidget";
 import LineSegments = THREE.LineSegments;
-import {TrendMark, TrendMarks} from "../TrendMarks";
+import {TrendMark} from "../TrendMarks";
 import {Utils} from "../Utils";
 import LineDashedMaterial = THREE.LineDashedMaterial;
 
@@ -139,7 +139,7 @@ class TrendMarkWidget {
 			// icon text
 			ctx.font = "19px Arial";
 			ctx.fillStyle = 'rgb(255, 255, 255)';
-			ctx.fillText(mark.icon, circleX, circleY + 5);
+			ctx.fillText(mark.icon, circleX, circleY + 7);
 
 			// line
 			ctx.beginPath();

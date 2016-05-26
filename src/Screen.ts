@@ -46,6 +46,7 @@ export class Screen {
 			changedProps.xAxis.range.from == void 0 &&
 			changedProps.xAxis.range.to == void 0
 		);
+		//canAnimate = false;
 		var targetX = this.cameraInitialPosition.x + state.data.xAxis.range.scroll;
 		if (this.cameraAnimation) this.cameraAnimation.kill();
 		if (canAnimate) {

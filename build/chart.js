@@ -52115,13 +52115,13 @@
 	            $el: null,
 	            zoom: 0,
 	            xAxis: {
-	                range: { type: Chart_1.AXIS_RANGE_TYPE.ALL, from: 0, to: 0, scroll: 0, padding: { start: 0, end: 200 } },
+	                range: { type: Chart_1.AXIS_RANGE_TYPE.ALL, from: 0, to: 0, scroll: 0, padding: { start: 0, end: 200 }, zoom: 1 },
 	                gridMinSize: 120,
 	                autoScroll: true,
-	                marks: []
+	                marks: [],
 	            },
 	            yAxis: {
-	                range: { type: Chart_1.AXIS_RANGE_TYPE.RELATIVE_END, from: 0, to: 0, padding: { start: 100, end: 100 } },
+	                range: { type: Chart_1.AXIS_RANGE_TYPE.RELATIVE_END, from: 0, to: 0, padding: { start: 100, end: 100 }, zoom: 1 },
 	                gridMinSize: 60,
 	                marks: []
 	            },
@@ -52138,7 +52138,8 @@
 	                dragMode: false,
 	                x: 0,
 	                y: 0
-	            }
+	            },
+	            computedData: {}
 	        };
 	        this.ee = new EE();
 	        this.ee.setMaxListeners(15);
@@ -52149,6 +52150,14 @@
 	        var style = getComputedStyle(initialState.$el);
 	        initialState.width = parseInt(style.width);
 	        initialState.height = parseInt(style.height);
+	        initialState.computedData = {
+	            xAxis: {
+	                range: {
+	                    initialFrom: initialState.xAxis.range.from,
+	                    initialTo: initialState.xAxis.range.to
+	                }
+	            }
+	        };
 	        this.trends = new Trends_1.Trends(this, initialState);
 	        initialState.trends = this.trends.calculatedOptions;
 	        this.setState(initialState);
@@ -54769,6 +54778,7 @@
 	        do {
 	            var targetPoint = chartState.getPointOnChart(point.xVal, point.yVal);
 	            point.vector = targetPoint;
+	            var zoomDistanceInPx = chartState.valueToPxByXAxis(xFromDiff);
 	            if (xFromDiff) {
 	                currents['x' + point.id] = targetPoint.x;
 	            }
@@ -54787,10 +54797,11 @@
 	        if (current)
 	            this.current = Utils_1.Utils.deepMerge(this.current, current);
 	        this.targets = Utils_1.Utils.deepMerge(this.targets, newTargets);
-	        var animation = this.currentAnimation = TweenLite.to(this.current, time, this.targets);
-	        animation.eventCallback('onUpdate', function () {
+	        var cb = function () {
 	            _this.ee.emit('animationFrame', _this);
-	        });
+	        };
+	        var animation = this.currentAnimation = TweenLite.to(this.current, time, this.targets);
+	        animation.eventCallback('onUpdate', cb);
 	        animation.eventCallback('onComplete', function () {
 	            _this.targets = { ease: void 0 };
 	        });
@@ -54824,174 +54835,6 @@
 	    return TrendPoint;
 	}());
 	exports.TrendPoint = TrendPoint;
-	//
-	// /**
-	//  * class helps widgets to animate trends points on chart
-	//  */
-	// export class TrendsAnimationManager {
-	//
-	// 	private trendsAnimationStates: {[trendName: string]: TrendPoints} = {};
-	// 	private ee: EventEmitter2;
-	//
-	// 	constructor (private chartState: ChartState) {
-	// 		this.ee = new EE();
-	// 		this.onTrendsChange();
-	// 		this.bindEvents();
-	// 	}
-	//
-	// 	getPoints(trendName: string): TrendPoints {
-	// 		return this.trendsAnimationStates[trendName];
-	// 	}
-	//
-	// 	onAnimationFrame(trendName: string, cb: (animationState: TrendPoints) => void): Function {
-	// 		var eventName = 'animationFrame.' + trendName;
-	// 		this.ee.on('animationFrame.' + trendName, cb);
-	// 		return () => {
-	// 			this.ee.removeListener(eventName, cb);
-	// 		}
-	// 	}
-	//
-	// 	protected bindEvents() {
-	// 		var state = this.chartState;
-	// 		state.onTrendsChange(() => this.onTrendsChange());
-	// 		state.onTrendChange((trendName: string, changedOptions: ITrendOptions, newData: ITrendData) => {
-	// 			if (newData) {
-	// 				var data = this.chartState.getTrend(trendName).getData();
-	// 				var isAppend = (!data.length || data[0].xVal < newData[0].xVal);
-	// 				isAppend ? this.appendData(trendName, newData) : this.prependData(trendName, newData);
-	// 			}
-	// 		});
-	// 		state.onZoom(() => this.updateAllTrends());
-	// 	}
-	//
-	// 	private onTrendsChange() {
-	// 		var trendsOptions = this.chartState.data.trends;
-	// 		for (let trendName in trendsOptions) {
-	// 			let trendOptions = trendsOptions[trendName];
-	// 			if (trendOptions.enabled && !this.trendsAnimationStates[trendName]) {
-	// 				this.createAnimationPoints(trendName);
-	// 			} else if (!trendOptions.enabled && this.trendsAnimationStates[trendName]) {
-	// 				this.destroyAnimationPoints(trendName);
-	// 			}
-	// 		}
-	// 	}
-	//
-	// 	private createAnimationPoints(trendName: string) {
-	// 		var trendData = this.chartState.getTrend(trendName).getData();
-	// 		var firstItem = trendData[0];
-	// 		var firstPointVector = this.chartState.getPointOnChart(firstItem.xVal, firstItem.yVal);
-	// 		this.trendsAnimationStates[trendName] = new TrendPoints(MAX_DATA_LENGTH, firstPointVector);
-	// 		this.appendData(trendName, trendData);
-	// 	}
-	//
-	// 	private destroyAnimationPoints(trendName: string) {
-	// 		var animationPoints = this.trendsAnimationStates[trendName];
-	// 		if (animationPoints.currentAnimation) animationPoints.currentAnimation.kill();
-	// 		delete this.trendsAnimationStates[trendName];
-	// 	}
-	//
-	// 	private prependData(trendName: string, newData: ITrendData) {
-	// 		var animationPoints = this.trendsAnimationStates[trendName];
-	// 		if (!animationPoints) return;
-	// 		var chartState = this.chartState;
-	// 		var trendData = chartState.getTrend(trendName).getData();
-	// 		var animationsOptions = chartState.data.animations;
-	//
-	// 		var startItemInd = newData.length;
-	// 		var startItem = trendData[startItemInd] || newData[0];
-	// 		var current: ICurrent = {};
-	// 		var targets: ITargets = {};
-	// 		for (let itemInd = startItemInd - 1; itemInd >= 0; itemInd--) {
-	// 			let trendItem = trendData[itemInd];
-	// 			let startPoint = chartState.getPointOnChart(startItem.xVal, startItem.yVal);
-	// 			let targetPoint = chartState.getPointOnChart(trendItem.xVal, trendItem.yVal);
-	// 			let point = animationPoints.prependPoint(trendItem, startPoint);
-	// 			let id = point.id;
-	// 			current['x' + id] = startPoint.x;
-	// 			current['y' + id] = startPoint.y;
-	// 			targets['x' + id] = targetPoint.x;
-	// 			targets['y' + id] = targetPoint.y;
-	// 		}
-	// 		targets.ease = animationsOptions.trendChangeEase;
-	// 		var time = animationsOptions.enabled ? animationsOptions.trendChangeSpeed : 0;
-	// 		this.animate(trendName, time, targets, current);
-	// 	}
-	//
-	// 	private appendData(trendName: string, newData: ITrendData) {
-	// 		var animationPoints = this.trendsAnimationStates[trendName];
-	// 		if (!animationPoints) return;
-	// 		var chartState = this.chartState;
-	// 		var trendData = chartState.getTrend(trendName).getData();
-	// 		var animationsOptions = chartState.data.animations;
-	//
-	// 		var startItemInd = trendData.length - newData.length;
-	// 		var startItem = trendData[startItemInd - 1] || newData[0];
-	// 		var current: ICurrent = {};
-	// 		var targets: ITargets = {};
-	// 		for (let itemInd = startItemInd; itemInd < trendData.length; itemInd++) {
-	// 			let trendItem = trendData[itemInd];
-	// 			let startPoint = chartState.getPointOnChart(startItem.xVal, startItem.yVal);
-	// 			let targetPoint = chartState.getPointOnChart(trendItem.xVal, trendItem.yVal);
-	// 			let point = animationPoints.appendPoint(trendItem, startPoint);
-	// 			let id = point.id;
-	// 			current['x' + id] = startPoint.x;
-	// 			current['y' + id] = startPoint.y;
-	// 			targets['x' + id] = targetPoint.x;
-	// 			targets['y' + id] = targetPoint.y;
-	// 		}
-	// 		targets.ease = animationsOptions.trendChangeEase;
-	// 		var time = animationsOptions.enabled ? animationsOptions.trendChangeSpeed : 0;
-	// 		this.animate(trendName, time, targets, current);
-	// 	}
-	//
-	// 	private updateAllTrends() {
-	// 		for (let trendName in this.trendsAnimationStates) {
-	// 			this.updateAllTrendPoints(trendName);
-	// 		}
-	// 	}
-	//
-	// 	private updateAllTrendPoints(trendName: string) {
-	// 		var chartState = this.chartState;
-	// 		var targets: ITargets = {};
-	// 		var currents: ICurrent = {};
-	//
-	// 		var currentXFrom = chartState.data.xAxis.range.from;
-	// 		var prevXFrom = chartState.data.prevState.xAxis.range.from;
-	// 		var xFromDiff = currentXFrom - prevXFrom;
-	//
-	// 		var point = this.trendsAnimationStates[trendName].getStartPoint();
-	// 		do {
-	// 			let targetPoint = chartState.getPointOnChart(point.xVal, point.yVal);
-	// 			point.vector = targetPoint;
-	// 			if (xFromDiff) {
-	// 				currents['x' + point.id] = targetPoint.x;
-	// 			}
-	// 			targets['x' + point.id] = targetPoint.x;
-	// 			targets['y' + point.id] = targetPoint.y;
-	// 		} while (point = point.getNext());
-	//
-	// 		var animationsOptions = chartState.data.animations;
-	// 		targets.ease = animationsOptions.zoomEase;
-	// 		var time = animationsOptions.enabled ? animationsOptions.zoomSpeed : 0;
-	// 		this.animate(trendName, time, targets, currents);
-	// 	}
-	//
-	//
-	// 	private animate(trendName: string, time: number, newTargets: Object, current?: Object) {
-	// 		var animationState = this.trendsAnimationStates[trendName];
-	// 		if (animationState.currentAnimation) animationState.currentAnimation.pause();
-	// 		if (current) animationState.current = Utils.deepMerge(animationState.current, current) as {[key: string]: number};
-	// 		animationState.targets = Utils.deepMerge(animationState.targets, newTargets) as ITargets;
-	//
-	// 		var animation = animationState.currentAnimation = TweenLite.to(animationState.current, time, animationState.targets);
-	// 		animation.eventCallback('onUpdate', () => {
-	// 			this.ee.emit('animationFrame.' + trendName, animationState);
-	// 		});
-	// 		animation.eventCallback('onComplete', () => {
-	// 			animationState.targets = {ease: void 0};
-	// 		});
-	// 	}
-	// } 
 
 
 /***/ },
@@ -55226,6 +55069,7 @@
 	            animations.enabled &&
 	            changedProps.xAxis.range.from == void 0 &&
 	            changedProps.xAxis.range.to == void 0);
+	        //canAnimate = false;
 	        var targetX = this.cameraInitialPosition.x + state.data.xAxis.range.scroll;
 	        if (this.cameraAnimation)
 	            this.cameraAnimation.kill();
@@ -56280,7 +56124,7 @@
 	            // icon text
 	            ctx.font = "19px Arial";
 	            ctx.fillStyle = 'rgb(255, 255, 255)';
-	            ctx.fillText(mark.icon, circleX, circleY + 5);
+	            ctx.fillText(mark.icon, circleX, circleY + 7);
 	            // line
 	            ctx.beginPath();
 	            ctx.strokeStyle = 'rgb(255, 255, 255)';

@@ -24,6 +24,12 @@ interface IChartStateComputedData {
 	trends?: {
 		maxXVal: number,
 		minXVal: number
+	},
+	xAxis?: {
+		range: {
+			initialFrom: number,
+			initialTo: number
+		}
 	}
 }
 
@@ -54,13 +60,13 @@ export class ChartState {
 		$el: null,
 		zoom: 0,
 		xAxis: {
-			range: {type: AXIS_RANGE_TYPE.ALL, from: 0, to: 0, scroll: 0, padding: {start: 0, end: 200}},
+			range: {type: AXIS_RANGE_TYPE.ALL, from: 0, to: 0, scroll: 0, padding: {start: 0, end: 200}, zoom: 1},
 			gridMinSize: 120,
 			autoScroll: true,
-			marks: []
+			marks: [],
 		},
 		yAxis: {
-			range: {type: AXIS_RANGE_TYPE.RELATIVE_END, from: 0, to: 0, padding: {start: 100, end: 100}},
+			range: {type: AXIS_RANGE_TYPE.RELATIVE_END, from: 0, to: 0, padding: {start: 100, end: 100}, zoom: 1},
 			gridMinSize: 60,
 			marks: []
 		},
@@ -77,6 +83,8 @@ export class ChartState {
 			dragMode: false,
 			x: 0,
 			y: 0
+		},
+		computedData: {
 		}
 
 	};
@@ -96,6 +104,15 @@ export class ChartState {
 		let style = getComputedStyle(initialState.$el);
 		initialState.width = parseInt(style.width);
 		initialState.height = parseInt(style.height);
+
+		initialState.computedData = {
+			xAxis: {
+				range: {
+					initialFrom: initialState.xAxis.range.from,
+					initialTo: initialState.xAxis.range.to
+				}
+			}
+		};
 
 		this.trends = new Trends(this, initialState);
 		initialState.trends = this.trends.calculatedOptions;

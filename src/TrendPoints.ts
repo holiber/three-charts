@@ -211,6 +211,7 @@ export class TrendPoints {
 		do {
 			let targetPoint = chartState.getPointOnChart(point.xVal, point.yVal);
 			point.vector = targetPoint;
+			var zoomDistanceInPx = chartState.valueToPxByXAxis(xFromDiff);
 			if (xFromDiff) {
 				currents['x' + point.id] = targetPoint.x;
 			}
@@ -229,10 +230,12 @@ export class TrendPoints {
 		if (current) this.current = Utils.deepMerge(this.current, current) as {[key: string]: number};
 		this.targets = Utils.deepMerge(this.targets, newTargets) as ITargets;
 
-		var animation = this.currentAnimation = TweenLite.to(this.current, time, this.targets);
-		animation.eventCallback('onUpdate', () => {
+		var cb = () => {
 			this.ee.emit('animationFrame', this);
-		});
+		};
+
+		var animation = this.currentAnimation = TweenLite.to(this.current, time, this.targets);
+		animation.eventCallback('onUpdate', cb);
 		animation.eventCallback('onComplete', () => {
 			this.targets = {ease: void 0};
 		});

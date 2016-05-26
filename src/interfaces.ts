@@ -27,6 +27,7 @@ export interface IAxisRange {
 	type?: AXIS_RANGE_TYPE,
 	from?: number,
 	to?: number,
+	zoom?: number,
 	scroll?: number,
 	padding?: {
 		start?: number,
