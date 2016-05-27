@@ -28,7 +28,15 @@ interface IChartStateComputedData {
 	xAxis?: {
 		range: {
 			initialFrom: number,
-			initialTo: number
+			initialTo: number,
+			scaleFactor: number
+		}
+	},
+	yAxis?: {
+		range: {
+			initialFrom: number,
+			initialTo: number,
+			scaleFactor: number
 		}
 	}
 }
@@ -83,8 +91,6 @@ export class ChartState {
 			dragMode: false,
 			x: 0,
 			y: 0
-		},
-		computedData: {
 		}
 
 	};
@@ -104,15 +110,6 @@ export class ChartState {
 		let style = getComputedStyle(initialState.$el);
 		initialState.width = parseInt(style.width);
 		initialState.height = parseInt(style.height);
-
-		initialState.computedData = {
-			xAxis: {
-				range: {
-					initialFrom: initialState.xAxis.range.from,
-					initialTo: initialState.xAxis.range.to
-				}
-			}
-		};
 
 		this.trends = new Trends(this, initialState);
 		initialState.trends = this.trends.calculatedOptions;
@@ -172,6 +169,9 @@ export class ChartState {
 
 	onZoom(cb: (changedProps: IChartState) => void) {
 		this.ee.on('zoom', cb);
+		return () => {
+			this.ee.off('zoom', cb);
+		}
 	}
 
 	onCameraChange(cb: (cameraOptions: {scrollX: number}) => void) {
@@ -210,10 +210,33 @@ export class ChartState {
 		this.ee.emit(eventName, data);
 	}
 
+	private initComputedData() {
+		var {width, height} = this.data;
+		var {from: xFrom, to: xTo} = this.data.xAxis.range;
+		var {from: yFrom, to: yTo} = this.data.yAxis.range;
+		this.data.computedData = {
+			xAxis: {
+				range: {
+					initialFrom: xFrom,
+					initialTo: xTo,
+					scaleFactor: width / (xTo - xFrom)
+				}
+			},
+			yAxis: {
+				range: {
+					initialFrom: yFrom,
+					initialTo: yTo,
+					scaleFactor: height / (yTo - yFrom)
+				}
+			}
+		};
+	}
+
 	private recalculateState(changedProps?: IChartState): IRecalculatedStateResult {
 		var data = this.data;
 		var patch: IChartState = {};
 		var eventsToEmit: IChartEvent[] = [];
+		var actualData = Utils.deepMerge({}, data);
 
 		// recalculate widgets
 		if (changedProps.widgets || !data.widgets) {
@@ -234,18 +257,36 @@ export class ChartState {
 			var oldX = data.prevState.cursor.x;
 			var currentX =  cursorOptions.x;
 			var currentScroll = data.xAxis.range.scroll;
-			var deltaX = oldX - currentX;
-			patch.xAxis = {range: {scroll: currentScroll + deltaX}};
+			var deltaXVal = this.pxToValueByXAxis(oldX - currentX);
+			patch.xAxis = {range: {scroll: currentScroll + deltaXVal}};
+			actualData = Utils.deepMerge(actualData, {xAxis: patch.xAxis} as IChartState)
 		}
 
-		// recalculate axis "from" and "to" for dynamics AXIS_RANGE_TYPE
-		var needToRecalculateAxis = (
-			(data.yAxis.range.type === AXIS_RANGE_TYPE.RELATIVE_END || data.yAxis.range.type === AXIS_RANGE_TYPE.AUTO) &&
-			(scrollChanged || changedProps.trends || changedProps.yAxis)
+		var needToRecalculateXAxis = (
+			(changedProps.xAxis && changedProps.xAxis.range) ||
+			this.data.xAxis.range.zeroVal == void 0
 		);
-		if (needToRecalculateAxis){
-			var newYAxisOptions = this.recalculateYAxis(changedProps.yAxis);
-			if (newYAxisOptions) patch.yAxis = newYAxisOptions;
+		if (needToRecalculateXAxis) {
+			let xAxisPatch = this.recalculateXAxis(actualData);
+			if (xAxisPatch) {
+				Utils.deepMerge(patch, {xAxis: xAxisPatch});
+				actualData = Utils.deepMerge(actualData, {xAxis: xAxisPatch} as IChartState);
+			}
+		}
+
+
+		// recalculate axis "from" and "to" for dynamics AXIS_RANGE_TYPE
+		var needToRecalculateYAxis = (
+			(data.yAxis.range.type === AXIS_RANGE_TYPE.RELATIVE_END || data.yAxis.range.type === AXIS_RANGE_TYPE.AUTO) &&
+			(scrollChanged || changedProps.trends || changedProps.yAxis) ||
+			this.data.yAxis.range.zeroVal == void 0
+		);
+		if (needToRecalculateYAxis){
+			let yAxisPatch = this.recalculateYAxis(actualData);
+			if (yAxisPatch) {
+				Utils.deepMerge(patch, {yAxis: yAxisPatch});
+				actualData = Utils.deepMerge(actualData, {yAxis: yAxisPatch} as IChartState);
+			}
 		}
 		// TODO: recalculate xAxis
 
@@ -258,8 +299,12 @@ export class ChartState {
 	}
 
 	private getComputedData(changedProps?: IChartState): IChartStateComputedData {
+		if (!this.data.computedData) {
+			this.initComputedData();
+		}
 		var computeAll = !changedProps;
 		var computedData: IChartStateComputedData = {};
+
 		if (computeAll || changedProps.trends && this.trends) {
 			computedData.trends = {
 				maxXVal: this.trends.getEndXVal(),
@@ -312,6 +357,7 @@ export class ChartState {
 		scrollChangeEventsNeeded && this.ee.emit('scroll', changedProps);
 
 		var zoomEventsNeeded = (
+			(changedProps.xAxis && changedProps.xAxis.range && changedProps.xAxis.range.zoom) ||
 			(changedProps.xAxis &&
 			changedProps.xAxis.range &&
 			(changedProps.xAxis.range.from || changedProps.xAxis.range.to))
@@ -336,16 +382,49 @@ export class ChartState {
 		}
 	}
 
+	private recalculateXAxis(actualData: IChartState): IAxisOptions {
+		var axisRange = actualData.xAxis.range;
+		var patch: IAxisOptions = {range: {}};
+		if (axisRange.zeroVal == void 0) {
+			patch = {
+				range: {
+					zeroVal: axisRange.from,
+					scaleFactor: actualData.width / (axisRange.to - axisRange.from)
+				}
+			}
+		}
+		var zeroVal = axisRange.zeroVal || patch.range.zeroVal;
+		var scaleFactor = axisRange.scaleFactor || patch.range.scaleFactor;
+		patch.range.from = zeroVal + axisRange.scroll;
+		patch.range.to = patch.range.from + actualData.width / scaleFactor;
+		return patch;
+	}
 
-	private recalculateYAxis(changedAxisOptions: IAxisOptions): IAxisOptions {
+
+	private recalculateYAxis1(actualData: IChartState): IAxisOptions {
 		// TODO: make tests
+		var patch: IAxisOptions = {range: {}};
+		// var yAxisRange = actualData.xAxis.range;
+		// var patch: IAxisOptions = {range: {}};
+		// if (yAxisRange.zeroVal == void 0) {
+		// 	patch = {
+		// 		range: {
+		// 			zeroVal: yAxisRange.from,
+		// 			scaleFactor: actualData.width / (yAxisRange.to - yAxisRange.from)
+		// 		}
+		// 	}
+		// }
+		//
+		// var zeroVal = axisRange.zeroVal || patch.range.zeroVal;
+		// var scaleFactor = axisRange.scaleFactor || patch.range.scaleFactor;
+
 		var trends = this.trends;
 		if (!trends) return null;
 		var state = this.data;
-		var axisOptions = state.yAxis;
-		axisOptions = Utils.deepMerge(axisOptions, changedAxisOptions || {} as IAxisOptions);
-		var xFromValue = this.getScreenLeftVal();
-		var xToValue = this.getScreenRightVal();
+		var yAxis = actualData.yAxis;
+		var xRange = actualData.xAxis.range;
+		var xFromValue = xRange.from;
+		var xToValue = xRange.to;
 		var xRangeLength = xToValue - xFromValue;
 		var trendsEndXVal = trends.getEndXVal();
 		var trendsStartXVal = trends.getStartXVal();
@@ -386,31 +465,71 @@ export class ChartState {
 		var paddingTopInPercents = padding.end / state.height;
 		var paddingBottomInPercents = padding.start / state.height;
 
-		axisOptions.range.to = maxY + paddingTopInPercents * rangeLength;
-		axisOptions.range.from = minY - paddingBottomInPercents * rangeLength;
-		return axisOptions;
+		var to = maxY + paddingTopInPercents * rangeLength;
+		var from = minY - paddingBottomInPercents * rangeLength;
+		patch.range.to = to;
+		patch.range.from = from;
+
+		if (yAxis.range.zeroVal == void 0) {
+			patch.range.zeroVal = from;
+			patch.range.scaleFactor = actualData.height / (to - from);
+		}
+
+		var zeroVal = yAxis.range.zeroVal || patch.range.zeroVal;
+		var scaleFactor = yAxis.range.scaleFactor || patch.range.scaleFactor;
+		patch.range.zoom = scaleFactor / (actualData.height / (to - from));
+		patch.range.scroll = from - zeroVal;
+		console.log('zoomY', patch.range.zoom);
+		console.log('patchY', patch);
+		return patch;
+	}
+
+
+	private recalculateYAxis(actualData: IChartState): IAxisOptions {
+		var patch: IAxisOptions = {range: {}};
+		var yAxisRange = actualData.yAxis.range;
+		var isInitialize = yAxisRange.zeroVal == void 0;
+		var trendsEndXVal = this.trends.getEndXVal();
+		var trendsStartXVal = this.trends.getStartXVal();
+		var zeroVal: number, scaleFactor: number, fromVal: number;
+		if (isInitialize) {
+			zeroVal = (yAxisRange.from !== void 0 && yAxisRange.from) || trendsStartXVal;
+			fromVal = zeroVal;
+		}
+		if (yAxisRange.zeroVal == void 0) {
+			patch = {
+				range: {
+					zeroVal: yAxisRange.from,
+					scaleFactor: actualData.width / (yAxisRange.to - yAxisRange.from)
+				}
+			}
+		}
+		return patch;
 	}
 
 	zoom(zoomValue: number) {
-		var {from, to} = this.data.xAxis.range;
-		var rangeLength = to - from;
-		var middleScreenValue = this.getValueByScreenX(this.data.width / 2);
-		var leftScreenValue = this.getValueByScreenX(0);
-		var rightScreenValue = this.getValueByScreenX(this.data.width);
-		var newTo = middleScreenValue + (rightScreenValue - middleScreenValue) * zoomValue;
-		var newFrom = middleScreenValue - (middleScreenValue - leftScreenValue) * zoomValue;
-		this.setState(
-			{xAxis: {range: {from: newFrom, to: newTo, scroll: 0}}}
-		);
+		// var {from, to} = this.data.xAxis.range;
+		// var rangeLength = to - from;
+		// var middleScreenValue = this.getValueByScreenX(this.data.width / 2);
+		// var leftScreenValue = this.getValueByScreenX(0);
+		// var rightScreenValue = this.getValueByScreenX(this.data.width);
+		// var newTo = middleScreenValue + (rightScreenValue - middleScreenValue) * zoomValue;
+		// var newFrom = middleScreenValue - (middleScreenValue - leftScreenValue) * zoomValue;
+		// this.setState(
+		// 	{xAxis: {range: {from: newFrom, to: newTo, scroll: 0}}}
+		// );
+		var currentZoom = this.data.xAxis.range.zoom;
+		this.setState({xAxis: {range: {zoom: currentZoom * zoomValue}}});
 	}
 
 	/**
 	 *  returns offset in pixels from xAxis.range.from to xVal
 	 */
 	getPointOnXAxis(xVal: number): number {
-		var w = this.data.width;
-		var {from, to} = this.data.xAxis.range;
-		return w * ((xVal - from) / (to - from));
+		// var w = this.data.width;
+		// var {from, to} = this.data.xAxis.range;
+		// return w * ((xVal - from) / (to - from));
+		return xVal * this.data.computedData.xAxis.range.scaleFactor * this.data.xAxis.range.zoom;
 	}
 
 	/**
@@ -435,28 +554,27 @@ export class ChartState {
 	 *  convert value to pixels by using settings from xAxis.range
 	 */
 	valueToPxByXAxis(xVal: number) {
-		var w = this.data.width;
-		var {from, to} = this.data.xAxis.range;
-		return xVal * (w / (to - from));
+		// var w = this.data.width;
+		// var {from, to} = this.data.xAxis.range;
+		// return xVal * (w / (to - from));
+		return xVal * this.data.computedData.xAxis.range.scaleFactor * this.data.xAxis.range.zoom;
 	}
 
 
 	/**
 	 *  convert value to pixels by using settings from yAxis.range
 	 */
-	valueToPxByYAxis(y: number) {
+	valueToPxByYAxis(yVal: number) {
 		var h = this.data.height;
 		var {from, to} = this.data.yAxis.range;
-		return y * ((to - from) / h );
+		return  yVal * (h / (to - from));
 	}
 
 	/**
 	 *  convert pixels to value by using settings from xAxis.range
 	 */
 	pxToValueByXAxis(xVal: number) {
-		var w = this.data.width;
-		var {from, to} = this.data.xAxis.range;
-		return xVal * ((to - from) / w);
+		return xVal / this.data.computedData.xAxis.range.scaleFactor / this.data.xAxis.range.zoom;
 	}
 
 	/**
@@ -473,10 +591,8 @@ export class ChartState {
 	 *  returns x value by screen x coordinate
 	 */
 	getValueByScreenX(x: number): number {
-		var w = this.data.width;
-		var {from, to, scroll} = this.data.xAxis.range;
-		var pxCoast = (to - from) / w;
-		return from + pxCoast * (x + scroll);
+		var {from, scroll} = this.data.xAxis.range;
+		return from + scroll + this.pxToValueByXAxis(x);
 	}
 
 
@@ -495,10 +611,16 @@ export class ChartState {
 	 *  returns screen x value by screen y coordinate
 	 */
 	getScreenXByValue(xVal: number): number {
+		// var w = this.data.width;
+		// var {from, to, scroll, zoom} = this.data.xAxis.range;
+		// var valCoast =  w / (to - from) * zoom;
+		// return valCoast * (xVal - from) - valCoast * scroll;
 		var w = this.data.width;
-		var {from, to, scroll} = this.data.xAxis.range;
-		var valCoast =  w / (to - from);
-		return valCoast * (xVal - from) - scroll;
+		var {initialFrom, scaleFactor} = this.data.computedData.xAxis.range;
+		var {scroll} = this.data.xAxis.range;
+		// var valCoast =  w / (to - from) * zoom;
+		// return valCoast * (xVal - from) - valCoast * scroll;
+		return this.valueToPxByXAxis(xVal - initialFrom - scroll)
 	}
 
 	/**

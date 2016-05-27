@@ -44,6 +44,7 @@ class TrendMarksWidget extends TrendWidget {
 	}
 	
 	protected bindEvents() {
+		super.bindEvents();
 		this.trend.marks.onChange(() => this.onMarksChange());
 	}
 
@@ -65,6 +66,13 @@ class TrendMarksWidget extends TrendWidget {
 		var widgets = this.marksWidgets;
 		for (let markName in widgets) {
 			widgets[markName].onTrendAnimate();
+		}
+	}
+
+	protected onZoom() {
+		var widgets = this.marksWidgets;
+		for (let markName in widgets) {
+			widgets[markName].onZoomHandler();
 		}
 	}
 }
@@ -167,15 +175,22 @@ class TrendMarkWidget {
 	}
 
 	onTrendAnimate() {
+		this.updatePosition();
+	}
+
+	onZoomHandler() {
+		this.updatePosition();
+	}
+
+	private updatePosition() {
 		if (!this.mark.point) return;
-		var pos = this.mark.point.getCurrentVec();
+		var pos = this.mark.point.getFramePoint();
 		this.object3D.position.set(pos.x, pos.y, 0);
 	}
 
 	private show() {
 		if (!this.mark.point) return;
-		var pos = this.mark.point.getCurrentVec();
-		this.object3D.position.set(pos.x, pos.y, 0);
+		this.updatePosition();
 		var animations = this.chartState.data.animations;
 		var time = animations.enabled ? 1 : 0;
 		this.object3D.scale.set(0.01, 0.01, 1);

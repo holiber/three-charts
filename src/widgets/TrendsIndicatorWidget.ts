@@ -55,6 +55,7 @@ class TrendIndicator extends TrendWidget {
 	}
 	
 	protected bindEvents() {
+		super.bindEvents();
 		this.bindEvent(this.chartState.onScroll(() => this.updatePosition()));
 	}
 
@@ -77,6 +78,12 @@ class TrendIndicator extends TrendWidget {
 
 	}
 
+	protected onZoom() {
+		// set new widget position
+		this.point = this.trend.points.getEndPoint();
+		this.updatePosition();
+	}
+
 	protected onTrendAnimate(animationState: TrendPoints) {
 		// set new widget position
 		this.point = animationState.getEndPoint();
@@ -84,7 +91,7 @@ class TrendIndicator extends TrendWidget {
 	}
 
 	private updatePosition() {
-		var endPointVector = this.point.getCurrentVec();
+		var endPointVector = this.point.getFramePoint();
 		var screenWidth = this.chartState.data.width;
 		var x = endPointVector.x;
 		var y = endPointVector.y;

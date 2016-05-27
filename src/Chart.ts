@@ -22,7 +22,7 @@ import {TrendsLoadingWidget} from "./widgets/TrendsLoadingWidget";
 import {AxisMarksWidget} from "./widgets/AxisMarksWidget";
 import {TrendsMarksWidget} from "./widgets/TrendsMarksWidget";
 
-export const MAX_DATA_LENGTH = 1280;
+export const MAX_DATA_LENGTH = 1000;
 
 export class Chart {
 	state: ChartState;
@@ -138,7 +138,7 @@ export class Chart {
 			if (oldTrendsMaxX < paddingRightX || oldTrendsMaxX > maxVisibleX) {
 				return;
 			}
-			var scrollDelta = state.valueToPxByXAxis(trendsMaxXDelta);
+			var scrollDelta = trendsMaxXDelta;
 			this.setState({xAxis: {range: {scroll: currentScroll + scrollDelta}}});
 		}
 	}

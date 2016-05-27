@@ -91,9 +91,7 @@ export abstract class TrendWidget {
 
 	constructor (protected chartState: ChartState, protected trendName: string) {
 		this.trend = chartState.trends.getTrend(trendName);
-		this.unsubscribers.push(this.trend.points.onAnimationFrame(
-			(trendPoints: TrendPoints) => this.onTrendAnimate(trendPoints)
-		));
+		this.chartState = chartState;
 		this.bindEvents();
 	}
 	abstract getObject3D(): Object3D;
@@ -110,9 +108,17 @@ export abstract class TrendWidget {
 	}
 	protected onTrendAnimate(trendPoints: TrendPoints) {
 	}
-	protected bindEvents() {};
+	protected bindEvents() {
+		this.bindEvent(this.trend.points.onAnimationFrame(
+			(trendPoints: TrendPoints) => this.onTrendAnimate(trendPoints)
+		));
+		this.bindEvent(this.chartState.onZoom(() => this.onZoom()));
+	};
 	protected bindEvent(unsubscriber: Function) {
 		this.unsubscribers.push(unsubscriber);
+	}
+	protected onZoom() {
+		
 	}
 
 }

@@ -44,6 +44,7 @@ class TrendBeacon extends TrendWidget {
 		return this.mesh;
 	}
 	protected bindEvents() {
+		super.bindEvents();
 		this.bindEvent(this.chartState.onScroll(() => this.updatePosition()));
 	}
 
@@ -102,14 +103,18 @@ class TrendBeacon extends TrendWidget {
 		});
 	}
 
-	protected onTrendAnimate(animationState: TrendPoints) {
-		// set new widget position
-		this.point = animationState.getEndPoint();
+	protected onZoom() {
+		this.point = this.trend.points.getEndPoint();
+		this.updatePosition();
+	}
+
+	protected onTrendAnimate(trendPoints: TrendPoints) {
+		this.point = trendPoints.getEndPoint();
 		this.updatePosition();
 	}
 
 	private updatePosition() {
-		var endPointVector = this.point.getCurrentVec();
+		var endPointVector = this.point.getFramePoint();
 		var screenWidth = this.chartState.data.width;
 		var x = endPointVector.x;
 		var screenX = this.chartState.getScreenXByPoint(endPointVector.x);

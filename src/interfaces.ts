@@ -32,7 +32,13 @@ export interface IAxisRange {
 	padding?: {
 		start?: number,
 		end?: number
-	}
+	},
+
+	/** only for internal usage **/
+	zeroVal?: number,
+
+	/** only for internal usage **/
+	scaleFactor?: number,
 }
 
 export interface IAxisOptions {

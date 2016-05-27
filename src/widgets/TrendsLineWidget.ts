@@ -12,6 +12,7 @@ import Vector2 = THREE.Vector2;
 import {TrendsWidget, TrendWidget} from "./TrendsWidget";
 import {TrendPoints} from "../TrendPoints";
 import LineSegments = THREE.LineSegments;
+import forestgreen = THREE.ColorKeywords.forestgreen;
 
 /**
  * widget for drawing trends lines
@@ -27,13 +28,14 @@ export class TrendsLineWidget extends TrendsWidget<TrendLine> {
 class TrendLine extends TrendWidget {
 	private material: LineBasicMaterial;
 	private lineSegments: LineSegments;
+	private scaleXFactor: number;
+	private scaleYFactor: number;
 	
 	constructor (chartState: ChartState, trendName: string) {
 		super(chartState, trendName);
 		var options = this.trend.getOptions();
 		this.material = new LineBasicMaterial( { color: options.lineColor, linewidth: options.lineWidth } );
 		this.initLine();
-		
 	}
 
 	getObject3D() {
@@ -44,24 +46,39 @@ class TrendLine extends TrendWidget {
 		var geometry = new Geometry();
 		var animationState = this.trend.points;
 		var points = animationState.points;
+		this.scaleXFactor = this.chartState.valueToPxByXAxis(1);
+		this.scaleYFactor = this.chartState.valueToPxByYAxis(1);
 
 		for (let pointId in points) {
 			let point = points[pointId];
 			let nextPoint = points[Number(pointId) + 1];
 			if (!nextPoint) break;
-			let vert1 = point.vector.clone();
-			let vert2 = nextPoint.vector.clone();
+			let vert1 = point.getFrameVal();
+			let vert2 = nextPoint.getFrameVal();
 			if (!nextPoint.hasValue) vert2 = vert1.clone();
 			geometry.vertices.push(vert1, vert2);
 
 		}
 
 		this.lineSegments = new LineSegments(geometry, this.material);
+		this.lineSegments.scale.set(this.scaleXFactor, this.scaleYFactor, 1);
+		this.lineSegments.position.set(
+			- this.chartState.data.xAxis.range.from * this.scaleXFactor,
+			- this.chartState.data.yAxis.range.from * this.scaleYFactor,
+			0
+		);
 		this.lineSegments.frustumCulled = false;
 	}
 
+	protected onZoom() {
+		var currentScale = this.lineSegments.scale;
+		var zoomX = this.chartState.data.xAxis.range.zoom;
+		var zoomY = this.chartState.data.yAxis.range.zoom;
+		currentScale.set(this.scaleXFactor * zoomX, this.scaleYFactor * zoomY, 1);
+	}
 
 	protected onTrendAnimate(animationState: TrendPoints) {
+
 		var trendData = this.trend.getData();
 		var geometry = this.lineSegments.geometry as Geometry;
 		var vertices = geometry.vertices;
@@ -75,22 +92,30 @@ class TrendLine extends TrendWidget {
 			if (ind > lastInd) continue;
 			let point = animationState.points[ind];
 			let nextPoint = point.getNext();
+			let prevPoint = point.getPrev();
 			let value = current[vertexValue];
-			let currentVertex = vertices[ind * 2];
+			let lineStartVertex = vertices[ind * 2];
+			let lineEndVertex = vertices[ind * 2 + 1];
+			let isAppend = (prevPoint && !nextPoint);
+
 			if (isX) {
-				currentVertex.setX(value);
-				if (nextPoint) {
-					vertices[ind * 2 + 1].setX(nextPoint.getCurrentVec().x);
+
+				if (isAppend) {
+					lineStartVertex.setX(prevPoint.getFrameVal().x);
+					lineEndVertex.setX(value);
 				} else {
-					vertices[ind * 2 + 1].setX(value);
+					lineStartVertex.setX(value);
+					lineEndVertex.setX(nextPoint.getFrameVal().x);
 				}
 			} else {
-				currentVertex.setY(value);
-				if (nextPoint) {
-					vertices[ind * 2 + 1].setY(nextPoint.getCurrentVec().y);
+				if (isAppend) {
+					lineStartVertex.setY(prevPoint.getFrameVal().y);
+					lineEndVertex.setY(value);
 				} else {
-					vertices[ind * 2 + 1].setY(value);
+					lineStartVertex.setY(value);
+					lineEndVertex.setY(nextPoint.getFrameVal().y);
 				}
+
 			}
 		}
 		geometry.verticesNeedUpdate = true;
