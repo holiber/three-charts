@@ -12,7 +12,7 @@ class DataSourse {
 		let sec = 0;
 		let val = 70;
 
-		while (sec < 20) {
+		while (sec < 40) {
 			this.data.push(val);
 			val += Math.random() * 14 - 7;
 			sec++;
@@ -36,7 +36,7 @@ class DataSourse {
 
 class MarksSource {
 	static getNext(val: number): ITrendMarkOptions {
-		if (Math.random() > 0.3) return null;
+		if (Math.random() > 0.2) return null;
 		return this.generate(val);
 	}
 
@@ -65,10 +65,10 @@ window.onload = function () {
 		// 	range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 100}
 		// },
 		xAxis: {
-			range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 30},
+			range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 60},
 			marks: [
-				{value: 25, name: 'deadline', title: 'DEADLINE', lineColor: '#ff6600', type: 'timeleft'},
-				{value: 35, name: 'close', title: 'CLOSE', lineColor: '#005187', type: 'timeleft'}
+				{value: 45, name: 'deadline', title: 'DEADLINE', lineColor: '#ff6600', type: 'timeleft'},
+				{value: 55, name: 'close', title: 'CLOSE', lineColor: '#005187', type: 'timeleft'}
 			]
 			// range: {
 			// 	from: 80,

@@ -53359,7 +53359,7 @@
 /* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var require;var __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(process, global, module) {/*!
+	var __WEBPACK_AMD_DEFINE_RESULT__;var require;/* WEBPACK VAR INJECTION */(function(process, global, module) {/*!
 	 * @overview es6-promise - a tiny implementation of Promises/A+.
 	 * @copyright Copyright (c) 2014 Yehuda Katz, Tom Dale, Stefan Penner and contributors (Conversion to ES6 API by Jake Archibald)
 	 * @license   Licensed under MIT license
@@ -54991,7 +54991,7 @@
 	        fromPosition = fromPosition !== void 0 ? fromPosition : this.position;
 	        var current = { position: fromPosition };
 	        var target = { position: toPosition, ease: ease };
-	        var animation = TweenLite.to(current, time, target);
+	        var animation = TweenLite.to(current, 0.01, target);
 	        animation.eventCallback('onUpdate', function () {
 	            _this.position = current.position;
 	            _this.ee.emit('onAnimationFrame');

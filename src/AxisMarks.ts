@@ -181,7 +181,7 @@ export class AxisMark {
 		fromPosition = fromPosition !== void 0 ? fromPosition : this.position;
 		var current = {position: fromPosition};
 		var target = {position: toPosition, ease: ease};
-		var animation = TweenLite.to(current, time, target);
+		var animation = TweenLite.to(current, 0.01, target);
 		animation.eventCallback('onUpdate', () => {
 			this.position = current.position;
 			this.ee.emit('onAnimationFrame');

@@ -12,7 +12,7 @@ webpackJsonp_name_([0],[
 	        this.data = [];
 	        var sec = 0;
 	        var val = 70;
-	        while (sec < 20) {
+	        while (sec < 40) {
 	            this.data.push(val);
 	            val += Math.random() * 14 - 7;
 	            sec++;
@@ -36,7 +36,7 @@ webpackJsonp_name_([0],[
 	    function MarksSource() {
 	    }
 	    MarksSource.getNext = function (val) {
-	        if (Math.random() > 0.3)
+	        if (Math.random() > 0.2)
 	            return null;
 	        return this.generate(val);
 	    };
@@ -62,10 +62,10 @@ webpackJsonp_name_([0],[
 	        // 	range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 100}
 	        // },
 	        xAxis: {
-	            range: { type: Chart_1.AXIS_RANGE_TYPE.FIXED, from: 0, to: 30 },
+	            range: { type: Chart_1.AXIS_RANGE_TYPE.FIXED, from: 0, to: 60 },
 	            marks: [
-	                { value: 25, name: 'deadline', title: 'DEADLINE', lineColor: '#ff6600', type: 'timeleft' },
-	                { value: 35, name: 'close', title: 'CLOSE', lineColor: '#005187', type: 'timeleft' }
+	                { value: 45, name: 'deadline', title: 'DEADLINE', lineColor: '#ff6600', type: 'timeleft' },
+	                { value: 55, name: 'close', title: 'CLOSE', lineColor: '#005187', type: 'timeleft' }
 	            ]
 	        },
 	        trends: {
