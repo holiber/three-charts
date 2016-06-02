@@ -19,7 +19,7 @@ import LineDashedMaterial = THREE.LineDashedMaterial;
  * widget for drawing trends marks for all trends
  */
 export class TrendsMarksWidget extends TrendsWidget<TrendMarksWidget> {
-	static widgetName = "trendsMarks";
+	static widgetName = "TrendsMarks";
 	protected getTrendWidgetClass() {
 		return TrendMarksWidget;
 	}
@@ -62,17 +62,24 @@ class TrendMarksWidget extends TrendWidget {
 		this.object3D.add(markWidget.getObject3D());
 	}
 
-	protected onTrendAnimate() {
+	// protected onTransformationFrame() {
+	// 	var widgets = this.marksWidgets;
+	// 	for (let markName in widgets) {
+	// 		widgets[markName].onTrendAnimate();
+	// 	}
+	// }
+
+	protected onZoomFrame() {
 		var widgets = this.marksWidgets;
 		for (let markName in widgets) {
-			widgets[markName].onTrendAnimate();
+			widgets[markName].onZoomFrameHandler();
 		}
 	}
 
-	protected onZoom() {
+	protected onPointsMove() {
 		var widgets = this.marksWidgets;
 		for (let markName in widgets) {
-			widgets[markName].onZoomHandler();
+			widgets[markName].onPointsMove();
 		}
 	}
 }
@@ -99,21 +106,9 @@ class TrendMarkWidget {
 	
 	protected initObject() {
 		this.object3D = new Object3D();
-		//this.line = this.createLine();
-		//this.object3D.add(this.line);
 		this.markMesh = this.createMarkMesh();
 		this.object3D.add(this.markMesh);
 	}
-
-	// protected createLine(): Line {
-	// 	// var lineGeometry = new Geometry();
-	// 	//
-	// 	// lineGeometry.vertices.push(new Vector3(0,0,0), new Vector3(0, this.position.lineHeight, 0));
-	// 	// return new Line(
-	// 	// 	lineGeometry,
-	// 	// 	new LineDashedMaterial()
-	// 	// );
-	// }
 
 	protected createMarkMesh(): Mesh {
 		var {markHeight, markWidth} = this;
@@ -174,11 +169,11 @@ class TrendMarkWidget {
 		return this.object3D;
 	}
 
-	onTrendAnimate() {
+	onPointsMove() {
 		this.updatePosition();
 	}
 
-	onZoomHandler() {
+	onZoomFrameHandler() {
 		this.updatePosition();
 	}
 

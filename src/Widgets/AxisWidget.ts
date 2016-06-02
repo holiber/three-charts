@@ -9,17 +9,14 @@ import UVMapping = THREE.UVMapping;
 import GridHelper = THREE.GridHelper;
 import {IAxisOptions} from "../Chart";
 import {ChartWidget} from "../Widget";
-import {ChartState, IChartState} from "../State";
+import {ChartState} from "../State";
 import {GridWidget, IGridParamsForAxis} from "./GridWidget";
 import {Utils} from "../Utils";
 import PlaneGeometry = THREE.PlaneGeometry;
 import MeshBasicMaterial = THREE.MeshBasicMaterial;
-
-enum AXIS_ORIENTATION {V, H};
-
-
-// canvas drawing is expensive operation, so we redraw xAxis only once per second
-var REDRAW_AXIS_X_INTERVAL = 1000;
+import OrthographicCamera = THREE.OrthographicCamera;
+import {IScreenTransformOptions} from "../Screen";
+import {AXIS_TYPE} from "../interfaces";
 
 /**
  * widget for drawing axis
@@ -29,9 +26,9 @@ export class AxisWidget extends ChartWidget {
 	private object3D: Object3D;
 	private axisXObject: Object3D;
 	private axisYObject: Object3D;
-	private axisXLastRedrawTime = 0;
 	private showAxisXTimeout = 0;
 	private showAxisYTimeout = 0;
+	private updateAxisXRequest: () => void;
 	
 	constructor (state: ChartState) {
 		super(state);
@@ -40,29 +37,38 @@ export class AxisWidget extends ChartWidget {
 		this.axisYObject = new Object3D();
 		this.object3D.add(this.axisXObject);
 		this.object3D.add(this.axisYObject);
-		this.initAxis(AXIS_ORIENTATION.H);
-		this.initAxis(AXIS_ORIENTATION.V);
+		this.initAxis(AXIS_TYPE.X);
+		this.initAxis(AXIS_TYPE.Y);
+
+		// canvas drawing is expensive operation, so when we scroll, redraw must be called only once per second
+		this.updateAxisXRequest = Utils.throttle(() => this.updateAxis(AXIS_TYPE.X), 1000);
 	}
 
 	bindEvents() {
 		var state = this.chartState;
-		state.onCameraChange((cameraPos: {scrollX: number}) => {
-			this.onScrollChange(cameraPos);
+		state.screen.onTransformationFrame((options) => {
+			this.onScrollChange(options.scrollX, options.scrollY);
 		});
-		state.onZoom((changedProps: IChartState) => {this.onZoom(changedProps)})
+		state.screen.onZoomFrame((options) => {this.onZoomFrame(options)});
 	}
 
-	private onScrollChange(cameraPos: {scrollX: number}) {
-		// axis y always fixed
-		this.axisYObject.position.x = cameraPos.scrollX;
-		if (Date.now() - this.axisXLastRedrawTime >= REDRAW_AXIS_X_INTERVAL) {
-			this.updateAxis(AXIS_ORIENTATION.H);
+	private onScrollChange(x: number, y: number) {
+
+		if (y != void 0) {
+			this.axisYObject.position.y = y;
+			this.axisXObject.position.y = y;
 		}
+
+		if (x != void 0) {
+			this.axisYObject.position.x = x;
+			this.updateAxisXRequest();
+		}
+
 	}
 
-	private initAxis(orientation: AXIS_ORIENTATION) {
+	private initAxis(orientation: AXIS_TYPE) {
 		
-		var isXAxis = orientation == AXIS_ORIENTATION.H;
+		var isXAxis = orientation == AXIS_TYPE.X;
 		var {width: visibleWidth, height: visibleHeight} = this.chartState.data;
 		var canvasWidth = 0, canvasHeight = 0;
 
@@ -108,10 +114,10 @@ export class AxisWidget extends ChartWidget {
 		return this.object3D;
 	}
 
-	private updateAxis(orientation: AXIS_ORIENTATION) {
-		var isXAxis = orientation == AXIS_ORIENTATION.H;
+	private updateAxis(orientation: AXIS_TYPE) {
+		var isXAxis = orientation == AXIS_TYPE.X;
 		var {width: visibleWidth, height: visibleHeight} = this.chartState.data;
-		var scrollX = this.chartState.data.xAxis.range.scroll;
+		var {scrollX, scrollXVal, scrollY, scrollYVal, zoomX, zoomY} = this.chartState.screen.options;
 		var axisOptions: IAxisOptions;
 		var axisMesh: Mesh;
 		var axisGridParams: IGridParamsForAxis;
@@ -119,11 +125,11 @@ export class AxisWidget extends ChartWidget {
 		if (isXAxis) {
 			axisMesh = this.axisXObject.children[0] as Mesh;
 			axisOptions = this.chartState.data.xAxis;
-			axisGridParams = GridWidget.getGridParamsForAxis(axisOptions, visibleWidth);
+			axisGridParams = GridWidget.getGridParamsForAxis(axisOptions, visibleWidth, scrollXVal, zoomX);
 		} else {
 			axisMesh = this.axisYObject.children[0] as Mesh;
 			axisOptions = this.chartState.data.yAxis;
-			axisGridParams = GridWidget.getGridParamsForAxis(axisOptions, visibleHeight);
+			axisGridParams = GridWidget.getGridParamsForAxis(axisOptions, visibleHeight, scrollYVal, zoomY);
 		}
 
 		var geometry = axisMesh.geometry as PlaneGeometry;
@@ -139,26 +145,21 @@ export class AxisWidget extends ChartWidget {
 
 
 		// TODO: draw text and lines in different loops
-		var scrollOffset = 0;
-		if (isXAxis) {
-			let segmentsInScroll = Math.round(scrollX / axisGridParams.stepInPx);
-			scrollOffset = segmentsInScroll * axisGridParams.step;
-		}
 		var edgeOffset = axisGridParams.segmentsCount * axisGridParams.step;
-		var startVal = axisGridParams.start + scrollOffset - edgeOffset;
-		var endVal = axisGridParams.end + scrollOffset + edgeOffset;
+		var startVal = axisGridParams.start  - edgeOffset;
+		var endVal = axisGridParams.end + edgeOffset;
 
 		ctx.beginPath();
 		for (let val = startVal; val <= endVal; val += axisGridParams.step) {
 			if (isXAxis) {
-				let pxVal = this.chartState.getPointOnXAxis(val) - scrollX + visibleWidth;
+				let pxVal = this.chartState.screen.getPointOnXAxis(val) - scrollX + visibleWidth;
 				ctx.textAlign = "center";
 				// uncomment for dots
 				// ctx.moveTo(pxVal + 0.5, canvasHeight);
 				// ctx.lineTo(pxVal + 0.5, canvasHeight - 5);
 				ctx.fillText(Number(val.toFixed(14)).toString(), pxVal, canvasHeight - 10);
 			} else {
-				let pxVal = canvasHeight - this.chartState.getPointOnYAxis(val);
+				let pxVal = canvasHeight - this.chartState.screen.getPointOnYAxis(val) + scrollY;
 				ctx.textAlign = "right";
 				// uncomment for dots
 				// ctx.moveTo(canvasWidth, pxVal + 0.5);
@@ -177,25 +178,21 @@ export class AxisWidget extends ChartWidget {
 		ctx.stroke();
 		ctx.closePath();
 		texture.needsUpdate = true;
-		this.axisXLastRedrawTime = Date.now();
 	}
 
-	private onZoom(changedProps: IChartState) {
-		var currentXRange = this.chartState.data.xAxis.range;
-		var prevXRange = this.chartState.data.prevState.xAxis.range;
-		var xRangeLengthCanged = (currentXRange.to - currentXRange.from !== prevXRange.to - prevXRange.from);
-		if (xRangeLengthCanged) {
-			this.updateAxis(AXIS_ORIENTATION.H);
+	private onZoomFrame(options: IScreenTransformOptions) {
+		if (options.zoomX) {
+			this.updateAxis(AXIS_TYPE.X);
 			//this.temporaryHideAxis(AXIS_ORIENTATION.H)
 		}
-		if (changedProps.yAxis) {
-			this.updateAxis(AXIS_ORIENTATION.V);
+		if (options.zoomY) {
+			this.updateAxis(AXIS_TYPE.Y);
 			//this.temporaryHideAxis(AXIS_ORIENTATION.V)
 		}
 	}
 
-	private temporaryHideAxis(orientation: AXIS_ORIENTATION) {
-		var isXAxis = orientation == AXIS_ORIENTATION.H;
+	private temporaryHideAxis(orientation: AXIS_TYPE) {
+		var isXAxis = orientation == AXIS_TYPE.X;
 		var timeoutId = setTimeout(() => {
 				this.showAxis(orientation);
 		}, 200);
@@ -211,8 +208,8 @@ export class AxisWidget extends ChartWidget {
 		}
 	}
 
-	private showAxis(orientation: AXIS_ORIENTATION) {
-		var isXAxis = orientation == AXIS_ORIENTATION.H;
+	private showAxis(orientation: AXIS_TYPE) {
+		var isXAxis = orientation == AXIS_TYPE.X;
 		var material: MeshBasicMaterial;
 		if (isXAxis) {
 			material = (this.axisXObject.children[0] as Mesh).material as MeshBasicMaterial;

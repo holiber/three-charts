@@ -62,7 +62,7 @@ webpackJsonp_name_([0],[
 	        // 	range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 100}
 	        // },
 	        xAxis: {
-	            range: { type: Chart_1.AXIS_RANGE_TYPE.FIXED, from: 0, to: 30 },
+	            range: { type: Chart_1.AXIS_RANGE_TYPE.FIXED, from: 10, to: 30 },
 	            marks: [
 	                { value: 25, name: 'deadline', title: 'DEADLINE', lineColor: '#ff6600', type: 'timeleft' },
 	                { value: 35, name: 'close', title: 'CLOSE', lineColor: '#005187', type: 'timeleft' }
@@ -74,8 +74,13 @@ webpackJsonp_name_([0],[
 	                hasBeacon: true,
 	                hasIndicator: true,
 	                hasGradient: false,
-	                marks: [MarksSource.generate(5), MarksSource.generate(15)]
+	                marks: [MarksSource.generate(15)]
 	            },
+	        },
+	        widgets: {
+	            //Grid: {enabled: false},
+	            //Axis: {enabled: false},
+	            TrendsGradient: { enabled: false },
 	        }
 	    });
 	    window['chart'] = chart;
@@ -143,7 +148,7 @@ webpackJsonp_name_([0],[
 	            responseData.unshift(dsMain.getPrev());
 	        setTimeout(function () {
 	            resolve(responseData);
-	        }, 4000);
+	        }, 1000);
 	    });
 	    setInterval(function () {
 	        i++;

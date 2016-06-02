@@ -1,4 +1,5 @@
 
+import {TIteralable} from "./interfaces";
 var EventEmmiter = require('EventEmitter2') as typeof EventEmitter2;
 import {ChartState} from "./State";
 import Vector3 = THREE.Vector3;
@@ -14,10 +15,12 @@ interface ICurrent {
 	[key: string]: number
 }
 
+
+// class helps to animate trends points
 export class TrendPoints {
 	currentAnimation: TweenLite;
 	points: {[id: string]: TrendPoint} = {};
-	//pointsByXVal: {[xVal: string]: TrendPoint} = {};
+	//pointsByXVal: {[scrollXVal: string]: TrendPoint} = {};
 
 	// objects like {x0: 1, y0: 2, x1: 2, y2: 3, ...}
 	current: {[key: string]: number} = {};
@@ -46,7 +49,6 @@ export class TrendPoints {
 	}
 
 	protected bindEvents() {
-		var state = this.chartState;
 		this.trend.onChange((changedOptions: ITrendOptions, newData: ITrendData) => {
 			if (newData) {
 				var data = this.trend.getData();
@@ -54,9 +56,7 @@ export class TrendPoints {
 				isAppend ? this.appendData(newData) : this.prependData(newData);
 			}
 		});
-		state.onZoom(() => this.updatePoints());
 	}
-
 
 	getEndPoint(): TrendPoint {
 		return this.points[this.endPointId];
@@ -191,48 +191,27 @@ export class TrendPoints {
 		this.animate(time, targets, current);
 	}
 
-	private updatePoints() {
-		// var chartState = this.chartState;
-		// var targets: ITargets = {};
-		// var currents: ICurrent = {};
-		//
-		// var currentXFrom = chartState.data.xAxis.range.from;
-		// var prevXFrom = chartState.data.prevState.xAxis.range.from;
-		// var xFromDiff = currentXFrom - prevXFrom;
-		//
-		// var point = this.getStartPoint();
-		// do {
-		// 	let targetPoint = chartState.getPointOnChart(point.xVal, point.yVal);
-		// 	point.vector = targetPoint;
-		// 	var zoomDistanceInPx = chartState.valueToPxByXAxis(xFromDiff);
-		// 	if (xFromDiff) {
-		// 		currents['x' + point.id] = targetPoint.x;
-		// 	}
-		// 	targets['x' + point.id] = targetPoint.x;
-		// 	targets['y' + point.id] = targetPoint.y;
-		// } while (point = point.getNext());
-		//
-		// var animationsOptions = chartState.data.animations;
-		// targets.ease = animationsOptions.zoomEase;
-		// var time = animationsOptions.enabled ? animationsOptions.zoomSpeed : 0;
-		// this.animate(time, targets, currents);
-	}
-
 	private animate(time: number, newTargets: Object, current?: Object) {
-		if (this.currentAnimation) this.currentAnimation.kill();
-		if (current) this.current = Utils.deepMerge(this.current, current) as {[key: string]: number};
-		//this.targets = Utils.deepMerge(this.targets, newTargets) as ITargets;
+		var cb = () => {
+			this.ee.emit('animationFrame', this);
+		};
 
 		var cb = () => {
 			this.ee.emit('animationFrame', this);
 		};
 
-		this.current = current as {[key: string]: number};
-		var animation = this.currentAnimation = TweenLite.to(this.current, time, newTargets);
-		animation.eventCallback('onUpdate', cb);
-		animation.eventCallback('onComplete', () => {
+		if (this.currentAnimation) this.currentAnimation.kill();
+
+		if (current) this.current = Utils.deepMerge(this.current, current) as TIteralable;
+		this.targets = Utils.deepMerge(this.targets, newTargets) as TIteralable;
+
+
+		this.currentAnimation = TweenLite.to(this.current, time, this.targets);
+		this.currentAnimation.eventCallback('onUpdate', cb);
+		this.currentAnimation.eventCallback('onComplete', () => {
 			this.current = {};
-			this.targets = {ease: void 0};
+			this.targets = {};
+			this.currentAnimation = null;
 		});
 	}
 
@@ -271,24 +250,18 @@ export class TrendPoint {
 		var current = this.trendPoints.current;
 		var frameValX = current['x' + this.id];
 		var frameValY = current['y' + this.id];
-		var xVal = frameValX !== void 0 ? frameValX : this.xVal;
-		var yVal = frameValY !== void 0 ? frameValY : this.yVal;
+		var xVal = frameValX != void 0 ? frameValX : this.xVal;
+		var yVal = frameValY != void 0 ? frameValY : this.yVal;
 		return new Vector3(xVal, yVal, 0);
 	}
 
 	getFramePoint(): Vector3 {
 		var frameVal = this.getFrameVal();
-		return this.trendPoints.chartState.getPointOnChart(frameVal.x, frameVal.y);
+		return this.trendPoints.chartState.screen.getPointOnChart(frameVal.x, frameVal.y);
 	}
 
 	getCurrentVec(): Vector3 {
 		var current = this.trendPoints.current;
 		return new Vector3(current['x' + this.id], current['y' + this.id], 0);
-	}
-
-	getTargetVec(): Vector3 {
-		// TODO:
-		Utils.error('not implemented');
-		return null
 	}
 }

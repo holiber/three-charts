@@ -103,19 +103,20 @@
 	// deps must be always on top
 	__webpack_require__(2);
 	__export(__webpack_require__(9));
+	var PerspectiveCamera = THREE.PerspectiveCamera;
 	var WebGLRenderer = THREE.WebGLRenderer;
 	var TrendsIndicatorWidget_1 = __webpack_require__(10);
-	var TrendsLineWidget_1 = __webpack_require__(15);
-	var State_1 = __webpack_require__(16);
+	var TrendsLineWidget_1 = __webpack_require__(17);
+	var State_1 = __webpack_require__(18);
 	var Utils_1 = __webpack_require__(11);
-	var Screen_1 = __webpack_require__(28);
-	var TrendsBeaconWidget_1 = __webpack_require__(29);
-	var AxisWidget_1 = __webpack_require__(30);
-	var GridWidget_1 = __webpack_require__(31);
-	var TrendsGradientWidget_1 = __webpack_require__(32);
-	var TrendsLoadingWidget_1 = __webpack_require__(33);
-	var AxisMarksWidget_1 = __webpack_require__(34);
-	var TrendsMarksWidget_1 = __webpack_require__(35);
+	var TrendsBeaconWidget_1 = __webpack_require__(31);
+	var AxisWidget_1 = __webpack_require__(32);
+	var GridWidget_1 = __webpack_require__(33);
+	var TrendsGradientWidget_1 = __webpack_require__(34);
+	var TrendsLoadingWidget_1 = __webpack_require__(35);
+	var AxisMarksWidget_1 = __webpack_require__(36);
+	var TrendsMarksWidget_1 = __webpack_require__(37);
+	var BorderWidget_1 = __webpack_require__(38);
 	exports.MAX_DATA_LENGTH = 1000;
 	var Chart = (function () {
 	    function Chart(state) {
@@ -141,8 +142,12 @@
 	        this.$el = renderer.domElement;
 	        this.stats = new Stats();
 	        $el.appendChild(this.stats.domElement);
-	        this.screen = new Screen_1.Screen(state);
-	        this.scene.add(this.screen.camera);
+	        var camSettings = state.screen.getCameraSettings();
+	        this.camera = new PerspectiveCamera(camSettings.FOV, camSettings.aspect, camSettings.near, camSettings.far);
+	        this.camera.position.set(camSettings.x, camSettings.y, camSettings.z);
+	        this.cameraInitialPosition = this.camera.position.clone();
+	        this.scene.add(this.camera);
+	        //this.camera.position.z = 2000;
 	        // init widgets
 	        for (var widgetName in Chart.installedWidgets) {
 	            var widgetOptions = this.state.data.widgets[widgetName];
@@ -159,7 +164,7 @@
 	    Chart.prototype.render = function (time) {
 	        var _this = this;
 	        this.stats.begin();
-	        this.renderer.render(this.scene, this.screen.camera);
+	        this.renderer.render(this.scene, this.camera);
 	        var renderDelay = this.state.data.animations.enabled ? 0 : 1000;
 	        if (renderDelay) {
 	            setTimeout(function () { return requestAnimationFrame(function (time) { return _this.render(time); }); }, renderDelay);
@@ -168,7 +173,7 @@
 	            requestAnimationFrame(function (time) { return _this.render(time); });
 	        }
 	        // this.screen.camera.rotation.z += 0.01;
-	        // this.screen.camera.rotation.y += 0.01;
+	        // this.screen.camera.rotation.scrollY += 0.01;
 	        this.stats.end();
 	    };
 	    Chart.prototype.getState = function () {
@@ -196,7 +201,24 @@
 	        $el.addEventListener('touchmove', function (ev) { _this.onTouchMove(ev); });
 	        $el.addEventListener('touchend', function (ev) { _this.onTouchEnd(ev); });
 	        this.state.onTrendsChange(function () { return _this.autoscroll(); });
-	        this.state.onScrollStop(function () { return _this.onScrollStop(); });
+	        //this.state.screen.onCameraChange((scrollX, scrollY) => this.onCameraChangeHandler(scrollX, scrollY))
+	        this.state.screen.onTransformationFrame(function (options) { return _this.onScreenTransform(options); });
+	    };
+	    Chart.prototype.onCameraChangeHandler = function (x, y) {
+	        if (x != void 0) {
+	            this.camera.position.setX(this.cameraInitialPosition.x + x);
+	        }
+	        if (y != void 0) {
+	            this.camera.position.setY(this.cameraInitialPosition.y + y);
+	        }
+	    };
+	    Chart.prototype.onScreenTransform = function (options) {
+	        if (options.scrollX != void 0) {
+	            this.camera.position.setX(this.cameraInitialPosition.x + options.scrollX);
+	        }
+	        if (options.scrollY != void 0) {
+	            this.camera.position.setY(this.cameraInitialPosition.y + options.scrollY);
+	        }
 	    };
 	    Chart.prototype.autoscroll = function () {
 	        var state = this.state;
@@ -236,7 +258,7 @@
 	    Chart.prototype.onMouseWheel = function (ev) {
 	        ev.stopPropagation();
 	        ev.preventDefault();
-	        this.state.zoom(1 + ev.wheelDeltaY * 0.0001);
+	        this.state.zoom(1 + ev.wheelDeltaY * 0.0002);
 	    };
 	    Chart.prototype.onTouchMove = function (ev) {
 	        this.setState({ cursor: { dragMode: true, x: ev.touches[0].clientX, y: ev.touches[0].clientY } });
@@ -274,6 +296,7 @@
 	Chart.installWidget(TrendsLoadingWidget_1.TrendsLoadingWidget);
 	Chart.installWidget(AxisMarksWidget_1.AxisMarksWidget);
 	Chart.installWidget(TrendsMarksWidget_1.TrendsMarksWidget);
+	Chart.installWidget(BorderWidget_1.BorderWidget);
 
 
 /***/ },
@@ -51563,7 +51586,7 @@
 	};
 	var Utils_1 = __webpack_require__(11);
 	var Mesh = THREE.Mesh;
-	var TrendsWidget_1 = __webpack_require__(13);
+	var TrendsWidget_1 = __webpack_require__(15);
 	var Color = THREE.Color;
 	var CANVAS_WIDTH = 128;
 	var CANVAS_HEIGHT = 64;
@@ -51575,7 +51598,7 @@
 	    TrendsIndicatorWidget.prototype.getTrendWidgetClass = function () {
 	        return TrendIndicator;
 	    };
-	    TrendsIndicatorWidget.widgetName = 'trendsIndicator';
+	    TrendsIndicatorWidget.widgetName = 'TrendsIndicator';
 	    return TrendsIndicatorWidget;
 	}(TrendsWidget_1.TrendsWidget));
 	exports.TrendsIndicatorWidget = TrendsIndicatorWidget;
@@ -51605,11 +51628,6 @@
 	        ctx.fillText(lastItem.yVal.toFixed(4), 0, 15);
 	        texture.needsUpdate = true;
 	    };
-	    TrendIndicator.prototype.bindEvents = function () {
-	        var _this = this;
-	        _super.prototype.bindEvents.call(this);
-	        this.bindEvent(this.chartState.onScroll(function () { return _this.updatePosition(); }));
-	    };
 	    TrendIndicator.prototype.initObject = function () {
 	        var color = new Color(this.trend.getOptions().lineColor);
 	        var texture = Utils_1.Utils.createPixelPerfectTexture(CANVAS_WIDTH, CANVAS_HEIGHT, function (ctx) {
@@ -51622,27 +51640,28 @@
 	        material.transparent = true;
 	        this.mesh = new Mesh(new THREE.PlaneGeometry(CANVAS_WIDTH, CANVAS_HEIGHT), material);
 	    };
-	    TrendIndicator.prototype.onZoom = function () {
+	    TrendIndicator.prototype.onTransformationFrame = function () {
 	        // set new widget position
 	        this.point = this.trend.points.getEndPoint();
 	        this.updatePosition();
 	    };
-	    TrendIndicator.prototype.onTrendAnimate = function (animationState) {
+	    TrendIndicator.prototype.onPointsMove = function (animationState) {
 	        // set new widget position
 	        this.point = animationState.getEndPoint();
 	        this.updatePosition();
 	    };
 	    TrendIndicator.prototype.updatePosition = function () {
+	        var state = this.chartState;
 	        var endPointVector = this.point.getFramePoint();
-	        var screenWidth = this.chartState.data.width;
+	        var screenWidth = state.data.width;
 	        var x = endPointVector.x;
 	        var y = endPointVector.y;
-	        var screenX = this.chartState.getScreenXByPoint(endPointVector.x);
+	        var screenX = state.screen.getScreenXByPoint(endPointVector.x);
 	        if (screenX < 0 || screenX > screenWidth) {
 	            if (screenX < 0)
-	                x = this.chartState.getPointByScreenX(0) + 20;
+	                x = state.screen.getPointByScreenX(0) + 20;
 	            if (screenX > screenWidth)
-	                x = this.chartState.getPointByScreenX(screenWidth) - CANVAS_WIDTH / 2 - 10;
+	                x = state.screen.getPointByScreenX(screenWidth) - CANVAS_WIDTH / 2 - 10;
 	            y -= 25;
 	        }
 	        this.mesh.position.set(x + CANVAS_WIDTH / 2, y + CANVAS_HEIGHT / 2 - 30, 0);
@@ -51656,7 +51675,8 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var deepmerge = __webpack_require__(12);
+	var isPlainObject = __webpack_require__(12);
+	var deepmerge = __webpack_require__(14);
 	/**
 	 * project utils static class
 	 */
@@ -51784,6 +51804,26 @@
 	        var rgb = this.parseColor(str);
 	        return (rgb[0] << (8 * 2)) + (rgb[1] << 8) + rgb[2];
 	    };
+	    Utils.throttle = function (func, ms) {
+	        var isThrottled = false, savedArgs, savedThis;
+	        function wrapper() {
+	            if (isThrottled) {
+	                savedArgs = arguments;
+	                savedThis = this;
+	                return;
+	            }
+	            func.apply(this, arguments); // (1)
+	            isThrottled = true;
+	            setTimeout(function () {
+	                isThrottled = false; // (3)
+	                if (savedArgs) {
+	                    wrapper.apply(savedThis, savedArgs);
+	                    savedArgs = savedThis = null;
+	                }
+	            }, ms);
+	        }
+	        return wrapper;
+	    };
 	    Utils.msToTimeString = function (timestamp) {
 	        var h = Math.floor(timestamp / 360000);
 	        var m = Math.floor(timestamp / 60000);
@@ -51794,6 +51834,21 @@
 	        var ind = Math.floor(Math.random() * arr.length);
 	        return arr[ind];
 	    };
+	    Utils.copyProps = function (srcObject, dstObject, props, excludeProps) {
+	        if (excludeProps === void 0) { excludeProps = []; }
+	        for (var key in props) {
+	            if (excludeProps.indexOf(key) !== -1)
+	                continue;
+	            if (srcObject[key] == void 0)
+	                continue;
+	            if (isPlainObject(props[key]) && dstObject[key] !== void 0) {
+	                this.copyProps(srcObject[key], dstObject[key], props[key]);
+	            }
+	            else {
+	                dstObject[key] = this.deepCopy(srcObject[key]);
+	            }
+	        }
+	    };
 	    Utils.currentId = 1;
 	    return Utils;
 	}());
@@ -51803,6 +51858,68 @@
 
 /***/ },
 /* 12 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/*!
+	 * is-plain-object <https://github.com/jonschlinkert/is-plain-object>
+	 *
+	 * Copyright (c) 2014-2015, Jon Schlinkert.
+	 * Licensed under the MIT License.
+	 */
+	
+	'use strict';
+	
+	var isObject = __webpack_require__(13);
+	
+	function isObjectObject(o) {
+	  return isObject(o) === true
+	    && Object.prototype.toString.call(o) === '[object Object]';
+	}
+	
+	module.exports = function isPlainObject(o) {
+	  var ctor,prot;
+	  
+	  if (isObjectObject(o) === false) return false;
+	  
+	  // If has modified constructor
+	  ctor = o.constructor;
+	  if (typeof ctor !== 'function') return false;
+	  
+	  // If has modified prototype
+	  prot = ctor.prototype;
+	  if (isObjectObject(prot) === false) return false;
+	  
+	  // If constructor does not have an Object-specific method
+	  if (prot.hasOwnProperty('isPrototypeOf') === false) {
+	    return false;
+	  }
+	  
+	  // Most likely a plain Object
+	  return true;
+	};
+
+
+/***/ },
+/* 13 */
+/***/ function(module, exports) {
+
+	/*!
+	 * isobject <https://github.com/jonschlinkert/isobject>
+	 *
+	 * Copyright (c) 2014-2015, Jon Schlinkert.
+	 * Licensed under the MIT License.
+	 */
+	
+	'use strict';
+	
+	module.exports = function isObject(val) {
+	  return val != null && typeof val === 'object'
+	    && !Array.isArray(val);
+	};
+
+
+/***/ },
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
@@ -51860,7 +51977,7 @@
 
 
 /***/ },
-/* 13 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -51869,7 +51986,7 @@
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Widget_1 = __webpack_require__(14);
+	var Widget_1 = __webpack_require__(16);
 	var Object3D = THREE.Object3D;
 	/**
 	 * abstract manager class for all trends widgets
@@ -51962,18 +52079,24 @@
 	            unsubscriber();
 	        }
 	    };
-	    TrendWidget.prototype.onTrendAnimate = function (trendPoints) {
+	    TrendWidget.prototype.onPointsMove = function (trendPoints) {
+	    };
+	    TrendWidget.prototype.onZoomFrame = function (options) {
+	    };
+	    TrendWidget.prototype.onTransformationFrame = function (options) {
+	    };
+	    TrendWidget.prototype.onZoom = function () {
 	    };
 	    TrendWidget.prototype.bindEvents = function () {
 	        var _this = this;
-	        this.bindEvent(this.trend.points.onAnimationFrame(function (trendPoints) { return _this.onTrendAnimate(trendPoints); }));
+	        this.bindEvent(this.trend.points.onAnimationFrame(function (trendPoints) { return _this.onPointsMove(trendPoints); }));
+	        this.bindEvent(this.chartState.screen.onTransformationFrame(function (options) { return _this.onTransformationFrame(options); }));
+	        this.bindEvent(this.chartState.screen.onZoomFrame(function (options) { return _this.onZoomFrame(options); }));
 	        this.bindEvent(this.chartState.onZoom(function () { return _this.onZoom(); }));
 	    };
 	    ;
 	    TrendWidget.prototype.bindEvent = function (unsubscriber) {
 	        this.unsubscribers.push(unsubscriber);
-	    };
-	    TrendWidget.prototype.onZoom = function () {
 	    };
 	    return TrendWidget;
 	}());
@@ -51981,7 +52104,7 @@
 
 
 /***/ },
-/* 14 */
+/* 16 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -52006,7 +52129,7 @@
 
 
 /***/ },
-/* 15 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -52017,7 +52140,8 @@
 	};
 	var Geometry = THREE.Geometry;
 	var LineBasicMaterial = THREE.LineBasicMaterial;
-	var TrendsWidget_1 = __webpack_require__(13);
+	var Vector3 = THREE.Vector3;
+	var TrendsWidget_1 = __webpack_require__(15);
 	var LineSegments = THREE.LineSegments;
 	/**
 	 * widget for drawing trends lines
@@ -52060,20 +52184,43 @@
 	            var vert2 = nextPoint.getFrameVal();
 	            if (!nextPoint.hasValue)
 	                vert2 = vert1.clone();
+	            vert1 = this.toLocalVec(vert1);
+	            vert2 = this.toLocalVec(vert2);
 	            geometry.vertices.push(vert1, vert2);
 	        }
 	        this.lineSegments = new LineSegments(geometry, this.material);
 	        this.lineSegments.scale.set(this.scaleXFactor, this.scaleYFactor, 1);
-	        this.lineSegments.position.set(-this.chartState.data.xAxis.range.from * this.scaleXFactor, -this.chartState.data.yAxis.range.from * this.scaleYFactor, 0);
+	        // this.lineSegments.position.set(
+	        // 	- this.chartState.data.xAxis.range.from * this.scaleXFactor,
+	        // 	- this.chartState.data.yAxis.range.from * this.scaleYFactor,
+	        // 	0
+	        // );
 	        this.lineSegments.frustumCulled = false;
 	    };
-	    TrendLine.prototype.onZoom = function () {
+	    // protected onZoom() {
+	    // 	var currentScale = this.lineSegments.scale;
+	    // 	var zoomX = this.chartState.data.xAxis.range.zoom;
+	    // 	var zoomY = this.chartState.data.yAxis.range.zoom;
+	    // 	currentScale.set(this.scaleXFactor * zoomX, this.scaleYFactor * zoomY, 1);
+	    // 	// setInterval(() => {
+	    // 	// 	currentScale.setY(currentScale.scrollY + 0.4);
+	    // 	// }, 500)
+	    // }
+	    // protected onZoomFrame(zoomX: number, zoomY: number) {
+	    // 	// var currentScale = this.lineSegments.scale;
+	    // 	// currentScale.set(this.scaleXFactor * zoomX, this.scaleYFactor * zoomY, 1);
+	    // 	// setInterval(() => {
+	    // 	// 	currentScale.setY(currentScale.scrollY + 0.4);
+	    // 	// }, 500)
+	    // }
+	    TrendLine.prototype.onZoomFrame = function (options) {
 	        var currentScale = this.lineSegments.scale;
-	        var zoomX = this.chartState.data.xAxis.range.zoom;
-	        var zoomY = this.chartState.data.yAxis.range.zoom;
-	        currentScale.set(this.scaleXFactor * zoomX, this.scaleYFactor * zoomY, 1);
+	        if (options.zoomX)
+	            currentScale.setX(this.scaleXFactor * options.zoomX);
+	        if (options.zoomY)
+	            currentScale.setY(this.scaleYFactor * options.zoomY);
 	    };
-	    TrendLine.prototype.onTrendAnimate = function (animationState) {
+	    TrendLine.prototype.onPointsMove = function (animationState) {
 	        var trendData = this.trend.getData();
 	        var geometry = this.lineSegments.geometry;
 	        var vertices = geometry.vertices;
@@ -52090,50 +52237,74 @@
 	            var point = animationState.points[ind];
 	            var nextPoint = point.getNext();
 	            var prevPoint = point.getPrev();
-	            var value = current[vertexValue];
 	            var lineStartVertex = vertices[ind * 2];
 	            var lineEndVertex = vertices[ind * 2 + 1];
-	            var isAppend = (prevPoint && !nextPoint);
+	            var isAppend = (prevPoint);
 	            if (isX) {
-	                if (isAppend) {
-	                    lineStartVertex.setX(prevPoint.getFrameVal().x);
+	                var value = this.toLocalX(current[vertexValue]);
+	                if (prevPoint) {
+	                    lineStartVertex.setX(this.toLocalX(prevPoint.getFrameVal().x));
 	                    lineEndVertex.setX(value);
 	                }
 	                else {
 	                    lineStartVertex.setX(value);
-	                    lineEndVertex.setX(nextPoint.getFrameVal().x);
+	                    lineEndVertex.setX(value);
+	                }
+	                if (nextPoint) {
+	                    var nextPointLineStartVertex = vertices[(nextPoint.id) * 2];
+	                    if (nextPointLineStartVertex.x !== value)
+	                        nextPointLineStartVertex.setX(value);
 	                }
 	            }
 	            else {
+	                var value = this.toLocalY(current[vertexValue]);
 	                if (isAppend) {
-	                    lineStartVertex.setY(prevPoint.getFrameVal().y);
+	                    lineStartVertex.setY(this.toLocalY(prevPoint.getFrameVal().y));
 	                    lineEndVertex.setY(value);
 	                }
 	                else {
 	                    lineStartVertex.setY(value);
-	                    lineEndVertex.setY(nextPoint.getFrameVal().y);
+	                    lineEndVertex.setY(value);
+	                }
+	                if (nextPoint) {
+	                    var nextPointLineStartVertex = vertices[(nextPoint.id) * 2];
+	                    if (nextPointLineStartVertex.y !== value)
+	                        nextPointLineStartVertex.setY(value);
 	                }
 	            }
 	        }
 	        geometry.verticesNeedUpdate = true;
+	    };
+	    TrendLine.prototype.toLocalX = function (xVal) {
+	        return xVal - this.chartState.data.xAxis.range.zeroVal;
+	    };
+	    TrendLine.prototype.toLocalY = function (yVal) {
+	        return yVal - this.chartState.data.yAxis.range.zeroVal;
+	    };
+	    TrendLine.prototype.toLocalVec = function (vec) {
+	        return new Vector3(this.toLocalX(vec.x), this.toLocalY(vec.y), 0);
 	    };
 	    return TrendLine;
 	}(TrendsWidget_1.TrendWidget));
 
 
 /***/ },
-/* 16 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var EE = __webpack_require__(17);
+	var EE = __webpack_require__(19);
 	var Chart_1 = __webpack_require__(1);
 	var Utils_1 = __webpack_require__(11);
 	var Vector3 = THREE.Vector3;
-	var Widget_1 = __webpack_require__(14);
-	var Trends_1 = __webpack_require__(18);
-	var AxisMarks_1 = __webpack_require__(27);
+	var Widget_1 = __webpack_require__(16);
+	var Trends_1 = __webpack_require__(20);
+	var Screen_1 = __webpack_require__(29);
+	var AxisMarks_1 = __webpack_require__(30);
 	var interfaces_1 = __webpack_require__(9);
+	/**
+	 * main class for manage chart state
+	 */
 	var ChartState = (function () {
 	    function ChartState(initialState) {
 	        this.data = {
@@ -52142,13 +52313,13 @@
 	            zoom: 0,
 	            xAxis: {
 	                range: { type: Chart_1.AXIS_RANGE_TYPE.ALL, from: 0, to: 0, scroll: 0, padding: { start: 0, end: 200 }, zoom: 1 },
-	                gridMinSize: 120,
+	                gridMinSize: 100,
 	                autoScroll: true,
 	                marks: [],
 	            },
 	            yAxis: {
 	                range: { type: Chart_1.AXIS_RANGE_TYPE.RELATIVE_END, from: 0, to: 0, padding: { start: 100, end: 100 }, zoom: 1 },
-	                gridMinSize: 60,
+	                gridMinSize: 50,
 	                marks: []
 	            },
 	            animations: {
@@ -52168,6 +52339,7 @@
 	        };
 	        this.ee = new EE();
 	        this.ee.setMaxListeners(15);
+	        this.screen = new Screen_1.Screen(this);
 	        if (!initialState.$el) {
 	            Utils_1.Utils.error('$el must be set');
 	        }
@@ -52230,9 +52402,6 @@
 	            _this.ee.off('zoom', cb);
 	        };
 	    };
-	    ChartState.prototype.onCameraChange = function (cb) {
-	        this.ee.on('cameraChange', cb);
-	    };
 	    ChartState.prototype.getTrend = function (trendName) {
 	        return this.trends.getTrend(trendName);
 	    };
@@ -52253,10 +52422,6 @@
 	        var recalculateResult = this.recalculateState(changedProps);
 	        changedProps = recalculateResult.changedProps;
 	        this.emitChangedStateEvents(changedProps, eventData);
-	    };
-	    // emit event on state. Dirty hack, use only for performance improvements such camera position change
-	    ChartState.prototype.emit = function (eventName, data) {
-	        this.ee.emit(eventName, data);
 	    };
 	    ChartState.prototype.initComputedData = function () {
 	        var _a = this.data, width = _a.width, height = _a.height;
@@ -52306,12 +52471,13 @@
 	            patch.xAxis = { range: { scroll: currentScroll + deltaXVal } };
 	            actualData = Utils_1.Utils.deepMerge(actualData, { xAxis: patch.xAxis });
 	        }
-	        var needToRecalculateXAxis = ((changedProps.xAxis && changedProps.xAxis.range) ||
+	        var needToRecalculateXAxis = (scrollChanged ||
+	            (changedProps.xAxis && (changedProps.xAxis.range)) ||
 	            this.data.xAxis.range.zeroVal == void 0);
 	        if (needToRecalculateXAxis) {
 	            var xAxisPatch = this.recalculateXAxis(actualData);
 	            if (xAxisPatch) {
-	                Utils_1.Utils.deepMerge(patch, { xAxis: xAxisPatch });
+	                patch = Utils_1.Utils.deepMerge(patch, { xAxis: xAxisPatch });
 	                actualData = Utils_1.Utils.deepMerge(actualData, { xAxis: xAxisPatch });
 	            }
 	        }
@@ -52322,7 +52488,7 @@
 	        if (needToRecalculateYAxis) {
 	            var yAxisPatch = this.recalculateYAxis(actualData);
 	            if (yAxisPatch) {
-	                Utils_1.Utils.deepMerge(patch, { yAxis: yAxisPatch });
+	                patch = Utils_1.Utils.deepMerge(patch, { yAxis: yAxisPatch });
 	                actualData = Utils_1.Utils.deepMerge(actualData, { yAxis: yAxisPatch });
 	            }
 	        }
@@ -52349,18 +52515,22 @@
 	        return computedData;
 	    };
 	    ChartState.prototype.savePrevState = function (changedProps) {
-	        var propsToSave = changedProps ? Object.keys(changedProps) : Object.keys(this.data);
+	        // var propsToSave = changedProps ? Object.keys(changedProps) : Object.keys(this.data);
+	        if (!changedProps)
+	            changedProps = this.data;
 	        var prevState = this.data.prevState;
-	        for (var _i = 0, propsToSave_1 = propsToSave; _i < propsToSave_1.length; _i++) {
-	            var propName = propsToSave_1[_i];
-	            if (this.data[propName] == void 0)
-	                continue;
-	            // prevent to store prev trend data by performance reasons
-	            if (propName == 'trends') {
-	                continue;
-	            }
-	            prevState[propName] = Utils_1.Utils.deepCopy(this.data[propName]);
-	        }
+	        // prevent to store prev trend data by performance reasons
+	        Utils_1.Utils.copyProps(this.data, prevState, changedProps, ['trends']);
+	        // for (let propName of propsToSave) {
+	        // 	if (this.data[propName] == void 0) continue;
+	        //
+	        // 	// prevent to store prev trend data by performance reasons
+	        // 	if (propName == 'trends') {
+	        // 		continue;
+	        // 	}
+	        //
+	        // 	prevState[propName] = Utils.deepCopy(this.data[propName]);
+	        // }
 	    };
 	    ChartState.prototype.emitChangedStateEvents = function (changedProps, eventData) {
 	        var prevState = this.data.prevState;
@@ -52380,13 +52550,7 @@
 	            changedProps.xAxis.range.scroll !== void 0);
 	        scrollChangeEventsNeeded && this.ee.emit('scroll', changedProps);
 	        var zoomEventsNeeded = ((changedProps.xAxis && changedProps.xAxis.range && changedProps.xAxis.range.zoom) ||
-	            (changedProps.xAxis &&
-	                changedProps.xAxis.range &&
-	                (changedProps.xAxis.range.from || changedProps.xAxis.range.to))
-	            ||
-	                (changedProps.yAxis &&
-	                    changedProps.yAxis.range &&
-	                    (changedProps.yAxis.range.from || changedProps.yAxis.range.to)));
+	            (changedProps.yAxis && changedProps.yAxis.range && changedProps.yAxis.range.zoom));
 	        zoomEventsNeeded && this.ee.emit('zoom', changedProps);
 	    };
 	    ChartState.prototype.initListeners = function () {
@@ -52403,240 +52567,183 @@
 	    ChartState.prototype.recalculateXAxis = function (actualData) {
 	        var axisRange = actualData.xAxis.range;
 	        var patch = { range: {} };
-	        if (axisRange.zeroVal == void 0) {
-	            patch = {
-	                range: {
-	                    zeroVal: axisRange.from,
-	                    scaleFactor: actualData.width / (axisRange.to - axisRange.from)
-	                }
-	            };
+	        var isInitialize = axisRange.zeroVal == void 0;
+	        var zeroVal, scaleFactor;
+	        if (isInitialize) {
+	            zeroVal = axisRange.from;
+	            scaleFactor = actualData.width / (axisRange.to - axisRange.from);
+	            patch = { range: { zeroVal: zeroVal, scaleFactor: scaleFactor } };
 	        }
-	        var zeroVal = axisRange.zeroVal || patch.range.zeroVal;
-	        var scaleFactor = axisRange.scaleFactor || patch.range.scaleFactor;
-	        patch.range.from = zeroVal + axisRange.scroll;
-	        patch.range.to = patch.range.from + actualData.width / scaleFactor;
-	        return patch;
-	    };
-	    ChartState.prototype.recalculateYAxis1 = function (actualData) {
-	        // TODO: make tests
-	        var patch = { range: {} };
-	        // var yAxisRange = actualData.xAxis.range;
-	        // var patch: IAxisOptions = {range: {}};
-	        // if (yAxisRange.zeroVal == void 0) {
-	        // 	patch = {
-	        // 		range: {
-	        // 			zeroVal: yAxisRange.from,
-	        // 			scaleFactor: actualData.width / (yAxisRange.to - yAxisRange.from)
-	        // 		}
-	        // 	}
-	        // }
-	        //
-	        // var zeroVal = axisRange.zeroVal || patch.range.zeroVal;
-	        // var scaleFactor = axisRange.scaleFactor || patch.range.scaleFactor;
-	        var trends = this.trends;
-	        if (!trends)
-	            return null;
-	        var state = this.data;
-	        var yAxis = actualData.yAxis;
-	        var xRange = actualData.xAxis.range;
-	        var xFromValue = xRange.from;
-	        var xToValue = xRange.to;
-	        var xRangeLength = xToValue - xFromValue;
-	        var trendsEndXVal = trends.getEndXVal();
-	        var trendsStartXVal = trends.getStartXVal();
-	        // check situation when chart was scrolled behind trends end or before trends start
-	        if (xToValue > trendsEndXVal) {
-	            xToValue = trendsEndXVal;
-	            xFromValue = xToValue - xRangeLength;
+	        else {
+	            zeroVal = axisRange.zeroVal;
+	            scaleFactor = axisRange.scaleFactor;
 	        }
-	        else if (xFromValue < trendsStartXVal) {
-	            xFromValue = trendsStartXVal;
-	            xToValue = xFromValue + xRangeLength;
-	        }
-	        var padding = state.yAxis.range.padding;
-	        var maxY = trends.getMaxYVal(xFromValue, xToValue);
-	        var minY = trends.getMinYVal(xFromValue, xToValue);
-	        var trendLastY = trends.getMaxYVal(trendsEndXVal, trendsEndXVal);
-	        if (state.yAxis.range.type == Chart_1.AXIS_RANGE_TYPE.RELATIVE_END) {
-	            if (trendLastY > maxY)
-	                maxY = trendLastY;
-	            if (trendLastY < minY)
-	                minY = trendLastY;
-	        }
-	        if (isNaN(maxY) || isNaN(minY) || maxY == minY)
-	            return null;
-	        var maxScreenY = Math.round(this.getScreenYByValue(maxY));
-	        var minScreenY = Math.round(this.getScreenYByValue(minY));
-	        var needToZoom = (maxScreenY > state.height ||
-	            maxScreenY < state.height - padding.end ||
-	            minScreenY < 0 || minScreenY > padding.start);
-	        if (!needToZoom)
-	            return null;
-	        var rangeLength = maxY - minY;
-	        var paddingTopInPercents = padding.end / state.height;
-	        var paddingBottomInPercents = padding.start / state.height;
-	        var to = maxY + paddingTopInPercents * rangeLength;
-	        var from = minY - paddingBottomInPercents * rangeLength;
-	        patch.range.to = to;
+	        var from = zeroVal + axisRange.scroll;
+	        var to = from + actualData.width / (scaleFactor * axisRange.zoom);
 	        patch.range.from = from;
-	        if (yAxis.range.zeroVal == void 0) {
-	            patch.range.zeroVal = from;
-	            patch.range.scaleFactor = actualData.height / (to - from);
-	        }
-	        var zeroVal = yAxis.range.zeroVal || patch.range.zeroVal;
-	        var scaleFactor = yAxis.range.scaleFactor || patch.range.scaleFactor;
-	        patch.range.zoom = scaleFactor / (actualData.height / (to - from));
-	        patch.range.scroll = from - zeroVal;
-	        console.log('zoomY', patch.range.zoom);
-	        console.log('patchY', patch);
+	        patch.range.to = to;
 	        return patch;
 	    };
 	    ChartState.prototype.recalculateYAxis = function (actualData) {
 	        var patch = { range: {} };
 	        var yAxisRange = actualData.yAxis.range;
 	        var isInitialize = yAxisRange.zeroVal == void 0;
-	        var trendsEndXVal = this.trends.getEndXVal();
-	        var trendsStartXVal = this.trends.getStartXVal();
-	        var zeroVal, scaleFactor, fromVal;
+	        var trends = this.trends;
+	        var trendsEndXVal = trends.getEndXVal();
+	        var trendsStartXVal = trends.getStartXVal();
+	        var xRange = actualData.xAxis.range;
+	        var xFrom = xRange.from, xTo = xRange.to;
+	        var xRangeLength = xTo - xFrom;
+	        var zeroVal, scaleFactor, scroll, zoom, needToZoom;
+	        // check situation when chart was scrolled behind trends end or before trends start
+	        if (xTo > trendsEndXVal) {
+	            xTo = trendsEndXVal;
+	            xFrom = xTo - xRangeLength;
+	        }
+	        else if (xFrom < trendsStartXVal) {
+	            xFrom = trendsStartXVal;
+	            xTo = xFrom + xRangeLength;
+	        }
+	        var maxY = trends.getMaxYVal(xFrom, xTo);
+	        var minY = trends.getMinYVal(xFrom, xTo);
+	        var trendLastY = trends.getMaxYVal(trendsEndXVal, trendsEndXVal);
+	        if (yAxisRange.type == Chart_1.AXIS_RANGE_TYPE.RELATIVE_END) {
+	            if (trendLastY > maxY)
+	                maxY = trendLastY;
+	            if (trendLastY < minY)
+	                minY = trendLastY;
+	        }
+	        var padding = yAxisRange.padding;
+	        var rangeLength = maxY - minY;
+	        var paddingTopInPercents = padding.end / actualData.height;
+	        var paddingBottomInPercents = padding.start / actualData.height;
+	        var rangeLengthInPercents = 1 - paddingTopInPercents - paddingBottomInPercents;
+	        var visibleRangeLength = rangeLength / rangeLengthInPercents;
+	        var fromVal = minY - visibleRangeLength * paddingBottomInPercents;
+	        var toVal = maxY + visibleRangeLength * paddingTopInPercents;
 	        if (isInitialize) {
-	            zeroVal = (yAxisRange.from !== void 0 && yAxisRange.from) || trendsStartXVal;
-	            fromVal = zeroVal;
+	            zeroVal = fromVal;
+	            scaleFactor = actualData.height / (toVal - fromVal);
+	            patch = { range: { zeroVal: zeroVal, scaleFactor: scaleFactor } };
+	            needToZoom = true;
 	        }
-	        if (yAxisRange.zeroVal == void 0) {
-	            patch = {
-	                range: {
-	                    zeroVal: yAxisRange.from,
-	                    scaleFactor: actualData.width / (yAxisRange.to - yAxisRange.from)
-	                }
-	            };
+	        else {
+	            scaleFactor = yAxisRange.scaleFactor;
+	            zeroVal = yAxisRange.zeroVal;
+	            var maxScreenY = Math.round(this.getScreenYByValue(maxY));
+	            var minScreenY = Math.round(this.getScreenYByValue(minY));
+	            needToZoom = (maxScreenY > actualData.height ||
+	                maxScreenY < actualData.height - padding.end ||
+	                minScreenY < 0 || minScreenY > padding.start);
 	        }
+	        if (!needToZoom)
+	            return null;
+	        scroll = fromVal - zeroVal;
+	        zoom = (actualData.height / (toVal - fromVal)) / scaleFactor;
+	        var currentAxisRange = this.data.yAxis.range;
+	        if (currentAxisRange.from !== fromVal)
+	            patch.range.from = fromVal;
+	        if (currentAxisRange.to !== toVal)
+	            patch.range.to = toVal;
+	        if (currentAxisRange.scroll !== scroll)
+	            patch.range.scroll = scroll;
+	        if (currentAxisRange.zoom !== zoom)
+	            patch.range.zoom = zoom;
 	        return patch;
 	    };
 	    ChartState.prototype.zoom = function (zoomValue) {
-	        // var {from, to} = this.data.xAxis.range;
-	        // var rangeLength = to - from;
-	        // var middleScreenValue = this.getValueByScreenX(this.data.width / 2);
-	        // var leftScreenValue = this.getValueByScreenX(0);
-	        // var rightScreenValue = this.getValueByScreenX(this.data.width);
-	        // var newTo = middleScreenValue + (rightScreenValue - middleScreenValue) * zoomValue;
-	        // var newFrom = middleScreenValue - (middleScreenValue - leftScreenValue) * zoomValue;
-	        // this.setState(
-	        // 	{xAxis: {range: {from: newFrom, to: newTo, scroll: 0}}}
-	        // );
-	        var currentZoom = this.data.xAxis.range.zoom;
-	        this.setState({ xAxis: { range: { zoom: currentZoom * zoomValue } } });
+	        var _a = this.data.xAxis.range, zoom = _a.zoom, scroll = _a.scroll, zeroVal = _a.zeroVal;
+	        var newZoom = zoom * zoomValue;
+	        var screenLeftVal = this.getValueByScreenX(0);
+	        var screenCenterVal = this.getValueByScreenX(this.data.width / 2);
+	        var halfScreenLength = screenCenterVal - screenLeftVal;
+	        var scrollDelta = halfScreenLength * zoomValue - halfScreenLength;
+	        var newScroll = scroll + scrollDelta;
+	        this.setState({ xAxis: { range: { zoom: newZoom, scroll: newScroll } } });
 	    };
 	    /**
-	     *  returns offset in pixels from xAxis.range.from to xVal
+	     *  returns offset in pixels from xAxis.range.zeroVal to xVal
 	     */
 	    ChartState.prototype.getPointOnXAxis = function (xVal) {
-	        // var w = this.data.width;
-	        // var {from, to} = this.data.xAxis.range;
-	        // return w * ((xVal - from) / (to - from));
-	        return xVal * this.data.computedData.xAxis.range.scaleFactor * this.data.xAxis.range.zoom;
+	        var _a = this.data.xAxis.range, scaleFactor = _a.scaleFactor, zoom = _a.zoom, zeroVal = _a.zeroVal;
+	        return (xVal - zeroVal) * scaleFactor * zoom;
 	    };
 	    /**
-	     *  returns offset in pixels from yAxis.range.from to yVal
+	     *  returns offset in pixels from yAxis.range.zeroVal to yVal
 	     */
 	    ChartState.prototype.getPointOnYAxis = function (yVal) {
-	        var h = this.data.height;
-	        var _a = this.data.yAxis.range, from = _a.from, to = _a.to;
-	        return h * ((yVal - from) / (to - from));
+	        var _a = this.data.yAxis.range, scaleFactor = _a.scaleFactor, zoom = _a.zoom, zeroVal = _a.zeroVal;
+	        return (yVal - zeroVal) * scaleFactor * zoom;
 	    };
 	    /**
-	     * returns value by offset in pixels from xAxis.range.from
+	     * returns value by offset in pixels from xAxis.range.zeroVal
 	     */
 	    ChartState.prototype.getValueOnXAxis = function (x) {
-	        var from = this.data.xAxis.range.from;
-	        return from + this.pxToValueByXAxis(x);
+	        return this.data.xAxis.range.zeroVal + this.pxToValueByXAxis(x);
 	    };
 	    /**
 	     *  convert value to pixels by using settings from xAxis.range
 	     */
 	    ChartState.prototype.valueToPxByXAxis = function (xVal) {
-	        // var w = this.data.width;
-	        // var {from, to} = this.data.xAxis.range;
-	        // return xVal * (w / (to - from));
-	        return xVal * this.data.computedData.xAxis.range.scaleFactor * this.data.xAxis.range.zoom;
+	        return xVal * this.data.xAxis.range.scaleFactor * this.data.xAxis.range.zoom;
 	    };
 	    /**
 	     *  convert value to pixels by using settings from yAxis.range
 	     */
 	    ChartState.prototype.valueToPxByYAxis = function (yVal) {
-	        var h = this.data.height;
-	        var _a = this.data.yAxis.range, from = _a.from, to = _a.to;
-	        return yVal * (h / (to - from));
+	        return yVal * this.data.yAxis.range.scaleFactor * this.data.yAxis.range.zoom;
 	    };
 	    /**
 	     *  convert pixels to value by using settings from xAxis.range
 	     */
 	    ChartState.prototype.pxToValueByXAxis = function (xVal) {
-	        return xVal / this.data.computedData.xAxis.range.scaleFactor / this.data.xAxis.range.zoom;
+	        return xVal / this.data.xAxis.range.scaleFactor / this.data.xAxis.range.zoom;
 	    };
 	    /**
 	     *  convert pixels to value by using settings from yAxis.range
 	     */
 	    ChartState.prototype.pxToValueByYAxis = function (yVal) {
-	        var h = this.data.height;
-	        var _a = this.data.yAxis.range, from = _a.from, to = _a.to;
-	        return yVal * ((to - from) / h);
+	        return yVal / this.data.yAxis.range.scaleFactor / this.data.yAxis.range.zoom;
 	    };
 	    /**
 	     *  returns x value by screen x coordinate
 	     */
 	    ChartState.prototype.getValueByScreenX = function (x) {
-	        var _a = this.data.xAxis.range, from = _a.from, scroll = _a.scroll;
-	        return from + scroll + this.pxToValueByXAxis(x);
+	        var _a = this.data.xAxis.range, zeroVal = _a.zeroVal, scroll = _a.scroll;
+	        return zeroVal + scroll + this.pxToValueByXAxis(x);
 	    };
 	    /**
 	     *  returns y value by screen y coordinate
 	     */
 	    ChartState.prototype.getValueByScreenY = function (y) {
-	        var h = this.data.height;
-	        var _a = this.data.yAxis.range, from = _a.from, to = _a.to;
-	        var pxCoast = (to - from) / h;
-	        return from + pxCoast * y;
+	        var _a = this.data.yAxis.range, zeroVal = _a.zeroVal, scroll = _a.scroll;
+	        return zeroVal + scroll + this.pxToValueByYAxis(y);
 	    };
 	    /**
 	     *  returns screen x value by screen y coordinate
 	     */
 	    ChartState.prototype.getScreenXByValue = function (xVal) {
-	        // var w = this.data.width;
-	        // var {from, to, scroll, zoom} = this.data.xAxis.range;
-	        // var valCoast =  w / (to - from) * zoom;
-	        // return valCoast * (xVal - from) - valCoast * scroll;
-	        var w = this.data.width;
-	        var _a = this.data.computedData.xAxis.range, initialFrom = _a.initialFrom, scaleFactor = _a.scaleFactor;
-	        var scroll = this.data.xAxis.range.scroll;
-	        // var valCoast =  w / (to - from) * zoom;
-	        // return valCoast * (xVal - from) - valCoast * scroll;
-	        return this.valueToPxByXAxis(xVal - initialFrom - scroll);
+	        var _a = this.data.xAxis.range, scroll = _a.scroll, zeroVal = _a.zeroVal;
+	        return this.valueToPxByXAxis(xVal - zeroVal - scroll);
 	    };
 	    /**
 	     *  returns screen y value by screen y coordinate
 	     */
 	    ChartState.prototype.getScreenYByValue = function (yVal) {
-	        var h = this.data.height;
-	        var _a = this.data.yAxis.range, from = _a.from, to = _a.to;
-	        var valCoast = h / (to - from);
-	        return valCoast * (yVal - from);
+	        var _a = this.data.yAxis.range, scroll = _a.scroll, zeroVal = _a.zeroVal;
+	        return this.valueToPxByYAxis(yVal - zeroVal - scroll);
 	    };
 	    /**
-	     * returns screen x coordinate by offset in pixels from xAxis.range.from value
+	     * returns screen x coordinate by offset in pixels from xAxis.range.zeroVal value
 	     */
 	    ChartState.prototype.getScreenXByPoint = function (xVal) {
 	        return this.getScreenXByValue(this.getValueOnXAxis(xVal));
 	    };
 	    /**
-	     * returns offset in pixels from xAxis.range.from value by screen x coordinate
+	     * returns offset in pixels from xAxis.range.zeroVal value by screen x coordinate
 	     */
 	    ChartState.prototype.getPointByScreenX = function (screenX) {
 	        return this.getPointOnXAxis(this.getValueByScreenX(screenX));
-	    };
-	    ChartState.prototype.getPxCoast = function () {
-	        var w = this.data.width;
-	        var _a = this.data.xAxis.range, from = _a.from, to = _a.to;
-	        return (to - from) / w;
 	    };
 	    ChartState.prototype.getPointOnChart = function (xVal, yVal) {
 	        return new Vector3(this.getPointOnXAxis(xVal), this.getPointOnYAxis(yVal), 0);
@@ -52650,18 +52757,13 @@
 	    ChartState.prototype.getPaddingRight = function () {
 	        return this.getValueByScreenX(this.data.width - this.data.xAxis.range.padding.end);
 	    };
-	    ChartState.prototype.scrollToEnd = function () {
-	        var rightPadding = this.data.xAxis.range.padding.end;
-	        var scrollPos = -this.getPointOnXAxis(this.data.computedData.trends.maxXVal) + this.data.width - rightPadding;
-	        this.setState({ xAxis: { range: { scroll: scrollPos } } });
-	    };
 	    return ChartState;
 	}());
 	exports.ChartState = ChartState;
 
 
 /***/ },
-/* 17 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_RESULT__;/*!
@@ -53240,11 +53342,11 @@
 
 
 /***/ },
-/* 18 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var Trend_1 = __webpack_require__(19);
+	var Trend_1 = __webpack_require__(21);
 	/**
 	 * Trends collection
 	 */
@@ -53311,16 +53413,16 @@
 
 
 /***/ },
-/* 19 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 	var Utils_1 = __webpack_require__(11);
-	var es6_promise_1 = __webpack_require__(20);
+	var es6_promise_1 = __webpack_require__(22);
 	var Chart_1 = __webpack_require__(1);
-	var TrendMarks_1 = __webpack_require__(25);
-	var TrendPoints_1 = __webpack_require__(26);
-	var EventEmitter = __webpack_require__(17);
+	var TrendMarks_1 = __webpack_require__(27);
+	var TrendPoints_1 = __webpack_require__(28);
+	var EventEmitter = __webpack_require__(19);
 	var DEFAULT_OPTIONS = {
 	    enabled: true,
 	    data: [],
@@ -53488,7 +53590,7 @@
 
 
 /***/ },
-/* 20 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_RESULT__;var require;/* WEBPACK VAR INJECTION */(function(process, global, module) {/*!
@@ -53621,7 +53723,7 @@
 	    function lib$es6$promise$asap$$attemptVertx() {
 	      try {
 	        var r = require;
-	        var vertx = __webpack_require__(23);
+	        var vertx = __webpack_require__(25);
 	        lib$es6$promise$asap$$vertxNext = vertx.runOnLoop || vertx.runOnContext;
 	        return lib$es6$promise$asap$$useVertxTimer();
 	      } catch(e) {
@@ -54439,7 +54541,7 @@
 	    };
 	
 	    /* global define:true module:true window: true */
-	    if ("function" === 'function' && __webpack_require__(24)['amd']) {
+	    if ("function" === 'function' && __webpack_require__(26)['amd']) {
 	      !(__WEBPACK_AMD_DEFINE_RESULT__ = function() { return lib$es6$promise$umd$$ES6Promise; }.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	    } else if (typeof module !== 'undefined' && module['exports']) {
 	      module['exports'] = lib$es6$promise$umd$$ES6Promise;
@@ -54451,10 +54553,10 @@
 	}).call(this);
 	
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(21), (function() { return this; }()), __webpack_require__(22)(module)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(23), (function() { return this; }()), __webpack_require__(24)(module)))
 
 /***/ },
-/* 21 */
+/* 23 */
 /***/ function(module, exports) {
 
 	// shim for using process in browser
@@ -54554,7 +54656,7 @@
 
 
 /***/ },
-/* 22 */
+/* 24 */
 /***/ function(module, exports) {
 
 	module.exports = function(module) {
@@ -54570,25 +54672,25 @@
 
 
 /***/ },
-/* 23 */
+/* 25 */
 /***/ function(module, exports) {
 
 	/* (ignored) */
 
 /***/ },
-/* 24 */
+/* 26 */
 /***/ function(module, exports) {
 
 	module.exports = function() { throw new Error("define cannot be used indirect"); };
 
 
 /***/ },
-/* 25 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 	var Utils_1 = __webpack_require__(11);
-	var EventEmitter = __webpack_require__(17);
+	var EventEmitter = __webpack_require__(19);
 	var TREND_MARK_SIDE;
 	(function (TREND_MARK_SIDE) {
 	    TREND_MARK_SIDE[TREND_MARK_SIDE["TOP"] = 0] = "TOP";
@@ -54700,45 +54802,24 @@
 	    TrendMark.prototype.setPoint = function (point) {
 	        this.point = point;
 	    };
-	    TrendMark.prototype.onZoom = function () {
-	        // var chartState = this.chartState;
-	        // var animations = this.chartState.data.animations;
-	        // var time = animations.enabled ? animations.zoomSpeed : 0;
-	        // var prevRange = chartState.data.prevState.xAxis.range;
-	        // var currentRange = chartState.data.xAxis.range;
-	        // var zoomDistanceInPx = chartState.valueToPxByXAxis(currentRange.from - prevRange.from);
-	        // var fromPosition = this.position - zoomDistanceInPx;
-	        // this.animate(this.getPosition(), time, animations.zoomEase, fromPosition);
-	    };
-	    TrendMark.prototype.animate = function (toPosition, time, ease, fromPosition) {
-	        // if (this.animation) this.animation.kill();
-	        // fromPosition = fromPosition !== void 0 ? fromPosition : this.position;
-	        // var current = {position: fromPosition};
-	        // var target = {position: toPosition, ease: ease};
-	        // var animation = TweenLite.to(current, time, target);
-	        // animation.eventCallback('onUpdate', () => {
-	        // 	this.position = current.position;
-	        // 	this.ee.emit('onAnimationFrame');
-	        // });
-	        // this.animation = animation;
-	    };
 	    return TrendMark;
 	}());
 	exports.TrendMark = TrendMark;
 
 
 /***/ },
-/* 26 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var EventEmmiter = __webpack_require__(17);
+	var EventEmmiter = __webpack_require__(19);
 	var Vector3 = THREE.Vector3;
 	var Utils_1 = __webpack_require__(11);
+	// class helps to animate trends points
 	var TrendPoints = (function () {
 	    function TrendPoints(chartState, trend, pointsCount, initialItem) {
 	        this.points = {};
-	        //pointsByXVal: {[xVal: string]: TrendPoint} = {};
+	        //pointsByXVal: {[scrollXVal: string]: TrendPoint} = {};
 	        // objects like {x0: 1, y0: 2, x1: 2, y2: 3, ...}
 	        this.current = {};
 	        this.targets = {};
@@ -54761,7 +54842,6 @@
 	    }
 	    TrendPoints.prototype.bindEvents = function () {
 	        var _this = this;
-	        var state = this.chartState;
 	        this.trend.onChange(function (changedOptions, newData) {
 	            if (newData) {
 	                var data = _this.trend.getData();
@@ -54769,7 +54849,6 @@
 	                isAppend ? _this.appendData(newData) : _this.prependData(newData);
 	            }
 	        });
-	        state.onZoom(function () { return _this.updatePoints(); });
 	    };
 	    TrendPoints.prototype.getEndPoint = function () {
 	        return this.points[this.endPointId];
@@ -54892,48 +54971,25 @@
 	        var time = animationsOptions.enabled ? animationsOptions.trendChangeSpeed : 0;
 	        this.animate(time, targets, current);
 	    };
-	    TrendPoints.prototype.updatePoints = function () {
-	        // var chartState = this.chartState;
-	        // var targets: ITargets = {};
-	        // var currents: ICurrent = {};
-	        //
-	        // var currentXFrom = chartState.data.xAxis.range.from;
-	        // var prevXFrom = chartState.data.prevState.xAxis.range.from;
-	        // var xFromDiff = currentXFrom - prevXFrom;
-	        //
-	        // var point = this.getStartPoint();
-	        // do {
-	        // 	let targetPoint = chartState.getPointOnChart(point.xVal, point.yVal);
-	        // 	point.vector = targetPoint;
-	        // 	var zoomDistanceInPx = chartState.valueToPxByXAxis(xFromDiff);
-	        // 	if (xFromDiff) {
-	        // 		currents['x' + point.id] = targetPoint.x;
-	        // 	}
-	        // 	targets['x' + point.id] = targetPoint.x;
-	        // 	targets['y' + point.id] = targetPoint.y;
-	        // } while (point = point.getNext());
-	        //
-	        // var animationsOptions = chartState.data.animations;
-	        // targets.ease = animationsOptions.zoomEase;
-	        // var time = animationsOptions.enabled ? animationsOptions.zoomSpeed : 0;
-	        // this.animate(time, targets, currents);
-	    };
 	    TrendPoints.prototype.animate = function (time, newTargets, current) {
 	        var _this = this;
+	        var cb = function () {
+	            _this.ee.emit('animationFrame', _this);
+	        };
+	        var cb = function () {
+	            _this.ee.emit('animationFrame', _this);
+	        };
 	        if (this.currentAnimation)
 	            this.currentAnimation.kill();
 	        if (current)
 	            this.current = Utils_1.Utils.deepMerge(this.current, current);
-	        //this.targets = Utils.deepMerge(this.targets, newTargets) as ITargets;
-	        var cb = function () {
-	            _this.ee.emit('animationFrame', _this);
-	        };
-	        this.current = current;
-	        var animation = this.currentAnimation = TweenLite.to(this.current, time, newTargets);
-	        animation.eventCallback('onUpdate', cb);
-	        animation.eventCallback('onComplete', function () {
+	        this.targets = Utils_1.Utils.deepMerge(this.targets, newTargets);
+	        this.currentAnimation = TweenLite.to(this.current, time, this.targets);
+	        this.currentAnimation.eventCallback('onUpdate', cb);
+	        this.currentAnimation.eventCallback('onComplete', function () {
 	            _this.current = {};
-	            _this.targets = { ease: void 0 };
+	            _this.targets = {};
+	            _this.currentAnimation = null;
 	        });
 	    };
 	    return TrendPoints;
@@ -54958,22 +55014,17 @@
 	        var current = this.trendPoints.current;
 	        var frameValX = current['x' + this.id];
 	        var frameValY = current['y' + this.id];
-	        var xVal = frameValX !== void 0 ? frameValX : this.xVal;
-	        var yVal = frameValY !== void 0 ? frameValY : this.yVal;
+	        var xVal = frameValX != void 0 ? frameValX : this.xVal;
+	        var yVal = frameValY != void 0 ? frameValY : this.yVal;
 	        return new Vector3(xVal, yVal, 0);
 	    };
 	    TrendPoint.prototype.getFramePoint = function () {
 	        var frameVal = this.getFrameVal();
-	        return this.trendPoints.chartState.getPointOnChart(frameVal.x, frameVal.y);
+	        return this.trendPoints.chartState.screen.getPointOnChart(frameVal.x, frameVal.y);
 	    };
 	    TrendPoint.prototype.getCurrentVec = function () {
 	        var current = this.trendPoints.current;
 	        return new Vector3(current['x' + this.id], current['y' + this.id], 0);
-	    };
-	    TrendPoint.prototype.getTargetVec = function () {
-	        // TODO:
-	        Utils_1.Utils.error('not implemented');
-	        return null;
 	    };
 	    return TrendPoint;
 	}());
@@ -54981,7 +55032,406 @@
 
 
 /***/ },
-/* 27 */
+/* 29 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var PerspectiveCamera = THREE.PerspectiveCamera;
+	var Vector3 = THREE.Vector3;
+	var EventEmmiter = __webpack_require__(19);
+	/**
+	 * manage camera, and contains methods for transforming pixels to values
+	 */
+	var Screen = (function () {
+	    function Screen(chartState) {
+	        this.options = { scrollXVal: 0, scrollX: 0, scrollYVal: 0, scrollY: 0, zoomX: 1, zoomY: 1 };
+	        this.currentScrollX = { val: 0 };
+	        this.currentScrollY = { val: 0 };
+	        this.currentZoomX = { val: 1 };
+	        this.currentZoomY = { val: 1 };
+	        this.chartState = chartState;
+	        var _a = chartState.data, w = _a.width, h = _a.height;
+	        this.ee = new EventEmmiter();
+	        this.bindEvents();
+	        //camera.position.z = 1500;
+	    }
+	    Screen.prototype.getCameraSettings = function () {
+	        var _a = this.chartState.data, w = _a.width, h = _a.height;
+	        // setup pixel-perfect camera
+	        var FOV = 75;
+	        var vFOV = FOV * (Math.PI / 180);
+	        var camera = this.camera = new PerspectiveCamera(FOV, w / h, 0.1, 5000);
+	        camera.position.z = h / (2 * Math.tan(vFOV / 2));
+	        return {
+	            FOV: FOV,
+	            aspect: w / h,
+	            near: 0.1,
+	            far: 5000,
+	            z: h / (2 * Math.tan(vFOV / 2)),
+	            // move 0,0 to left-bottom corner
+	            x: w / 2,
+	            y: h / 2
+	        };
+	    };
+	    Screen.prototype.onCameraChange = function (cb) {
+	        var _this = this;
+	        this.ee.on('cameraChange', cb);
+	        return function () {
+	            _this.ee.off('cameraChange', cb);
+	        };
+	    };
+	    Screen.prototype.onZoomFrame = function (cb) {
+	        var _this = this;
+	        var eventName = 'zoomFrame';
+	        this.ee.on(eventName, cb);
+	        return function () {
+	            _this.ee.removeListener(eventName, cb);
+	        };
+	    };
+	    Screen.prototype.onScrollFrame = function (cb) {
+	        var _this = this;
+	        var eventName = 'scrollFrame';
+	        this.ee.on(eventName, cb);
+	        return function () {
+	            _this.ee.removeListener(eventName, cb);
+	        };
+	    };
+	    Screen.prototype.onTransformationFrame = function (cb) {
+	        var _this = this;
+	        var eventName = 'transformationFrame';
+	        this.ee.on(eventName, cb);
+	        return function () {
+	            _this.ee.removeListener(eventName, cb);
+	        };
+	    };
+	    Screen.prototype.transform = function (options) {
+	        var scrollXVal = options.scrollXVal, scrollYVal = options.scrollYVal, zoomX = options.zoomX, zoomY = options.zoomY;
+	        if (scrollXVal != void 0)
+	            this.options.scrollXVal = scrollXVal;
+	        if (scrollYVal != void 0)
+	            this.options.scrollYVal = scrollYVal;
+	        if (zoomX != void 0)
+	            this.options.zoomX = zoomX;
+	        if (zoomY != void 0)
+	            this.options.zoomY = zoomY;
+	        if (scrollXVal != void 0 || zoomX) {
+	            options.scrollX = this.valueToPxByXAxis(scrollXVal != void 0 ? scrollXVal : this.options.scrollXVal);
+	            this.options.scrollX = options.scrollX;
+	        }
+	        if (scrollYVal != void 0 || zoomY) {
+	            options.scrollY = this.valueToPxByYAxis(scrollYVal != void 0 ? scrollYVal : this.options.scrollYVal);
+	            this.options.scrollY = options.scrollY;
+	        }
+	        this.ee.emit('transformationFrame', options);
+	        if (options.scrollXVal != void 0 || options.scrollYVal != void 0) {
+	            this.ee.emit('scrollFrame', options);
+	        }
+	        if (options.zoomX != void 0 || options.zoomY != void 0) {
+	            this.ee.emit('zoomFrame', options);
+	        }
+	    };
+	    Screen.prototype.scrollTo = function (x, y) {
+	        //
+	        // if (scrollX != void 0) {
+	        // 	this.cameraScrollX = scrollX;
+	        // 	//var pointX = this.cameraInitialPosition.scrollX + this.chartState.valueToPxByXAxis(scrollX);
+	        // 	this.camera.position.scrollX = this.cameraInitialPosition.scrollX + scrollX;
+	        // }
+	        //
+	        // if (scrollY != void 0) {
+	        // 	this.cameraScrollY = scrollY;
+	        // 	//var pointY = this.cameraInitialPosition.scrollY + this.chartState.valueToPxByYAxis(scrollY);
+	        // 	this.camera.position.scrollY = this.cameraInitialPosition.scrollY + scrollY;
+	        // }
+	        //
+	        // // dirty hack, used only for performance reasons, in ideal world we always must use ChartState.setState
+	        // // this.chartState.emit('cameraChange', {scrollX: scrollX, scrollY: scrollY});
+	        this.ee.emit('cameraChange', x, y);
+	    };
+	    Screen.prototype.bindEvents = function () {
+	        var _this = this;
+	        var state = this.chartState;
+	        // handle scroll and zoom
+	        state.onChange(function (changedProps) {
+	            if (changedProps.xAxis && changedProps.xAxis.range) {
+	                if (changedProps.xAxis.range.scroll != void 0)
+	                    _this.onScrollXHandler(changedProps);
+	                if (changedProps.xAxis.range.zoom)
+	                    _this.onZoomXHandler();
+	            }
+	            if (changedProps.yAxis && changedProps.yAxis.range) {
+	                if (changedProps.yAxis.range.scroll != void 0)
+	                    _this.onScrollYHandler();
+	                if (changedProps.yAxis.range.zoom)
+	                    _this.onZoomYHandler();
+	            }
+	        });
+	    };
+	    Screen.prototype.onScrollXHandler = function (changedProps) {
+	        var _this = this;
+	        var state = this.chartState;
+	        var isDragMode = state.data.cursor.dragMode;
+	        var animations = state.data.animations;
+	        var canAnimate = animations.enabled && !isDragMode;
+	        var zoomXChanged = changedProps.xAxis.range.zoom;
+	        var isAutoscroll = !isDragMode && !zoomXChanged;
+	        var time = isAutoscroll ? animations.autoScrollSpeed : animations.zoomSpeed;
+	        var ease = isAutoscroll ? animations.autoScrollEase : animations.zoomEase;
+	        var targetXVal = state.data.xAxis.range.scroll;
+	        if (this.scrollXAnimation)
+	            this.scrollXAnimation.pause();
+	        var cb = function () {
+	            _this.transform({ scrollXVal: _this.currentScrollX.val });
+	        };
+	        if (canAnimate) {
+	            this.scrollXAnimation = TweenLite.to(this.currentScrollX, time, {
+	                val: targetXVal, ease: ease
+	            });
+	            this.scrollXAnimation.eventCallback('onUpdate', cb);
+	        }
+	        else {
+	            this.currentScrollX.val = targetXVal;
+	            cb();
+	        }
+	    };
+	    Screen.prototype.onScrollYHandler = function () {
+	        var _this = this;
+	        var state = this.chartState;
+	        var animations = state.data.animations;
+	        var canAnimate = animations.enabled;
+	        var time = animations.zoomSpeed;
+	        var targetYVal = state.data.yAxis.range.scroll;
+	        if (this.scrollXAnimation)
+	            this.scrollXAnimation.pause();
+	        var cb = function () {
+	            _this.transform({ scrollYVal: _this.currentScrollY.val });
+	        };
+	        if (canAnimate) {
+	            this.scrollYAnimation = TweenLite.to(this.currentScrollY, time, {
+	                val: targetYVal, ease: animations.zoomEase
+	            });
+	            this.scrollYAnimation.eventCallback('onUpdate', cb);
+	        }
+	        else {
+	            this.currentScrollY.val = targetYVal;
+	            cb();
+	        }
+	    };
+	    Screen.prototype.onZoomXHandler = function () {
+	        var _this = this;
+	        var state = this.chartState;
+	        var animations = state.data.animations;
+	        var canAnimate = animations.enabled;
+	        var time = animations.zoomSpeed;
+	        var targetZoom = state.data.xAxis.range.zoom;
+	        if (this.zoomXAnimation)
+	            this.zoomXAnimation.pause();
+	        var cb = function () {
+	            _this.transform({ zoomX: _this.currentZoomX.val });
+	        };
+	        if (canAnimate) {
+	            this.zoomXAnimation = TweenLite.to(this.currentZoomX, time, {
+	                val: targetZoom, ease: animations.zoomEase
+	            });
+	            this.zoomXAnimation.eventCallback('onUpdate', cb);
+	        }
+	        else {
+	            this.currentZoomX.val = targetZoom;
+	            cb();
+	        }
+	    };
+	    Screen.prototype.onZoomYHandler = function () {
+	        var _this = this;
+	        var state = this.chartState;
+	        var animations = state.data.animations;
+	        var canAnimate = animations.enabled;
+	        var time = animations.zoomSpeed;
+	        var targetZoom = state.data.yAxis.range.zoom;
+	        if (this.zoomYAnimation)
+	            this.zoomYAnimation.pause();
+	        var cb = function () {
+	            _this.transform({ zoomY: _this.currentZoomY.val });
+	        };
+	        if (canAnimate) {
+	            this.zoomYAnimation = TweenLite.to(this.currentZoomY, time, {
+	                val: targetZoom, ease: animations.zoomEase
+	            });
+	            this.zoomYAnimation.eventCallback('onUpdate', cb);
+	        }
+	        else {
+	            this.currentZoomY.val = targetZoom;
+	            cb();
+	        }
+	    };
+	    Screen.prototype.onScroll = function (changedProps) {
+	        // var state = this.chartState;
+	        // var isDragMode = state.data.cursor.dragMode;
+	        // var animations =  state.data.animations;
+	        // var targetScrollX = state.valueToPxByXAxis(state.data.xAxis.range.scroll);
+	        // var targetScrollY = state.valueToPxByYAxis(state.data.yAxis.range.scroll);
+	        // var scrollXChanged = targetScrollX !== state.data.prevState.xAxis.range.scroll;
+	        // var scrollYChanged = targetScrollY !== state.data.prevState.yAxis.range.scroll;
+	        // var zoomXChanged = changedProps.xAxis && changedProps.xAxis.range && changedProps.xAxis.range.zoom != void 0;
+	        // var canAnimate = animations.enabled;
+	        //
+	        //
+	        // if (scrollYChanged) {
+	        // 	if (this.scrollYAnimation) this.scrollYAnimation.pause();
+	        // 	this.currentScrollY = this.currentScrollY || {val: this.cameraScrollY};
+	        // 	if (canAnimate) {
+	        // 		this.scrollYAnimation = TweenLite.to(this.currentScrollY, animations.zoomSpeed, {
+	        // 			val: targetScrollY, ease: animations.zoomEase
+	        // 		});
+	        // 		this.scrollYAnimation.eventCallback('onUpdate', () => {
+	        // 			this.scrollTo(null, this.currentScrollY.val);
+	        // 		});
+	        // 	} else {
+	        // 		this.currentScrollY.val = targetScrollY;
+	        // 		this.scrollTo(null, targetScrollY);
+	        // 	}
+	        // }
+	        //
+	        // if (scrollXChanged) {
+	        // 	canAnimate = canAnimate && !isDragMode && !zoomXChanged;
+	        // 	if (this.scrollXAnimation) this.scrollXAnimation.pause();
+	        // 	this.currentScrollX = this.currentScrollX || {val: this.cameraScrollX};
+	        // 	if (canAnimate) {
+	        // 		this.scrollXAnimation = TweenLite.to(this.currentScrollX, animations.autoScrollSpeed, {
+	        // 			val: targetScrollX, ease: animations.autoScrollEase
+	        // 		});
+	        // 		this.scrollXAnimation.eventCallback('onUpdate', () => {
+	        // 			this.scrollTo(this.currentScrollX.val);
+	        // 		});
+	        // 	} else {
+	        // 		this.currentScrollX.val = targetScrollX;
+	        // 		this.scrollTo(targetScrollX);
+	        // 	}
+	        // }
+	        // //canAnimate = false;
+	        // this.currentScroll = this.currentScroll || {scrollXVal: this.cameraScrollXVal, scrollYVal: this.cameraScrollYVal};
+	        // var targetXVal = state.data.xAxis.range.scroll;
+	        // var targetYVal = state.data.yAxis.range.scroll;
+	        // if (this.cameraAnimation) this.cameraAnimation.pause();
+	        // if (canAnimate) {
+	        // 	this.cameraAnimation = TweenLite.to(this.currentScroll, animations.autoScrollSpeed, {
+	        // 		scrollXVal: targetXVal, scrollYVal: targetYVal, ease: animations.autoScrollEase
+	        // 	});
+	        // 	this.cameraAnimation.eventCallback('onUpdate', () => {
+	        // 		this.scrollTo(this.currentScroll.scrollXVal, this.currentScroll.scrollYVal);
+	        // 	});
+	        // 	return;
+	        // }
+	        // this.scrollTo(targetXVal, targetYVal);
+	    };
+	    /**
+	     *  returns offset in pixels from xAxis.range.zeroVal to scrollXVal
+	     */
+	    Screen.prototype.getPointOnXAxis = function (xVal) {
+	        var _a = this.chartState.data.xAxis.range, scaleFactor = _a.scaleFactor, zeroVal = _a.zeroVal;
+	        var zoom = this.options.zoomX;
+	        return (xVal - zeroVal) * scaleFactor * zoom;
+	    };
+	    /**
+	     *  returns offset in pixels from yAxis.range.zeroVal to scrollYVal
+	     */
+	    Screen.prototype.getPointOnYAxis = function (yVal) {
+	        var _a = this.chartState.data.yAxis.range, scaleFactor = _a.scaleFactor, zeroVal = _a.zeroVal;
+	        var zoom = this.options.zoomY;
+	        return (yVal - zeroVal) * scaleFactor * zoom;
+	    };
+	    /**
+	     *  returns offset in pixels from xAxis.range.zeroVal and from yAxis.range.zeroVal to scrollXVal and scrollYVal
+	     */
+	    Screen.prototype.getPointOnChart = function (xVal, yVal) {
+	        return new Vector3(this.getPointOnXAxis(xVal), this.getPointOnYAxis(yVal), 0);
+	    };
+	    /**
+	     * returns value by offset in pixels from xAxis.range.zeroVal
+	     */
+	    Screen.prototype.getValueOnXAxis = function (x) {
+	        return this.chartState.data.xAxis.range.zeroVal + this.pxToValueByXAxis(x);
+	    };
+	    /**
+	     *  convert value to pixels by using settings from xAxis.range
+	     */
+	    Screen.prototype.valueToPxByXAxis = function (xVal) {
+	        return xVal * this.chartState.data.xAxis.range.scaleFactor * this.options.zoomX;
+	    };
+	    /**
+	     *  convert value to pixels by using settings from yAxis.range
+	     */
+	    Screen.prototype.valueToPxByYAxis = function (yVal) {
+	        return yVal * this.chartState.data.yAxis.range.scaleFactor * this.options.zoomY;
+	    };
+	    /**
+	     *  convert pixels to value by using settings from xAxis.range
+	     */
+	    Screen.prototype.pxToValueByXAxis = function (xVal) {
+	        return xVal / this.chartState.data.xAxis.range.scaleFactor / this.options.zoomX;
+	    };
+	    /**
+	     *  convert pixels to value by using settings from yAxis.range
+	     */
+	    Screen.prototype.pxToValueByYAxis = function (yVal) {
+	        return yVal / this.chartState.data.yAxis.range.scaleFactor / this.options.zoomY;
+	    };
+	    /**
+	     *  returns scrollX value by screen scrollX coordinate
+	     */
+	    Screen.prototype.getValueByScreenX = function (x) {
+	        return this.chartState.data.xAxis.range.zeroVal + this.options.scrollXVal + this.pxToValueByXAxis(x);
+	    };
+	    /**
+	     *  returns scrollY value by screen scrollY coordinate
+	     */
+	    Screen.prototype.getValueByScreenY = function (y) {
+	        return this.chartState.data.yAxis.range.zeroVal + this.options.scrollYVal + this.pxToValueByYAxis(y);
+	    };
+	    //
+	    /**
+	     *  returns screen scrollX value by screen scrollY coordinate
+	     */
+	    Screen.prototype.getScreenXByValue = function (xVal) {
+	        var _a = this.chartState.data.xAxis.range, scroll = _a.scroll, zeroVal = _a.zeroVal;
+	        return this.valueToPxByXAxis(xVal - zeroVal - scroll);
+	    };
+	    // /**
+	    //  *  returns screen scrollY value by screen scrollY coordinate
+	    //  */
+	    // getScreenYByValue(scrollYVal: number): number {
+	    // 	var {scroll, zeroVal} = this.data.yAxis.range;
+	    // 	return this.valueToPxByYAxis(scrollYVal - zeroVal - scroll)
+	    // }
+	    //
+	    //
+	    /**
+	     * returns screen scrollX coordinate by offset in pixels from xAxis.range.zeroVal value
+	     */
+	    Screen.prototype.getScreenXByPoint = function (xVal) {
+	        return this.getScreenXByValue(this.getValueOnXAxis(xVal));
+	    };
+	    /**
+	     * returns offset in pixels from xAxis.range.zeroVal value by screen scrollX coordinate
+	     */
+	    Screen.prototype.getPointByScreenX = function (screenX) {
+	        return this.getPointOnXAxis(this.getValueByScreenX(screenX));
+	    };
+	    /**
+	     * returns offset in pixels from yAxis.range.zeroVal value by screen scrollY coordinate
+	     */
+	    Screen.prototype.getPointByScreenY = function (screenY) {
+	        return this.getPointOnYAxis(this.getValueByScreenY(screenY));
+	    };
+	    Screen.prototype.getBottom = function () {
+	        return this.getPointByScreenY(0);
+	    };
+	    return Screen;
+	}());
+	exports.Screen = Screen;
+
+
+/***/ },
+/* 30 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -54992,7 +55442,7 @@
 	};
 	var Utils_1 = __webpack_require__(11);
 	var interfaces_1 = __webpack_require__(9);
-	var EventEmitter = __webpack_require__(17);
+	var EventEmitter = __webpack_require__(19);
 	var AXIS_MARK_DEFAULT_OPTIONS = {
 	    type: 'simple',
 	    lineWidth: 2,
@@ -55042,7 +55492,7 @@
 	            var markVal = mark.options.value;
 	            var markWasCrossed = (startVal == markVal || endVal == markVal || (startVal < markVal && endVal > markVal));
 	            if (markWasCrossed)
-	                this.ee.emit('onMarkCrossed', trendName, newData);
+	                this.ee.emit('markCrossed', trendName, newData);
 	        }
 	    };
 	    AxisMarks.prototype.bindEvents = function () {
@@ -55069,36 +55519,31 @@
 	        this.options = options;
 	        this.axisType = axisType;
 	        this.chartState = chartState;
-	        this.position = this.getPosition();
 	        this.bindEvents();
 	    }
+	    AxisMark.prototype.bindEvents = function () { };
 	    AxisMark.prototype.setOptions = function (newOptions) {
+	        var value = this.options.value;
 	        this.options = Utils_1.Utils.deepMerge(this.options, newOptions);
-	        this.updatePosition();
+	        if (this.options.value !== value)
+	            this.ee.emit('valueChange');
 	        this.ee.emit('onDisplayedValueChange');
 	    };
 	    AxisMark.prototype.getDisplayedVal = function () {
 	        return String(this.options.value);
 	    };
-	    AxisMark.prototype.getPosition = function () {
-	        if (this.axisType == interfaces_1.AXIS_TYPE.X) {
-	            return this.chartState.getPointOnXAxis(this.options.value);
-	        }
-	        Utils_1.Utils.error('not implemented');
-	        return 0;
-	    };
-	    AxisMark.prototype.onAnimationFrame = function (cb) {
-	        var _this = this;
-	        this.ee.on('onAnimationFrame', cb);
-	        return function () {
-	            _this.ee.off('onAnimationFrame', cb);
-	        };
-	    };
 	    AxisMark.prototype.onMarkCrossed = function (cb) {
 	        var _this = this;
-	        this.ee.on('onMarkCrossed', cb);
+	        this.ee.on('markCrossed', cb);
 	        return function () {
-	            _this.ee.off('onMarkCrossed', cb);
+	            _this.ee.off('markCrossed', cb);
+	        };
+	    };
+	    AxisMark.prototype.onValueChange = function (cb) {
+	        var _this = this;
+	        this.ee.on('valueChange', cb);
+	        return function () {
+	            _this.ee.off('valueChange', cb);
 	        };
 	    };
 	    AxisMark.prototype.onDisplayedValueChange = function (cb) {
@@ -55107,39 +55552,6 @@
 	        return function () {
 	            _this.ee.off('onDisplayedValueChange', cb);
 	        };
-	    };
-	    AxisMark.prototype.updatePosition = function () {
-	        var animations = this.chartState.data.animations;
-	        var time = animations.enabled ? animations.trendChangeSpeed : 0;
-	        this.animate(this.getPosition(), time, animations.trendChangeEase);
-	    };
-	    AxisMark.prototype.bindEvents = function () {
-	        var _this = this;
-	        this.chartState.onZoom(function () { return _this.onZoom(); });
-	    };
-	    AxisMark.prototype.onZoom = function () {
-	        var chartState = this.chartState;
-	        var animations = this.chartState.data.animations;
-	        var time = animations.enabled ? animations.zoomSpeed : 0;
-	        var prevRange = chartState.data.prevState.xAxis.range;
-	        var currentRange = chartState.data.xAxis.range;
-	        var zoomDistanceInPx = chartState.valueToPxByXAxis(currentRange.from - prevRange.from);
-	        var fromPosition = this.position - zoomDistanceInPx;
-	        this.animate(this.getPosition(), time, animations.zoomEase, fromPosition);
-	    };
-	    AxisMark.prototype.animate = function (toPosition, time, ease, fromPosition) {
-	        var _this = this;
-	        if (this.animation)
-	            this.animation.kill();
-	        fromPosition = fromPosition !== void 0 ? fromPosition : this.position;
-	        var current = { position: fromPosition };
-	        var target = { position: toPosition, ease: ease };
-	        var animation = TweenLite.to(current, time, target);
-	        animation.eventCallback('onUpdate', function () {
-	            _this.position = current.position;
-	            _this.ee.emit('onAnimationFrame');
-	        });
-	        this.animation = animation;
 	    };
 	    AxisMark.typeName = 'simple';
 	    return AxisMark;
@@ -55161,7 +55573,6 @@
 	    };
 	    AxisTimeleftMark.prototype.bindEvents = function () {
 	        var _this = this;
-	        _super.prototype.bindEvents.call(this);
 	        this.chartState.onTrendsChange(function () { return _this.onTrendsChange(); });
 	    };
 	    AxisTimeleftMark.prototype.onTrendsChange = function () {
@@ -55174,76 +55585,7 @@
 
 
 /***/ },
-/* 28 */
-/***/ function(module, exports) {
-
-	"use strict";
-	var PerspectiveCamera = THREE.PerspectiveCamera;
-	/**
-	 * manage camera, and contains methods for transforming pixels to values
-	 */
-	var Screen = (function () {
-	    function Screen(chartState) {
-	        this.chartState = chartState;
-	        var _a = chartState.data, w = _a.width, h = _a.height;
-	        // setup pixel-perfect camera
-	        var FOV = 75;
-	        var vFOV = FOV * (Math.PI / 180);
-	        var camera = this.camera = new PerspectiveCamera(FOV, w / h, 0.1, 5000);
-	        camera.position.z = h / (2 * Math.tan(vFOV / 2));
-	        // move 0,0 to left-bottom corner
-	        camera.position.x = w / 2;
-	        camera.position.y = h / 2;
-	        this.cameraInitialPosition = camera.position.clone();
-	        this.cameraScrollXVal = 0;
-	        this.bindEvents();
-	        //camera.position.z = 2000;
-	    }
-	    Screen.prototype.scrollTo = function (xVal) {
-	        var pointX = this.cameraInitialPosition.x + this.chartState.valueToPxByXAxis(xVal);
-	        this.cameraScrollXVal = xVal;
-	        this.camera.position.x = pointX;
-	        // dirty hack, used only for performance reasons, in ideal world we always must use ChartState.setState
-	        this.chartState.emit('cameraChange', { scrollXVal: this.cameraScrollXVal });
-	    };
-	    Screen.prototype.bindEvents = function () {
-	        var _this = this;
-	        var state = this.chartState;
-	        state.onScroll(function (changedProps) { return _this.onScroll(changedProps); });
-	        state.onZoom(function (changedProps) { return _this.scrollTo(state.data.xAxis.range.scroll); });
-	    };
-	    Screen.prototype.onScroll = function (changedProps) {
-	        var _this = this;
-	        var state = this.chartState;
-	        var isDragMode = state.data.cursor.dragMode;
-	        var animations = state.data.animations;
-	        var canAnimate = (!isDragMode &&
-	            animations.enabled &&
-	            changedProps.xAxis.range.from == void 0 &&
-	            changedProps.xAxis.range.to == void 0);
-	        //canAnimate = false;
-	        var animationObject = { scrollXVal: this.cameraScrollXVal };
-	        var targetXVal = state.data.xAxis.range.scroll;
-	        if (this.cameraAnimation)
-	            this.cameraAnimation.kill();
-	        if (canAnimate) {
-	            this.cameraAnimation = TweenLite.to(animationObject, animations.autoScrollSpeed, {
-	                scrollXVal: targetXVal, ease: animations.autoScrollEase
-	            });
-	            this.cameraAnimation.eventCallback('onUpdate', function () {
-	                _this.scrollTo(animationObject.scrollXVal);
-	            });
-	            return;
-	        }
-	        this.scrollTo(targetXVal);
-	    };
-	    return Screen;
-	}());
-	exports.Screen = Screen;
-
-
-/***/ },
-/* 29 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -55256,7 +55598,7 @@
 	var Mesh = THREE.Mesh;
 	var PlaneBufferGeometry = THREE.PlaneBufferGeometry;
 	var MeshBasicMaterial = THREE.MeshBasicMaterial;
-	var TrendsWidget_1 = __webpack_require__(13);
+	var TrendsWidget_1 = __webpack_require__(15);
 	/**
 	 * widget adds blinking beacon on trends end
 	 * activated when trend.hasBeacon = true
@@ -55269,7 +55611,7 @@
 	    TrendsBeaconWidget.prototype.getTrendWidgetClass = function () {
 	        return TrendBeacon;
 	    };
-	    TrendsBeaconWidget.widgetName = 'trendsBeacon';
+	    TrendsBeaconWidget.widgetName = 'TrendsBeacon';
 	    return TrendsBeaconWidget;
 	}(TrendsWidget_1.TrendsWidget));
 	exports.TrendsBeaconWidget = TrendsBeaconWidget;
@@ -55330,23 +55672,24 @@
 	            ctx.fill();
 	        });
 	    };
-	    TrendBeacon.prototype.onZoom = function () {
+	    TrendBeacon.prototype.onTransformationFrame = function () {
 	        this.point = this.trend.points.getEndPoint();
 	        this.updatePosition();
 	    };
-	    TrendBeacon.prototype.onTrendAnimate = function (trendPoints) {
+	    TrendBeacon.prototype.onPointsMove = function (trendPoints) {
 	        this.point = trendPoints.getEndPoint();
 	        this.updatePosition();
 	    };
 	    TrendBeacon.prototype.updatePosition = function () {
+	        var state = this.chartState;
 	        var endPointVector = this.point.getFramePoint();
-	        var screenWidth = this.chartState.data.width;
+	        var screenWidth = state.data.width;
 	        var x = endPointVector.x;
-	        var screenX = this.chartState.getScreenXByPoint(endPointVector.x);
+	        var screenX = state.screen.getScreenXByPoint(endPointVector.x);
 	        if (screenX < 0)
-	            x = this.chartState.getPointByScreenX(0);
+	            x = state.screen.getPointByScreenX(0);
 	        if (screenX > screenWidth)
-	            x = this.chartState.getPointByScreenX(screenWidth);
+	            x = state.screen.getPointByScreenX(screenWidth);
 	        this.mesh.position.set(x, endPointVector.y, 0);
 	    };
 	    return TrendBeacon;
@@ -55354,7 +55697,7 @@
 
 
 /***/ },
-/* 30 */
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -55365,25 +55708,18 @@
 	};
 	var Mesh = THREE.Mesh;
 	var Object3D = THREE.Object3D;
-	var Widget_1 = __webpack_require__(14);
-	var GridWidget_1 = __webpack_require__(31);
+	var Widget_1 = __webpack_require__(16);
+	var GridWidget_1 = __webpack_require__(33);
 	var Utils_1 = __webpack_require__(11);
-	var AXIS_ORIENTATION;
-	(function (AXIS_ORIENTATION) {
-	    AXIS_ORIENTATION[AXIS_ORIENTATION["V"] = 0] = "V";
-	    AXIS_ORIENTATION[AXIS_ORIENTATION["H"] = 1] = "H";
-	})(AXIS_ORIENTATION || (AXIS_ORIENTATION = {}));
-	;
-	// canvas drawing is expensive operation, so we redraw xAxis only once per second
-	var REDRAW_AXIS_X_INTERVAL = 1000;
+	var interfaces_1 = __webpack_require__(9);
 	/**
 	 * widget for drawing axis
 	 */
 	var AxisWidget = (function (_super) {
 	    __extends(AxisWidget, _super);
 	    function AxisWidget(state) {
+	        var _this = this;
 	        _super.call(this, state);
-	        this.axisXLastRedrawTime = 0;
 	        this.showAxisXTimeout = 0;
 	        this.showAxisYTimeout = 0;
 	        this.object3D = new Object3D();
@@ -55391,26 +55727,31 @@
 	        this.axisYObject = new Object3D();
 	        this.object3D.add(this.axisXObject);
 	        this.object3D.add(this.axisYObject);
-	        this.initAxis(AXIS_ORIENTATION.H);
-	        this.initAxis(AXIS_ORIENTATION.V);
+	        this.initAxis(interfaces_1.AXIS_TYPE.X);
+	        this.initAxis(interfaces_1.AXIS_TYPE.Y);
+	        // canvas drawing is expensive operation, so when we scroll, redraw must be called only once per second
+	        this.updateAxisXRequest = Utils_1.Utils.throttle(function () { return _this.updateAxis(interfaces_1.AXIS_TYPE.X); }, 1000);
 	    }
 	    AxisWidget.prototype.bindEvents = function () {
 	        var _this = this;
 	        var state = this.chartState;
-	        state.onCameraChange(function (cameraPos) {
-	            _this.onScrollChange(cameraPos);
+	        state.screen.onTransformationFrame(function (options) {
+	            _this.onScrollChange(options.scrollX, options.scrollY);
 	        });
-	        state.onZoom(function (changedProps) { _this.onZoom(changedProps); });
+	        state.screen.onZoomFrame(function (options) { _this.onZoomFrame(options); });
 	    };
-	    AxisWidget.prototype.onScrollChange = function (cameraPos) {
-	        // axis y always fixed
-	        this.axisYObject.position.x = cameraPos.scrollX;
-	        if (Date.now() - this.axisXLastRedrawTime >= REDRAW_AXIS_X_INTERVAL) {
-	            this.updateAxis(AXIS_ORIENTATION.H);
+	    AxisWidget.prototype.onScrollChange = function (x, y) {
+	        if (y != void 0) {
+	            this.axisYObject.position.y = y;
+	            this.axisXObject.position.y = y;
+	        }
+	        if (x != void 0) {
+	            this.axisYObject.position.x = x;
+	            this.updateAxisXRequest();
 	        }
 	    };
 	    AxisWidget.prototype.initAxis = function (orientation) {
-	        var isXAxis = orientation == AXIS_ORIENTATION.H;
+	        var isXAxis = orientation == interfaces_1.AXIS_TYPE.X;
 	        var _a = this.chartState.data, visibleWidth = _a.width, visibleHeight = _a.height;
 	        var canvasWidth = 0, canvasHeight = 0;
 	        if (isXAxis) {
@@ -55446,21 +55787,21 @@
 	        return this.object3D;
 	    };
 	    AxisWidget.prototype.updateAxis = function (orientation) {
-	        var isXAxis = orientation == AXIS_ORIENTATION.H;
+	        var isXAxis = orientation == interfaces_1.AXIS_TYPE.X;
 	        var _a = this.chartState.data, visibleWidth = _a.width, visibleHeight = _a.height;
-	        var scrollX = this.chartState.data.xAxis.range.scroll;
+	        var _b = this.chartState.screen.options, scrollX = _b.scrollX, scrollXVal = _b.scrollXVal, scrollY = _b.scrollY, scrollYVal = _b.scrollYVal, zoomX = _b.zoomX, zoomY = _b.zoomY;
 	        var axisOptions;
 	        var axisMesh;
 	        var axisGridParams;
 	        if (isXAxis) {
 	            axisMesh = this.axisXObject.children[0];
 	            axisOptions = this.chartState.data.xAxis;
-	            axisGridParams = GridWidget_1.GridWidget.getGridParamsForAxis(axisOptions, visibleWidth);
+	            axisGridParams = GridWidget_1.GridWidget.getGridParamsForAxis(axisOptions, visibleWidth, scrollXVal, zoomX);
 	        }
 	        else {
 	            axisMesh = this.axisYObject.children[0];
 	            axisOptions = this.chartState.data.yAxis;
-	            axisGridParams = GridWidget_1.GridWidget.getGridParamsForAxis(axisOptions, visibleHeight);
+	            axisGridParams = GridWidget_1.GridWidget.getGridParamsForAxis(axisOptions, visibleHeight, scrollYVal, zoomY);
 	        }
 	        var geometry = axisMesh.geometry;
 	        var canvasWidth = geometry.parameters.width;
@@ -55472,18 +55813,13 @@
 	            axisMesh.position.x = canvasWidth / 2 - visibleWidth + scrollX;
 	        }
 	        // TODO: draw text and lines in different loops
-	        var scrollOffset = 0;
-	        if (isXAxis) {
-	            var segmentsInScroll = Math.round(scrollX / axisGridParams.stepInPx);
-	            scrollOffset = segmentsInScroll * axisGridParams.step;
-	        }
 	        var edgeOffset = axisGridParams.segmentsCount * axisGridParams.step;
-	        var startVal = axisGridParams.start + scrollOffset - edgeOffset;
-	        var endVal = axisGridParams.end + scrollOffset + edgeOffset;
+	        var startVal = axisGridParams.start - edgeOffset;
+	        var endVal = axisGridParams.end + edgeOffset;
 	        ctx.beginPath();
 	        for (var val = startVal; val <= endVal; val += axisGridParams.step) {
 	            if (isXAxis) {
-	                var pxVal = this.chartState.getPointOnXAxis(val) - scrollX + visibleWidth;
+	                var pxVal = this.chartState.screen.getPointOnXAxis(val) - scrollX + visibleWidth;
 	                ctx.textAlign = "center";
 	                // uncomment for dots
 	                // ctx.moveTo(pxVal + 0.5, canvasHeight);
@@ -55491,7 +55827,7 @@
 	                ctx.fillText(Number(val.toFixed(14)).toString(), pxVal, canvasHeight - 10);
 	            }
 	            else {
-	                var pxVal = canvasHeight - this.chartState.getPointOnYAxis(val);
+	                var pxVal = canvasHeight - this.chartState.screen.getPointOnYAxis(val) + scrollY;
 	                ctx.textAlign = "right";
 	                // uncomment for dots
 	                // ctx.moveTo(canvasWidth, pxVal + 0.5);
@@ -55505,22 +55841,18 @@
 	        ctx.stroke();
 	        ctx.closePath();
 	        texture.needsUpdate = true;
-	        this.axisXLastRedrawTime = Date.now();
 	    };
-	    AxisWidget.prototype.onZoom = function (changedProps) {
-	        var currentXRange = this.chartState.data.xAxis.range;
-	        var prevXRange = this.chartState.data.prevState.xAxis.range;
-	        var xRangeLengthCanged = (currentXRange.to - currentXRange.from !== prevXRange.to - prevXRange.from);
-	        if (xRangeLengthCanged) {
-	            this.updateAxis(AXIS_ORIENTATION.H);
+	    AxisWidget.prototype.onZoomFrame = function (options) {
+	        if (options.zoomX) {
+	            this.updateAxis(interfaces_1.AXIS_TYPE.X);
 	        }
-	        if (changedProps.yAxis) {
-	            this.updateAxis(AXIS_ORIENTATION.V);
+	        if (options.zoomY) {
+	            this.updateAxis(interfaces_1.AXIS_TYPE.Y);
 	        }
 	    };
 	    AxisWidget.prototype.temporaryHideAxis = function (orientation) {
 	        var _this = this;
-	        var isXAxis = orientation == AXIS_ORIENTATION.H;
+	        var isXAxis = orientation == interfaces_1.AXIS_TYPE.X;
 	        var timeoutId = setTimeout(function () {
 	            _this.showAxis(orientation);
 	        }, 200);
@@ -55536,7 +55868,7 @@
 	        }
 	    };
 	    AxisWidget.prototype.showAxis = function (orientation) {
-	        var isXAxis = orientation == AXIS_ORIENTATION.H;
+	        var isXAxis = orientation == interfaces_1.AXIS_TYPE.X;
 	        var material;
 	        if (isXAxis) {
 	            material = this.axisXObject.children[0].material;
@@ -55554,7 +55886,7 @@
 
 
 /***/ },
-/* 31 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -55563,10 +55895,10 @@
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Widget_1 = __webpack_require__(14);
+	var Vector3 = THREE.Vector3;
+	var Widget_1 = __webpack_require__(16);
 	var LineSegments = THREE.LineSegments;
-	// update lines is expensive operation, so we do it only once per second
-	var UPDATE_LINES_INTERVAL = 1000;
+	var Utils_1 = __webpack_require__(11);
 	/**
 	 * widget for drawing chart grid
 	 */
@@ -55574,111 +55906,89 @@
 	    __extends(GridWidget, _super);
 	    function GridWidget(chartState) {
 	        _super.call(this, chartState);
-	        this.linesValues = { x: [], y: [] };
-	        this.linesLastUpdateTime = 0;
-	        this.updateGridParams();
-	        var _a = chartState.data, width = _a.width, height = _a.height;
-	        this.gridSizeH = Math.floor(width / chartState.data.xAxis.gridMinSize) * 3;
-	        this.gridSizeV = Math.floor(height / chartState.data.yAxis.gridMinSize) * 3;
-	        this.linesValues = this.getCurrentLinesValues();
-	        var geometry = new THREE.Geometry();
-	        var material = new THREE.LineBasicMaterial({ linewidth: 1, opacity: 0.07, transparent: true });
-	        for (var _i = 0, _b = this.linesValues.x; _i < _b.length; _i++) {
-	            var xVal = _b[_i];
-	            (_c = geometry.vertices).push.apply(_c, this.getVerticalLineSegment(xVal));
-	        }
-	        for (var _d = 0, _e = this.linesValues.y; _d < _e.length; _d++) {
-	            var yVal = _e[_d];
-	            (_f = geometry.vertices).push.apply(_f, this.getHorizontalLineSegment(yVal));
-	        }
-	        this.lineSegments = new LineSegments(geometry, material);
-	        var _c, _f;
+	        var _a = chartState.data, width = _a.width, height = _a.height, xAxis = _a.xAxis, yAxis = _a.yAxis;
+	        this.gridSizeH = Math.floor(width / xAxis.gridMinSize) * 3;
+	        this.gridSizeV = Math.floor(height / yAxis.gridMinSize) * 3;
+	        this.initGrid();
+	        this.updateGrid();
 	    }
-	    GridWidget.prototype.updateGridParams = function () {
-	        var _a = this.chartState.data, yAxis = _a.yAxis, xAxis = _a.xAxis, width = _a.width, height = _a.height;
-	        this.axisXGridParams = GridWidget.getGridParamsForAxis(xAxis, width);
-	        this.axisYGridParams = GridWidget.getGridParamsForAxis(yAxis, height);
-	        this.scrollInSegments = Math.ceil(xAxis.range.scroll / this.axisXGridParams.stepInPx);
-	    };
-	    GridWidget.prototype.getCurrentLinesValues = function () {
-	        var linesValues = { x: [], y: [] };
-	        var axisXGrid = this.axisXGridParams;
-	        var axisYGrid = this.axisYGridParams;
-	        var startX = axisXGrid.start + this.scrollInSegments * axisXGrid.step;
-	        var startY = axisYGrid.start;
-	        for (var i = -this.gridSizeH / 3; i < this.gridSizeH * 2 / 3; i++) {
-	            linesValues.x.push(startX + i * axisXGrid.step);
-	        }
-	        for (var i = -this.gridSizeV / 3; i < this.gridSizeV * 2 / 3; i++) {
-	            linesValues.y.push(startY + i * axisYGrid.step);
-	        }
-	        return linesValues;
-	    };
-	    GridWidget.prototype.getHorizontalLineSegment = function (yVal) {
-	        var width = this.chartState.data.width;
-	        var y = this.chartState.getPointOnYAxis(yVal);
-	        var scrollX = this.scrollInSegments * this.axisXGridParams.stepInPx;
-	        return [new THREE.Vector3(width * 2 + scrollX, y, 0), new THREE.Vector3(-width + scrollX, y, 0)];
-	    };
-	    GridWidget.prototype.getVerticalLineSegment = function (xVal) {
-	        var height = this.chartState.data.height;
-	        var x = this.chartState.getPointOnXAxis(xVal);
-	        return [new THREE.Vector3(x, height * 2, 0), new THREE.Vector3(x, -height, 0)];
-	    };
 	    GridWidget.prototype.bindEvents = function () {
 	        var _this = this;
-	        this.chartState.onScroll(function () {
-	            _this.onScrollChange();
-	        });
-	        this.chartState.onScrollStop(function () { return _this.recalculateLines(); });
-	        this.chartState.onZoom(function () { return _this.onZoom(); });
+	        // grid is bigger then screen, so it's no need to update it on each scroll event
+	        this.chartState.onScroll(Utils_1.Utils.throttle(function () { return _this.updateGrid(); }, 1000));
+	        this.chartState.screen.onZoomFrame(function (options) { return _this.onZoomFrame(options); });
 	    };
-	    GridWidget.prototype.onScrollChange = function () {
-	        if (Date.now() - this.linesLastUpdateTime >= UPDATE_LINES_INTERVAL) {
-	            this.recalculateLines();
-	        }
+	    GridWidget.prototype.initGrid = function () {
+	        var geometry = new THREE.Geometry();
+	        var material = new THREE.LineBasicMaterial({ linewidth: 1, opacity: 0.09, transparent: true });
+	        var xLinesCount = this.gridSizeH;
+	        var yLinesCount = this.gridSizeV;
+	        while (xLinesCount--)
+	            geometry.vertices.push(new Vector3(), new Vector3());
+	        while (yLinesCount--)
+	            geometry.vertices.push(new Vector3(), new Vector3());
+	        this.lineSegments = new LineSegments(geometry, material);
+	        this.lineSegments.frustumCulled = false;
 	    };
-	    GridWidget.prototype.onZoom = function () {
-	        // var newLineValues = this.getCurrentLinesValues();
-	        // var animations = this.chartState.data.animations;
-	        // var time = animations.enabled ? animations.zoomSpeed : 0;
-	        // if (this.linesXAnimation) this.linesXAnimation.pause();
-	        // if (this.linesYAnimation) this.linesYAnimation.pause();
-	        // this.linesXAnimation = TweenLite.to(this.linesValues.x, time, newLineValues.x);
-	        // this.linesYAnimation = TweenLite.to(this.linesValues.y, time, newLineValues.y);
-	        // this.linesXAnimation.eventCallback('onUpdate', () => {
-	        // 	this.updateLinesSegments();
-	        // });
-	        // this.linesXAnimation.eventCallback('onComplete', () => {
-	        // 	this.recalculateLines();
-	        // });
-	        this.recalculateLines();
-	    };
-	    GridWidget.prototype.recalculateLines = function () {
-	        this.updateGridParams();
-	        this.linesValues = this.getCurrentLinesValues();
-	        this.updateLinesSegments();
-	        this.linesLastUpdateTime = Date.now();
-	    };
-	    GridWidget.prototype.updateLinesSegments = function () {
-	        var horizontalLines = this.linesValues.x;
-	        var verticalLines = this.linesValues.y;
+	    GridWidget.prototype.updateGrid = function () {
+	        var _a = this.chartState.data, yAxis = _a.yAxis, xAxis = _a.xAxis, width = _a.width, height = _a.height;
+	        var axisXGrid = GridWidget.getGridParamsForAxis(xAxis, width, xAxis.range.scroll, xAxis.range.zoom);
+	        var axisYGrid = GridWidget.getGridParamsForAxis(yAxis, height, yAxis.range.scroll, yAxis.range.zoom);
+	        var scrollXInSegments = Math.ceil(xAxis.range.scroll / axisXGrid.step);
+	        var scrollYInSegments = Math.ceil(yAxis.range.scroll / axisYGrid.step);
+	        var gridScrollXVal = scrollXInSegments * axisXGrid.step;
+	        var gridScrollYVal = scrollYInSegments * axisYGrid.step;
+	        var startXVal = axisXGrid.start + gridScrollXVal;
+	        var startYVal = axisYGrid.start + gridScrollYVal;
 	        var geometry = this.lineSegments.geometry;
-	        var verticalValuesOffset = this.gridSizeH * 2;
-	        for (var i = 0; i < horizontalLines.length; i++) {
-	            var lineSegment = this.getVerticalLineSegment(horizontalLines[i]);
-	            geometry.vertices[i * 2].set(lineSegment[0].x, lineSegment[0].y, 0);
-	            geometry.vertices[i * 2 + 1].set(lineSegment[1].x, lineSegment[1].y, 0);
+	        var vertices = geometry.vertices;
+	        var lineInd = 0;
+	        for (var i = -this.gridSizeH / 3; i < this.gridSizeH * 2 / 3; i++) {
+	            var value = startXVal + i * axisXGrid.step;
+	            var lineSegment = this.getVerticalLineSegment(value, gridScrollXVal, gridScrollYVal);
+	            vertices[lineInd * 2].set(lineSegment[0].x, lineSegment[0].y, 0);
+	            vertices[lineInd * 2 + 1].set(lineSegment[1].x, lineSegment[1].y, 0);
+	            lineInd++;
 	        }
-	        for (var i = 0; i < verticalLines.length; i++) {
-	            var lineSegment = this.getHorizontalLineSegment(verticalLines[i]);
-	            geometry.vertices[verticalValuesOffset + i * 2].set(lineSegment[0].x, lineSegment[0].y, 0);
-	            geometry.vertices[verticalValuesOffset + i * 2 + 1].set(lineSegment[1].x, lineSegment[1].y, 0);
+	        for (var i = -this.gridSizeV / 3; i < this.gridSizeV * 2 / 3; i++) {
+	            var value = startYVal + i * axisYGrid.step;
+	            var lineSegment = this.getHorizontalLineSegment(value, gridScrollXVal, gridScrollYVal);
+	            vertices[lineInd * 2].set(lineSegment[0].x, lineSegment[0].y, 0);
+	            vertices[lineInd * 2 + 1].set(lineSegment[1].x, lineSegment[1].y, 0);
+	            lineInd++;
 	        }
 	        geometry.verticesNeedUpdate = true;
+	        this.lineSegments.scale.set(xAxis.range.scaleFactor * xAxis.range.zoom, yAxis.range.scaleFactor * yAxis.range.zoom, 1);
 	    };
-	    GridWidget.getGridParamsForAxis = function (axisOptions, axisWidth) {
-	        var _a = axisOptions.range, from = _a.from, to = _a.to;
+	    GridWidget.prototype.getHorizontalLineSegment = function (yVal, scrollXVal, scrollYVal) {
+	        var chartState = this.chartState;
+	        var localYVal = yVal - chartState.data.yAxis.range.zeroVal - scrollYVal;
+	        var widthVal = chartState.pxToValueByXAxis(chartState.data.width);
+	        return [
+	            new THREE.Vector3(widthVal * 2 + scrollXVal, localYVal, 0),
+	            new THREE.Vector3(-widthVal + scrollXVal, localYVal, 0)
+	        ];
+	    };
+	    GridWidget.prototype.getVerticalLineSegment = function (xVal, scrollXVal, scrollYVal) {
+	        var chartState = this.chartState;
+	        var localXVal = xVal - chartState.data.xAxis.range.zeroVal - scrollXVal;
+	        var heightVal = chartState.pxToValueByYAxis(chartState.data.height);
+	        return [
+	            new THREE.Vector3(localXVal, heightVal * 2 + scrollYVal, 0),
+	            new THREE.Vector3(localXVal, -heightVal + scrollYVal, 0)
+	        ];
+	    };
+	    GridWidget.prototype.onZoomFrame = function (options) {
+	        var _a = this.chartState.data, xAxis = _a.xAxis, yAxis = _a.yAxis;
+	        if (options.zoomX)
+	            this.lineSegments.scale.setX(xAxis.range.scaleFactor * options.zoomX);
+	        if (options.zoomY)
+	            this.lineSegments.scale.setY(yAxis.range.scaleFactor * options.zoomY);
+	    };
+	    GridWidget.getGridParamsForAxis = function (axisOptions, axisWidth, scroll, zoom) {
+	        var axisRange = axisOptions.range;
+	        var from = axisOptions.range.zeroVal + scroll;
+	        var to = from + axisWidth / (axisRange.scaleFactor * zoom);
 	        var axisLength = to - from;
 	        var gridStep = 0;
 	        var gridStepInPixels = 0;
@@ -55732,7 +56042,7 @@
 
 
 /***/ },
-/* 32 */
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -55746,7 +56056,7 @@
 	var Face3 = THREE.Face3;
 	var Vector2 = THREE.Vector2;
 	var Utils_1 = __webpack_require__(11);
-	var TrendsWidget_1 = __webpack_require__(13);
+	var TrendsWidget_1 = __webpack_require__(15);
 	var MAX_VERTICES = 1000;
 	var PART_VERTICES_COUNT = 5;
 	var PART_FACES_COUNT = 3;
@@ -55832,7 +56142,7 @@
 	            var prevItem = data[ind - 1];
 	            if (!prevItem)
 	                continue;
-	            //let nextItem = {xVal: startItem.xVal + 5, yVal: startItem.yVal};
+	            //let nextItem = {scrollXVal: startItem.scrollXVal + 5, scrollYVal: startItem.scrollYVal};
 	            this.setupGradientPart(ind, this.gradient.geometry, prevItem, item, startItem);
 	        }
 	    };
@@ -55940,7 +56250,7 @@
 
 
 /***/ },
-/* 33 */
+/* 35 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -55953,7 +56263,7 @@
 	var Mesh = THREE.Mesh;
 	var PlaneBufferGeometry = THREE.PlaneBufferGeometry;
 	var MeshBasicMaterial = THREE.MeshBasicMaterial;
-	var TrendsWidget_1 = __webpack_require__(13);
+	var TrendsWidget_1 = __webpack_require__(15);
 	/**
 	 * widget adds loading indicator
 	 * activated when animations enabled
@@ -55974,6 +56284,7 @@
 	    __extends(TrendLoading, _super);
 	    function TrendLoading(state, trendName) {
 	        _super.call(this, state, trendName);
+	        this.isActive = false;
 	        // add beacon
 	        this.mesh = new Mesh(new PlaneBufferGeometry(32, 32), new MeshBasicMaterial({ map: TrendLoading.createTexture(), transparent: true }));
 	        this.deactivate();
@@ -55986,6 +56297,7 @@
 	    };
 	    TrendLoading.prototype.bindEvents = function () {
 	        var _this = this;
+	        _super.prototype.bindEvents.call(this);
 	        this.bindEvent(this.trend.onPrependRequest(function () { return _this.activate(); }));
 	    };
 	    TrendLoading.prototype.prependData = function () {
@@ -56000,10 +56312,13 @@
 	            animation.restart();
 	        });
 	        this.animation = animation;
+	        this.isActive = true;
+	        this.updatePosition();
 	    };
 	    TrendLoading.prototype.deactivate = function () {
 	        this.animation && this.animation.kill();
 	        this.mesh.material.opacity = 0;
+	        this.isActive = false;
 	    };
 	    TrendLoading.createTexture = function () {
 	        var h = 64, w = 64;
@@ -56022,9 +56337,14 @@
 	            ctx.stroke();
 	        });
 	    };
-	    TrendLoading.prototype.onTrendAnimate = function (animationState) {
+	    TrendLoading.prototype.onZoomFrame = function () {
+	        this.updatePosition();
+	    };
+	    TrendLoading.prototype.updatePosition = function () {
+	        if (!this.isActive)
+	            return;
 	        // set new widget position
-	        var pointVector = animationState.getStartPoint().getCurrentVec();
+	        var pointVector = this.trend.points.getStartPoint().getFramePoint();
 	        this.mesh.position.set(pointVector.x, pointVector.y, 0);
 	    };
 	    return TrendLoading;
@@ -56032,7 +56352,7 @@
 
 
 /***/ },
-/* 34 */
+/* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -56041,7 +56361,7 @@
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Widget_1 = __webpack_require__(14);
+	var Widget_1 = __webpack_require__(16);
 	var Object3D = THREE.Object3D;
 	var Geometry = THREE.Geometry;
 	var LineBasicMaterial = THREE.LineBasicMaterial;
@@ -56071,6 +56391,20 @@
 	        this.axisMarksWidgets.push(axisMarkWidget);
 	        this.object3D.add(axisMarkWidget.getObject3D());
 	    };
+	    AxisMarksWidget.prototype.bindEvents = function () {
+	        var _this = this;
+	        this.chartState.screen.onTransformationFrame(function (options) { return _this.onTransformationFrame(options); });
+	    };
+	    AxisMarksWidget.prototype.onTransformationFrame = function (options) {
+	        if (options.scrollYVal != void 0 || options.zoomX || options.zoomY)
+	            this.updateMarksPositions();
+	    };
+	    AxisMarksWidget.prototype.updateMarksPositions = function () {
+	        for (var _i = 0, _a = this.axisMarksWidgets; _i < _a.length; _i++) {
+	            var widget = _a[_i];
+	            widget.updatePosition();
+	        }
+	    };
 	    AxisMarksWidget.prototype.getObject3D = function () {
 	        return this.object3D;
 	    };
@@ -56098,6 +56432,7 @@
 	        this.chartState = chartState;
 	        this.axisMark = axisMark;
 	        this.axisType = axisMark.axisType;
+	        this.frameValue = axisMark.options.value;
 	        this.object3D = new Object3D();
 	        this.object3D.position.setZ(-0.1);
 	        this.line = this.createLine();
@@ -56135,16 +56470,35 @@
 	    };
 	    AxisMarkWidget.prototype.bindEvents = function () {
 	        var _this = this;
-	        this.axisMark.onAnimationFrame(function () { return _this.updatePosition(); });
 	        this.axisMark.onDisplayedValueChange(function () { return _this.renderIndicator(); });
+	        this.axisMark.onValueChange(function () { return _this.onValueChangeHandler(); });
+	    };
+	    AxisMarkWidget.prototype.onValueChangeHandler = function () {
+	        var _this = this;
+	        // move mark to new position with animation
+	        if (this.moveAnimation)
+	            this.moveAnimation.kill();
+	        var animations = this.chartState.data.animations;
+	        var targetValue = this.axisMark.options.value;
+	        var cb = function () {
+	            _this.updatePosition();
+	        };
+	        if (animations.enabled) {
+	            this.moveAnimation = TweenLite.to(this, animations.trendChangeSpeed, { frameValue: targetValue, ease: animations.trendChangeEase });
+	            this.moveAnimation.eventCallback('onUpdate', cb);
+	        }
+	        else {
+	            this.frameValue = targetValue;
+	            cb();
+	        }
 	    };
 	    AxisMarkWidget.prototype.updatePosition = function () {
 	        var chartState = this.chartState;
 	        var isXAxis = this.axisType == interfaces_1.AXIS_TYPE.X;
 	        if (!isXAxis)
 	            return; // TODO: support for yAxis
-	        this.object3D.position.x = this.axisMark.position;
-	        this.object3D.position.y = 0;
+	        this.object3D.position.x = chartState.screen.getPointOnXAxis(this.frameValue);
+	        this.object3D.position.y = chartState.screen.getBottom();
 	        var lineGeometry = this.line.geometry;
 	        lineGeometry.vertices[1].setY(chartState.data.height);
 	        lineGeometry.verticesNeedUpdate = true;
@@ -56156,7 +56510,7 @@
 
 
 /***/ },
-/* 35 */
+/* 37 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -56167,7 +56521,7 @@
 	};
 	var Mesh = THREE.Mesh;
 	var Object3D = THREE.Object3D;
-	var TrendsWidget_1 = __webpack_require__(13);
+	var TrendsWidget_1 = __webpack_require__(15);
 	var Utils_1 = __webpack_require__(11);
 	/**
 	 * widget for drawing trends marks for all trends
@@ -56180,7 +56534,7 @@
 	    TrendsMarksWidget.prototype.getTrendWidgetClass = function () {
 	        return TrendMarksWidget;
 	    };
-	    TrendsMarksWidget.widgetName = "trendsMarks";
+	    TrendsMarksWidget.widgetName = "TrendsMarks";
 	    return TrendsMarksWidget;
 	}(TrendsWidget_1.TrendsWidget));
 	exports.TrendsMarksWidget = TrendsMarksWidget;
@@ -56216,16 +56570,22 @@
 	        this.marksWidgets[mark.options.name] = markWidget;
 	        this.object3D.add(markWidget.getObject3D());
 	    };
-	    TrendMarksWidget.prototype.onTrendAnimate = function () {
+	    // protected onTransformationFrame() {
+	    // 	var widgets = this.marksWidgets;
+	    // 	for (let markName in widgets) {
+	    // 		widgets[markName].onTrendAnimate();
+	    // 	}
+	    // }
+	    TrendMarksWidget.prototype.onZoomFrame = function () {
 	        var widgets = this.marksWidgets;
 	        for (var markName in widgets) {
-	            widgets[markName].onTrendAnimate();
+	            widgets[markName].onZoomFrameHandler();
 	        }
 	    };
-	    TrendMarksWidget.prototype.onZoom = function () {
+	    TrendMarksWidget.prototype.onPointsMove = function () {
 	        var widgets = this.marksWidgets;
 	        for (var markName in widgets) {
-	            widgets[markName].onZoomHandler();
+	            widgets[markName].onPointsMove();
 	        }
 	    };
 	    return TrendMarksWidget;
@@ -56245,20 +56605,9 @@
 	    }
 	    TrendMarkWidget.prototype.initObject = function () {
 	        this.object3D = new Object3D();
-	        //this.line = this.createLine();
-	        //this.object3D.add(this.line);
 	        this.markMesh = this.createMarkMesh();
 	        this.object3D.add(this.markMesh);
 	    };
-	    // protected createLine(): Line {
-	    // 	// var lineGeometry = new Geometry();
-	    // 	//
-	    // 	// lineGeometry.vertices.push(new Vector3(0,0,0), new Vector3(0, this.position.lineHeight, 0));
-	    // 	// return new Line(
-	    // 	// 	lineGeometry,
-	    // 	// 	new LineDashedMaterial()
-	    // 	// );
-	    // }
 	    TrendMarkWidget.prototype.createMarkMesh = function () {
 	        var _a = this, markHeight = _a.markHeight, markWidth = _a.markWidth;
 	        var lineHeight = this.position.lineHeight;
@@ -56305,10 +56654,10 @@
 	    TrendMarkWidget.prototype.getObject3D = function () {
 	        return this.object3D;
 	    };
-	    TrendMarkWidget.prototype.onTrendAnimate = function () {
+	    TrendMarkWidget.prototype.onPointsMove = function () {
 	        this.updatePosition();
 	    };
-	    TrendMarkWidget.prototype.onZoomHandler = function () {
+	    TrendMarkWidget.prototype.onZoomFrameHandler = function () {
 	        this.updatePosition();
 	    };
 	    TrendMarkWidget.prototype.updatePosition = function () {
@@ -56328,6 +56677,41 @@
 	    };
 	    return TrendMarkWidget;
 	}());
+
+
+/***/ },
+/* 38 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var __extends = (this && this.__extends) || function (d, b) {
+	    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+	    function __() { this.constructor = d; }
+	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+	};
+	var Widget_1 = __webpack_require__(16);
+	var LineSegments = THREE.LineSegments;
+	var Vector3 = THREE.Vector3;
+	/**
+	 * widget for drawing chart grid
+	 */
+	var BorderWidget = (function (_super) {
+	    __extends(BorderWidget, _super);
+	    function BorderWidget(chartState) {
+	        _super.call(this, chartState);
+	        var _a = chartState.data, width = _a.width, height = _a.height;
+	        var geometry = new THREE.Geometry();
+	        var material = new THREE.LineBasicMaterial({ linewidth: 1, opacity: 0.0, transparent: true });
+	        geometry.vertices.push(new Vector3(0, 0, 0), new Vector3(0, height, 0), new Vector3(0, height, 0), new Vector3(width, height, 0), new Vector3(width, height, 0), new Vector3(width, 0, 0), new Vector3(width, 0, 0), new Vector3(0, 0, 0));
+	        this.lineSegments = new LineSegments(geometry, material);
+	    }
+	    BorderWidget.prototype.getObject3D = function () {
+	        return this.lineSegments;
+	    };
+	    BorderWidget.widgetName = 'Border';
+	    return BorderWidget;
+	}(Widget_1.ChartWidget));
+	exports.BorderWidget = BorderWidget;
 
 
 /***/ }

@@ -21,6 +21,8 @@ export enum AXIS_RANGE_TYPE {
  */
 export declare type TEase = Ease | Linear;
 
+export declare type TIteralable = {[key: string]: any};
+
 export enum AXIS_TYPE {X, Y}
 
 export interface IAxisRange {

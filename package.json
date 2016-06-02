@@ -9,6 +9,7 @@
     "es6-promise": "^3.2.1",
     "eventemitter2": "^0.4.11",
     "gsap": "^1.18.4",
+    "is-plain-object": "^2.0.1",
     "three": "^0.76.1"
   },
   "devDependencies": {

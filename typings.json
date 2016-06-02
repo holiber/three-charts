@@ -4,7 +4,7 @@
     "es6-promise": "registry:npm/es6-promise#3.0.0+20160211003958",
     "webpack": "registry:npm/webpack#1.12.9+20160418172948"
   },
-  "ambientDependencies": {
+  "globalDependencies": {
     "eventemitter2": "registry:dt/eventemitter2#0.14.4+20160316155526",
     "greensock": "registry:dt/greensock#1.15.1+20160316155526",
     "stats": "registry:dt/stats#0.0.0+20160316155526",

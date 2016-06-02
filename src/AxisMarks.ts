@@ -71,7 +71,7 @@ export class AxisMarks {
 			let mark = marks[markName];
 			let markVal = mark.options.value;
 			let markWasCrossed = (startVal == markVal || endVal == markVal || (startVal < markVal && endVal > markVal));
-			if (markWasCrossed) this.ee.emit('onMarkCrossed', trendName, newData);
+			if (markWasCrossed) this.ee.emit('markCrossed', trendName, newData);
 		}
 	}
 
@@ -93,10 +93,8 @@ export class AxisMark {
 	static typeName = 'simple';
 	options: IAxisMarkOptions;
 	axisType: AXIS_TYPE;
-	position: number;
 	protected chartState: ChartState;
 	protected renderOnTrendsChange = false;
-	protected animation: TweenLite;
 	protected ee: EventEmitter2;
 
 	constructor(chartState: ChartState, axisType: AXIS_TYPE, options: IAxisMarkOptions) {
@@ -110,13 +108,15 @@ export class AxisMark {
 		this.options = options;
 		this.axisType = axisType;
 		this.chartState = chartState;
-		this.position = this.getPosition();
 		this.bindEvents();
 	}
+	
+	protected bindEvents() {}
 
 	setOptions(newOptions: IAxisMarkUpdateOptions) {
+		var value = this.options.value;
 		this.options = Utils.deepMerge(this.options, newOptions);
-		this.updatePosition();
+		if (this.options.value !== value) this.ee.emit('valueChange');
 		this.ee.emit('onDisplayedValueChange');
 	}
 
@@ -124,27 +124,17 @@ export class AxisMark {
 		return String(this.options.value);
 	}
 
-
-	getPosition() {
-		if (this.axisType == AXIS_TYPE.X) {
-			return this.chartState.getPointOnXAxis(this.options.value);
-		}
-		Utils.error('not implemented');
-		return 0
-	}
-
-	
-	onAnimationFrame(cb: () => void): Function {
-		this.ee.on('onAnimationFrame', cb);
-		return () => {
-			this.ee.off('onAnimationFrame', cb);
-		}
-	}
-
 	onMarkCrossed(cb: (trendName: string, newData: ITrendData) => void): Function {
-		this.ee.on('onMarkCrossed', cb);
+		this.ee.on('markCrossed', cb);
 		return () => {
-			this.ee.off('onMarkCrossed', cb);
+			this.ee.off('markCrossed', cb);
+		}
+	}
+
+	onValueChange(cb: () => void) {
+		this.ee.on('valueChange', cb);
+		return () => {
+			this.ee.off('valueChange', cb);
 		}
 	}
 
@@ -154,41 +144,6 @@ export class AxisMark {
 			this.ee.off('onDisplayedValueChange', cb);
 		}
 	}
-
-	protected updatePosition() {
-		var animations = this.chartState.data.animations;
-		var time = animations.enabled ? animations.trendChangeSpeed : 0;
-		this.animate(this.getPosition(), time, animations.trendChangeEase);
-	}
-	
-	protected bindEvents() {
-		this.chartState.onZoom(() => this.onZoom());
-	}
-	
-	private onZoom() {
-		var chartState = this.chartState;
-		var animations = this.chartState.data.animations;
-		var time = animations.enabled ? animations.zoomSpeed : 0;
-		var prevRange = chartState.data.prevState.xAxis.range;
-		var currentRange = chartState.data.xAxis.range;
-		var zoomDistanceInPx = chartState.valueToPxByXAxis(currentRange.from - prevRange.from);
-		var fromPosition = this.position - zoomDistanceInPx;
-		this.animate(this.getPosition(), time, animations.zoomEase, fromPosition);
-	}
-
-	private animate(toPosition: Object, time: number, ease: TEase, fromPosition?: number) {
-		if (this.animation) this.animation.kill();
-		fromPosition = fromPosition !== void 0 ? fromPosition : this.position;
-		var current = {position: fromPosition};
-		var target = {position: toPosition, ease: ease};
-		var animation = TweenLite.to(current, time, target);
-		animation.eventCallback('onUpdate', () => {
-			this.position = current.position;
-			this.ee.emit('onAnimationFrame');
-		});
-		this.animation = animation;
-	}
-
 }
 
 export class AxisTimeleftMark extends AxisMark {
@@ -204,7 +159,6 @@ export class AxisTimeleftMark extends AxisMark {
 	}
 
 	protected bindEvents() {
-		super.bindEvents();
 		this.chartState.onTrendsChange(() => this.onTrendsChange());
 	}
 
