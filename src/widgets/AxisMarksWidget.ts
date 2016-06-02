@@ -13,6 +13,7 @@ import Texture = THREE.Texture;
 import MeshBasicMaterial = THREE.MeshBasicMaterial;
 import {AxisMark, AxisMarks} from "../AxisMarks";
 import {AXIS_TYPE} from "../interfaces";
+import {IScreenTransformOptions} from "../Screen";
 
 
 // TODO: support for yAxis
@@ -39,10 +40,21 @@ export class AxisMarksWidget extends ChartWidget {
 	}
 
 	private createAxisMark(axisMark: AxisMark) {
-
 		var axisMarkWidget = new AxisMarkWidget(this.chartState, axisMark);
 		this.axisMarksWidgets.push(axisMarkWidget);
 		this.object3D.add(axisMarkWidget.getObject3D());
+	}
+
+	protected bindEvents() {
+		this.chartState.screen.onTransformationFrame((options) => this.onTransformationFrame(options));
+	}
+
+	private onTransformationFrame(options: IScreenTransformOptions) {
+		if (options.scrollYVal != void 0 || options.zoomX || options.zoomY) this.updateMarksPositions();
+	}
+
+	private updateMarksPositions() {
+		for (let widget of this.axisMarksWidgets) widget.updatePosition();
 	}
 
 	getObject3D() {
@@ -73,6 +85,8 @@ class AxisMarkWidget {
 	protected object3D: Object3D;
 	protected line: Line;
 	protected indicator: Mesh;
+	protected moveAnimation: TweenLite;
+	protected frameValue: number;
 	
 
 	constructor(chartState: ChartState, axisMark: AxisMark) {
@@ -85,6 +99,7 @@ class AxisMarkWidget {
 		this.chartState = chartState;
 		this.axisMark = axisMark;
 		this.axisType = axisMark.axisType;
+		this.frameValue = axisMark.options.value;
 		this.object3D = new Object3D();
 		this.object3D.position.setZ(-0.1);
 
@@ -136,16 +151,36 @@ class AxisMarkWidget {
 	}
 
 	protected bindEvents() {
-		this.axisMark.onAnimationFrame(() => this.updatePosition());
 		this.axisMark.onDisplayedValueChange(() => this.renderIndicator());
+		this.axisMark.onValueChange(() => this.onValueChangeHandler());
 	}
 
-	protected updatePosition() {
+	private onValueChangeHandler() {
+		// move mark to new position with animation
+		if (this.moveAnimation) this.moveAnimation.kill();
+		var animations = this.chartState.data.animations;
+		var targetValue = this.axisMark.options.value;
+		var cb = () => {
+			this.updatePosition();
+		};
+		if (animations.enabled) {
+			this.moveAnimation = TweenLite.to(
+				this, animations.trendChangeSpeed,
+				{frameValue: targetValue, ease: animations.trendChangeEase}
+			);
+			this.moveAnimation.eventCallback('onUpdate', cb);
+		} else {
+			this.frameValue = targetValue;
+			cb();
+		}
+	}
+
+	updatePosition() {
 		var chartState = this.chartState;
 		var isXAxis = this.axisType == AXIS_TYPE.X;
 		if (!isXAxis) return; // TODO: support for yAxis
-		this.object3D.position.x = this.axisMark.position;
-		this.object3D.position.y = 0;
+		this.object3D.position.x = chartState.screen.getPointOnXAxis(this.frameValue);
+		this.object3D.position.y = chartState.screen.getBottom();
 		var lineGeometry = (this.line.geometry as Geometry);
 		lineGeometry.vertices[1].setY(chartState.data.height);
 		lineGeometry.verticesNeedUpdate = true;

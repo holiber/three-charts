@@ -9,13 +9,14 @@ import Vector3 = THREE.Vector3;
 import {TrendWidget, TrendsWidget} from "./TrendsWidget";
 import {ITrendOptions} from "../Trend";
 import {TrendPoints, TrendPoint} from "../TrendPoints";
+import chartreuse = THREE.ColorKeywords.chartreuse;
 
 /**
  * widget adds blinking beacon on trends end
  * activated when trend.hasBeacon = true
  */
 export class TrendsBeaconWidget extends TrendsWidget<TrendBeacon> {
-	static widgetName = 'trendsBeacon';
+	static widgetName = 'TrendsBeacon';
 	protected getTrendWidgetClass() {
 		return TrendBeacon;
 	}
@@ -44,6 +45,7 @@ class TrendBeacon extends TrendWidget {
 		return this.mesh;
 	}
 	protected bindEvents() {
+		super.bindEvents();
 		this.bindEvent(this.chartState.onScroll(() => this.updatePosition()));
 	}
 
@@ -102,19 +104,24 @@ class TrendBeacon extends TrendWidget {
 		});
 	}
 
-	protected onTrendAnimate(animationState: TrendPoints) {
-		// set new widget position
-		this.point = animationState.getEndPoint();
+	protected onTransformationFrame() {
+		this.point = this.trend.points.getEndPoint();
+		this.updatePosition();
+	}
+
+	protected onPointsMove(trendPoints: TrendPoints) {
+		this.point = trendPoints.getEndPoint();
 		this.updatePosition();
 	}
 
 	private updatePosition() {
-		var endPointVector = this.point.getCurrentVec();
-		var screenWidth = this.chartState.data.width;
+		var state = this.chartState;
+		var endPointVector = this.point.getFramePoint();
+		var screenWidth = state.data.width;
 		var x = endPointVector.x;
-		var screenX = this.chartState.getScreenXByPoint(endPointVector.x);
-		if (screenX < 0) x = this.chartState.getPointByScreenX(0);
-		if (screenX > screenWidth) x = this.chartState.getPointByScreenX(screenWidth);
+		var screenX = state.screen.getScreenXByPoint(endPointVector.x);
+		if (screenX < 0) x = state.screen.getPointByScreenX(0);
+		if (screenX > screenWidth) x = state.screen.getPointByScreenX(screenWidth);
 		this.mesh.position.set(x, endPointVector.y, 0);
 	}
 }

@@ -119,7 +119,7 @@ class TrendGradient extends TrendWidget {
 			let item = data[ind];
 			let prevItem = data[ind - 1];
 			if (!prevItem) continue;
-			//let nextItem = {xVal: startItem.xVal + 5, yVal: startItem.yVal};
+			//let nextItem = {scrollXVal: startItem.scrollXVal + 5, scrollYVal: startItem.scrollYVal};
 	
 	
 			this.setupGradientPart(ind, this.gradient.geometry as Geometry, prevItem, item, startItem);

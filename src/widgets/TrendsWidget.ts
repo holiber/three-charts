@@ -7,6 +7,7 @@ import {IAxisOptions, MAX_DATA_LENGTH} from "../Chart";
 import Vector2 = THREE.Vector2;
 import Vector3 = THREE.Vector3;
 import {TrendPoints} from "../TrendPoints";
+import {IScreenTransformOptions} from "../Screen";
 
 
 interface ITrendWidgetClass<TrendWidgetType> {
@@ -91,9 +92,7 @@ export abstract class TrendWidget {
 
 	constructor (protected chartState: ChartState, protected trendName: string) {
 		this.trend = chartState.trends.getTrend(trendName);
-		this.unsubscribers.push(this.trend.points.onAnimationFrame(
-			(trendPoints: TrendPoints) => this.onTrendAnimate(trendPoints)
-		));
+		this.chartState = chartState;
 		this.bindEvents();
 	}
 	abstract getObject3D(): Object3D;
@@ -108,11 +107,36 @@ export abstract class TrendWidget {
 			unsubscriber();
 		}
 	}
-	protected onTrendAnimate(trendPoints: TrendPoints) {
+	protected onPointsMove(trendPoints: TrendPoints) {
 	}
-	protected bindEvents() {};
+	protected onZoomFrame(options: IScreenTransformOptions) {
+	}
+	protected onTransformationFrame(options: IScreenTransformOptions) {
+	}
+	protected onZoom() {
+	}
+
+
+	protected bindEvents() {
+
+		this.bindEvent(this.trend.points.onAnimationFrame(
+			(trendPoints: TrendPoints) => this.onPointsMove(trendPoints)
+		));
+
+		this.bindEvent(this.chartState.screen.onTransformationFrame(
+			(options) => this.onTransformationFrame(options)
+		));
+		
+		this.bindEvent(this.chartState.screen.onZoomFrame(
+			(options) => this.onZoomFrame(options)
+		));
+
+		this.bindEvent(this.chartState.onZoom(() => this.onZoom()));
+	};
+
 	protected bindEvent(unsubscriber: Function) {
 		this.unsubscribers.push(unsubscriber);
 	}
+
 
 }

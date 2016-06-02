@@ -13,7 +13,7 @@ import {TrendsLineWidget} from "./widgets/TrendsLineWidget";
 import {ChartState, IChartState} from "./State";
 import {ChartWidget, IChartWidgetConstructor} from "./Widget";
 import {Utils} from "./Utils";
-import {Screen} from "./Screen";
+import {Screen, IScreenTransformOptions} from "./Screen";
 import {TrendsBeaconWidget} from "./widgets/TrendsBeaconWidget";
 import {AxisWidget} from "./widgets/AxisWidget";
 import {GridWidget} from "./widgets/GridWidget";
@@ -21,15 +21,17 @@ import {TrendsGradientWidget} from "./widgets/TrendsGradientWidget";
 import {TrendsLoadingWidget} from "./widgets/TrendsLoadingWidget";
 import {AxisMarksWidget} from "./widgets/AxisMarksWidget";
 import {TrendsMarksWidget} from "./widgets/TrendsMarksWidget";
+import {BorderWidget} from "./widgets/BorderWidget";
 
-export const MAX_DATA_LENGTH = 1280;
+export const MAX_DATA_LENGTH = 1000;
 
 export class Chart {
 	state: ChartState;
 	private $el: HTMLElement;
-	private screen: Screen;
 	private renderer: Renderer;
 	private scene: Scene;
+	private camera: PerspectiveCamera;
+	private cameraInitialPosition: Vector3;
 	private widgets: Array<ChartWidget> = [];
 	private stats: Stats;
 
@@ -62,8 +64,12 @@ export class Chart {
 		this.stats = new Stats();
 		$el.appendChild(this.stats.domElement);
 
-		this.screen = new Screen(state);
-		this.scene.add(this.screen.camera);
+		var camSettings = state.screen.getCameraSettings();
+		this.camera = new PerspectiveCamera(camSettings.FOV, camSettings.aspect, camSettings.near, camSettings.far);
+		this.camera.position.set(camSettings.x, camSettings.y, camSettings.z);
+		this.cameraInitialPosition = this.camera.position.clone();
+		this.scene.add(this.camera);
+		//this.camera.position.z = 2000;
 
 		// init widgets
 		for (let widgetName in Chart.installedWidgets) {
@@ -81,7 +87,7 @@ export class Chart {
 	
 	render(time: number) {
 		this.stats.begin();
-		this.renderer.render(this.scene, this.screen.camera);
+		this.renderer.render(this.scene, this.camera);
 
 		var renderDelay = this.state.data.animations.enabled ? 0 : 1000;
 		if (renderDelay) {
@@ -90,7 +96,7 @@ export class Chart {
 			requestAnimationFrame((time) => this.render(time));
 		}
 		// this.screen.camera.rotation.z += 0.01;
-		// this.screen.camera.rotation.y += 0.01;
+		// this.screen.camera.rotation.scrollY += 0.01;
 		this.stats.end();
 	}
 	
@@ -123,7 +129,27 @@ export class Chart {
 		$el.addEventListener('touchend', (ev: TouchEvent) => {this.onTouchEnd(ev)});
 
 		this.state.onTrendsChange(() => this.autoscroll());
-		this.state.onScrollStop(() => this.onScrollStop());
+		//this.state.screen.onCameraChange((scrollX, scrollY) => this.onCameraChangeHandler(scrollX, scrollY))
+
+		this.state.screen.onTransformationFrame((options) => this.onScreenTransform(options))
+	}
+
+	private onCameraChangeHandler(x: number, y: number) {
+		if (x != void 0) {
+			this.camera.position.setX(this.cameraInitialPosition.x + x);
+		}
+		if (y != void 0) {
+			this.camera.position.setY(this.cameraInitialPosition.y + y);
+		}
+	}
+
+	private onScreenTransform(options: IScreenTransformOptions) {
+		if (options.scrollX != void 0) {
+			this.camera.position.setX(this.cameraInitialPosition.x + options.scrollX);
+		}
+		if (options.scrollY != void 0) {
+			this.camera.position.setY(this.cameraInitialPosition.y + options.scrollY);
+		}
 	}
 	
 	private autoscroll() {
@@ -138,7 +164,7 @@ export class Chart {
 			if (oldTrendsMaxX < paddingRightX || oldTrendsMaxX > maxVisibleX) {
 				return;
 			}
-			var scrollDelta = state.valueToPxByXAxis(trendsMaxXDelta);
+			var scrollDelta = trendsMaxXDelta;
 			this.setState({xAxis: {range: {scroll: currentScroll + scrollDelta}}});
 		}
 	}
@@ -168,7 +194,7 @@ export class Chart {
 	private onMouseWheel(ev: MouseWheelEvent) {
 		ev.stopPropagation();
 		ev.preventDefault();
-		this.state.zoom(1 + ev.wheelDeltaY * 0.0001);
+		this.state.zoom(1 + ev.wheelDeltaY * 0.0002);
 	}
 
 	private onTouchMove(ev: TouchEvent) {
@@ -207,3 +233,4 @@ Chart.installWidget(TrendsGradientWidget);
 Chart.installWidget(TrendsLoadingWidget);
 Chart.installWidget(AxisMarksWidget);
 Chart.installWidget(TrendsMarksWidget);
+Chart.installWidget(BorderWidget);

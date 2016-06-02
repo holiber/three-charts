@@ -65,7 +65,7 @@ window.onload = function () {
 		// 	range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 100}
 		// },
 		xAxis: {
-			range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 60},
+			range: {type: AXIS_RANGE_TYPE.FIXED, from: 10, to: 30},
 			marks: [
 				{value: 45, name: 'deadline', title: 'DEADLINE', lineColor: '#ff6600', type: 'timeleft'},
 				{value: 55, name: 'close', title: 'CLOSE', lineColor: '#005187', type: 'timeleft'}
@@ -81,10 +81,18 @@ window.onload = function () {
 				hasBeacon: true,
 				hasIndicator: true,
 				hasGradient: false,
-				marks: [MarksSource.generate(5), MarksSource.generate(15)]
+				marks: [MarksSource.generate(15)]
 			},
 			// 'red': {dataset: dsRed.data, lineColor: 0xFF2222, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
 			// 'blue': {dataset: dsBlue.data, lineColor: 0x2222FF, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
+		},
+		widgets: {
+			//Grid: {enabled: false},
+			//Axis: {enabled: false},
+			TrendsGradient: {enabled: false},
+			//TrendsBeacon: {enabled: false},
+			//TrendsIndicator: {enabled: false},
+			//TrendsMarks: {enabled: false}
 		}
 	});
 	
@@ -157,7 +165,7 @@ window.onload = function () {
 		while (ticksCount--) responseData.unshift(dsMain.getPrev());
 		setTimeout(() => {
 			resolve(responseData);
-		}, 4000)
+		}, 1000)
 	});
 
 	setInterval(() => {

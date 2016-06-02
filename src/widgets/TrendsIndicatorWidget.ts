@@ -16,7 +16,7 @@ const CANVAS_WIDTH = 128;
 const CANVAS_HEIGHT = 64;
 
 export class TrendsIndicatorWidget extends TrendsWidget<TrendIndicator> {
-	static widgetName = 'trendsIndicator';
+	static widgetName = 'TrendsIndicator';
 	protected getTrendWidgetClass() {
 		return TrendIndicator;
 	}
@@ -53,10 +53,6 @@ class TrendIndicator extends TrendWidget {
 		ctx.fillText(lastItem.yVal.toFixed(4), 0, 15);
 		texture.needsUpdate = true;
 	}
-	
-	protected bindEvents() {
-		this.bindEvent(this.chartState.onScroll(() => this.updatePosition()));
-	}
 
 	private initObject() {
 		var color = new Color(this.trend.getOptions().lineColor);
@@ -77,21 +73,28 @@ class TrendIndicator extends TrendWidget {
 
 	}
 
-	protected onTrendAnimate(animationState: TrendPoints) {
+	protected onTransformationFrame() {
+		// set new widget position
+		this.point = this.trend.points.getEndPoint();
+		this.updatePosition();
+	}
+
+	protected onPointsMove(animationState: TrendPoints) {
 		// set new widget position
 		this.point = animationState.getEndPoint();
 		this.updatePosition();
 	}
 
 	private updatePosition() {
-		var endPointVector = this.point.getCurrentVec();
-		var screenWidth = this.chartState.data.width;
+		var state = this.chartState;
+		var endPointVector = this.point.getFramePoint();
+		var screenWidth = state.data.width;
 		var x = endPointVector.x;
 		var y = endPointVector.y;
-		var screenX = this.chartState.getScreenXByPoint(endPointVector.x);
+		var screenX = state.screen.getScreenXByPoint(endPointVector.x);
 		if (screenX < 0 || screenX > screenWidth) {
-			if (screenX < 0) x = this.chartState.getPointByScreenX(0) + 20;
-			if (screenX > screenWidth) x = this.chartState.getPointByScreenX(screenWidth) - CANVAS_WIDTH / 2 - 10;
+			if (screenX < 0) x = state.screen.getPointByScreenX(0) + 20;
+			if (screenX > screenWidth) x = state.screen.getPointByScreenX(screenWidth) - CANVAS_WIDTH / 2 - 10;
 			y -= 25;
 		}
 		this.mesh.position.set(x + CANVAS_WIDTH / 2, y + CANVAS_HEIGHT / 2  - 30, 0);

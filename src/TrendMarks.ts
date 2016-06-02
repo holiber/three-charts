@@ -141,29 +141,6 @@ export class TrendMark {
 	setPoint(point: TrendPoint) {
 		this.point = point;
 	}
-	
-	private onZoom() {
-		// var chartState = this.chartState;
-		// var animations = this.chartState.data.animations;
-		// var time = animations.enabled ? animations.zoomSpeed : 0;
-		// var prevRange = chartState.data.prevState.xAxis.range;
-		// var currentRange = chartState.data.xAxis.range;
-		// var zoomDistanceInPx = chartState.valueToPxByXAxis(currentRange.from - prevRange.from);
-		// var fromPosition = this.position - zoomDistanceInPx;
-		// this.animate(this.getPosition(), time, animations.zoomEase, fromPosition);
-	}
 
-	private animate(toPosition: Object, time: number, ease: TEase, fromPosition?: number) {
-		// if (this.animation) this.animation.kill();
-		// fromPosition = fromPosition !== void 0 ? fromPosition : this.position;
-		// var current = {position: fromPosition};
-		// var target = {position: toPosition, ease: ease};
-		// var animation = TweenLite.to(current, time, target);
-		// animation.eventCallback('onUpdate', () => {
-		// 	this.position = current.position;
-		// 	this.ee.emit('onAnimationFrame');
-		// });
-		// this.animation = animation;
-	}
 
 }

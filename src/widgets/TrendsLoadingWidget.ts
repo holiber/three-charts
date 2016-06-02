@@ -24,6 +24,7 @@ export class TrendsLoadingWidget extends TrendsWidget<TrendLoading> {
 class TrendLoading extends TrendWidget {
 	private mesh: Mesh;
 	private animation: TweenLite;
+	private isActive = false;
 
 	static widgetIsEnabled(trendOptions: ITrendOptions, chartState: ChartState) {
 		return trendOptions.enabled && chartState.data.animations.enabled;
@@ -44,6 +45,7 @@ class TrendLoading extends TrendWidget {
 	}
 	
 	bindEvents() {
+		super.bindEvents();
 		this.bindEvent(this.trend.onPrependRequest(() => this.activate()))
 	}
 
@@ -60,11 +62,14 @@ class TrendLoading extends TrendWidget {
 			animation.restart();
 		});
 		this.animation = animation;
+		this.isActive = true;
+		this.updatePosition();
 	}
 
 	private deactivate() {
 		this.animation && this.animation.kill();
 		this.mesh.material.opacity = 0;
+		this.isActive = false;
 	}
 
 
@@ -87,10 +92,14 @@ class TrendLoading extends TrendWidget {
 		});
 	}
 	
-	protected onTrendAnimate(animationState: TrendPoints) {
+	protected onZoomFrame() {
+		this.updatePosition();
+	}
+
+	private updatePosition() {
+		if (!this.isActive) return;
 		// set new widget position
-		var pointVector = animationState.getStartPoint().getCurrentVec();
+		var pointVector = this.trend.points.getStartPoint().getFramePoint();
 		this.mesh.position.set(pointVector.x, pointVector.y, 0);
-	
 	}
 }

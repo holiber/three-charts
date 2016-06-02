@@ -1,5 +1,8 @@
 import Texture = THREE.Texture;
 import Color = THREE.Color;
+import {TIteralable} from "./interfaces";
+
+var isPlainObject = require('is-plain-object') as Function;
 
 export declare type TUid = number;
 
@@ -162,6 +165,36 @@ export class Utils {
 		return (rgb[0] << (8 * 2)) + (rgb[1] << 8) + rgb[2];
 	}
 
+	static throttle(func: Function, ms: number) {
+
+	var isThrottled = false,
+		savedArgs: any,
+		savedThis: any;
+
+	function wrapper() {
+
+		if (isThrottled) { // (2)
+			savedArgs = arguments;
+			savedThis = this;
+			return;
+		}
+
+		func.apply(this, arguments); // (1)
+
+		isThrottled = true;
+
+		setTimeout(function() {
+			isThrottled = false; // (3)
+			if (savedArgs) {
+				wrapper.apply(savedThis, savedArgs);
+				savedArgs = savedThis = null;
+			}
+		}, ms);
+	}
+
+	return wrapper;
+}
+
 	static msToTimeString(timestamp: number) {
 		var h = Math.floor(timestamp / 360000);
 		var m =  Math.floor(timestamp / 60000);
@@ -172,6 +205,18 @@ export class Utils {
 	static getRandomItem<T>(arr: Array<T>): T {
 		var ind = Math.floor(Math.random() * arr.length);
 		return arr[ind];
+	}
+
+	static copyProps(srcObject: TIteralable, dstObject: TIteralable, props: TIteralable, excludeProps: string[] = []) {
+		for (var key in props) {
+			if (excludeProps.indexOf(key) !== -1) continue;
+			if (srcObject[key] == void 0) continue;
+			if (isPlainObject(props[key]) && dstObject[key] !== void 0) {
+				this.copyProps(srcObject[key], dstObject[key], props[key])
+			} else {
+				dstObject[key] = this.deepCopy(srcObject[key]);
+			}
+		}
 	}
 
 }

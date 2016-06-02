@@ -21,6 +21,8 @@ export enum AXIS_RANGE_TYPE {
  */
 export declare type TEase = Ease | Linear;
 
+export declare type TIteralable = {[key: string]: any};
+
 export enum AXIS_TYPE {X, Y}
 
 export interface IAxisRange {
@@ -32,7 +34,13 @@ export interface IAxisRange {
 	padding?: {
 		start?: number,
 		end?: number
-	}
+	},
+
+	/** only for internal usage **/
+	zeroVal?: number,
+
+	/** only for internal usage **/
+	scaleFactor?: number,
 }
 
 export interface IAxisOptions {

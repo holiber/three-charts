@@ -9,6 +9,7 @@ import LineSegments = THREE.LineSegments;
 import {ChartState} from "../State";
 import {IAxisOptions} from "../Chart";
 import {Utils} from "../Utils";
+import {IScreenTransformOptions} from "../Screen";
 
 export interface IGridParamsForAxis {
 	start: number,
@@ -19,141 +20,111 @@ export interface IGridParamsForAxis {
 	segmentsCount: number
 }
 
-interface ILinesValues {
-	x: number[],
-	y: number[]
-}
-
-// update lines is expensive operation, so we do it only once per second
-var UPDATE_LINES_INTERVAL = 1000;
-
 /**
  * widget for drawing chart grid
  */
 export class GridWidget extends ChartWidget{
 	static widgetName = 'Grid';
 	private lineSegments: LineSegments;
-	private axisXGridParams: IGridParamsForAxis;
-	private axisYGridParams: IGridParamsForAxis;
-	private linesValues: ILinesValues = {x: [], y: []};
-	private scrollInSegments: number;
 	private gridSizeH: number;
 	private gridSizeV: number;
-	private linesLastUpdateTime = 0;
-	private linesXAnimation: TweenLite;
-	private linesYAnimation: TweenLite;
 
 	constructor (chartState: ChartState) {
 		super(chartState);
-		this.updateGridParams();
-		var {width, height} = chartState.data;
-		this.gridSizeH = Math.floor(width / chartState.data.xAxis.gridMinSize) * 3;
-		this.gridSizeV = Math.floor(height / chartState.data.yAxis.gridMinSize) * 3;
-		this.linesValues = this.getCurrentLinesValues();
-		var geometry = new THREE.Geometry();
-		var material = new THREE.LineBasicMaterial( { linewidth: 1, opacity: 0.07, transparent: true} );
-		for (let xVal of this.linesValues.x) geometry.vertices.push(...this.getVerticalLineSegment(xVal));
-		for (let yVal of this.linesValues.y) geometry.vertices.push(...this.getHorizontalLineSegment(yVal));
-		this.lineSegments = new LineSegments(geometry, material);
-	}
-
-	private updateGridParams() {
-		var {yAxis, xAxis, width, height} = this.chartState.data;
-		this.axisXGridParams = GridWidget.getGridParamsForAxis(xAxis, width);
-		this.axisYGridParams = GridWidget.getGridParamsForAxis(yAxis, height);
-		this.scrollInSegments = Math.ceil(xAxis.range.scroll / this.axisXGridParams.stepInPx);
-	}
-
-	private getCurrentLinesValues(): ILinesValues {
-		var linesValues: ILinesValues = {x: [], y: []};
-		var axisXGrid = this.axisXGridParams;
-		var axisYGrid = this.axisYGridParams;
-		var startX = axisXGrid.start + this.scrollInSegments * axisXGrid.step;
-		var startY = axisYGrid.start;
-
-		for (let i =  -this.gridSizeH / 3; i < this.gridSizeH * 2/3; i++) {
-			linesValues.x.push(startX + i * axisXGrid.step);
-		}
-
-		for (let i =  -this.gridSizeV / 3; i < this.gridSizeV * 2/3; i++) {
-			linesValues.y.push(startY + i * axisYGrid.step);
-		}
-		
-		return linesValues;
-	}
-
-	private getHorizontalLineSegment(yVal: number): Vector3[] {
-		var {width} = this.chartState.data;
-		var y = this.chartState.getPointOnYAxis(yVal);
-		var scrollX = this.scrollInSegments * this.axisXGridParams.stepInPx;
-		return [new THREE.Vector3(width * 2 + scrollX, y, 0 ), new THREE.Vector3( -width + scrollX, y, 0 )];
-	}
-
-	private getVerticalLineSegment(xVal: number): Vector3[] {
-		var {height} = this.chartState.data;
-		var x = this.chartState.getPointOnXAxis(xVal);
-		return [new THREE.Vector3(x, height * 2, 0 ), new THREE.Vector3(x, -height, 0 )];
+		var {width, height, xAxis, yAxis} = chartState.data;
+		this.gridSizeH = Math.floor(width / xAxis.gridMinSize) * 3;
+		this.gridSizeV = Math.floor(height / yAxis.gridMinSize) * 3;
+		this.initGrid();
+		this.updateGrid();
 	}
 
 	bindEvents() {
-		this.chartState.onScroll(() => {
-			this.onScrollChange();
-		});
-		this.chartState.onScrollStop(() => this.recalculateLines());
-		this.chartState.onZoom(() => this.onZoom());
+		// grid is bigger then screen, so it's no need to update it on each scroll event
+		this.chartState.onScroll(Utils.throttle(() => this.updateGrid(), 1000));
+
+		this.chartState.screen.onZoomFrame((options) => this.onZoomFrame(options));
 	}
 
-	private onScrollChange() {
-		if (Date.now() - this.linesLastUpdateTime >= UPDATE_LINES_INTERVAL) {
-			this.recalculateLines();
-		}
+	private initGrid() {
+		var geometry = new THREE.Geometry();
+		var material = new THREE.LineBasicMaterial( { linewidth: 1, opacity: 0.09, transparent: true});
+		var xLinesCount = this.gridSizeH;
+		var yLinesCount = this.gridSizeV;
+		while (xLinesCount--) geometry.vertices.push(new Vector3(), new Vector3());
+		while (yLinesCount--) geometry.vertices.push(new Vector3(), new Vector3());
+		this.lineSegments = new LineSegments(geometry, material);
+		this.lineSegments.frustumCulled = false;
 	}
 
-	private onZoom() {
-		// var newLineValues = this.getCurrentLinesValues();
-		// var animations = this.chartState.data.animations;
-		// var time = animations.enabled ? animations.zoomSpeed : 0;
-		// if (this.linesXAnimation) this.linesXAnimation.pause();
-		// if (this.linesYAnimation) this.linesYAnimation.pause();
-		// this.linesXAnimation = TweenLite.to(this.linesValues.x, time, newLineValues.x);
-		// this.linesYAnimation = TweenLite.to(this.linesValues.y, time, newLineValues.y);
-		// this.linesXAnimation.eventCallback('onUpdate', () => {
-		// 	this.updateLinesSegments();
-		// });
-		// this.linesXAnimation.eventCallback('onComplete', () => {
-		// 	this.recalculateLines();
-		// });
-		this.recalculateLines();
-	}
-
-	private recalculateLines() {
-		this.updateGridParams();
-		this.linesValues = this.getCurrentLinesValues();
-		this.updateLinesSegments();
-		this.linesLastUpdateTime = Date.now();
-	}
-
-	private updateLinesSegments() {
-		var horizontalLines = this.linesValues.x;
-		var verticalLines = this.linesValues.y;
+	private updateGrid() {
+		var {yAxis, xAxis, width, height} = this.chartState.data;
+		var axisXGrid = GridWidget.getGridParamsForAxis(xAxis, width, xAxis.range.scroll, xAxis.range.zoom);
+		var axisYGrid = GridWidget.getGridParamsForAxis(yAxis, height, yAxis.range.scroll, yAxis.range.zoom);
+		var scrollXInSegments = Math.ceil(xAxis.range.scroll / axisXGrid.step);
+		var scrollYInSegments = Math.ceil(yAxis.range.scroll / axisYGrid.step);
+		var gridScrollXVal = scrollXInSegments * axisXGrid.step;
+		var gridScrollYVal = scrollYInSegments * axisYGrid.step;
+		var startXVal = axisXGrid.start + gridScrollXVal;
+		var startYVal = axisYGrid.start + gridScrollYVal;
 		var geometry = this.lineSegments.geometry as Geometry;
-		var verticalValuesOffset = this.gridSizeH * 2;
+		var vertices = geometry.vertices;
+		var lineInd = 0;
 
-		for (let i = 0; i < horizontalLines.length; i++) {
-			let lineSegment = this.getVerticalLineSegment(horizontalLines[i]);
-			geometry.vertices[i * 2].set(lineSegment[0].x, lineSegment[0].y, 0);
-			geometry.vertices[i * 2 + 1].set(lineSegment[1].x, lineSegment[1].y, 0);
+		for (let i =  -this.gridSizeH / 3; i < this.gridSizeH * 2/3; i++) {
+			let value = startXVal + i * axisXGrid.step;
+			let lineSegment = this.getVerticalLineSegment(value, gridScrollXVal, gridScrollYVal);
+			vertices[lineInd * 2].set(lineSegment[0].x, lineSegment[0].y, 0);
+			vertices[lineInd * 2 + 1].set(lineSegment[1].x, lineSegment[1].y, 0);
+			lineInd++;
 		}
-		for (let i = 0; i < verticalLines.length; i++) {
-			let lineSegment = this.getHorizontalLineSegment(verticalLines[i]);
-			geometry.vertices[verticalValuesOffset + i * 2].set(lineSegment[0].x, lineSegment[0].y, 0);
-			geometry.vertices[verticalValuesOffset + i * 2 + 1].set(lineSegment[1].x, lineSegment[1].y, 0);
+
+		for (let i =  -this.gridSizeV / 3; i < this.gridSizeV * 2/3; i++) {
+			let value = startYVal + i * axisYGrid.step;
+			let lineSegment = this.getHorizontalLineSegment(value, gridScrollXVal, gridScrollYVal);
+			vertices[lineInd * 2].set(lineSegment[0].x, lineSegment[0].y, 0);
+			vertices[lineInd * 2 + 1].set(lineSegment[1].x, lineSegment[1].y, 0);
+			lineInd++;
 		}
+
 		geometry.verticesNeedUpdate = true;
+
+		this.lineSegments.scale.set(
+			xAxis.range.scaleFactor * xAxis.range.zoom,
+			yAxis.range.scaleFactor * yAxis.range.zoom,
+			1
+		)
 	}
 
-	static getGridParamsForAxis(axisOptions: IAxisOptions, axisWidth: number): IGridParamsForAxis {
-		var {from, to} = axisOptions.range;
+	private getHorizontalLineSegment(yVal: number, scrollXVal: number, scrollYVal: number): Vector3[] {
+		var chartState = this.chartState;
+		var localYVal = yVal - chartState.data.yAxis.range.zeroVal - scrollYVal;
+		var widthVal = chartState.pxToValueByXAxis(chartState.data.width);
+		return [
+			new THREE.Vector3(widthVal * 2 + scrollXVal, localYVal, 0 ),
+			new THREE.Vector3( -widthVal + scrollXVal, localYVal, 0 )
+		];
+	}
+
+	private getVerticalLineSegment(xVal: number, scrollXVal: number, scrollYVal: number): Vector3[] {
+		var chartState = this.chartState;
+		var localXVal = xVal - chartState.data.xAxis.range.zeroVal - scrollXVal;
+		var heightVal = chartState.pxToValueByYAxis(chartState.data.height);
+		return [
+			new THREE.Vector3(localXVal, heightVal * 2 + scrollYVal, 0 ),
+			new THREE.Vector3(localXVal, -heightVal + scrollYVal, 0 )
+		];
+	}
+
+	private onZoomFrame(options: IScreenTransformOptions) {
+		var {xAxis, yAxis} = this.chartState.data;
+		if (options.zoomX) this.lineSegments.scale.setX(xAxis.range.scaleFactor * options.zoomX);
+		if (options.zoomY) this.lineSegments.scale.setY(yAxis.range.scaleFactor * options.zoomY);
+	}
+
+	static getGridParamsForAxis(axisOptions: IAxisOptions, axisWidth: number, scroll: number, zoom: number): IGridParamsForAxis {
+		var axisRange = axisOptions.range;
+		var from = axisOptions.range.zeroVal + scroll;
+		var to = from + axisWidth / (axisRange.scaleFactor * zoom);
 		var axisLength = to - from;
 		var gridStep = 0;
 		var gridStepInPixels = 0;
@@ -201,7 +172,7 @@ export class GridWidget extends ChartWidget{
 			segmentsCount: Math.round((gridEnd - gridStart) / gridStep)
 		}
 	}
-
+	
 	getObject3D() {
 		return this.lineSegments;
 	}
