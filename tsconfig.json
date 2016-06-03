@@ -4,13 +4,11 @@
     "module": "commonjs",
     "sourceMap": true,
     "outDir": "build/tmp",
-    "noImplicitAny": true
+    "declaration": true
   },
   "exclude": [
     "node_modules",
     "typings/main.d.ts",
     "typings/main"
-  ],
-
-  "compileOnSave": true
+  ]
 }
