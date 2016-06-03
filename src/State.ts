@@ -8,7 +8,7 @@ import {Trends, ITrendsOptions} from "./Trends";
 import {Screen} from "./Screen";
 import {IChartEvent} from "./Events";
 import {AxisMarks} from "./AxisMarks";
-import {AXIS_TYPE} from "./interfaces";
+import {AXIS_TYPE, AXIS_DATA_TYPE} from "./interfaces";
 
 
 interface IRecalculatedStateResult {
@@ -20,25 +20,12 @@ interface IRecalculatedStateResult {
 /**
  * readonly computed state data
  * calculated after recalculateState() call
+ * contains cached values
  */
 interface IChartStateComputedData {
 	trends?: {
 		maxXVal: number,
 		minXVal: number
-	},
-	xAxis?: {
-		range: {
-			initialFrom: number,
-			initialTo: number,
-			scaleFactor: number
-		}
-	},
-	yAxis?: {
-		range: {
-			initialFrom: number,
-			initialTo: number,
-			scaleFactor: number
-		}
 	}
 }
 
@@ -73,12 +60,14 @@ export class ChartState {
 		zoom: 0,
 		xAxis: {
 			range: {type: AXIS_RANGE_TYPE.ALL, from: 0, to: 0, scroll: 0, padding: {start: 0, end: 200}, zoom: 1},
+			dataType: AXIS_DATA_TYPE.NUMBER,
 			gridMinSize: 100,
 			autoScroll: true,
 			marks: [],
 		},
 		yAxis: {
 			range: {type: AXIS_RANGE_TYPE.RELATIVE_END, from: 0, to: 0, padding: {start: 100, end: 100}, zoom: 1},
+			dataType: AXIS_DATA_TYPE.NUMBER,
 			gridMinSize: 50,
 			marks: []
 		},
@@ -207,28 +196,6 @@ export class ChartState {
 
 	}
 
-	private initComputedData() {
-		var {width, height} = this.data;
-		var {from: xFrom, to: xTo} = this.data.xAxis.range;
-		var {from: yFrom, to: yTo} = this.data.yAxis.range;
-		this.data.computedData = {
-			xAxis: {
-				range: {
-					initialFrom: xFrom,
-					initialTo: xTo,
-					scaleFactor: width / (xTo - xFrom)
-				}
-			},
-			yAxis: {
-				range: {
-					initialFrom: yFrom,
-					initialTo: yTo,
-					scaleFactor: height / (yTo - yFrom)
-				}
-			}
-		};
-	}
-
 	private recalculateState(changedProps?: IChartState): IRecalculatedStateResult {
 		var data = this.data;
 		var patch: IChartState = {};
@@ -297,9 +264,6 @@ export class ChartState {
 	}
 
 	private getComputedData(changedProps?: IChartState): IChartStateComputedData {
-		if (!this.data.computedData) {
-			this.initComputedData();
-		}
 		var computeAll = !changedProps;
 		var computedData: IChartStateComputedData = {};
 
@@ -384,6 +348,7 @@ export class ChartState {
 		var patch: IAxisOptions = {range: {}};
 		var isInitialize = axisRange.zeroVal == void 0;
 		var zeroVal: number, scaleFactor: number;
+		var zoom = axisRange.zoom;
 
 		if (isInitialize) {
 			zeroVal = axisRange.from;
@@ -393,8 +358,23 @@ export class ChartState {
 			zeroVal = axisRange.zeroVal;
 			scaleFactor = axisRange.scaleFactor;
 		}
-		var from = zeroVal + axisRange.scroll;
-		var to = from + actualData.width / (scaleFactor * axisRange.zoom);
+
+		do {
+			var from = zeroVal + axisRange.scroll;
+			var to = from + actualData.width / (scaleFactor * zoom);
+			var rangeLength = to - from;
+			var needToRecalculateZoom = false;
+			
+			if (rangeLength > axisRange.maxLength || rangeLength < axisRange.minLength) {
+				var fixScale = rangeLength > axisRange.maxLength ?
+					rangeLength / axisRange.maxLength :
+					rangeLength / axisRange.minLength;
+				var zoom = zoom * fixScale;
+				patch.range.zoom = zoom;
+				needToRecalculateZoom = true;
+			}
+		} while (needToRecalculateZoom);
+
 		patch.range.from = from;
 		patch.range.to = to;
 		return patch;

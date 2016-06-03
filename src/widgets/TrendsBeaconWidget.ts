@@ -122,6 +122,6 @@ class TrendBeacon extends TrendWidget {
 		var screenX = state.screen.getScreenXByPoint(endPointVector.x);
 		if (screenX < 0) x = state.screen.getPointByScreenX(0);
 		if (screenX > screenWidth) x = state.screen.getPointByScreenX(screenWidth);
-		this.mesh.position.set(x, endPointVector.y, 0);
+		this.mesh.position.set(x, endPointVector.y, 0.1);
 	}
 }

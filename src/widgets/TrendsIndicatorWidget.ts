@@ -70,7 +70,6 @@ class TrendIndicator extends TrendWidget {
 			new THREE.PlaneGeometry(CANVAS_WIDTH, CANVAS_HEIGHT),
 			material
 		);
-
 	}
 
 	protected onTransformationFrame() {
@@ -97,7 +96,7 @@ class TrendIndicator extends TrendWidget {
 			if (screenX > screenWidth) x = state.screen.getPointByScreenX(screenWidth) - CANVAS_WIDTH / 2 - 10;
 			y -= 25;
 		}
-		this.mesh.position.set(x + CANVAS_WIDTH / 2, y + CANVAS_HEIGHT / 2  - 30, 0);
+		this.mesh.position.set(x + CANVAS_WIDTH / 2, y + CANVAS_HEIGHT / 2  - 30, 0.1);
 	}
 
 	

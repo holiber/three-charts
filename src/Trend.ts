@@ -10,7 +10,7 @@ export interface IPrependPromiseExecutor {
 	(requestedDataLength: number, resolve: (data: TTrendRawData) => void, reject: () => void): void;
 }
 export type TTrendRawData = ITrendData | number[];
-export interface ITrendItem {xVal: number, yVal: number, id: number}
+export interface ITrendItem {xVal: number, yVal: number, id?: number}
 export interface ITrendData extends Array<ITrendItem>{}
 export interface ITrendOptions {
 	enabled?: boolean,

@@ -2,35 +2,56 @@
 import {Chart, AXIS_RANGE_TYPE} from './src/Chart';
 import {ITrendMarkOptions} from "./src/TrendMarks";
 import {Utils} from "./src/Utils";
+import {ITrendItem} from "./src/Trend";
+import {AXIS_DATA_TYPE} from "./src/interfaces";
 
 var chart: Chart;
 
 class DataSourse {
-	data: number[] = [];
+	data: ITrendItem[] = [];
+	startTime: number;
+	endTime: number;
 
 	constructor() {
 		let sec = 0;
 		let val = 70;
+		this.startTime = Date.now();
 
-		while (sec < 40) {
-			this.data.push(val);
+		while (sec < 20) {
+			this.data.push({
+				xVal: this.startTime + sec * 1000,
+				yVal: val
+			});
 			val += Math.random() * 14 - 7;
 			sec++;
 		}
+		this.endTime = this.data[this.data.length - 1].xVal;
 	}
 
 	getNext() {
 		var lastVal = this.data[this.data.length - 1];
-		var nextVal = lastVal + Math.random() * 14 - 7;
-		this.data.push(nextVal);
-		return nextVal;
+		var yVal = lastVal.yVal + Math.random() * 14 - 7;
+		var xVal = this.endTime + 1000;
+		this.endTime = xVal;
+		var item = {
+			xVal: xVal,
+			yVal: yVal
+		};
+		this.data.push(item);
+		return item;
 	}
 
 	getPrev() {
 		var firstVal = this.data[0];
-		var nextVal = firstVal + Math.random() * 14 - 7;
-		this.data.unshift(nextVal);
-		return nextVal;
+		var yVal = firstVal.yVal + Math.random() * 14 - 7;
+		var xVal = this.startTime - 1000;
+		this.startTime = xVal;
+		var item = {
+			xVal: xVal,
+			yVal: yVal
+		};
+		this.data.unshift(item);
+		return item;
 	}
 }
 
@@ -65,10 +86,18 @@ window.onload = function () {
 		// 	range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 100}
 		// },
 		xAxis: {
-			range: {type: AXIS_RANGE_TYPE.FIXED, from: 10, to: 30},
+			//range: {type: AXIS_RANGE_TYPE.FIXED, from: 10, to: 30},
+			dataType: AXIS_DATA_TYPE.DATE,
+			range: {
+				type: AXIS_RANGE_TYPE.FIXED,
+				from: Date.now(),
+				to: Date.now() + 20000,
+				maxLength: 500000,
+				minLength: 5000
+			},
 			marks: [
-				{value: 45, name: 'deadline', title: 'DEADLINE', lineColor: '#ff6600', type: 'timeleft'},
-				{value: 55, name: 'close', title: 'CLOSE', lineColor: '#005187', type: 'timeleft'}
+				{value: Date.now() + 30000, name: 'deadline', title: 'DEADLINE', lineColor: '#ff6600', type: 'timeleft'},
+				{value: Date.now() + 40000, name: 'close', title: 'CLOSE', lineColor: '#005187', type: 'timeleft'}
 			]
 			// range: {
 			// 	from: 80,
@@ -81,7 +110,7 @@ window.onload = function () {
 				hasBeacon: true,
 				hasIndicator: true,
 				hasGradient: false,
-				marks: [MarksSource.generate(15)]
+				marks: [MarksSource.generate(Date.now() + 3000)]
 			},
 			// 'red': {dataset: dsRed.data, lineColor: 0xFF2222, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
 			// 'blue': {dataset: dsBlue.data, lineColor: 0x2222FF, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
@@ -105,8 +134,8 @@ window.onload = function () {
 	mainTrend.onDataChange(() => {
 		var closeValue = closeMark.options.value;
 		if (mainTrend.getLastItem().xVal >= closeValue) {
-			deadlineMark.setOptions({value: closeValue + 15})
-			closeMark.setOptions({value: closeValue + 25})
+			deadlineMark.setOptions({value: closeValue + 10000})
+			closeMark.setOptions({value: closeValue + 20000})
 		}
 		var markOptions = MarksSource.getNext(mainTrend.getLastItem().xVal);
 		if (markOptions) setTimeout(() => {
@@ -160,8 +189,8 @@ window.onload = function () {
 	var i = 0;
 
 	chart.getTrend('main').onPrependRequest((requestedLength, resolve, reject) => {
-		var responseData: number[] = [];
-		var ticksCount = Math.round(requestedLength);
+		var responseData: ITrendItem[] = [];
+		var ticksCount = Math.round(requestedLength / 1000) ;
 		while (ticksCount--) responseData.unshift(dsMain.getPrev());
 		setTimeout(() => {
 			resolve(responseData);

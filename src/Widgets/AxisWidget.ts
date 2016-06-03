@@ -16,7 +16,7 @@ import PlaneGeometry = THREE.PlaneGeometry;
 import MeshBasicMaterial = THREE.MeshBasicMaterial;
 import OrthographicCamera = THREE.OrthographicCamera;
 import {IScreenTransformOptions} from "../Screen";
-import {AXIS_TYPE} from "../interfaces";
+import {AXIS_TYPE, AXIS_DATA_TYPE} from "../interfaces";
 
 /**
  * widget for drawing axis
@@ -151,20 +151,29 @@ export class AxisWidget extends ChartWidget {
 
 		ctx.beginPath();
 		for (let val = startVal; val <= endVal; val += axisGridParams.step) {
+			let displayedValue = '';
 			if (isXAxis) {
 				let pxVal = this.chartState.screen.getPointOnXAxis(val) - scrollX + visibleWidth;
 				ctx.textAlign = "center";
 				// uncomment for dots
 				// ctx.moveTo(pxVal + 0.5, canvasHeight);
 				// ctx.lineTo(pxVal + 0.5, canvasHeight - 5);
-				ctx.fillText(Number(val.toFixed(14)).toString(), pxVal, canvasHeight - 10);
+				if (axisOptions.dataType == AXIS_DATA_TYPE.DATE) {
+					displayedValue = AxisWidget.getDateStr(val, axisGridParams);
+				} else {
+					displayedValue = Number(val.toFixed(14)).toString();
+				}
+
+				ctx.fillText(displayedValue, pxVal, canvasHeight - 10);
 			} else {
 				let pxVal = canvasHeight - this.chartState.screen.getPointOnYAxis(val) + scrollY;
 				ctx.textAlign = "right";
 				// uncomment for dots
 				// ctx.moveTo(canvasWidth, pxVal + 0.5);
 				// ctx.lineTo(canvasWidth - 5, pxVal + 0.5);
-				ctx.fillText(Number(val.toFixed(14)).toString(), canvasWidth - 15 , pxVal + 3);
+
+				displayedValue = Number(val.toFixed(14)).toString();
+				ctx.fillText(displayedValue, canvasWidth - 15 , pxVal + 3);
 
 				// uncomment for left-side axis
 				// ctx.moveTo(0, pxVal + 0.5);
@@ -218,5 +227,16 @@ export class AxisWidget extends ChartWidget {
 		}
 		this.updateAxis(orientation);
 		TweenLite.to(material, 0.3, {opacity: 1});
+	}
+
+	static getDateStr(timestamp: number, gridParams: IGridParamsForAxis): string {
+		var sec = 1000;
+		var min = sec * 60;
+		var hour = min * 60;
+		var day = hour * 60;
+		var step = gridParams.step;
+		var d = new Date(timestamp);
+		var tf = (num: number) => Utils.toFixed(num, 2);
+		return tf(d.getHours()) + ':' + tf(d.getMinutes()) + ':' + tf(d.getSeconds());
 	}
 }

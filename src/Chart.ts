@@ -229,7 +229,7 @@ Chart.installWidget(AxisWidget);
 Chart.installWidget(GridWidget);
 Chart.installWidget(TrendsBeaconWidget);
 Chart.installWidget(TrendsIndicatorWidget);
-Chart.installWidget(TrendsGradientWidget);
+// Chart.installWidget(TrendsGradientWidget);
 Chart.installWidget(TrendsLoadingWidget);
 Chart.installWidget(AxisMarksWidget);
 Chart.installWidget(TrendsMarksWidget);

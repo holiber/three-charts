@@ -36,6 +36,9 @@ export interface IAxisRange {
 		end?: number
 	},
 
+	maxLength?: number;
+	minLength?: number;
+
 	/** only for internal usage **/
 	zeroVal?: number,
 
@@ -43,11 +46,14 @@ export interface IAxisRange {
 	scaleFactor?: number,
 }
 
+export enum AXIS_DATA_TYPE {NUMBER, DATE}
+
 export interface IAxisOptions {
-	range: IAxisRange,
-	gridMinSize?: number,
-	autoScroll?: boolean,
-	marks?: IAxisMarkOptions[]
+	range: IAxisRange;
+	dataType?: AXIS_DATA_TYPE;
+	gridMinSize?: number;
+	autoScroll?: boolean;
+	marks?: IAxisMarkOptions[];
 }
 
 export interface IAnimationsOptions {

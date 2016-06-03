@@ -155,7 +155,7 @@ export class AxisTimeleftMark extends AxisMark {
 		var maxXVal = this.chartState.data.computedData.trends.maxXVal;
 		var time = markVal - maxXVal;
 		if (time < 0) time = 0;
-		return Utils.msToTimeString(time * 1000);
+		return Utils.msToTimeString(time);
 	}
 
 	protected bindEvents() {
