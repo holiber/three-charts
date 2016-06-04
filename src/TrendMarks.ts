@@ -7,7 +7,7 @@ import Vector3 = THREE.Vector3;
 import {TrendPoint} from "./TrendPoints";
 var EventEmitter = require<typeof EventEmitter2>('EventEmitter2');
 
-enum TREND_MARK_SIDE {TOP, BOTTOM}
+export enum TREND_MARK_SIDE {TOP, BOTTOM}
 
 export interface ITrendMarkOptions {
 	value: number,

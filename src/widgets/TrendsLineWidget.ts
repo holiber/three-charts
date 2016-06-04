@@ -26,7 +26,7 @@ export class TrendsLineWidget extends TrendsWidget<TrendLine> {
 }
 
 
-class TrendLine extends TrendWidget {
+export class TrendLine extends TrendWidget {
 	private material: LineBasicMaterial;
 	private lineSegments: LineSegments;
 	private scaleXFactor: number;

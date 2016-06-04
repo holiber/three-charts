@@ -22,7 +22,7 @@ export class TrendsIndicatorWidget extends TrendsWidget<TrendIndicator> {
 	}
 }
 
-class TrendIndicator extends TrendWidget {
+export class TrendIndicator extends TrendWidget {
 	private mesh: Mesh;
 	private point: TrendPoint;
 

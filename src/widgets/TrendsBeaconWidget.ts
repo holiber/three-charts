@@ -22,7 +22,7 @@ export class TrendsBeaconWidget extends TrendsWidget<TrendBeacon> {
 	}
 }
 
-class TrendBeacon extends TrendWidget {
+export class TrendBeacon extends TrendWidget {
 	private mesh: Mesh;
 	private animated: boolean;
 	private point: TrendPoint;

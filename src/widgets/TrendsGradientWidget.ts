@@ -41,7 +41,7 @@ export class TrendsGradientWidget extends TrendsWidget<TrendGradient> {
 
 
 
-class TrendGradient extends TrendWidget {
+export class TrendGradient extends TrendWidget {
 	private gradient: Mesh;
 	
 	static widgetIsEnabled(trendOptions: ITrendOptions) {

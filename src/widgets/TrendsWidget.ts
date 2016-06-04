@@ -3,14 +3,13 @@ import {ChartWidget} from "../Widget";
 import Object3D = THREE.Object3D;
 import {ChartState} from "../State";
 import {ITrendOptions, ITrendData, Trend} from "../Trend";
-import {IAxisOptions, MAX_DATA_LENGTH} from "../Chart";
 import Vector2 = THREE.Vector2;
 import Vector3 = THREE.Vector3;
 import {TrendPoints} from "../TrendPoints";
 import {IScreenTransformOptions} from "../Screen";
 
 
-interface ITrendWidgetClass<TrendWidgetType> {
+export interface ITrendWidgetClass<TrendWidgetType> {
 	new (chartState: ChartState, trendName: string): TrendWidgetType;
 	widgetIsEnabled(trendOptions: ITrendOptions, chartState: ChartState): boolean;
 }

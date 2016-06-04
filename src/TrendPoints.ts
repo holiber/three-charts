@@ -6,7 +6,7 @@ import Vector3 = THREE.Vector3;
 import {ITrendData, ITrendOptions, ITrendItem, Trend} from "./Trend";
 import {Utils, TUid} from "./Utils";
 
-interface ITargets {
+export interface ITargets {
 	ease?: Linear | Ease
 	[key: string]: number | Linear | Ease
 }

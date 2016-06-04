@@ -28,7 +28,7 @@ export class TrendsMarksWidget extends TrendsWidget<TrendMarksWidget> {
 /**
  * widget for drawing trend marks for one trend
  */
-class TrendMarksWidget extends TrendWidget {
+export class TrendMarksWidget extends TrendWidget {
 
 	private object3D: Object3D;
 	private marksWidgets: {[name: string]: TrendMarkWidget} = {};

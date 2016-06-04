@@ -7,9 +7,9 @@ import Line = THREE.Line;
 import {ChartWidget} from "../Widget";
 import LineSegments = THREE.LineSegments;
 import {ChartState} from "../State";
-import {IAxisOptions} from "../Chart";
 import {Utils} from "../Utils";
 import {IScreenTransformOptions} from "../Screen";
+import {IAxisOptions} from "../interfaces";
 
 export interface IGridParamsForAxis {
 	start: number,

@@ -1,6 +1,5 @@
 
 
-
 /**
  * defines how axis range will be calculated
  * FIXED - directly use range.from and range.to value

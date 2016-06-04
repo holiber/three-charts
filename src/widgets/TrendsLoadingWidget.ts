@@ -21,7 +21,7 @@ export class TrendsLoadingWidget extends TrendsWidget<TrendLoading> {
 	}
 }
 
-class TrendLoading extends TrendWidget {
+export class TrendLoading extends TrendWidget {
 	private mesh: Mesh;
 	private animation: TweenLite;
 	private isActive = false;

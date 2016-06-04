@@ -1,6 +1,5 @@
 import {ITrendOptions, Trend, ITrendData} from "./Trend";
 var EE = require('EventEmitter2') as typeof EventEmitter2;
-import {IAxisOptions, AXIS_RANGE_TYPE, IAnimationsOptions, Chart} from "./Chart";
 import {Utils} from './Utils';
 import Vector3 = THREE.Vector3;
 import {IChartWidgetOptions, ChartWidget} from "./Widget";
@@ -8,7 +7,8 @@ import {Trends, ITrendsOptions} from "./Trends";
 import {Screen} from "./Screen";
 import {IChartEvent} from "./Events";
 import {AxisMarks} from "./AxisMarks";
-import {AXIS_TYPE, AXIS_DATA_TYPE} from "./interfaces";
+import {AXIS_TYPE, AXIS_DATA_TYPE, IAxisOptions, IAnimationsOptions, AXIS_RANGE_TYPE} from "./interfaces";
+import {Chart} from "./Chart";
 
 
 interface IRecalculatedStateResult {
@@ -22,7 +22,7 @@ interface IRecalculatedStateResult {
  * calculated after recalculateState() call
  * contains cached values
  */
-interface IChartStateComputedData {
+export interface IChartStateComputedData {
 	trends?: {
 		maxXVal: number,
 		minXVal: number

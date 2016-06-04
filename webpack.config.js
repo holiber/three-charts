@@ -2,8 +2,9 @@ var CommonsPlugin = new require("webpack/lib/optimize/CommonsChunkPlugin");
 
 module.exports = {
     entry: {
-        'demoApp': './demoApp.ts',
-        'previewApp': './demo/previewApp.ts'
+        // 'demoApp': './demoApp.ts',
+        // 'chart': './scr'
+        demoApp: "./demoApp.ts"
     },
     output: {
         path: __dirname + '/build',
@@ -20,7 +21,7 @@ module.exports = {
         loaders: [
             {
                 test: /\.ts$/,
-                loader: 'ts-loader', //awesome-typescript-loader
+                loader: 'awesome-typescript-loader' //'ts-loader'
 
             }
         ]

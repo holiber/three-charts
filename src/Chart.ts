@@ -1,7 +1,7 @@
 // deps must be always on top
+import {Trend} from "./Trend";
 require('./deps');
 
-export * from './interfaces';
 import Vector3 = THREE.Vector3;
 import PerspectiveCamera = THREE.PerspectiveCamera;
 import Renderer = THREE.Renderer;
@@ -107,7 +107,7 @@ export class Chart {
 	/**
 	 * shortcut for Chart.state.getTrend
 	 */
-	getTrend(trendName: string) {
+	getTrend(trendName: string): Trend {
 		return this.state.getTrend(trendName);
 	}
 	

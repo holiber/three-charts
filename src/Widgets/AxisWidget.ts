@@ -7,7 +7,6 @@ import Line = THREE.Line;
 import Object3D = THREE.Object3D;
 import UVMapping = THREE.UVMapping;
 import GridHelper = THREE.GridHelper;
-import {IAxisOptions} from "../Chart";
 import {ChartWidget} from "../Widget";
 import {ChartState} from "../State";
 import {GridWidget, IGridParamsForAxis} from "./GridWidget";
@@ -16,7 +15,7 @@ import PlaneGeometry = THREE.PlaneGeometry;
 import MeshBasicMaterial = THREE.MeshBasicMaterial;
 import OrthographicCamera = THREE.OrthographicCamera;
 import {IScreenTransformOptions} from "../Screen";
-import {AXIS_TYPE, AXIS_DATA_TYPE} from "../interfaces";
+import {AXIS_TYPE, AXIS_DATA_TYPE, IAxisOptions} from "../interfaces";
 
 /**
  * widget for drawing axis
