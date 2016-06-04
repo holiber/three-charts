@@ -1,1 +1,1 @@
-{"version":3,"sources":["webpack:///./index.ts"],"names":[],"mappings":";;;;;;;;;AAAA,4CAA2C;AAC3C,8BAAc,CAAa,CAAC","file":"index.js","sourcesContent":["/// <reference path=\"typings/index.d.ts\" />\nexport * from './src/index';\n\n\n/** WEBPACK FOOTER **\n ** ./index.ts\n **/"],"sourceRoot":""}
+{"version":3,"sources":["webpack:///./index.ts"],"names":[],"mappings":";;;;;;;;;AAAA,8BAAc,CAAa,CAAC","file":"index.js","sourcesContent":["export * from './src/index';\n\n\n/** WEBPACK FOOTER **\n ** ./index.ts\n **/"],"sourceRoot":""}

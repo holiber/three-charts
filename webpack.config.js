@@ -33,6 +33,6 @@ module.exports = {
             name: "chart"
         }),
 
-        new CopyWebpackPlugin([{ from: 'typings', to: 'typings' }])
+        // new CopyWebpackPlugin([{ from: 'typings', to: 'typings' }])
     ]
 };
