@@ -1,8 +1,7 @@
 {
   "version": false,
   "dependencies": {
-    "es6-promise": "registry:npm/es6-promise#3.0.0+20160211003958",
-    "webpack": "registry:npm/webpack#1.12.9+20160418172948"
+    "es6-promise": "registry:npm/es6-promise#3.0.0+20160211003958"
   },
   "globalDependencies": {
     "eventemitter2": "registry:dt/eventemitter2#0.14.4+20160316155526",

@@ -1,10 +1,11 @@
 var CommonsPlugin = new require("webpack/lib/optimize/CommonsChunkPlugin");
+var CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
     entry: {
         // 'demoApp': './demoApp.ts',
-        // 'chart': './scr'
-        demoApp: "./demoApp.ts"
+        index: './index.ts',
+        demoApp: "./demo/demoApp.ts"
     },
     output: {
         path: __dirname + '/build',
@@ -30,6 +31,8 @@ module.exports = {
     plugins: [
         new CommonsPlugin({
             name: "chart"
-        })
+        }),
+
+        new CopyWebpackPlugin([{ from: 'typings', to: 'typings' }])
     ]
 };

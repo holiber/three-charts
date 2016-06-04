@@ -25,8 +25,6 @@ export class AxisWidget extends ChartWidget {
 	private object3D: Object3D;
 	private axisXObject: Object3D;
 	private axisYObject: Object3D;
-	private showAxisXTimeout = 0;
-	private showAxisYTimeout = 0;
 	private updateAxisXRequest: () => void;
 	
 	constructor (state: ChartState) {
@@ -199,34 +197,34 @@ export class AxisWidget extends ChartWidget {
 		}
 	}
 
-	private temporaryHideAxis(orientation: AXIS_TYPE) {
-		var isXAxis = orientation == AXIS_TYPE.X;
-		var timeoutId = setTimeout(() => {
-				this.showAxis(orientation);
-		}, 200);
+	// private temporaryHideAxis(orientation: AXIS_TYPE) {
+	// 	var isXAxis = orientation == AXIS_TYPE.X;
+	// 	var timeoutId = setTimeout(() => {
+	// 			this.showAxis(orientation);
+	// 	}, 200);
+	//
+	// 	if (isXAxis) {
+	// 		(this.axisXObject.children[0] as Mesh).material.opacity = 0;
+	// 		clearTimeout(this.showAxisXTimeout);
+	// 		this.showAxisXTimeout =	timeoutId;
+	// 	} else {
+	// 		clearTimeout(this.showAxisYTimeout);
+	// 		(this.axisYObject.children[0] as Mesh).material.opacity = 0;
+	// 		this.showAxisYTimeout = timeoutId;
+	// 	}
+	// }
 
-		if (isXAxis) {
-			(this.axisXObject.children[0] as Mesh).material.opacity = 0;
-			clearTimeout(this.showAxisXTimeout);
-			this.showAxisXTimeout =	timeoutId;
-		} else {
-			clearTimeout(this.showAxisYTimeout);
-			(this.axisYObject.children[0] as Mesh).material.opacity = 0;
-			this.showAxisYTimeout = timeoutId;
-		}
-	}
-
-	private showAxis(orientation: AXIS_TYPE) {
-		var isXAxis = orientation == AXIS_TYPE.X;
-		var material: MeshBasicMaterial;
-		if (isXAxis) {
-			material = (this.axisXObject.children[0] as Mesh).material as MeshBasicMaterial;
-		} else {
-			material = (this.axisYObject.children[0] as Mesh).material as MeshBasicMaterial;
-		}
-		this.updateAxis(orientation);
-		TweenLite.to(material, 0.3, {opacity: 1});
-	}
+	// private showAxis(orientation: AXIS_TYPE) {
+	// 	var isXAxis = orientation == AXIS_TYPE.X;
+	// 	var material: MeshBasicMaterial;
+	// 	if (isXAxis) {
+	// 		material = (this.axisXObject.children[0] as Mesh).material as MeshBasicMaterial;
+	// 	} else {
+	// 		material = (this.axisYObject.children[0] as Mesh).material as MeshBasicMaterial;
+	// 	}
+	// 	this.updateAxis(orientation);
+	// 	TweenLite.to(material, 0.3, {opacity: 1});
+	// }
 
 	static getDateStr(timestamp: number, gridParams: IGridParamsForAxis): string {
 		var sec = 1000;

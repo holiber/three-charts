@@ -13,6 +13,7 @@
     "three": "^0.76.1"
   },
   "devDependencies": {
+    "copy-webpack-plugin": "^3.0.1",
     "ts-loader": "^0.8.2",
     "typescript": "^1.8.10"
   },

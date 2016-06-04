@@ -1,5 +1,5 @@
 
-import {Chart, AXIS_RANGE_TYPE, ITrendItem, ITrendMarkOptions, Utils, AXIS_DATA_TYPE} from './src';
+import {Chart, AXIS_RANGE_TYPE, ITrendItem, ITrendMarkOptions, Utils, AXIS_DATA_TYPE} from '../src';
 
 var chart: Chart;
 
