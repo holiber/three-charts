@@ -6,7 +6,7 @@ var isPlainObject = require('is-plain-object') as Function;
 
 export declare type TUid = number;
 
-var deepmerge = require<Function>('deepmerge');
+var deepmerge = require('deepmerge') as Function;
 
 /**
  * project utils static class
