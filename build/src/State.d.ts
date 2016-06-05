@@ -34,6 +34,7 @@ export interface IChartState {
         x?: number;
         y?: number;
     };
+    showStats?: boolean;
     computedData?: IChartStateComputedData;
     [key: string]: any;
 }

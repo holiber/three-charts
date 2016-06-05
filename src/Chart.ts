@@ -52,7 +52,7 @@ export class Chart {
 
 	private init() {
 		var state = this.state;
-		var {width: w, height: h, $el} = state.data;
+		var {width: w, height: h, $el, showStats} = state.data;
 		this.scene = new THREE.Scene();
 
 		var renderer = this.renderer = new WebGLRenderer({antialias: true}); //new THREE.CanvasRenderer();
@@ -61,8 +61,10 @@ export class Chart {
 		$el.appendChild(renderer.domElement);
 		this.$el = renderer.domElement;
 
-		this.stats = new Stats();
-		$el.appendChild(this.stats.domElement);
+		if (showStats) {
+			this.stats = new Stats();
+			$el.appendChild(this.stats.domElement);
+		}
 
 		var camSettings = state.screen.getCameraSettings();
 		this.camera = new PerspectiveCamera(camSettings.FOV, camSettings.aspect, camSettings.near, camSettings.far);
@@ -86,7 +88,7 @@ export class Chart {
 	}
 	
 	render(time: number) {
-		this.stats.begin();
+		this.stats && this.stats.begin();
 		this.renderer.render(this.scene, this.camera);
 
 		var renderDelay = this.state.data.animations.enabled ? 0 : 1000;
@@ -95,9 +97,7 @@ export class Chart {
 		} else {
 			requestAnimationFrame((time) => this.render(time));
 		}
-		// this.screen.camera.rotation.z += 0.01;
-		// this.screen.camera.rotation.scrollY += 0.01;
-		this.stats.end();
+		this.stats && this.stats.end();
 	}
 	
 	getState(): IChartState {

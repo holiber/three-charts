@@ -45,6 +45,7 @@ export interface IChartState {
 		x?: number,
 		y?: number
 	},
+	showStats?: boolean;
 	computedData?: IChartStateComputedData
 	[key: string]: any; // for "for in" loops
 }
@@ -84,8 +85,8 @@ export class ChartState {
 			dragMode: false,
 			x: 0,
 			y: 0
-		}
-
+		},
+		showStats: false
 	};
 	trends: Trends;
 	screen: Screen;

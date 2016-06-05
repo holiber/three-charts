@@ -111,6 +111,7 @@ window.onload = function () {
 			// 'red': {dataset: dsRed.data, lineColor: 0xFF2222, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
 			// 'blue': {dataset: dsBlue.data, lineColor: 0x2222FF, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
 		},
+		showStats: true,
 		widgets: {
 			//Grid: {enabled: false},
 			//Axis: {enabled: false},

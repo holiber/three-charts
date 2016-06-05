@@ -108,15 +108,17 @@ var ThreeChart =
 	    };
 	    Chart.prototype.init = function () {
 	        var state = this.state;
-	        var _a = state.data, w = _a.width, h = _a.height, $el = _a.$el;
+	        var _a = state.data, w = _a.width, h = _a.height, $el = _a.$el, showStats = _a.showStats;
 	        this.scene = new THREE.Scene();
 	        var renderer = this.renderer = new WebGLRenderer({ antialias: true }); //new THREE.CanvasRenderer();
 	        renderer.setPixelRatio(Chart.devicePixelRatio);
 	        renderer.setSize(w, h);
 	        $el.appendChild(renderer.domElement);
 	        this.$el = renderer.domElement;
-	        this.stats = new Stats();
-	        $el.appendChild(this.stats.domElement);
+	        if (showStats) {
+	            this.stats = new Stats();
+	            $el.appendChild(this.stats.domElement);
+	        }
 	        var camSettings = state.screen.getCameraSettings();
 	        this.camera = new PerspectiveCamera(camSettings.FOV, camSettings.aspect, camSettings.near, camSettings.far);
 	        this.camera.position.set(camSettings.x, camSettings.y, camSettings.z);
@@ -138,7 +140,7 @@ var ThreeChart =
 	    };
 	    Chart.prototype.render = function (time) {
 	        var _this = this;
-	        this.stats.begin();
+	        this.stats && this.stats.begin();
 	        this.renderer.render(this.scene, this.camera);
 	        var renderDelay = this.state.data.animations.enabled ? 0 : 1000;
 	        if (renderDelay) {
@@ -147,9 +149,7 @@ var ThreeChart =
 	        else {
 	            requestAnimationFrame(function (time) { return _this.render(time); });
 	        }
-	        // this.screen.camera.rotation.z += 0.01;
-	        // this.screen.camera.rotation.scrollY += 0.01;
-	        this.stats.end();
+	        this.stats && this.stats.end();
 	    };
 	    Chart.prototype.getState = function () {
 	        return this.state.data;
@@ -52349,7 +52349,8 @@ var ThreeChart =
 	                dragMode: false,
 	                x: 0,
 	                y: 0
-	            }
+	            },
+	            showStats: false
 	        };
 	        this.ee = new EE();
 	        this.ee.setMaxListeners(15);
@@ -56553,4 +56554,5 @@ var ThreeChart =
 /***/ }
 /******/ ]);
 //# sourceMappingURL=ThreeChart.js.map
+ if (typeof module !== "undefined" && module.exports) module.exports = ThreeChart;
  if (typeof module !== "undefined" && module.exports) module.exports = ThreeChart;
