@@ -14,15 +14,17 @@
   },
   "devDependencies": {
     "copy-webpack-plugin": "^3.0.1",
+    "rimraf": "^2.5.2",
     "ts-loader": "^0.8.2",
     "typescript": "^1.8.10"
   },
   "typings": "./typings/index.d.ts",
   "scripts": {
-    "start": "webpack --watch",
-    "build": "webpack",
+    "start": "npm run rimraf -- build && webpack --watch",
+    "build": "npm run rimraf -- build && webpack",
     "postinstall": "typings install",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "rimraf": "rimraf"
   },
   "author": "",
   "license": "ISC"

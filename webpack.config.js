@@ -30,9 +30,9 @@ module.exports = {
 
     plugins: [
         new CommonsPlugin({
-            name: "chart"
+            name: "webgl-chart"
         }),
 
-        // new CopyWebpackPlugin([{ from: 'typings', to: 'typings' }])
+        new CopyWebpackPlugin([{ from: 'build/webgl-chart.js', to: 'index.js', force: true}])
     ]
 };
