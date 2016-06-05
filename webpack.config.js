@@ -4,8 +4,7 @@ var WebpackOnBuildPlugin = require('on-build-webpack');
 
 module.exports = {
     entry: {
-        // 'demoApp': './demoApp.ts',
-        index: './index.ts',
+        ThreeChart: './index.ts',
         demoApp: "./demo/demoApp.ts"
     },
     output: {
@@ -30,15 +29,18 @@ module.exports = {
     },
 
     plugins: [
-        new CommonsPlugin({
-            name: "webgl-chart"
-        }),
+        // new CommonsPlugin({
+        //     name: "threeChart"
+        // }),
 
         // make webgl-chart.js index file
         new WebpackOnBuildPlugin(function(stats) {
             var fs = require('fs');
-            fs.createReadStream(__dirname + '/build/webgl-chart.js')
-                .pipe(fs.createWriteStream(__dirname + '/build/index.js'));
+            var sourceFile = __dirname + '/build/ThreeChart.js';
+            var scriptContent = fs.readFileSync(sourceFile);
+            scriptContent += '\n if (typeof module !== "undefined" && module.exports) module.exports = ThreeChart;';
+            fs.writeFileSync(sourceFile, scriptContent);
+            fs.writeFileSync(__dirname + '/build/index.js', scriptContent);
         })
 
     ]
