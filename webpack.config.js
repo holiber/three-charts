@@ -1,5 +1,6 @@
 var CommonsPlugin = new require("webpack/lib/optimize/CommonsChunkPlugin");
-var CopyWebpackPlugin = require('copy-webpack-plugin');
+var WebpackOnBuildPlugin = require('on-build-webpack');
+
 
 module.exports = {
     entry: {
@@ -33,6 +34,12 @@ module.exports = {
             name: "webgl-chart"
         }),
 
-        new CopyWebpackPlugin([{ from: 'build/webgl-chart.js', to: 'index.js', force: true}])
+        // make webgl-chart.js index file
+        new WebpackOnBuildPlugin(function(stats) {
+            var fs = require('fs');
+            fs.createReadStream(__dirname + '/build/webgl-chart.js')
+                .pipe(fs.createWriteStream(__dirname + '/build/index.js'));
+        })
+
     ]
 };
