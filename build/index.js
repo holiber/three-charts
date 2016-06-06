@@ -115,6 +115,7 @@ var ThreeChart =
 	        renderer.setSize(w, h);
 	        $el.appendChild(renderer.domElement);
 	        this.$el = renderer.domElement;
+	        this.$el.style.display = 'block';
 	        if (showStats) {
 	            this.stats = new Stats();
 	            $el.appendChild(this.stats.domElement);

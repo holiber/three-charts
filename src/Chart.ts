@@ -60,6 +60,7 @@ export class Chart {
 		renderer.setSize(w, h);
 		$el.appendChild(renderer.domElement);
 		this.$el = renderer.domElement;
+		this.$el.style.display = 'block';
 
 		if (showStats) {
 			this.stats = new Stats();
