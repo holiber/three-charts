@@ -56556,4 +56556,3 @@ var ThreeChart =
 /******/ ]);
 //# sourceMappingURL=ThreeChart.js.map
  if (typeof module !== "undefined" && module.exports) module.exports = ThreeChart;
- if (typeof module !== "undefined" && module.exports) module.exports = ThreeChart;
