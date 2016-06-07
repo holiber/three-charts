@@ -8,8 +8,7 @@
   },
   "exclude": [
     "node_modules",
-    "build",
-    "typings/main.d.ts",
-    "typings/main"
+    "src/node_modules",
+    "build"
   ]
 }

@@ -9,4 +9,4 @@ export var isPlainObject = require('is-plain-object') as Function;
 export var deepmerge = require('deepmerge') as Function;
 export var EventEmitter = require('EventEmitter2') as typeof EventEmitter2;
 
-export {Promise} from "es6-promise";
+export {Promise} from 'es6promise-custom';
