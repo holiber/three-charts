@@ -1,7 +1,8 @@
 // deps must be always on top
-import {Trend} from "./Trend";
+
 require('./deps');
 
+import {Trend} from "./Trend";
 import Vector3 = THREE.Vector3;
 import PerspectiveCamera = THREE.PerspectiveCamera;
 import Renderer = THREE.Renderer;

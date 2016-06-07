@@ -1,10 +1,9 @@
 import {ChartState, IChartState} from "./State";
 import {Utils} from "./Utils";
-import {Promise} from "es6-promise/dist/es6-promise";
 import {MAX_DATA_LENGTH} from "./Chart";
 import {ITrendMarkOptions, TrendMarks} from "./TrendMarks";
 import {TrendPoints} from "./TrendPoints";
-import {EventEmitter} from './deps';
+import {EventEmitter, Promise} from './deps';
 
 export interface IPrependPromiseExecutor {
 	(requestedDataLength: number, resolve: (data: TTrendRawData) => void, reject: () => void): void;
