@@ -4,7 +4,7 @@ import {Promise} from "es6-promise/dist/es6-promise";
 import {MAX_DATA_LENGTH} from "./Chart";
 import {ITrendMarkOptions, TrendMarks} from "./TrendMarks";
 import {TrendPoints} from "./TrendPoints";
-var EventEmitter = require('EventEmitter2') as typeof EventEmitter2;
+import {EventEmitter} from './deps';
 
 export interface IPrependPromiseExecutor {
 	(requestedDataLength: number, resolve: (data: TTrendRawData) => void, reject: () => void): void;

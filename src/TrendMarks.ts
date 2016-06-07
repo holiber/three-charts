@@ -5,7 +5,7 @@ import {TEase} from "./interfaces";
 import {Trend, ITrendOptions} from "./Trend";
 import Vector3 = THREE.Vector3;
 import {TrendPoint} from "./TrendPoints";
-var EventEmitter = require('EventEmitter2') as typeof EventEmitter2;
+import {EventEmitter} from './deps';
 
 export enum TREND_MARK_SIDE {TOP, BOTTOM}
 

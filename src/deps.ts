@@ -5,4 +5,4 @@
 //require('gsap/src/uncompressed/easing/EasePack.js');
 //require('three/examples/js/renderers/CanvasRenderer.js');
 //require('three/examples/js/renderers/Projector.js');
-
+export var EventEmitter = window['EventEmitter'] as typeof EventEmitter2;//require('EventEmitter2') as typeof EventEmitter2;

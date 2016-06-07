@@ -1,6 +1,6 @@
 
 import {TIteralable} from "./interfaces";
-var EventEmmiter = require('EventEmitter2') as typeof EventEmitter2;
+import {EventEmitter} from './deps';
 import {ChartState} from "./State";
 import Vector3 = THREE.Vector3;
 import {ITrendData, ITrendOptions, ITrendItem, Trend} from "./Trend";
@@ -35,7 +35,7 @@ export class TrendPoints {
 	constructor (chartState: ChartState, trend: Trend, pointsCount: number, initialItem: ITrendItem) {
 		this.chartState = chartState;
 		this.trend = trend;
-		this.ee = new EventEmmiter();
+		this.ee = new EventEmitter();
 		var point: TrendPoint;
 		for (let i = 0; i < pointsCount; i++) {
 			let id = i;

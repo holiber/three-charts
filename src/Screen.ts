@@ -2,7 +2,7 @@ import PerspectiveCamera = THREE.PerspectiveCamera;
 import Vector3 = THREE.Vector3;
 import {ChartState, IChartState} from "./State";
 import forestgreen = THREE.ColorKeywords.forestgreen;
-var EventEmmiter = require('EventEmitter2') as typeof EventEmitter2;
+import {EventEmitter} from './deps';
 
 export interface IScreenTransformOptions {
 	scrollXVal?: number,
@@ -33,7 +33,7 @@ export class Screen {
 	constructor(chartState: ChartState) {
 		this.chartState = chartState;
 		var {width: w, height: h} = chartState.data;
-		this.ee = new EventEmmiter();
+		this.ee = new EventEmitter();
 		this.bindEvents();
 
 		//camera.position.z = 1500;

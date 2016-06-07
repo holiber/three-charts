@@ -3,7 +3,7 @@ import {ChartState} from "./State";
 import {Utils} from "./Utils";
 import {AXIS_TYPE, TEase} from "./interfaces";
 import {ITrendData, ITrendOptions} from "./Trend";
-var EventEmitter = require('EventEmitter2') as typeof EventEmitter2;
+import {EventEmitter} from './deps';
 
 export interface IAxisMarkUpdateOptions {
 	value: number

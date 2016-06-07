@@ -1,5 +1,5 @@
 import {ITrendOptions, Trend, ITrendData} from "./Trend";
-var EE = require('EventEmitter2') as typeof EventEmitter2;
+import {EventEmitter} from './deps';
 import {Utils} from './Utils';
 import Vector3 = THREE.Vector3;
 import {IChartWidgetOptions, ChartWidget} from "./Widget";
@@ -94,7 +94,7 @@ export class ChartState {
 	private ee: EventEmitter2;
 
 	constructor(initialState: IChartState) {
-		this.ee = new EE();
+		this.ee = new EventEmitter();
 		this.ee.setMaxListeners(15);
 		this.screen = new Screen(this);
 

@@ -61,14 +61,14 @@ var ThreeChart =
 	    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
 	}
 	__export(__webpack_require__(2));
-	__export(__webpack_require__(25));
 	__export(__webpack_require__(24));
 	__export(__webpack_require__(23));
-	__export(__webpack_require__(12));
-	__export(__webpack_require__(15));
-	__export(__webpack_require__(21));
 	__export(__webpack_require__(22));
+	__export(__webpack_require__(12));
 	__export(__webpack_require__(14));
+	__export(__webpack_require__(20));
+	__export(__webpack_require__(21));
+	__export(__webpack_require__(13));
 	__export(__webpack_require__(5));
 	__export(__webpack_require__(10));
 
@@ -85,13 +85,13 @@ var ThreeChart =
 	var TrendsLineWidget_1 = __webpack_require__(11);
 	var State_1 = __webpack_require__(12);
 	var Utils_1 = __webpack_require__(5);
-	var TrendsBeaconWidget_1 = __webpack_require__(26);
-	var AxisWidget_1 = __webpack_require__(27);
-	var GridWidget_1 = __webpack_require__(28);
-	var TrendsLoadingWidget_1 = __webpack_require__(29);
-	var AxisMarksWidget_1 = __webpack_require__(30);
-	var TrendsMarksWidget_1 = __webpack_require__(31);
-	var BorderWidget_1 = __webpack_require__(32);
+	var TrendsBeaconWidget_1 = __webpack_require__(25);
+	var AxisWidget_1 = __webpack_require__(26);
+	var GridWidget_1 = __webpack_require__(27);
+	var TrendsLoadingWidget_1 = __webpack_require__(28);
+	var AxisMarksWidget_1 = __webpack_require__(29);
+	var TrendsMarksWidget_1 = __webpack_require__(30);
+	var BorderWidget_1 = __webpack_require__(31);
 	exports.MAX_DATA_LENGTH = 1000;
 	var Chart = (function () {
 	    function Chart(state) {
@@ -279,6 +279,7 @@ var ThreeChart =
 /* 3 */
 /***/ function(module, exports) {
 
+	"use strict";
 	// TODO: think about different bundles build
 	// (<any>window).THREE = require('three/three');
 	// (<any>window).Stats = require('three/examples/js/libs/stats.min');
@@ -286,6 +287,7 @@ var ThreeChart =
 	//require('gsap/src/uncompressed/easing/EasePack.js');
 	//require('three/examples/js/renderers/CanvasRenderer.js');
 	//require('three/examples/js/renderers/Projector.js');
+	exports.EventEmitter = window['EventEmitter']; //require('EventEmitter2') as typeof EventEmitter2;
 
 
 /***/ },
@@ -1009,14 +1011,14 @@ var ThreeChart =
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var EE = __webpack_require__(13);
+	var deps_1 = __webpack_require__(3);
 	var Utils_1 = __webpack_require__(5);
 	var Vector3 = THREE.Vector3;
 	var Widget_1 = __webpack_require__(10);
-	var Trends_1 = __webpack_require__(14);
-	var Screen_1 = __webpack_require__(23);
-	var AxisMarks_1 = __webpack_require__(24);
-	var interfaces_1 = __webpack_require__(25);
+	var Trends_1 = __webpack_require__(13);
+	var Screen_1 = __webpack_require__(22);
+	var AxisMarks_1 = __webpack_require__(23);
+	var interfaces_1 = __webpack_require__(24);
 	var Chart_1 = __webpack_require__(2);
 	/**
 	 * main class for manage chart state
@@ -1056,7 +1058,7 @@ var ThreeChart =
 	            },
 	            showStats: false
 	        };
-	        this.ee = new EE();
+	        this.ee = new deps_1.EventEmitter();
 	        this.ee.setMaxListeners(15);
 	        this.screen = new Screen_1.Screen(this);
 	        if (!initialState.$el) {
@@ -1474,587 +1476,8 @@ var ThreeChart =
 /* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_RESULT__;/*!
-	 * EventEmitter2
-	 * https://github.com/hij1nx/EventEmitter2
-	 *
-	 * Copyright (c) 2013 hij1nx
-	 * Licensed under the MIT license.
-	 */
-	;!function(undefined) {
-	
-	  var isArray = Array.isArray ? Array.isArray : function _isArray(obj) {
-	    return Object.prototype.toString.call(obj) === "[object Array]";
-	  };
-	  var defaultMaxListeners = 10;
-	
-	  function init() {
-	    this._events = {};
-	    if (this._conf) {
-	      configure.call(this, this._conf);
-	    }
-	  }
-	
-	  function configure(conf) {
-	    if (conf) {
-	
-	      this._conf = conf;
-	
-	      conf.delimiter && (this.delimiter = conf.delimiter);
-	      conf.maxListeners && (this._events.maxListeners = conf.maxListeners);
-	      conf.wildcard && (this.wildcard = conf.wildcard);
-	      conf.newListener && (this.newListener = conf.newListener);
-	
-	      if (this.wildcard) {
-	        this.listenerTree = {};
-	      }
-	    }
-	  }
-	
-	  function EventEmitter(conf) {
-	    this._events = {};
-	    this.newListener = false;
-	    configure.call(this, conf);
-	  }
-	
-	  //
-	  // Attention, function return type now is array, always !
-	  // It has zero elements if no any matches found and one or more
-	  // elements (leafs) if there are matches
-	  //
-	  function searchListenerTree(handlers, type, tree, i) {
-	    if (!tree) {
-	      return [];
-	    }
-	    var listeners=[], leaf, len, branch, xTree, xxTree, isolatedBranch, endReached,
-	        typeLength = type.length, currentType = type[i], nextType = type[i+1];
-	    if (i === typeLength && tree._listeners) {
-	      //
-	      // If at the end of the event(s) list and the tree has listeners
-	      // invoke those listeners.
-	      //
-	      if (typeof tree._listeners === 'function') {
-	        handlers && handlers.push(tree._listeners);
-	        return [tree];
-	      } else {
-	        for (leaf = 0, len = tree._listeners.length; leaf < len; leaf++) {
-	          handlers && handlers.push(tree._listeners[leaf]);
-	        }
-	        return [tree];
-	      }
-	    }
-	
-	    if ((currentType === '*' || currentType === '**') || tree[currentType]) {
-	      //
-	      // If the event emitted is '*' at this part
-	      // or there is a concrete match at this patch
-	      //
-	      if (currentType === '*') {
-	        for (branch in tree) {
-	          if (branch !== '_listeners' && tree.hasOwnProperty(branch)) {
-	            listeners = listeners.concat(searchListenerTree(handlers, type, tree[branch], i+1));
-	          }
-	        }
-	        return listeners;
-	      } else if(currentType === '**') {
-	        endReached = (i+1 === typeLength || (i+2 === typeLength && nextType === '*'));
-	        if(endReached && tree._listeners) {
-	          // The next element has a _listeners, add it to the handlers.
-	          listeners = listeners.concat(searchListenerTree(handlers, type, tree, typeLength));
-	        }
-	
-	        for (branch in tree) {
-	          if (branch !== '_listeners' && tree.hasOwnProperty(branch)) {
-	            if(branch === '*' || branch === '**') {
-	              if(tree[branch]._listeners && !endReached) {
-	                listeners = listeners.concat(searchListenerTree(handlers, type, tree[branch], typeLength));
-	              }
-	              listeners = listeners.concat(searchListenerTree(handlers, type, tree[branch], i));
-	            } else if(branch === nextType) {
-	              listeners = listeners.concat(searchListenerTree(handlers, type, tree[branch], i+2));
-	            } else {
-	              // No match on this one, shift into the tree but not in the type array.
-	              listeners = listeners.concat(searchListenerTree(handlers, type, tree[branch], i));
-	            }
-	          }
-	        }
-	        return listeners;
-	      }
-	
-	      listeners = listeners.concat(searchListenerTree(handlers, type, tree[currentType], i+1));
-	    }
-	
-	    xTree = tree['*'];
-	    if (xTree) {
-	      //
-	      // If the listener tree will allow any match for this part,
-	      // then recursively explore all branches of the tree
-	      //
-	      searchListenerTree(handlers, type, xTree, i+1);
-	    }
-	
-	    xxTree = tree['**'];
-	    if(xxTree) {
-	      if(i < typeLength) {
-	        if(xxTree._listeners) {
-	          // If we have a listener on a '**', it will catch all, so add its handler.
-	          searchListenerTree(handlers, type, xxTree, typeLength);
-	        }
-	
-	        // Build arrays of matching next branches and others.
-	        for(branch in xxTree) {
-	          if(branch !== '_listeners' && xxTree.hasOwnProperty(branch)) {
-	            if(branch === nextType) {
-	              // We know the next element will match, so jump twice.
-	              searchListenerTree(handlers, type, xxTree[branch], i+2);
-	            } else if(branch === currentType) {
-	              // Current node matches, move into the tree.
-	              searchListenerTree(handlers, type, xxTree[branch], i+1);
-	            } else {
-	              isolatedBranch = {};
-	              isolatedBranch[branch] = xxTree[branch];
-	              searchListenerTree(handlers, type, { '**': isolatedBranch }, i+1);
-	            }
-	          }
-	        }
-	      } else if(xxTree._listeners) {
-	        // We have reached the end and still on a '**'
-	        searchListenerTree(handlers, type, xxTree, typeLength);
-	      } else if(xxTree['*'] && xxTree['*']._listeners) {
-	        searchListenerTree(handlers, type, xxTree['*'], typeLength);
-	      }
-	    }
-	
-	    return listeners;
-	  }
-	
-	  function growListenerTree(type, listener) {
-	
-	    type = typeof type === 'string' ? type.split(this.delimiter) : type.slice();
-	
-	    //
-	    // Looks for two consecutive '**', if so, don't add the event at all.
-	    //
-	    for(var i = 0, len = type.length; i+1 < len; i++) {
-	      if(type[i] === '**' && type[i+1] === '**') {
-	        return;
-	      }
-	    }
-	
-	    var tree = this.listenerTree;
-	    var name = type.shift();
-	
-	    while (name) {
-	
-	      if (!tree[name]) {
-	        tree[name] = {};
-	      }
-	
-	      tree = tree[name];
-	
-	      if (type.length === 0) {
-	
-	        if (!tree._listeners) {
-	          tree._listeners = listener;
-	        }
-	        else if(typeof tree._listeners === 'function') {
-	          tree._listeners = [tree._listeners, listener];
-	        }
-	        else if (isArray(tree._listeners)) {
-	
-	          tree._listeners.push(listener);
-	
-	          if (!tree._listeners.warned) {
-	
-	            var m = defaultMaxListeners;
-	
-	            if (typeof this._events.maxListeners !== 'undefined') {
-	              m = this._events.maxListeners;
-	            }
-	
-	            if (m > 0 && tree._listeners.length > m) {
-	
-	              tree._listeners.warned = true;
-	              console.error('(node) warning: possible EventEmitter memory ' +
-	                            'leak detected. %d listeners added. ' +
-	                            'Use emitter.setMaxListeners() to increase limit.',
-	                            tree._listeners.length);
-	              console.trace();
-	            }
-	          }
-	        }
-	        return true;
-	      }
-	      name = type.shift();
-	    }
-	    return true;
-	  }
-	
-	  // By default EventEmitters will print a warning if more than
-	  // 10 listeners are added to it. This is a useful default which
-	  // helps finding memory leaks.
-	  //
-	  // Obviously not all Emitters should be limited to 10. This function allows
-	  // that to be increased. Set to zero for unlimited.
-	
-	  EventEmitter.prototype.delimiter = '.';
-	
-	  EventEmitter.prototype.setMaxListeners = function(n) {
-	    this._events || init.call(this);
-	    this._events.maxListeners = n;
-	    if (!this._conf) this._conf = {};
-	    this._conf.maxListeners = n;
-	  };
-	
-	  EventEmitter.prototype.event = '';
-	
-	  EventEmitter.prototype.once = function(event, fn) {
-	    this.many(event, 1, fn);
-	    return this;
-	  };
-	
-	  EventEmitter.prototype.many = function(event, ttl, fn) {
-	    var self = this;
-	
-	    if (typeof fn !== 'function') {
-	      throw new Error('many only accepts instances of Function');
-	    }
-	
-	    function listener() {
-	      if (--ttl === 0) {
-	        self.off(event, listener);
-	      }
-	      fn.apply(this, arguments);
-	    }
-	
-	    listener._origin = fn;
-	
-	    this.on(event, listener);
-	
-	    return self;
-	  };
-	
-	  EventEmitter.prototype.emit = function() {
-	
-	    this._events || init.call(this);
-	
-	    var type = arguments[0];
-	
-	    if (type === 'newListener' && !this.newListener) {
-	      if (!this._events.newListener) { return false; }
-	    }
-	
-	    // Loop through the *_all* functions and invoke them.
-	    if (this._all) {
-	      var l = arguments.length;
-	      var args = new Array(l - 1);
-	      for (var i = 1; i < l; i++) args[i - 1] = arguments[i];
-	      for (i = 0, l = this._all.length; i < l; i++) {
-	        this.event = type;
-	        this._all[i].apply(this, args);
-	      }
-	    }
-	
-	    // If there is no 'error' event listener then throw.
-	    if (type === 'error') {
-	
-	      if (!this._all &&
-	        !this._events.error &&
-	        !(this.wildcard && this.listenerTree.error)) {
-	
-	        if (arguments[1] instanceof Error) {
-	          throw arguments[1]; // Unhandled 'error' event
-	        } else {
-	          throw new Error("Uncaught, unspecified 'error' event.");
-	        }
-	        return false;
-	      }
-	    }
-	
-	    var handler;
-	
-	    if(this.wildcard) {
-	      handler = [];
-	      var ns = typeof type === 'string' ? type.split(this.delimiter) : type.slice();
-	      searchListenerTree.call(this, handler, ns, this.listenerTree, 0);
-	    }
-	    else {
-	      handler = this._events[type];
-	    }
-	
-	    if (typeof handler === 'function') {
-	      this.event = type;
-	      if (arguments.length === 1) {
-	        handler.call(this);
-	      }
-	      else if (arguments.length > 1)
-	        switch (arguments.length) {
-	          case 2:
-	            handler.call(this, arguments[1]);
-	            break;
-	          case 3:
-	            handler.call(this, arguments[1], arguments[2]);
-	            break;
-	          // slower
-	          default:
-	            var l = arguments.length;
-	            var args = new Array(l - 1);
-	            for (var i = 1; i < l; i++) args[i - 1] = arguments[i];
-	            handler.apply(this, args);
-	        }
-	      return true;
-	    }
-	    else if (handler) {
-	      var l = arguments.length;
-	      var args = new Array(l - 1);
-	      for (var i = 1; i < l; i++) args[i - 1] = arguments[i];
-	
-	      var listeners = handler.slice();
-	      for (var i = 0, l = listeners.length; i < l; i++) {
-	        this.event = type;
-	        listeners[i].apply(this, args);
-	      }
-	      return (listeners.length > 0) || !!this._all;
-	    }
-	    else {
-	      return !!this._all;
-	    }
-	
-	  };
-	
-	  EventEmitter.prototype.on = function(type, listener) {
-	
-	    if (typeof type === 'function') {
-	      this.onAny(type);
-	      return this;
-	    }
-	
-	    if (typeof listener !== 'function') {
-	      throw new Error('on only accepts instances of Function');
-	    }
-	    this._events || init.call(this);
-	
-	    // To avoid recursion in the case that type == "newListeners"! Before
-	    // adding it to the listeners, first emit "newListeners".
-	    this.emit('newListener', type, listener);
-	
-	    if(this.wildcard) {
-	      growListenerTree.call(this, type, listener);
-	      return this;
-	    }
-	
-	    if (!this._events[type]) {
-	      // Optimize the case of one listener. Don't need the extra array object.
-	      this._events[type] = listener;
-	    }
-	    else if(typeof this._events[type] === 'function') {
-	      // Adding the second element, need to change to array.
-	      this._events[type] = [this._events[type], listener];
-	    }
-	    else if (isArray(this._events[type])) {
-	      // If we've already got an array, just append.
-	      this._events[type].push(listener);
-	
-	      // Check for listener leak
-	      if (!this._events[type].warned) {
-	
-	        var m = defaultMaxListeners;
-	
-	        if (typeof this._events.maxListeners !== 'undefined') {
-	          m = this._events.maxListeners;
-	        }
-	
-	        if (m > 0 && this._events[type].length > m) {
-	
-	          this._events[type].warned = true;
-	          console.error('(node) warning: possible EventEmitter memory ' +
-	                        'leak detected. %d listeners added. ' +
-	                        'Use emitter.setMaxListeners() to increase limit.',
-	                        this._events[type].length);
-	          console.trace();
-	        }
-	      }
-	    }
-	    return this;
-	  };
-	
-	  EventEmitter.prototype.onAny = function(fn) {
-	
-	    if (typeof fn !== 'function') {
-	      throw new Error('onAny only accepts instances of Function');
-	    }
-	
-	    if(!this._all) {
-	      this._all = [];
-	    }
-	
-	    // Add the function to the event listener collection.
-	    this._all.push(fn);
-	    return this;
-	  };
-	
-	  EventEmitter.prototype.addListener = EventEmitter.prototype.on;
-	
-	  EventEmitter.prototype.off = function(type, listener) {
-	    if (typeof listener !== 'function') {
-	      throw new Error('removeListener only takes instances of Function');
-	    }
-	
-	    var handlers,leafs=[];
-	
-	    if(this.wildcard) {
-	      var ns = typeof type === 'string' ? type.split(this.delimiter) : type.slice();
-	      leafs = searchListenerTree.call(this, null, ns, this.listenerTree, 0);
-	    }
-	    else {
-	      // does not use listeners(), so no side effect of creating _events[type]
-	      if (!this._events[type]) return this;
-	      handlers = this._events[type];
-	      leafs.push({_listeners:handlers});
-	    }
-	
-	    for (var iLeaf=0; iLeaf<leafs.length; iLeaf++) {
-	      var leaf = leafs[iLeaf];
-	      handlers = leaf._listeners;
-	      if (isArray(handlers)) {
-	
-	        var position = -1;
-	
-	        for (var i = 0, length = handlers.length; i < length; i++) {
-	          if (handlers[i] === listener ||
-	            (handlers[i].listener && handlers[i].listener === listener) ||
-	            (handlers[i]._origin && handlers[i]._origin === listener)) {
-	            position = i;
-	            break;
-	          }
-	        }
-	
-	        if (position < 0) {
-	          continue;
-	        }
-	
-	        if(this.wildcard) {
-	          leaf._listeners.splice(position, 1);
-	        }
-	        else {
-	          this._events[type].splice(position, 1);
-	        }
-	
-	        if (handlers.length === 0) {
-	          if(this.wildcard) {
-	            delete leaf._listeners;
-	          }
-	          else {
-	            delete this._events[type];
-	          }
-	        }
-	        return this;
-	      }
-	      else if (handlers === listener ||
-	        (handlers.listener && handlers.listener === listener) ||
-	        (handlers._origin && handlers._origin === listener)) {
-	        if(this.wildcard) {
-	          delete leaf._listeners;
-	        }
-	        else {
-	          delete this._events[type];
-	        }
-	      }
-	    }
-	
-	    return this;
-	  };
-	
-	  EventEmitter.prototype.offAny = function(fn) {
-	    var i = 0, l = 0, fns;
-	    if (fn && this._all && this._all.length > 0) {
-	      fns = this._all;
-	      for(i = 0, l = fns.length; i < l; i++) {
-	        if(fn === fns[i]) {
-	          fns.splice(i, 1);
-	          return this;
-	        }
-	      }
-	    } else {
-	      this._all = [];
-	    }
-	    return this;
-	  };
-	
-	  EventEmitter.prototype.removeListener = EventEmitter.prototype.off;
-	
-	  EventEmitter.prototype.removeAllListeners = function(type) {
-	    if (arguments.length === 0) {
-	      !this._events || init.call(this);
-	      return this;
-	    }
-	
-	    if(this.wildcard) {
-	      var ns = typeof type === 'string' ? type.split(this.delimiter) : type.slice();
-	      var leafs = searchListenerTree.call(this, null, ns, this.listenerTree, 0);
-	
-	      for (var iLeaf=0; iLeaf<leafs.length; iLeaf++) {
-	        var leaf = leafs[iLeaf];
-	        leaf._listeners = null;
-	      }
-	    }
-	    else {
-	      if (!this._events[type]) return this;
-	      this._events[type] = null;
-	    }
-	    return this;
-	  };
-	
-	  EventEmitter.prototype.listeners = function(type) {
-	    if(this.wildcard) {
-	      var handlers = [];
-	      var ns = typeof type === 'string' ? type.split(this.delimiter) : type.slice();
-	      searchListenerTree.call(this, handlers, ns, this.listenerTree, 0);
-	      return handlers;
-	    }
-	
-	    this._events || init.call(this);
-	
-	    if (!this._events[type]) this._events[type] = [];
-	    if (!isArray(this._events[type])) {
-	      this._events[type] = [this._events[type]];
-	    }
-	    return this._events[type];
-	  };
-	
-	  EventEmitter.prototype.listenersAny = function() {
-	
-	    if(this._all) {
-	      return this._all;
-	    }
-	    else {
-	      return [];
-	    }
-	
-	  };
-	
-	  if (true) {
-	     // AMD. Register as an anonymous module.
-	    !(__WEBPACK_AMD_DEFINE_RESULT__ = function() {
-	      return EventEmitter;
-	    }.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-	  } else if (typeof exports === 'object') {
-	    // CommonJS
-	    exports.EventEmitter2 = EventEmitter;
-	  }
-	  else {
-	    // Browser global.
-	    window.EventEmitter2 = EventEmitter;
-	  }
-	}();
-
-
-/***/ },
-/* 14 */
-/***/ function(module, exports, __webpack_require__) {
-
 	"use strict";
-	var Trend_1 = __webpack_require__(15);
+	var Trend_1 = __webpack_require__(14);
 	/**
 	 * Trends collection
 	 */
@@ -2121,16 +1544,16 @@ var ThreeChart =
 
 
 /***/ },
-/* 15 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 	var Utils_1 = __webpack_require__(5);
-	var es6_promise_1 = __webpack_require__(16);
+	var es6_promise_1 = __webpack_require__(15);
 	var Chart_1 = __webpack_require__(2);
-	var TrendMarks_1 = __webpack_require__(21);
-	var TrendPoints_1 = __webpack_require__(22);
-	var EventEmitter = __webpack_require__(13);
+	var TrendMarks_1 = __webpack_require__(20);
+	var TrendPoints_1 = __webpack_require__(21);
+	var deps_1 = __webpack_require__(3);
 	var DEFAULT_OPTIONS = {
 	    enabled: true,
 	    data: [],
@@ -2149,7 +1572,7 @@ var ThreeChart =
 	        this.calculatedOptions.name = trendName;
 	        if (options.dataset)
 	            this.calculatedOptions.data = Trend.prepareData(options.dataset);
-	        this.ee = new EventEmitter();
+	        this.ee = new deps_1.EventEmitter();
 	        this.canRequestPrepend = !!options.onPrependRequest;
 	        this.bindEvents();
 	    }
@@ -2298,7 +1721,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 16 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var require;var __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(process, global, module) {/*!
@@ -2431,7 +1854,7 @@ var ThreeChart =
 	    function lib$es6$promise$asap$$attemptVertx() {
 	      try {
 	        var r = require;
-	        var vertx = __webpack_require__(19);
+	        var vertx = __webpack_require__(18);
 	        lib$es6$promise$asap$$vertxNext = vertx.runOnLoop || vertx.runOnContext;
 	        return lib$es6$promise$asap$$useVertxTimer();
 	      } catch(e) {
@@ -3249,7 +2672,7 @@ var ThreeChart =
 	    };
 	
 	    /* global define:true module:true window: true */
-	    if ("function" === 'function' && __webpack_require__(20)['amd']) {
+	    if ("function" === 'function' && __webpack_require__(19)['amd']) {
 	      !(__WEBPACK_AMD_DEFINE_RESULT__ = function() { return lib$es6$promise$umd$$ES6Promise; }.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	    } else if (typeof module !== 'undefined' && module['exports']) {
 	      module['exports'] = lib$es6$promise$umd$$ES6Promise;
@@ -3261,10 +2684,10 @@ var ThreeChart =
 	}).call(this);
 	
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(17), (function() { return this; }()), __webpack_require__(18)(module)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(16), (function() { return this; }()), __webpack_require__(17)(module)))
 
 /***/ },
-/* 17 */
+/* 16 */
 /***/ function(module, exports) {
 
 	// shim for using process in browser
@@ -3364,7 +2787,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 18 */
+/* 17 */
 /***/ function(module, exports) {
 
 	module.exports = function(module) {
@@ -3380,25 +2803,25 @@ var ThreeChart =
 
 
 /***/ },
-/* 19 */
+/* 18 */
 /***/ function(module, exports) {
 
 	/* (ignored) */
 
 /***/ },
-/* 20 */
+/* 19 */
 /***/ function(module, exports) {
 
 	module.exports = function() { throw new Error("define cannot be used indirect"); };
 
 
 /***/ },
-/* 21 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 	var Utils_1 = __webpack_require__(5);
-	var EventEmitter = __webpack_require__(13);
+	var deps_1 = __webpack_require__(3);
 	(function (TREND_MARK_SIDE) {
 	    TREND_MARK_SIDE[TREND_MARK_SIDE["TOP"] = 0] = "TOP";
 	    TREND_MARK_SIDE[TREND_MARK_SIDE["BOTTOM"] = 1] = "BOTTOM";
@@ -3415,7 +2838,7 @@ var ThreeChart =
 	    function TrendMarks(chartState, trend) {
 	        this.items = {};
 	        this.chartState = chartState;
-	        this.ee = new EventEmitter();
+	        this.ee = new deps_1.EventEmitter();
 	        this.trend = trend;
 	        this.onMarksChange();
 	        this.bindEvents();
@@ -3492,7 +2915,7 @@ var ThreeChart =
 	var TrendMark = (function () {
 	    function TrendMark(chartState, options, trend) {
 	        this.renderOnTrendsChange = false;
-	        this.ee = new EventEmitter();
+	        this.ee = new deps_1.EventEmitter();
 	        this.options = options;
 	        this.chartState = chartState;
 	        this.trend = trend;
@@ -3516,11 +2939,11 @@ var ThreeChart =
 
 
 /***/ },
-/* 22 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var EventEmmiter = __webpack_require__(13);
+	var deps_1 = __webpack_require__(3);
 	var Vector3 = THREE.Vector3;
 	var Utils_1 = __webpack_require__(5);
 	// class helps to animate trends points
@@ -3536,7 +2959,7 @@ var ThreeChart =
 	        this.endPointId = 0;
 	        this.chartState = chartState;
 	        this.trend = trend;
-	        this.ee = new EventEmmiter();
+	        this.ee = new deps_1.EventEmitter();
 	        var point;
 	        for (var i = 0; i < pointsCount; i++) {
 	            var id = i;
@@ -3740,13 +3163,13 @@ var ThreeChart =
 
 
 /***/ },
-/* 23 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 	var PerspectiveCamera = THREE.PerspectiveCamera;
 	var Vector3 = THREE.Vector3;
-	var EventEmmiter = __webpack_require__(13);
+	var deps_1 = __webpack_require__(3);
 	/**
 	 * manage camera, and contains methods for transforming pixels to values
 	 */
@@ -3759,7 +3182,7 @@ var ThreeChart =
 	        this.currentZoomY = { val: 1 };
 	        this.chartState = chartState;
 	        var _a = chartState.data, w = _a.width, h = _a.height;
-	        this.ee = new EventEmmiter();
+	        this.ee = new deps_1.EventEmitter();
 	        this.bindEvents();
 	        //camera.position.z = 1500;
 	    }
@@ -4139,7 +3562,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 24 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -4149,8 +3572,8 @@ var ThreeChart =
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
 	var Utils_1 = __webpack_require__(5);
-	var interfaces_1 = __webpack_require__(25);
-	var EventEmitter = __webpack_require__(13);
+	var interfaces_1 = __webpack_require__(24);
+	var deps_1 = __webpack_require__(3);
 	var AXIS_MARK_DEFAULT_OPTIONS = {
 	    type: 'simple',
 	    lineWidth: 2,
@@ -4165,7 +3588,7 @@ var ThreeChart =
 	            return;
 	        }
 	        this.chartState = chartState;
-	        this.ee = new EventEmitter();
+	        this.ee = new deps_1.EventEmitter();
 	        this.axisType = axisType;
 	        var marks = this.items;
 	        var axisMarksOptions = chartState.data.xAxis.marks;
@@ -4223,7 +3646,7 @@ var ThreeChart =
 	            // TODO: axis mark on Y axis
 	            Utils_1.Utils.error('axis mark on Y axis not supported yet');
 	        }
-	        this.ee = new EventEmitter();
+	        this.ee = new deps_1.EventEmitter();
 	        this.options = options;
 	        this.axisType = axisType;
 	        this.chartState = chartState;
@@ -4293,7 +3716,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 25 */
+/* 24 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -4317,7 +3740,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 26 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -4430,7 +3853,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 27 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -4442,9 +3865,9 @@ var ThreeChart =
 	var Mesh = THREE.Mesh;
 	var Object3D = THREE.Object3D;
 	var Widget_1 = __webpack_require__(10);
-	var GridWidget_1 = __webpack_require__(28);
+	var GridWidget_1 = __webpack_require__(27);
 	var Utils_1 = __webpack_require__(5);
-	var interfaces_1 = __webpack_require__(25);
+	var interfaces_1 = __webpack_require__(24);
 	/**
 	 * widget for drawing axis
 	 */
@@ -4633,7 +4056,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 28 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -4789,7 +4212,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 29 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -4892,7 +4315,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 30 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -4909,7 +4332,7 @@ var ThreeChart =
 	var Utils_1 = __webpack_require__(5);
 	var Line = THREE.Line;
 	var Mesh = THREE.Mesh;
-	var interfaces_1 = __webpack_require__(25);
+	var interfaces_1 = __webpack_require__(24);
 	// TODO: support for yAxis
 	/**
 	 * widget for shows marks on axis
@@ -5050,7 +4473,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 31 */
+/* 30 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -5221,7 +4644,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 32 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -5258,4 +4681,3 @@ var ThreeChart =
 /***/ }
 /******/ ]);
 //# sourceMappingURL=ThreeChart.js.map
- if (typeof module !== "undefined" && module.exports) module.exports = ThreeChart;
