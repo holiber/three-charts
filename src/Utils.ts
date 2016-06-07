@@ -1,12 +1,10 @@
 import Texture = THREE.Texture;
 import Color = THREE.Color;
 import {TIteralable} from "./interfaces";
+import { deepmerge, isPlainObject } from './deps';
 
-var isPlainObject = require('is-plain-object') as Function;
 
 export declare type TUid = number;
-
-var deepmerge = require('deepmerge') as Function;
 
 /**
  * project utils static class

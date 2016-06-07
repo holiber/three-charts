@@ -5,4 +5,6 @@
 //require('gsap/src/uncompressed/easing/EasePack.js');
 //require('three/examples/js/renderers/CanvasRenderer.js');
 //require('three/examples/js/renderers/Projector.js');
+export var isPlainObject = window['isPlainObject'] as Function;//require('is-plain-object') as Function;
+export var deepmerge = window['isPlainObject'] as Function; //require('deepmerge') as Function;
 export var EventEmitter = window['EventEmitter'] as typeof EventEmitter2;//require('EventEmitter2') as typeof EventEmitter2;
