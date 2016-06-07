@@ -6,6 +6,7 @@ module.exports = {
     entry: {
         ThreeChart: './index.ts',
         demoApp: "./demo/demoApp.ts"
+        //vendor: ["EventEmitter2"]
     },
     output: {
         path: __dirname + '/build',
@@ -29,9 +30,7 @@ module.exports = {
     },
 
     plugins: [
-        // new CommonsPlugin({
-        //     name: "threeChart"
-        // }),
+        //new CommonsPlugin(/* chunkName= */"vendor", /* filename= */"vendor.bundle.js"),
 
         // make webgl-chart.js index file
         new WebpackOnBuildPlugin(function(stats) {
