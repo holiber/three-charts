@@ -11192,7 +11192,7 @@ var demoApp =
 /* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(process, global, module) {/*!
+	var __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(process, module) {/*!
 	 * @overview es6-promise - a tiny implementation of Promises/A+.
 	 * @copyright Copyright (c) 2014 Yehuda Katz, Tom Dale, Stefan Penner and contributors (Conversion to ES6 API by Jake Archibald)
 	 * @license   Licensed under MIT license
@@ -12109,34 +12109,34 @@ var demoApp =
 	            enumerator._settledAt(lib$es6$promise$$internal$$REJECTED, i, reason);
 	        });
 	    };
-	    function lib$es6$promise$polyfill$$polyfill() {
-	        var local;
-	
-	        if (typeof global !== 'undefined') {
-	            local = global;
-	        } else if (typeof self !== 'undefined') {
-	            local = self;
-	        } else {
-	            try {
-	                local = Function('return this')();
-	            } catch (e) {
-	                throw new Error('polyfill failed because global object is unavailable in this environment');
-	            }
-	        }
-	
-	        var P = local.Promise;
-	
-	        if (P && Object.prototype.toString.call(P.resolve()) === '[object Promise]' && !P.cast) {
-	            return;
-	        }
-	
-	        local.Promise = lib$es6$promise$promise$$default;
-	    }
-	    var lib$es6$promise$polyfill$$default = lib$es6$promise$polyfill$$polyfill;
+	    // function lib$es6$promise$polyfill$$polyfill() {
+	    //     var local;
+	    //
+	    //     if (typeof global !== 'undefined') {
+	    //         local = global;
+	    //     } else if (typeof self !== 'undefined') {
+	    //         local = self;
+	    //     } else {
+	    //         try {
+	    //             local = Function('return this')();
+	    //         } catch (e) {
+	    //             throw new Error('polyfill failed because global object is unavailable in this environment');
+	    //         }
+	    //     }
+	    //
+	    //     var P = local.Promise;
+	    //
+	    //     if (P && Object.prototype.toString.call(P.resolve()) === '[object Promise]' && !P.cast) {
+	    //         return;
+	    //     }
+	    //
+	    //     local.Promise = lib$es6$promise$promise$$default;
+	    // }
+	    // var lib$es6$promise$polyfill$$default = lib$es6$promise$polyfill$$polyfill;
 	
 	    var lib$es6$promise$umd$$ES6Promise = {
 	        'Promise': lib$es6$promise$promise$$default,
-	        'polyfill': lib$es6$promise$polyfill$$default
+	        //'polyfill': lib$es6$promise$polyfill$$default
 	    };
 	
 	    /* global define:true module:true window: true */
@@ -12148,11 +12148,11 @@ var demoApp =
 	        this['ES6Promise'] = lib$es6$promise$umd$$ES6Promise;
 	    }
 	
-	    lib$es6$promise$polyfill$$default();
+	    //lib$es6$promise$polyfill$$default();
 	}).call(this);
 	
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(14), (function() { return this; }()), __webpack_require__(15)(module)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(14), __webpack_require__(15)(module)))
 
 /***/ },
 /* 14 */
