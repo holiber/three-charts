@@ -45,6 +45,10 @@ export interface IChartState {
 		x?: number,
 		y?: number
 	},
+	/**
+	 * use fps = 0 for no limits
+	 */
+	autoRender?: {enabled?: boolean, fps?: number}
 	showStats?: boolean;
 	computedData?: IChartStateComputedData
 	[key: string]: any; // for "for in" loops
@@ -81,6 +85,7 @@ export class ChartState {
 			autoScrollSpeed: 1,
 			autoScrollEase: Linear.easeNone
 		},
+		autoRender: {enabled: true, fps: 0},
 		cursor: {
 			dragMode: false,
 			x: 0,

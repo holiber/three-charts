@@ -112,6 +112,8 @@ window.onload = function () {
 			// 'blue': {dataset: dsBlue.data, lineColor: 0x2222FF, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
 		},
 		showStats: true,
+		// autoRender: {fps: 100},
+		// animations: {enabled: false},
 		widgets: {
 			//Grid: {enabled: false},
 			//Axis: {enabled: false},

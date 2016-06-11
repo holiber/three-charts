@@ -4,6 +4,7 @@ import { ChartWidget } from "./Widget";
 export declare const MAX_DATA_LENGTH: number;
 export declare class Chart {
     state: ChartState;
+    isStopped: boolean;
     private $el;
     private renderer;
     private scene;
@@ -18,7 +19,10 @@ export declare class Chart {
     constructor(state: IChartState);
     static installWidget<WidgetClass extends typeof ChartWidget>(Widget: WidgetClass): void;
     private init();
-    render(time: number): void;
+    private renderLoop();
+    render(): void;
+    stop(): void;
+    run(): void;
     getState(): IChartState;
     /**
      * shortcut for Chart.state.getTrend

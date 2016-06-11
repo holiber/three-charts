@@ -109,8 +109,9 @@ var ThreeChart =
 	    };
 	    Chart.prototype.init = function () {
 	        var state = this.state;
-	        var _a = state.data, w = _a.width, h = _a.height, $el = _a.$el, showStats = _a.showStats;
+	        var _a = state.data, w = _a.width, h = _a.height, $el = _a.$el, showStats = _a.showStats, autoRender = _a.autoRender;
 	        this.scene = new THREE.Scene();
+	        this.isStopped = !autoRender.enabled;
 	        var renderer = this.renderer = new WebGLRenderer({ antialias: true }); //new THREE.CanvasRenderer();
 	        renderer.setPixelRatio(Chart.devicePixelRatio);
 	        renderer.setSize(w, h);
@@ -138,20 +139,33 @@ var ThreeChart =
 	            this.widgets.push(widget);
 	        }
 	        this.bindEvents();
-	        this.render(Date.now());
+	        this.renderLoop();
 	    };
-	    Chart.prototype.render = function (time) {
+	    Chart.prototype.renderLoop = function () {
 	        var _this = this;
 	        this.stats && this.stats.begin();
-	        this.renderer.render(this.scene, this.camera);
-	        var renderDelay = this.state.data.animations.enabled ? 0 : 1000;
-	        if (renderDelay) {
-	            setTimeout(function () { return requestAnimationFrame(function (time) { return _this.render(time); }); }, renderDelay);
+	        this.render();
+	        if (this.isStopped)
+	            return;
+	        var fpsLimit = this.state.data.autoRender.fps;
+	        if (fpsLimit) {
+	            var delay = 1000 / fpsLimit;
+	            setTimeout(function () { return requestAnimationFrame(function () { return _this.renderLoop(); }); }, delay);
 	        }
 	        else {
-	            requestAnimationFrame(function (time) { return _this.render(time); });
+	            requestAnimationFrame(function () { return _this.renderLoop(); });
 	        }
 	        this.stats && this.stats.end();
+	    };
+	    Chart.prototype.render = function () {
+	        this.renderer.render(this.scene, this.camera);
+	    };
+	    Chart.prototype.stop = function () {
+	        this.isStopped = true;
+	    };
+	    Chart.prototype.run = function () {
+	        this.isStopped = false;
+	        this.renderLoop();
 	    };
 	    Chart.prototype.getState = function () {
 	        return this.state.data;
@@ -12714,6 +12728,7 @@ var ThreeChart =
 	                autoScrollSpeed: 1,
 	                autoScrollEase: Linear.easeNone
 	            },
+	            autoRender: { enabled: true, fps: 0 },
 	            cursor: {
 	                dragMode: false,
 	                x: 0,
@@ -15248,4 +15263,7 @@ var ThreeChart =
 /***/ }
 /******/ ]);
 //# sourceMappingURL=ThreeChart.js.map
+ if (typeof module !== "undefined" && module.exports) module.exports = ThreeChart;
+ if (typeof module !== "undefined" && module.exports) module.exports = ThreeChart;
+ if (typeof module !== "undefined" && module.exports) module.exports = ThreeChart;
  if (typeof module !== "undefined" && module.exports) module.exports = ThreeChart;

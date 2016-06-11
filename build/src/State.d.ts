@@ -34,6 +34,13 @@ export interface IChartState {
         x?: number;
         y?: number;
     };
+    /**
+     * use fps = 0 for no limits
+     */
+    autoRender?: {
+        enabled?: boolean;
+        fps?: number;
+    };
     showStats?: boolean;
     computedData?: IChartStateComputedData;
     [key: string]: any;

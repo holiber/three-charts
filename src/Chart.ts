@@ -28,6 +28,7 @@ export const MAX_DATA_LENGTH = 1000;
 
 export class Chart {
 	state: ChartState;
+	isStopped: boolean;
 	private $el: HTMLElement;
 	private renderer: Renderer;
 	private scene: Scene;
@@ -53,8 +54,9 @@ export class Chart {
 
 	private init() {
 		var state = this.state;
-		var {width: w, height: h, $el, showStats} = state.data;
+		var {width: w, height: h, $el, showStats, autoRender} = state.data;
 		this.scene = new THREE.Scene();
+		this.isStopped = !autoRender.enabled;
 
 		var renderer = this.renderer = new WebGLRenderer({antialias: true}); //new THREE.CanvasRenderer();
 		renderer.setPixelRatio(Chart.devicePixelRatio);
@@ -86,20 +88,35 @@ export class Chart {
 		}
 
 		this.bindEvents();
-		this.render(Date.now());
+		this.renderLoop();
 	}
 	
-	render(time: number) {
+	private renderLoop() {
 		this.stats && this.stats.begin();
-		this.renderer.render(this.scene, this.camera);
+		this.render();
+		if (this.isStopped) return;
+		var fpsLimit = this.state.data.autoRender.fps;
 
-		var renderDelay = this.state.data.animations.enabled ? 0 : 1000;
-		if (renderDelay) {
-			setTimeout(() => requestAnimationFrame((time) => this.render(time)), renderDelay);
+		if (fpsLimit) {
+			let delay = 1000 / fpsLimit;
+			setTimeout(() => requestAnimationFrame(() => this.renderLoop()), delay);
 		} else {
-			requestAnimationFrame((time) => this.render(time));
+			requestAnimationFrame(() => this.renderLoop());
 		}
 		this.stats && this.stats.end();
+	}
+	
+	render() {
+		this.renderer.render(this.scene, this.camera);
+	}
+
+	stop() {
+		this.isStopped = true;
+	}
+
+	run() {
+		this.isStopped = false;
+		this.renderLoop();
 	}
 	
 	getState(): IChartState {
