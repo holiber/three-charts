@@ -14448,7 +14448,8 @@ var demoApp =
 	        this.ee.emit('onDisplayedValueChange');
 	    };
 	    AxisMark.prototype.getDisplayedVal = function () {
-	        return String(this.options.value);
+	        var _a = this.options, value = _a.value, displayedValue = _a.displayedValue;
+	        return String(displayedValue !== void 0 ? displayedValue : value);
 	    };
 	    AxisMark.prototype.onMarkCrossed = function (cb) {
 	        var _this = this;

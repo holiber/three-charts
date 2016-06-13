@@ -3,6 +3,7 @@ import { AXIS_TYPE } from "./interfaces";
 import { ITrendData } from "./Trend";
 export interface IAxisMarkUpdateOptions {
     value: number;
+    displayedValue?: string;
 }
 export interface IAxisMarkOptions extends IAxisMarkUpdateOptions {
     name?: string;
