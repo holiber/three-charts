@@ -6,7 +6,8 @@ import {ITrendData, ITrendOptions} from "./Trend";
 import {EventEmitter} from './deps';
 
 export interface IAxisMarkUpdateOptions {
-	value: number
+	value: number,
+	displayedValue?: string
 }
 
 export interface IAxisMarkOptions extends IAxisMarkUpdateOptions {
@@ -121,7 +122,8 @@ export class AxisMark {
 	}
 
 	getDisplayedVal(): string {
-		return String(this.options.value);
+		let {value, displayedValue} = this.options;
+		return String(displayedValue !== void 0 ? displayedValue : value);
 	}
 
 	onMarkCrossed(cb: (trendName: string, newData: ITrendData) => void): Function {
