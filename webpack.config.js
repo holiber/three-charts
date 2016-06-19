@@ -1,5 +1,6 @@
 var CommonsPlugin = new require("webpack/lib/optimize/CommonsChunkPlugin");
 var WebpackOnBuildPlugin = require('on-build-webpack');
+var CopyWebpackPlugin = require('copy-webpack-plugin');
 
 
 module.exports = {
@@ -32,7 +33,10 @@ module.exports = {
 
     plugins: [
         //new CommonsPlugin(/* chunkName= */"vendor", /* filename= */"vendor.bundle.js"),
-
+        new CopyWebpackPlugin([
+            // {output}/file.txt
+            { from: 'node_modules/three/three.js' }
+        ]),
         // make webgl-chart.js index file
         new WebpackOnBuildPlugin(function(stats) {
             var fs = require('fs');
