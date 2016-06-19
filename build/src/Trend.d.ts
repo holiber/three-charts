@@ -1,8 +1,12 @@
 import { ChartState, IChartState } from "./State";
 import { ITrendMarkOptions, TrendMarks } from "./TrendMarks";
-import { TrendPoints } from "./TrendPoints";
+import { TrendSegments } from "./TrendSegments";
 export interface IPrependPromiseExecutor {
     (requestedDataLength: number, resolve: (data: TTrendRawData) => void, reject: () => void): void;
+}
+export declare enum TREND_TYPE {
+    LINE = 0,
+    CANDLE = 1,
 }
 export declare type TTrendRawData = ITrendData | number[];
 export interface ITrendItem {
@@ -17,18 +21,26 @@ export interface ITrendOptions {
     data?: ITrendData;
     dataset?: ITrendData | number[];
     name?: string;
+    type?: TREND_TYPE;
     lineWidth?: number;
     lineColor?: number;
     hasGradient?: boolean;
     hasIndicator?: boolean;
     hasBeacon?: boolean;
+    maxSegmentLength?: number;
+    minSegmentLengthInPx?: number;
+    maxSegmentLengthInPx?: number;
     marks?: ITrendMarkOptions[];
     onPrependRequest?: IPrependPromiseExecutor;
 }
 export declare class Trend {
     name: string;
     marks: TrendMarks;
-    points: TrendPoints;
+    segments: TrendSegments;
+    minXVal: number;
+    minYVal: number;
+    maxXVal: number;
+    maxYVal: number;
     private chartState;
     private calculatedOptions;
     private prependRequest;
@@ -45,6 +57,7 @@ export declare class Trend {
     getFirstItem(): ITrendItem;
     getLastItem(): ITrendItem;
     getOptions(): ITrendOptions;
+    setOptions(options: ITrendOptions): void;
     onPrependRequest(cb: IPrependPromiseExecutor): Function;
     /**
      * shortcut for ChartState.onTrendChange

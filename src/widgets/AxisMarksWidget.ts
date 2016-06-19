@@ -22,7 +22,7 @@ import {IScreenTransformOptions} from "../Screen";
  * widget for shows marks on axis
  */
 export class AxisMarksWidget extends ChartWidget {
-	static widgetName = 'axisMarks';
+	static widgetName = 'AxisMarks';
 
 	private object3D: Object3D;
 	private xAxisMarks: AxisMarks;

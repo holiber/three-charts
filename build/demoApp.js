@@ -47,6 +47,7 @@ var demoApp =
 
 	"use strict";
 	var src_1 = __webpack_require__(1);
+	var Trend_1 = __webpack_require__(22);
 	var chart;
 	var DataSourse = (function () {
 	    function DataSourse() {
@@ -54,7 +55,7 @@ var demoApp =
 	        var sec = 0;
 	        var val = 70;
 	        this.startTime = Date.now();
-	        while (sec < 20) {
+	        while (sec < 2000) {
 	            this.data.push({
 	                xVal: this.startTime + sec * 1000,
 	                yVal: val
@@ -64,6 +65,9 @@ var demoApp =
 	        }
 	        this.endTime = this.data[this.data.length - 1].xVal;
 	    }
+	    DataSourse.prototype.getData = function () {
+	        return src_1.Utils.deepCopy(this.data);
+	    };
 	    DataSourse.prototype.getNext = function () {
 	        var lastVal = this.data[this.data.length - 1];
 	        var yVal = lastVal.yVal + Math.random() * 14 - 7;
@@ -126,17 +130,18 @@ var demoApp =
 	                type: src_1.AXIS_RANGE_TYPE.FIXED,
 	                from: Date.now(),
 	                to: Date.now() + 20000,
-	                maxLength: 500000,
+	                // maxLength: 500000,
 	                minLength: 5000
 	            },
 	            marks: [
-	                { value: Date.now() + 30000, name: 'deadline', title: 'DEADLINE', lineColor: '#ff6600', type: 'timeleft' },
-	                { value: Date.now() + 40000, name: 'close', title: 'CLOSE', lineColor: '#005187', type: 'timeleft' }
+	                { value: dsMain.endTime + 30000, name: 'deadline', title: 'DEADLINE', lineColor: '#ff6600', type: 'timeleft' },
+	                { value: dsMain.endTime + 40000, name: 'close', title: 'CLOSE', lineColor: '#005187', type: 'timeleft' }
 	            ]
 	        },
 	        trends: {
 	            'main': {
-	                dataset: dsMain.data,
+	                type: Trend_1.TREND_TYPE.CANDLE,
+	                dataset: dsMain.getData(),
 	                hasBeacon: true,
 	                hasIndicator: true,
 	                hasGradient: false,
@@ -150,6 +155,11 @@ var demoApp =
 	            //Grid: {enabled: false},
 	            //Axis: {enabled: false},
 	            TrendsGradient: { enabled: false },
+	            //TrendsBeacon: {enabled: false},
+	            //TrendsIndicator: {enabled: false},
+	            TrendsMarks: { enabled: false },
+	            TrendsLoading: { enabled: false },
+	            AxisMarks: { enabled: false }
 	        }
 	    });
 	    window['chart'] = chart;
@@ -211,13 +221,12 @@ var demoApp =
 	    //
 	    var i = 0;
 	    chart.getTrend('main').onPrependRequest(function (requestedLength, resolve, reject) {
-	        var responseData = [];
-	        var ticksCount = Math.round(requestedLength / 1000);
-	        while (ticksCount--)
-	            responseData.unshift(dsMain.getPrev());
-	        setTimeout(function () {
-	            resolve(responseData);
-	        }, 1000);
+	        // var responseData: ITrendItem[] = [];
+	        // var ticksCount = Math.round(requestedLength / 1000) ;
+	        // while (ticksCount--) responseData.unshift(dsMain.getPrev());
+	        // setTimeout(() => {
+	        // 	resolve(responseData);
+	        // }, 1000)
 	    });
 	    setInterval(function () {
 	        i++;
@@ -254,6 +263,25 @@ var demoApp =
 	    $checkboxBluetrend.addEventListener('change', function () {
 	        chart.setState({ trends: { blue: { enabled: $checkboxBluetrend.checked } } });
 	    });
+	    var $switchLineBtn = document.querySelector('[name="switch-line"]');
+	    $switchLineBtn.addEventListener('click', function () {
+	        chart.getTrend('main').setOptions({ type: Trend_1.TREND_TYPE.LINE });
+	    });
+	    var $switchBarsBtn = document.querySelector('[name="switch-bars"]');
+	    $switchBarsBtn.addEventListener('click', function () {
+	        chart.getTrend('main').setOptions({ type: Trend_1.TREND_TYPE.CANDLE });
+	    });
+	    var timeframeButtons = document.querySelectorAll(".timeframe");
+	    for (var i = 0; i < timeframeButtons.length; i++) {
+	        timeframeButtons[i].addEventListener("click", function () {
+	            var range = Number(this.getAttribute('data-range'));
+	            var segmentLength = Number(this.getAttribute('data-segment-length'));
+	            chart.state.zoomToRange(range);
+	            // setTimeout(() => {
+	            // 	chart.getTrend('main').setOptions({maxSegmentLength: segmentLength});
+	            // }, 400);
+	        });
+	    }
 	}
 
 
@@ -266,14 +294,14 @@ var demoApp =
 	    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
 	}
 	__export(__webpack_require__(2));
+	__export(__webpack_require__(30));
 	__export(__webpack_require__(29));
 	__export(__webpack_require__(28));
-	__export(__webpack_require__(27));
-	__export(__webpack_require__(22));
-	__export(__webpack_require__(24));
-	__export(__webpack_require__(25));
 	__export(__webpack_require__(26));
+	__export(__webpack_require__(22));
 	__export(__webpack_require__(23));
+	__export(__webpack_require__(24));
+	__export(__webpack_require__(27));
 	__export(__webpack_require__(18));
 	__export(__webpack_require__(20));
 
@@ -282,23 +310,24 @@ var demoApp =
 /* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
-	// deps must be always on top
 	"use strict";
+	// deps must be always on top
 	__webpack_require__(3);
 	var PerspectiveCamera = THREE.PerspectiveCamera;
 	var WebGLRenderer = THREE.WebGLRenderer;
 	var TrendsIndicatorWidget_1 = __webpack_require__(17);
 	var TrendsLineWidget_1 = __webpack_require__(21);
-	var State_1 = __webpack_require__(22);
+	var TrendsCandleWidget_1 = __webpack_require__(25);
+	var State_1 = __webpack_require__(26);
 	var Utils_1 = __webpack_require__(18);
-	var TrendsBeaconWidget_1 = __webpack_require__(30);
-	var AxisWidget_1 = __webpack_require__(31);
-	var GridWidget_1 = __webpack_require__(32);
-	var TrendsLoadingWidget_1 = __webpack_require__(33);
-	var AxisMarksWidget_1 = __webpack_require__(34);
-	var TrendsMarksWidget_1 = __webpack_require__(35);
-	var BorderWidget_1 = __webpack_require__(36);
-	exports.MAX_DATA_LENGTH = 1000;
+	var TrendsBeaconWidget_1 = __webpack_require__(31);
+	var AxisWidget_1 = __webpack_require__(32);
+	var GridWidget_1 = __webpack_require__(33);
+	var TrendsLoadingWidget_1 = __webpack_require__(34);
+	var AxisMarksWidget_1 = __webpack_require__(35);
+	var TrendsMarksWidget_1 = __webpack_require__(36);
+	var BorderWidget_1 = __webpack_require__(37);
+	exports.MAX_DATA_LENGTH = 2692000; //1000;
 	var Chart = (function () {
 	    function Chart(state) {
 	        this.widgets = [];
@@ -484,6 +513,7 @@ var demoApp =
 	exports.Chart = Chart;
 	// install built-in widgets
 	Chart.installWidget(TrendsLineWidget_1.TrendsLineWidget);
+	Chart.installWidget(TrendsCandleWidget_1.TrendsCandlesWidget);
 	Chart.installWidget(AxisWidget_1.AxisWidget);
 	Chart.installWidget(GridWidget_1.GridWidget);
 	Chart.installWidget(TrendsBeaconWidget_1.TrendsBeaconWidget);
@@ -12309,6 +12339,7 @@ var demoApp =
 	var Color = THREE.Color;
 	var CANVAS_WIDTH = 128;
 	var CANVAS_HEIGHT = 64;
+	var OFFSET_X = 15;
 	var TrendsIndicatorWidget = (function (_super) {
 	    __extends(TrendsIndicatorWidget, _super);
 	    function TrendsIndicatorWidget() {
@@ -12361,22 +12392,24 @@ var demoApp =
 	    };
 	    TrendIndicator.prototype.onTransformationFrame = function () {
 	        // set new widget position
-	        this.point = this.trend.points.getEndPoint();
+	        this.segment = this.trend.segments.getEndSegment();
 	        this.updatePosition();
 	    };
 	    TrendIndicator.prototype.onPointsMove = function (animationState) {
 	        // set new widget position
-	        this.point = animationState.getEndPoint();
+	        this.segment = animationState.getEndSegment();
 	        this.updatePosition();
 	    };
 	    TrendIndicator.prototype.updatePosition = function () {
 	        var state = this.chartState;
-	        var endPointVector = this.point.getFramePoint();
+	        var _a = this.segment.currentAnimationState, segmentEndXVal = _a.endXVal, segmentEndYVal = _a.endYVal;
+	        var endPointVector = state.screen.getPointOnChart(segmentEndXVal, segmentEndYVal);
 	        var screenWidth = state.data.width;
-	        var x = endPointVector.x;
+	        var x = endPointVector.x + OFFSET_X;
 	        var y = endPointVector.y;
 	        var screenX = state.screen.getScreenXByPoint(endPointVector.x);
-	        if (screenX < 0 || screenX > screenWidth) {
+	        var indicatorIsOutOfScreen = screenX < 0 || screenX > screenWidth;
+	        if (indicatorIsOutOfScreen) {
 	            if (screenX < 0)
 	                x = state.screen.getPointByScreenX(0) + 20;
 	            if (screenX > screenWidth)
@@ -12480,14 +12513,38 @@ var demoApp =
 	    Utils.getUid = function () {
 	        return this.currentId++;
 	    };
-	    Utils.eq = function (num1, num2) {
-	        return Math.abs(num1 - num2) < 0.01;
+	    // static eq(num1: number, num2: number) {
+	    // 	return Math.abs(num1 - num2) < 0.01
+	    // }
+	    //
+	    // static gte(num1: number, num2: number) {
+	    // 	return this.eq(num1, num2) || num1 > num2;
+	    // }
+	    //
+	    // static lte(num1: number, num2: number) {
+	    // 	return this.eq(num1, num2) || num1 < num2;
+	    // }
+	    Utils.binarySearchClosestInd = function (arr, num, key) {
+	        var mid;
+	        var lo = 0;
+	        var hi = arr.length - 1;
+	        while (hi - lo > 1) {
+	            mid = Math.floor((lo + hi) / 2);
+	            if (arr[mid][key] < num) {
+	                lo = mid;
+	            }
+	            else {
+	                hi = mid;
+	            }
+	        }
+	        if (num - arr[lo][key] <= arr[hi][key] - num) {
+	            return lo;
+	        }
+	        return hi;
 	    };
-	    Utils.gte = function (num1, num2) {
-	        return this.eq(num1, num2) || num1 > num2;
-	    };
-	    Utils.lte = function (num1, num2) {
-	        return this.eq(num1, num2) || num1 < num2;
+	    Utils.binarySearchClosest = function (arr, num, key) {
+	        var ind = this.binarySearchClosestInd(arr, num, key);
+	        return arr[ind];
 	    };
 	    /**!
 	     * @preserve $.parseColor
@@ -12611,21 +12668,22 @@ var demoApp =
 	        var TrendWidgetClass = this.getTrendWidgetClass();
 	        for (var trendName in trendsOptions) {
 	            var trendOptions = trendsOptions[trendName];
-	            if (TrendWidgetClass.widgetIsEnabled(trendOptions, this.chartState) && !this.widgets[trendName]) {
+	            var widgetCanBeEnabled = TrendWidgetClass.widgetIsEnabled(trendOptions, this.chartState);
+	            if (widgetCanBeEnabled && !this.widgets[trendName]) {
 	                this.createTrendWidget(trendName);
 	            }
-	            else if (!trendOptions.enabled && this.widgets[trendName]) {
+	            else if (!widgetCanBeEnabled && this.widgets[trendName]) {
 	                this.destroyTrendWidget(trendName);
 	            }
 	        }
 	    };
 	    TrendsWidget.prototype.onTrendChange = function (trendName, changedOptions, newData) {
-	        if (!changedOptions.data)
-	            return;
 	        var widget = this.widgets[trendName];
 	        if (!widget)
 	            return;
 	        widget.onTrendChange(changedOptions);
+	        if (!changedOptions.data)
+	            return;
 	        if (newData) {
 	            var data = this.chartState.getTrend(trendName).getData();
 	            var isAppend = (!data.length || data[0].xVal < newData[0].xVal);
@@ -12688,7 +12746,7 @@ var demoApp =
 	    };
 	    TrendWidget.prototype.bindEvents = function () {
 	        var _this = this;
-	        this.bindEvent(this.trend.points.onAnimationFrame(function (trendPoints) { return _this.onPointsMove(trendPoints); }));
+	        this.bindEvent(this.trend.segments.onAnimationFrame(function (trendPoints) { return _this.onPointsMove(trendPoints); }));
 	        this.bindEvent(this.chartState.screen.onTransformationFrame(function (options) { return _this.onTransformationFrame(options); }));
 	        this.bindEvent(this.chartState.screen.onZoomFrame(function (options) { return _this.onZoomFrame(options); }));
 	        this.bindEvent(this.chartState.onZoom(function () { return _this.onZoom(); }));
@@ -12709,7 +12767,6 @@ var demoApp =
 	"use strict";
 	/**
 	 * base class for all widgets
-	 * widgets must not change state!
 	 * each widget must have widgetName static property
 	 */
 	var ChartWidget = (function () {
@@ -12742,6 +12799,8 @@ var demoApp =
 	var Vector3 = THREE.Vector3;
 	var TrendsWidget_1 = __webpack_require__(19);
 	var LineSegments = THREE.LineSegments;
+	var Trend_1 = __webpack_require__(22);
+	var MAX_DISPLAYED_SEGMENTS = 2000;
 	/**
 	 * widget for drawing trends lines
 	 */
@@ -12761,57 +12820,84 @@ var demoApp =
 	    __extends(TrendLine, _super);
 	    function TrendLine(chartState, trendName) {
 	        _super.call(this, chartState, trendName);
+	        this.displayedSegments = {};
 	        var options = this.trend.getOptions();
 	        this.material = new LineBasicMaterial({ color: options.lineColor, linewidth: options.lineWidth });
 	        this.initLine();
 	    }
+	    TrendLine.widgetIsEnabled = function (trendOptions) {
+	        return trendOptions.enabled && trendOptions.type == Trend_1.TREND_TYPE.LINE;
+	    };
 	    TrendLine.prototype.getObject3D = function () {
 	        return this.lineSegments;
 	    };
+	    TrendLine.prototype.bindEvents = function () {
+	        var _this = this;
+	        _super.prototype.bindEvents.call(this);
+	        this.bindEvent(this.trend.segments.onRebuild(function () {
+	            _this.destroySegments();
+	            _this.setupSegments();
+	        }));
+	        this.bindEvent(this.trend.segments.onDisplayedRangeChanged(function () {
+	            _this.setupSegments();
+	        }));
+	    };
 	    TrendLine.prototype.initLine = function () {
 	        var geometry = new Geometry();
-	        var animationState = this.trend.points;
-	        var points = animationState.points;
-	        this.scaleXFactor = this.chartState.valueToPxByXAxis(1);
-	        this.scaleYFactor = this.chartState.valueToPxByYAxis(1);
-	        for (var pointId in points) {
-	            var point = points[pointId];
-	            var nextPoint = points[Number(pointId) + 1];
-	            if (!nextPoint)
-	                break;
-	            var vert1 = point.getFrameVal();
-	            var vert2 = nextPoint.getFrameVal();
-	            if (!nextPoint.hasValue)
-	                vert2 = vert1.clone();
-	            vert1 = this.toLocalVec(vert1);
-	            vert2 = this.toLocalVec(vert2);
-	            geometry.vertices.push(vert1, vert2);
-	        }
+	        var _a = this.chartState.data.xAxis.range, scaleXFactor = _a.scaleFactor, zoomX = _a.zoom;
+	        var _b = this.chartState.data.yAxis.range, scaleYFactor = _b.scaleFactor, zoomY = _b.zoom;
+	        this.scaleXFactor = scaleXFactor;
+	        this.scaleYFactor = scaleYFactor;
 	        this.lineSegments = new LineSegments(geometry, this.material);
-	        this.lineSegments.scale.set(this.scaleXFactor, this.scaleYFactor, 1);
-	        // this.lineSegments.position.set(
-	        // 	- this.chartState.data.xAxis.range.from * this.scaleXFactor,
-	        // 	- this.chartState.data.yAxis.range.from * this.scaleYFactor,
-	        // 	0
-	        // );
+	        this.lineSegments.scale.set(scaleXFactor * zoomX, scaleYFactor * zoomY, 1);
 	        this.lineSegments.frustumCulled = false;
+	        for (var i = 0; i < MAX_DISPLAYED_SEGMENTS; i++) {
+	            geometry.vertices.push(new Vector3(), new Vector3());
+	        }
+	        this.vertices = geometry.vertices;
+	        this.setupSegments();
 	    };
-	    // protected onZoom() {
-	    // 	var currentScale = this.lineSegments.scale;
-	    // 	var zoomX = this.chartState.data.xAxis.range.zoom;
-	    // 	var zoomY = this.chartState.data.yAxis.range.zoom;
-	    // 	currentScale.set(this.scaleXFactor * zoomX, this.scaleYFactor * zoomY, 1);
-	    // 	// setInterval(() => {
-	    // 	// 	currentScale.setY(currentScale.scrollY + 0.4);
-	    // 	// }, 500)
-	    // }
-	    // protected onZoomFrame(zoomX: number, zoomY: number) {
-	    // 	// var currentScale = this.lineSegments.scale;
-	    // 	// currentScale.set(this.scaleXFactor * zoomX, this.scaleYFactor * zoomY, 1);
-	    // 	// setInterval(() => {
-	    // 	// 	currentScale.setY(currentScale.scrollY + 0.4);
-	    // 	// }, 500)
-	    // }
+	    TrendLine.prototype.setupSegments = function () {
+	        var geometry = this.lineSegments.geometry;
+	        var _a = this.trend.segments, firstDisplayedSegment = _a.firstDisplayedSegment, lastDisplayedSegment = _a.lastDisplayedSegment;
+	        for (var segmentId in this.displayedSegments) {
+	            var segment_1 = this.displayedSegments[segmentId];
+	            var segmentIsNotDisplayed = (segment_1.startXVal < firstDisplayedSegment.startXVal ||
+	                segment_1.endXVal > lastDisplayedSegment.endXVal);
+	            if (segmentIsNotDisplayed)
+	                this.destroySegment(Number(segmentId));
+	        }
+	        var segment = firstDisplayedSegment;
+	        while (segment && segment.xVal <= lastDisplayedSegment.xVal) {
+	            this.setupSegment(segment.id, segment.currentAnimationState);
+	            segment = segment.getNext();
+	        }
+	        geometry.verticesNeedUpdate = true;
+	    };
+	    TrendLine.prototype.setupSegment = function (segmentId, segmentState) {
+	        var segment = this.displayedSegments[segmentId];
+	        if (!segment) {
+	            segment = segmentState;
+	            this.displayedSegments[segmentId] = segment;
+	        }
+	        var segmentInd = segmentId % MAX_DISPLAYED_SEGMENTS;
+	        var lineStartVertex = this.vertices[segmentInd * 2];
+	        var lineEndVertex = this.vertices[segmentInd * 2 + 1];
+	        lineStartVertex.set(this.toLocalX(segmentState.startXVal), this.toLocalY(segmentState.startYVal), 0);
+	        lineEndVertex.set(this.toLocalX(segmentState.endXVal), this.toLocalY(segmentState.endYVal), 0);
+	    };
+	    TrendLine.prototype.destroySegments = function () {
+	        for (var segmentId in this.displayedSegments)
+	            this.destroySegment(Number(segmentId));
+	    };
+	    TrendLine.prototype.destroySegment = function (segmentId) {
+	        var segmentInd = segmentId % MAX_DISPLAYED_SEGMENTS;
+	        var lineStartVertex = this.vertices[segmentInd * 2];
+	        var lineEndVertex = this.vertices[segmentInd * 2 + 1];
+	        lineStartVertex.set(0, 0, 0);
+	        lineEndVertex.set(0, 0, 0);
+	        delete this.displayedSegments[segmentId];
+	    };
 	    TrendLine.prototype.onZoomFrame = function (options) {
 	        var currentScale = this.lineSegments.scale;
 	        if (options.zoomX)
@@ -12819,58 +12905,13 @@ var demoApp =
 	        if (options.zoomY)
 	            currentScale.setY(this.scaleYFactor * options.zoomY);
 	    };
-	    TrendLine.prototype.onPointsMove = function (animationState) {
-	        var trendData = this.trend.getData();
+	    TrendLine.prototype.onPointsMove = function (trendSegments) {
 	        var geometry = this.lineSegments.geometry;
-	        var vertices = geometry.vertices;
-	        var current = animationState.current;
-	        var lastInd = trendData.length - 1;
-	        for (var vertexValue in current) {
-	            var firstChar = vertexValue.charAt(0);
-	            if (firstChar !== 'x' && firstChar !== 'y')
+	        for (var _i = 0, _a = trendSegments.animatedSegmentsIds; _i < _a.length; _i++) {
+	            var segmentId = _a[_i];
+	            if (!this.displayedSegments[segmentId])
 	                continue;
-	            var isX = firstChar == 'x';
-	            var ind = Number(vertexValue.substr(1));
-	            if (ind > lastInd)
-	                continue;
-	            var point = animationState.points[ind];
-	            var nextPoint = point.getNext();
-	            var prevPoint = point.getPrev();
-	            var lineStartVertex = vertices[ind * 2];
-	            var lineEndVertex = vertices[ind * 2 + 1];
-	            var isAppend = (prevPoint);
-	            if (isX) {
-	                var value = this.toLocalX(current[vertexValue]);
-	                if (prevPoint) {
-	                    lineStartVertex.setX(this.toLocalX(prevPoint.getFrameVal().x));
-	                    lineEndVertex.setX(value);
-	                }
-	                else {
-	                    lineStartVertex.setX(value);
-	                    lineEndVertex.setX(value);
-	                }
-	                if (nextPoint) {
-	                    var nextPointLineStartVertex = vertices[(nextPoint.id) * 2];
-	                    if (nextPointLineStartVertex.x !== value)
-	                        nextPointLineStartVertex.setX(value);
-	                }
-	            }
-	            else {
-	                var value = this.toLocalY(current[vertexValue]);
-	                if (isAppend) {
-	                    lineStartVertex.setY(this.toLocalY(prevPoint.getFrameVal().y));
-	                    lineEndVertex.setY(value);
-	                }
-	                else {
-	                    lineStartVertex.setY(value);
-	                    lineEndVertex.setY(value);
-	                }
-	                if (nextPoint) {
-	                    var nextPointLineStartVertex = vertices[(nextPoint.id) * 2];
-	                    if (nextPointLineStartVertex.y !== value)
-	                        nextPointLineStartVertex.setY(value);
-	                }
-	            }
+	            this.setupSegment(segmentId, trendSegments.segmentsById[segmentId].currentAnimationState);
 	        }
 	        geometry.verticesNeedUpdate = true;
 	    };
@@ -12893,14 +12934,941 @@ var demoApp =
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
+	var Utils_1 = __webpack_require__(18);
+	var TrendMarks_1 = __webpack_require__(23);
+	var TrendSegments_1 = __webpack_require__(24);
+	var deps_1 = __webpack_require__(3);
+	(function (TREND_TYPE) {
+	    TREND_TYPE[TREND_TYPE["LINE"] = 0] = "LINE";
+	    TREND_TYPE[TREND_TYPE["CANDLE"] = 1] = "CANDLE";
+	})(exports.TREND_TYPE || (exports.TREND_TYPE = {}));
+	var TREND_TYPE = exports.TREND_TYPE;
+	var DEFAULT_OPTIONS = {
+	    enabled: true,
+	    type: TREND_TYPE.LINE,
+	    data: [],
+	    marks: [],
+	    maxSegmentLength: 1000,
+	    minSegmentLengthInPx: 30,
+	    maxSegmentLengthInPx: 60,
+	    lineWidth: 2,
+	    lineColor: 0xFFFFFF,
+	    hasGradient: true,
+	    hasBeacon: false
+	};
+	var Trend = (function () {
+	    function Trend(chartState, trendName, initialState) {
+	        this.minXVal = Infinity;
+	        this.minYVal = Infinity;
+	        this.maxXVal = -Infinity;
+	        this.maxYVal = -Infinity;
+	        var options = initialState.trends[trendName];
+	        this.name = trendName;
+	        this.chartState = chartState;
+	        this.calculatedOptions = Utils_1.Utils.deepMerge(DEFAULT_OPTIONS, options);
+	        this.calculatedOptions.name = trendName;
+	        if (options.dataset)
+	            this.calculatedOptions.data = Trend.prepareData(options.dataset);
+	        this.calculatedOptions.dataset = [];
+	        this.ee = new deps_1.EventEmitter();
+	        this.canRequestPrepend = !!options.onPrependRequest;
+	        this.bindEvents();
+	    }
+	    Trend.prototype.onInitialStateApplied = function () {
+	        this.segments = new TrendSegments_1.TrendSegments(this.chartState, this);
+	        this.marks = new TrendMarks_1.TrendMarks(this.chartState, this);
+	    };
+	    Trend.prototype.bindEvents = function () {
+	        var _this = this;
+	        var chartState = this.chartState;
+	        chartState.onInitialStateApplied(function () { return _this.onInitialStateApplied(); });
+	        chartState.onScrollStop(function () { return _this.checkForPrependRequest(); });
+	        chartState.onZoom(function () { return _this.checkForPrependRequest(); });
+	        chartState.onTrendChange(function (trendName, changedOptions, newData) { return _this.ee.emit('change', changedOptions, newData); });
+	    };
+	    Trend.prototype.getCalculatedOptions = function () {
+	        return this.calculatedOptions;
+	    };
+	    Trend.prototype.appendData = function (rawData) {
+	        var options = this.getOptions();
+	        var newData = Trend.prepareData(rawData, this.getData());
+	        var updatedTrendData = options.data.concat(newData);
+	        this.changeData(updatedTrendData, newData);
+	    };
+	    Trend.prototype.prependData = function (rawData) {
+	        var options = this.getOptions();
+	        var newData = Trend.prepareData(rawData, this.getData(), true);
+	        var updatedTrendData = newData.concat(options.data);
+	        this.changeData(updatedTrendData, newData);
+	    };
+	    Trend.prototype.changeData = function (allData, newData) {
+	        // if (allData.length > MAX_DATA_LENGTH) Utils.error('max data length reached')
+	        for (var _i = 0, newData_1 = newData; _i < newData_1.length; _i++) {
+	            var item = newData_1[_i];
+	            if (item.xVal < this.minXVal)
+	                this.minXVal = item.xVal;
+	            if (item.xVal > this.maxXVal)
+	                this.maxXVal = item.xVal;
+	            if (item.yVal < this.minYVal)
+	                this.minYVal = item.yVal;
+	            if (item.yVal > this.maxYVal)
+	                this.maxYVal = item.yVal;
+	        }
+	        var options = this.getOptions();
+	        var statePatch = { trends: (_a = {}, _a[options.name] = { data: allData }, _a) };
+	        this.chartState.setState(statePatch, newData);
+	        var _a;
+	    };
+	    Trend.prototype.getData = function (fromX, toX) {
+	        var data = this.getOptions().data;
+	        if (fromX == void 0 && toX == void 0)
+	            return data;
+	        fromX = fromX !== void 0 ? fromX : data[0].xVal;
+	        toX = toX !== void 0 ? toX : data[data.length].xVal;
+	        var filteredData = [];
+	        for (var _i = 0, data_1 = data; _i < data_1.length; _i++) {
+	            var item = data_1[_i];
+	            if (item.xVal < fromX)
+	                continue;
+	            if (item.xVal > toX)
+	                break;
+	            filteredData.push(item);
+	        }
+	        return filteredData;
+	    };
+	    Trend.prototype.getFirstItem = function () {
+	        return this.getOptions().data[0];
+	    };
+	    Trend.prototype.getLastItem = function () {
+	        var data = this.getOptions().data;
+	        return data[data.length - 1];
+	    };
+	    Trend.prototype.getOptions = function () {
+	        return this.chartState.data.trends[this.name];
+	    };
+	    Trend.prototype.setOptions = function (options) {
+	        this.chartState.setState({ trends: (_a = {}, _a[this.name] = options, _a) });
+	        var _a;
+	    };
+	    Trend.prototype.onPrependRequest = function (cb) {
+	        var _this = this;
+	        this.canRequestPrepend = true;
+	        this.ee.on('prependRequest', cb);
+	        return function () {
+	            _this.ee.off('prependRequest', cb);
+	        };
+	    };
+	    /**
+	     * shortcut for ChartState.onTrendChange
+	     */
+	    Trend.prototype.onChange = function (cb) {
+	        var _this = this;
+	        this.ee.on('change', cb);
+	        return function () {
+	            _this.ee.off('change', cb);
+	        };
+	    };
+	    Trend.prototype.onDataChange = function (cb) {
+	        var _this = this;
+	        var onChangeCb = function (changedOptions, newData) {
+	            if (changedOptions.data)
+	                cb(newData);
+	        };
+	        this.ee.on('change', onChangeCb);
+	        return function () {
+	            _this.ee.off('change', onChangeCb);
+	        };
+	    };
+	    Trend.prototype.checkForPrependRequest = function () {
+	        var _this = this;
+	        if (this.prependRequest)
+	            return;
+	        var chartState = this.chartState;
+	        var minXVal = chartState.data.computedData.trends.minXVal;
+	        var minScreenX = chartState.getScreenXByValue(minXVal);
+	        var needToRequest = this.canRequestPrepend && minScreenX > 0;
+	        var _a = chartState.data.xAxis.range, from = _a.from, to = _a.to;
+	        var requestedDataLength = to - from;
+	        if (!needToRequest)
+	            return;
+	        this.prependRequest = new deps_1.Promise(function (resolve, reject) {
+	            _this.ee.emit('prependRequest', requestedDataLength, resolve, reject);
+	        });
+	        this.prependRequest.then(function (newData) {
+	            _this.prependData(newData);
+	            _this.prependRequest = null;
+	        }, function () {
+	            _this.prependRequest = null;
+	        });
+	    };
+	    Trend.prepareData = function (newData, currentData, isPrepend) {
+	        if (isPrepend === void 0) { isPrepend = false; }
+	        var data = [];
+	        if (typeof newData[0] == 'number') {
+	            currentData = currentData || [];
+	            var initialItem = void 0;
+	            var xVal = void 0;
+	            if (isPrepend) {
+	                initialItem = currentData[0];
+	                xVal = initialItem.xVal - newData.length;
+	            }
+	            else {
+	                initialItem = currentData[currentData.length - 1];
+	                xVal = initialItem ? initialItem.xVal + 1 : 0;
+	            }
+	            for (var _i = 0, _a = newData; _i < _a.length; _i++) {
+	                var yVal = _a[_i];
+	                data.push({ xVal: xVal, yVal: yVal, id: Utils_1.Utils.getUid() });
+	                xVal++;
+	            }
+	        }
+	        else {
+	            data = newData;
+	        }
+	        return data;
+	    };
+	    return Trend;
+	}());
+	exports.Trend = Trend;
+
+
+/***/ },
+/* 23 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var Utils_1 = __webpack_require__(18);
+	var deps_1 = __webpack_require__(3);
+	(function (TREND_MARK_SIDE) {
+	    TREND_MARK_SIDE[TREND_MARK_SIDE["TOP"] = 0] = "TOP";
+	    TREND_MARK_SIDE[TREND_MARK_SIDE["BOTTOM"] = 1] = "BOTTOM";
+	})(exports.TREND_MARK_SIDE || (exports.TREND_MARK_SIDE = {}));
+	var TREND_MARK_SIDE = exports.TREND_MARK_SIDE;
+	var AXIS_MARK_DEFAULT_OPTIONS = {
+	    title: '',
+	    description: '',
+	    value: 0,
+	    iconColor: 'rgb(255, 102, 217)',
+	    orientation: TREND_MARK_SIDE.TOP
+	};
+	var TrendMarks = (function () {
+	    function TrendMarks(chartState, trend) {
+	        this.items = {};
+	        this.chartState = chartState;
+	        this.ee = new deps_1.EventEmitter();
+	        this.trend = trend;
+	        this.onMarksChange();
+	        this.bindEvents();
+	    }
+	    TrendMarks.prototype.bindEvents = function () {
+	        var _this = this;
+	        this.trend.onDataChange(function () { return _this.updateMarksPoints(); });
+	        this.trend.onChange(function (changedOptions) { return _this.onTrendChange(changedOptions); });
+	    };
+	    TrendMarks.prototype.onTrendChange = function (changedOptions) {
+	        if (!changedOptions.marks)
+	            return;
+	        this.onMarksChange();
+	        this.ee.emit('change');
+	    };
+	    TrendMarks.prototype.onChange = function (cb) {
+	        var _this = this;
+	        this.ee.on('change', cb);
+	        return function () {
+	            _this.ee.off('change', cb);
+	        };
+	    };
+	    TrendMarks.prototype.updateMarksPoints = function () {
+	        var marks = this.items;
+	        var marksArr = [];
+	        var xVals = [];
+	        for (var markName in marks) {
+	            var mark = marks[markName];
+	            xVals.push(mark.options.value);
+	            marksArr.push(mark);
+	            mark.setPoint(null);
+	        }
+	        marksArr.sort(function (a, b) { return a.options.value - b.options.value; });
+	        var points = this.trend.segments.getPointsForXValues(xVals.sort(function (a, b) { return a - b; }));
+	        for (var markInd = 0; markInd < marksArr.length; markInd++) {
+	            marksArr[markInd].setPoint(points[markInd]);
+	        }
+	    };
+	    TrendMarks.prototype.onMarksChange = function () {
+	        var trendsMarksOptions = this.trend.getOptions().marks;
+	        for (var _i = 0, trendsMarksOptions_1 = trendsMarksOptions; _i < trendsMarksOptions_1.length; _i++) {
+	            var options = trendsMarksOptions_1[_i];
+	            var marks = this.items;
+	            // set mark name
+	            if (!options.name) {
+	                options.name = Utils_1.Utils.getUid().toString();
+	                if (marks[options.name])
+	                    Utils_1.Utils.error('duplicated mark name ' + options.name);
+	            }
+	            else if (marks[options.name]) {
+	                continue;
+	            }
+	            options = Utils_1.Utils.deepMerge(AXIS_MARK_DEFAULT_OPTIONS, options);
+	            var mark = new TrendMark(this.chartState, options, this.trend);
+	            marks[options.name] = mark;
+	        }
+	        this.updateMarksPoints();
+	    };
+	    TrendMarks.prototype.createMark = function (options) {
+	        var marksOptions = this.trend.getOptions().marks;
+	        var newMarkOptions = marksOptions.concat([options]);
+	        this.chartState.setState({ trends: (_a = {}, _a[this.trend.name] = { marks: newMarkOptions }, _a) });
+	        var _a;
+	    };
+	    TrendMarks.prototype.getItems = function () {
+	        return this.items;
+	    };
+	    TrendMarks.prototype.getItem = function (markName) {
+	        return this.items[markName];
+	    };
+	    return TrendMarks;
+	}());
+	exports.TrendMarks = TrendMarks;
+	var TrendMark = (function () {
+	    function TrendMark(chartState, options, trend) {
+	        this.renderOnTrendsChange = false;
+	        this.ee = new deps_1.EventEmitter();
+	        this.options = options;
+	        this.chartState = chartState;
+	        this.trend = trend;
+	    }
+	    TrendMark.prototype.onAnimationFrame = function (cb) {
+	        var _this = this;
+	        this.ee.on('onAnimationFrame', cb);
+	        return function () {
+	            _this.ee.off('onAnimationFrame', cb);
+	        };
+	    };
+	    /**
+	     * only for internal usage
+	     */
+	    TrendMark.prototype.setPoint = function (point) {
+	        this.point = point;
+	    };
+	    return TrendMark;
+	}());
+	exports.TrendMark = TrendMark;
+
+
+/***/ },
+/* 24 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var deps_1 = __webpack_require__(3);
+	var Vector3 = THREE.Vector3;
+	var Utils_1 = __webpack_require__(18);
+	var MAX_ANIMATED_SEGMENTS = 200;
+	/**
+	 *  Class helps to display and animate trends segments
+	 */
+	var TrendSegments = (function () {
+	    function TrendSegments(chartState, trend) {
+	        this.segmentsById = {};
+	        this.segments = [];
+	        this.animatedSegmentsIds = [];
+	        this.segmentsLength = 0;
+	        this.nextEmptyId = 0;
+	        this.startPointId = 0;
+	        this.endPointId = 0;
+	        this.chartState = chartState;
+	        this.ee = new deps_1.EventEmitter();
+	        this.trend = trend;
+	        this.maxSegmentLength = trend.getOptions().maxSegmentLength;
+	        this.rebuildSegments();
+	        this.bindEvents();
+	    }
+	    TrendSegments.prototype.bindEvents = function () {
+	        var _this = this;
+	        this.trend.onChange(function (changedOptions, newData) { return _this.onTrendChangeHandler(changedOptions, newData); });
+	        this.chartState.onZoom(function () { return _this.onZoomHandler(); });
+	        this.chartState.onScroll(function () { return _this.recalculateDisplayedRange(); });
+	    };
+	    TrendSegments.prototype.onZoomHandler = function () {
+	        // let {maxSegmentLength, minSegmentLengthInPx} = this.trend.getOptions();
+	        // let currentSegmentLengthInPx = this.chartState.valueToPxByXAxis(this.maxSegmentLength);
+	        // let needToRebuildSegments = (
+	        // 	currentSegmentLengthInPx < minSegmentLengthInPx ||
+	        // 	this.maxSegmentLength > maxSegmentLength
+	        // );
+	        var segmentsRebuilded = this.rebuildSegments();
+	        if (!segmentsRebuilded) {
+	            this.recalculateDisplayedRange();
+	        }
+	    };
+	    TrendSegments.prototype.onTrendChangeHandler = function (changedOptions, newData) {
+	        var needRebuildSegments = changedOptions.maxSegmentLength != void 0;
+	        if (needRebuildSegments) {
+	            this.rebuildSegments();
+	            return;
+	        }
+	        if (!newData)
+	            return;
+	        var data = this.trend.getData();
+	        var isAppend = (!data.length || data[0].xVal < newData[0].xVal);
+	        isAppend ? this.appendData(newData) : this.prependData(newData);
+	        this.recalculateDisplayedRange();
+	    };
+	    TrendSegments.prototype.getEndSegment = function () {
+	        return this.segmentsById[this.endPointId];
+	    };
+	    TrendSegments.prototype.getStartPoint = function () {
+	        return this.segmentsById[this.startPointId];
+	    };
+	    TrendSegments.prototype.rebuildSegments = function () {
+	        var _a = this.trend.getOptions(), maxSegmentLength = _a.maxSegmentLength, minSegmentLengthInPx = _a.minSegmentLengthInPx, maxSegmentLengthInPx = _a.maxSegmentLengthInPx;
+	        var needToRebuild = this.segments.length === 0;
+	        var segmentLength = this.maxSegmentLength;
+	        var currentSegmentLengthInPx = this.chartState.valueToPxByXAxis(segmentLength);
+	        if (currentSegmentLengthInPx < minSegmentLengthInPx) {
+	            needToRebuild = true;
+	            segmentLength = Math.ceil(this.chartState.pxToValueByXAxis(maxSegmentLengthInPx)); //Math.ceil(maxSegmentLength * (minSegmentLengthInPx / currentSegmentLengthInPx));
+	        }
+	        else if (this.chartState.valueToPxByXAxis(this.maxSegmentLength) >= maxSegmentLengthInPx) {
+	            needToRebuild = true;
+	            segmentLength = this.chartState.pxToValueByXAxis(minSegmentLengthInPx);
+	        }
+	        if (!needToRebuild)
+	            return false;
+	        this.maxSegmentLength = segmentLength;
+	        this.segmentsById = {};
+	        this.segments = [];
+	        this.nextEmptyId = 0;
+	        this.startPointId = 0;
+	        this.endPointId = 0;
+	        this.segmentsLength = 0;
+	        this.appendData(null, true);
+	        this.recalculateDisplayedRange(true);
+	        this.ee.emit('rebuild');
+	    };
+	    TrendSegments.prototype.recalculateDisplayedRange = function (segmentsAreRebuilded) {
+	        if (segmentsAreRebuilded === void 0) { segmentsAreRebuilded = false; }
+	        var _a = this.chartState.data.xAxis.range, from = _a.from, to = _a.to;
+	        var _b = this, firstDisplayedSegment = _b.firstDisplayedSegment, lastDisplayedSegment = _b.lastDisplayedSegment;
+	        var displayedRange = to - from;
+	        this.firstDisplayedSegment = Utils_1.Utils.binarySearchClosest(this.segments, from - displayedRange, 'startXVal');
+	        this.lastDisplayedSegment = Utils_1.Utils.binarySearchClosest(this.segments, to + displayedRange, 'endXVal');
+	        if (segmentsAreRebuilded)
+	            return;
+	        var displayedRangeChanged = (firstDisplayedSegment.id !== this.firstDisplayedSegment.id ||
+	            lastDisplayedSegment.id !== this.lastDisplayedSegment.id);
+	        if (displayedRangeChanged)
+	            this.ee.emit('displayedRangeChanged');
+	    };
+	    // getSegments(fromX?: number, toX?: number): TrendSegment[] {
+	    // 	var segments = this.segments;
+	    // 	if (fromX == void 0 && toX == void 0) return segments;
+	    // 	fromX = fromX !== void 0 ? fromX : segments[0].startXVal;
+	    // 	toX = toX !== void 0 ? toX : segments[this.segmentsLength].endXVal;
+	    // 	var startSegmentInd = Utils.closestBinarySearch(segments, fromX, 'xVal');
+	    // 	var endSegmentInd = Utils.closestBinarySearch(segments, toX, 'xVal');
+	    // 	return segments.slice(startSegmentInd, endSegmentInd);
+	    // }
+	    /**
+	     * returns array of segmentsById for values array
+	     * values must be sorted!
+	     */
+	    TrendSegments.prototype.getPointsForXValues = function (values) {
+	        return [];
+	        // var valueInd = 0;
+	        // var value = values[valueInd];
+	        // var lastValueInd = values.length - 1;
+	        // var results: TrendSegment[] = [];
+	        // var point = this.getStartPoint();
+	        // if (!point.hasValue) return [];
+	        //
+	        // while (point) {
+	        //
+	        // 	while (value < point.startXVal) {
+	        // 		results.push(void 0);
+	        // 		value = values[++valueInd];
+	        // 	}
+	        //
+	        // 	while (value > point.endXVal) {
+	        // 		point = point.getNext();
+	        // 		if (!point) break;
+	        // 	}
+	        //
+	        // 	var valueInPoint = (
+	        // 		point.startXVal == value || point.endXVal == value ||
+	        // 		(point.startXVal < value && point.endXVal < value)
+	        // 	);
+	        // 	if (valueInPoint) {
+	        // 		results.push(point);
+	        // 		value = values[++valueInd];
+	        // 	}
+	        // 	if (valueInd > lastValueInd) break;
+	        // }
+	        // return results;
+	    };
+	    TrendSegments.prototype.onAnimationFrame = function (cb) {
+	        var _this = this;
+	        var eventName = 'animationFrame';
+	        this.ee.on('animationFrame', cb);
+	        return function () {
+	            _this.ee.removeListener(eventName, cb);
+	        };
+	    };
+	    TrendSegments.prototype.onRebuild = function (cb) {
+	        var _this = this;
+	        var eventName = 'rebuild';
+	        this.ee.on(eventName, cb);
+	        return function () {
+	            _this.ee.removeListener(eventName, cb);
+	        };
+	    };
+	    TrendSegments.prototype.onDisplayedRangeChanged = function (cb) {
+	        var _this = this;
+	        var eventName = 'displayedRangeChanged';
+	        this.ee.on(eventName, cb);
+	        return function () {
+	            _this.ee.removeListener(eventName, cb);
+	        };
+	    };
+	    TrendSegments.prototype.prependPoint = function (items) {
+	        var id = this.nextEmptyId++;
+	        var point = this.segmentsById[id];
+	        var nextPoint = this.segmentsById[this.startPointId];
+	        if (nextPoint.hasValue) {
+	            nextPoint.prevId = id;
+	            point.nextId = nextPoint.id;
+	        }
+	        point.hasValue = true;
+	        //point.appendItems(items);
+	        this.startPointId = id;
+	        return point;
+	    };
+	    TrendSegments.prototype.allocateNextSegment = function () {
+	        var id = this.nextEmptyId++;
+	        var segment = new TrendSegment(this, id);
+	        var prevSegment = this.segmentsById[this.endPointId];
+	        if (prevSegment && prevSegment.hasValue) {
+	            prevSegment.nextId = id;
+	            segment.prevId = prevSegment.id;
+	        }
+	        this.endPointId = id;
+	        this.segmentsLength++;
+	        this.segmentsById[id] = segment;
+	        this.segments.push(segment);
+	        return segment;
+	    };
+	    TrendSegments.prototype.appendData = function (newData, needRebuildSegments) {
+	        if (needRebuildSegments === void 0) { needRebuildSegments = false; }
+	        var trendData = this.trend.getData();
+	        if (needRebuildSegments) {
+	            newData = trendData;
+	            this.animatedSegmentsIds = [];
+	        }
+	        var startItemInd = trendData.length - newData.length;
+	        var endSegment = this.getEndSegment() || this.allocateNextSegment();
+	        var initialAnimationState = endSegment.hasValue ? endSegment.createAnimationState() : null;
+	        var segment = endSegment || this.segmentsById[0];
+	        var itemInd = 0;
+	        var animatedSegments = [];
+	        while (itemInd < newData.length) {
+	            var item = newData[itemInd];
+	            var itemIsInserted = segment.appendItem(item);
+	            var isLastItem = itemInd == newData.length - 1;
+	            if (itemIsInserted) {
+	                if (!isLastItem)
+	                    itemInd++;
+	            }
+	            else {
+	                if (!segment.isCompleted)
+	                    segment.complete();
+	            }
+	            if (isLastItem && itemIsInserted) {
+	                segment.recalculateItems();
+	            }
+	            var segmentIsReadyForAnimate = segment.isCompleted || (isLastItem && itemIsInserted);
+	            if (segmentIsReadyForAnimate) {
+	                animatedSegments.push(segment);
+	                var id = segment.id;
+	                if (!initialAnimationState)
+	                    initialAnimationState = animatedSegments[0].createAnimationState();
+	                var ias = initialAnimationState;
+	                segment.initialAnimationState = ias;
+	                if (animatedSegments.length > 1)
+	                    segment.initialAnimationState = Utils_1.Utils.deepMerge(ias, {
+	                        startXVal: ias.endXVal,
+	                        startYVal: ias.endYVal
+	                    });
+	                segment.targetAnimationState = segment.createAnimationState();
+	                this.animatedSegmentsIds.push(id);
+	            }
+	            if (isLastItem && itemIsInserted)
+	                break;
+	            if (!segment.isCompleted)
+	                continue;
+	            segment = this.allocateNextSegment();
+	            var prevItem = trendData[startItemInd + itemInd - 1];
+	            segment.appendItem(prevItem);
+	        }
+	        var animationsOptions = this.chartState.data.animations;
+	        var time = animationsOptions.enabled ? animationsOptions.trendChangeSpeed : 0;
+	        if (needRebuildSegments || this.animatedSegmentsIds.length > MAX_ANIMATED_SEGMENTS)
+	            time = 0;
+	        this.animate(time);
+	    };
+	    TrendSegments.prototype.prependData = function (newData) {
+	        var chartState = this.chartState;
+	        var trendData = this.trend.getData();
+	        var animationsOptions = chartState.data.animations;
+	        var startItemInd = newData.length;
+	        var startItem = trendData[startItemInd] || newData[0];
+	        var current = {};
+	        var targets = {};
+	        for (var itemInd = startItemInd - 1; itemInd >= 0; itemInd--) {
+	            var trendItem = trendData[itemInd];
+	            var point = this.prependPoint([trendItem]);
+	            var id = point.id;
+	            current['x' + id] = startItem.xVal;
+	            current['y' + id] = startItem.yVal;
+	            targets['x' + id] = trendItem.xVal;
+	            targets['y' + id] = trendItem.yVal;
+	        }
+	        targets.ease = animationsOptions.trendChangeEase;
+	        var time = animationsOptions.enabled ? animationsOptions.trendChangeSpeed : 0;
+	        // this.animate(time, targets, current);
+	    };
+	    TrendSegments.prototype.animate = function (time) {
+	        var _this = this;
+	        if (this.currentAnimation)
+	            this.currentAnimation.kill();
+	        if (time == 0) {
+	            this.onAnimationFrameHandler(1);
+	            this.animatedSegmentsIds = [];
+	            this.currentAnimation = null;
+	            return;
+	        }
+	        var animationsOptions = this.chartState.data.animations;
+	        var ease = animationsOptions.trendChangeEase;
+	        var objectToAnimate = { animationValue: 0 };
+	        this.currentAnimation = TweenLite.to(objectToAnimate, time, { animationValue: 1, ease: ease });
+	        this.currentAnimation.eventCallback('onUpdate', function () { return _this.onAnimationFrameHandler(objectToAnimate.animationValue); });
+	        this.currentAnimation.eventCallback('onComplete', function () {
+	            _this.animatedSegmentsIds = [];
+	            _this.currentAnimation = null;
+	        });
+	    };
+	    TrendSegments.prototype.onAnimationFrameHandler = function (coefficient) {
+	        for (var _i = 0, _a = this.animatedSegmentsIds; _i < _a.length; _i++) {
+	            var segmentId = _a[_i];
+	            var segment = this.segmentsById[segmentId];
+	            for (var key in segment.targetAnimationState) {
+	                var targetValue = segment.targetAnimationState[key];
+	                var initialValue = segment.initialAnimationState[key];
+	                var currentValue = initialValue + (targetValue - initialValue) * coefficient;
+	                segment.currentAnimationState[key] = currentValue;
+	            }
+	        }
+	        this.ee.emit('animationFrame', this);
+	    };
+	    return TrendSegments;
+	}());
+	exports.TrendSegments = TrendSegments;
+	var TrendSegment = (function () {
+	    function TrendSegment(trendPoints, id) {
+	        this.isCompleted = false;
+	        this.items = [];
+	        this.initialAnimationState = {};
+	        this.targetAnimationState = {};
+	        this.currentAnimationState = {};
+	        this.trendSegments = trendPoints;
+	        this.id = id;
+	        this.maxLength = trendPoints.maxSegmentLength;
+	    }
+	    TrendSegment.prototype.createAnimationState = function () {
+	        var _a = this, xVal = _a.xVal, yVal = _a.yVal, startXVal = _a.startXVal, startYVal = _a.startYVal, endXVal = _a.endXVal, endYVal = _a.endYVal, maxYVal = _a.maxYVal, minYVal = _a.minYVal, maxLength = _a.maxLength;
+	        return {
+	            xVal: xVal,
+	            yVal: yVal,
+	            startXVal: startXVal,
+	            startYVal: startYVal,
+	            endXVal: endXVal,
+	            endYVal: endYVal,
+	            maxYVal: maxYVal,
+	            minYVal: minYVal,
+	            maxLength: maxLength
+	        };
+	    };
+	    ;
+	    TrendSegment.prototype.appendItem = function (item) {
+	        var items = this.items;
+	        if (items.length < 2) {
+	            this.items.push(item);
+	            this.hasValue = true;
+	            return true;
+	        }
+	        var startXVal = items[0].xVal;
+	        if (item.xVal - startXVal > this.maxLength)
+	            return false;
+	        items.push(item);
+	        return true;
+	    };
+	    TrendSegment.prototype.complete = function () {
+	        this.isCompleted = true;
+	        this.recalculateItems();
+	        this.items = []; // free memory for completed ranges
+	    };
+	    TrendSegment.prototype.recalculateItems = function () {
+	        var items = this.items;
+	        var itemsLength = items.length;
+	        if (itemsLength === 0)
+	            Utils_1.Utils.error('Unable to create TrendSegment without TrendItems');
+	        var endItem = items[itemsLength - 1];
+	        var endXVal = endItem.xVal, endYVal = endItem.yVal;
+	        var startXVal, startYVal;
+	        var startItem = items[0];
+	        startXVal = startItem.xVal;
+	        startYVal = startItem.yVal;
+	        var minX = Math.min(startXVal, endXVal);
+	        var maxX = Math.max(startXVal, endXVal);
+	        var middleXVal = minX + (maxX - minX) / 2;
+	        var minY = Math.min(startYVal, endYVal);
+	        var maxY = Math.max(startYVal, endYVal);
+	        var middleYVal = minY + (maxY - minY) / 2;
+	        var yVals = items.map(function (item) { return item.yVal; });
+	        this.startXVal = startXVal;
+	        this.startYVal = startYVal;
+	        this.endXVal = endXVal;
+	        this.endYVal = endYVal;
+	        this.xVal = middleXVal;
+	        this.yVal = middleYVal;
+	        this.maxYVal = Math.max.apply(Math, yVals);
+	        this.minYVal = Math.min.apply(Math, yVals);
+	        if (!this.currentAnimationState)
+	            this.currentAnimationState = this.createAnimationState();
+	    };
+	    TrendSegment.prototype.getNext = function () {
+	        var nextPoint = this.trendSegments.segmentsById[this.nextId];
+	        return nextPoint && nextPoint.hasValue ? nextPoint : null;
+	    };
+	    TrendSegment.prototype.getPrev = function () {
+	        var prevPoint = this.trendSegments.segmentsById[this.prevId];
+	        return prevPoint && prevPoint.hasValue ? prevPoint : null;
+	    };
+	    TrendSegment.prototype.getFrameVal = function () {
+	        var _a = this.createAnimationState(), xVal = _a.xVal, yVal = _a.yVal;
+	        return new Vector3(xVal, yVal, 0);
+	    };
+	    TrendSegment.prototype.getFramePoint = function () {
+	        var frameVal = this.getFrameVal();
+	        return this.trendSegments.chartState.screen.getPointOnChart(frameVal.x, frameVal.y);
+	    };
+	    return TrendSegment;
+	}());
+	exports.TrendSegment = TrendSegment;
+
+
+/***/ },
+/* 25 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var __extends = (this && this.__extends) || function (d, b) {
+	    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+	    function __() { this.constructor = d; }
+	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+	};
+	var TrendsWidget_1 = __webpack_require__(19);
+	var Object3D = THREE.Object3D;
+	var Geometry = THREE.Geometry;
+	var Vector3 = THREE.Vector3;
+	var Mesh = THREE.Mesh;
+	var Line = THREE.Line;
+	var MeshBasicMaterial = THREE.MeshBasicMaterial;
+	var PlaneGeometry = THREE.PlaneGeometry;
+	var Trend_1 = __webpack_require__(22);
+	var LineBasicMaterial = THREE.LineBasicMaterial;
+	var RISE_COLOR = 0x2CAC40;
+	var FALL_COLOR = 0xEE5533;
+	var MARGIN_PERCENT = 0.3;
+	// const MAX_CANDLES = 100;
+	/**
+	 * widget for drawing trends candles
+	 */
+	var TrendsCandlesWidget = (function (_super) {
+	    __extends(TrendsCandlesWidget, _super);
+	    function TrendsCandlesWidget() {
+	        _super.apply(this, arguments);
+	    }
+	    TrendsCandlesWidget.prototype.getTrendWidgetClass = function () {
+	        return TrendCandlesWidget;
+	    };
+	    TrendsCandlesWidget.widgetName = "trendsCandles";
+	    return TrendsCandlesWidget;
+	}(TrendsWidget_1.TrendsWidget));
+	exports.TrendsCandlesWidget = TrendsCandlesWidget;
+	var TrendCandlesWidget = (function (_super) {
+	    __extends(TrendCandlesWidget, _super);
+	    function TrendCandlesWidget(chartState, trendName) {
+	        _super.call(this, chartState, trendName);
+	        this.candles = {};
+	        this.initObject();
+	    }
+	    TrendCandlesWidget.widgetIsEnabled = function (trendOptions) {
+	        return trendOptions.enabled && trendOptions.type == Trend_1.TREND_TYPE.CANDLE;
+	    };
+	    TrendCandlesWidget.prototype.getObject3D = function () {
+	        return this.object3D;
+	    };
+	    TrendCandlesWidget.prototype.bindEvents = function () {
+	        var _this = this;
+	        _super.prototype.bindEvents.call(this);
+	        this.bindEvent(this.trend.segments.onRebuild(function () {
+	            _this.destroyCandles();
+	            _this.setupCandles();
+	        }));
+	        this.bindEvent(this.trend.segments.onDisplayedRangeChanged(function () {
+	            _this.setupCandles();
+	        }));
+	    };
+	    TrendCandlesWidget.prototype.initObject = function () {
+	        var stateData = this.chartState.data;
+	        var _a = stateData.xAxis.range, scaleXFactor = _a.scaleFactor, zoomX = _a.zoom;
+	        var _b = stateData.yAxis.range, scaleYFactor = _b.scaleFactor, zoomY = _b.zoom;
+	        this.scaleXFactor = scaleXFactor;
+	        this.scaleYFactor = scaleYFactor;
+	        this.object3D = new Object3D();
+	        this.object3D.scale.set(scaleXFactor * zoomX, scaleYFactor * zoomY, 1);
+	        this.object3D.frustumCulled = false;
+	        this.setupCandles();
+	    };
+	    TrendCandlesWidget.prototype.setupCandles = function () {
+	        // remove invisible
+	        // let segments = this.trend.segments.segmentsById;
+	        // let object3D = this.object3D;
+	        // while (object3D.children.length) object3D.remove(object3D.children[0]);
+	        // this.candles = {};
+	        //
+	        var _a = this.trend.segments, firstDisplayedSegment = _a.firstDisplayedSegment, lastDisplayedSegment = _a.lastDisplayedSegment;
+	        for (var segmentId in this.candles) {
+	            var segment_1 = this.candles[segmentId].segment;
+	            var segmentIsNotDisplayed = (segment_1.startXVal < firstDisplayedSegment.startXVal ||
+	                segment_1.endXVal > lastDisplayedSegment.endXVal);
+	            if (segmentIsNotDisplayed)
+	                this.destroyCandle(Number(segmentId));
+	        }
+	        var segment = firstDisplayedSegment;
+	        while (segment && segment.xVal <= lastDisplayedSegment.xVal) {
+	            this.setupCandle(segment.id, segment.currentAnimationState);
+	            segment = segment.getNext();
+	        }
+	        // for (let segmentId in segments) {
+	        // 	this.setupCandle(Number(segmentId), segments[segmentId].createAnimationState());
+	        // }
+	    };
+	    TrendCandlesWidget.prototype.destroyCandles = function () {
+	        for (var segmentId in this.candles)
+	            this.destroyCandle(Number(segmentId));
+	    };
+	    TrendCandlesWidget.prototype.destroyCandle = function (segmentId) {
+	        var candle = this.candles[segmentId];
+	        this.object3D.remove(candle.getObject3D());
+	        delete this.candles[segmentId];
+	    };
+	    TrendCandlesWidget.prototype.onZoomFrame = function (options) {
+	        var currentScale = this.object3D.scale;
+	        if (options.zoomX)
+	            currentScale.setX(this.scaleXFactor * options.zoomX);
+	        if (options.zoomY)
+	            currentScale.setY(this.scaleYFactor * options.zoomY);
+	    };
+	    TrendCandlesWidget.prototype.onPointsMove = function (trendSegments) {
+	        for (var _i = 0, _a = trendSegments.animatedSegmentsIds; _i < _a.length; _i++) {
+	            var segmentId = _a[_i];
+	            if (!this.candles[segmentId])
+	                continue;
+	            var segmentState = trendSegments.segmentsById[segmentId].currentAnimationState;
+	            this.setupCandle(segmentId, segmentState);
+	        }
+	    };
+	    TrendCandlesWidget.prototype.setupCandle = function (candleId, segmentState) {
+	        var candle = this.candles[candleId];
+	        if (!candle) {
+	            candle = this.candles[candleId] = new CandleWidget();
+	            var candleObject = candle.getObject3D();
+	            this.object3D.add(candleObject);
+	        }
+	        candle.getObject3D().position.set(this.toLocalX(segmentState.xVal), this.toLocalY(segmentState.yVal), 0);
+	        candle.setSegment(segmentState);
+	    };
+	    TrendCandlesWidget.prototype.toLocalX = function (xVal) {
+	        return xVal - this.chartState.data.xAxis.range.zeroVal;
+	    };
+	    TrendCandlesWidget.prototype.toLocalY = function (yVal) {
+	        return yVal - this.chartState.data.yAxis.range.zeroVal;
+	    };
+	    TrendCandlesWidget.prototype.toLocalVec = function (vec) {
+	        return new Vector3(this.toLocalX(vec.x), this.toLocalY(vec.y), 0);
+	    };
+	    return TrendCandlesWidget;
+	}(TrendsWidget_1.TrendWidget));
+	exports.TrendCandlesWidget = TrendCandlesWidget;
+	var CandleWidget = (function () {
+	    function CandleWidget() {
+	        this.initObject();
+	    }
+	    CandleWidget.prototype.getObject3D = function () {
+	        return this.rect;
+	    };
+	    CandleWidget.prototype.setSegment = function (segment) {
+	        this.segment = segment;
+	        var color = segment.endYVal < segment.startYVal ? FALL_COLOR : RISE_COLOR;
+	        // update rect
+	        var geometry = this.rect.geometry;
+	        var material = this.rect.material;
+	        var width = segment.endXVal - segment.startXVal;
+	        width -= width * MARGIN_PERCENT;
+	        var height = Math.max(segment.startYVal, segment.endYVal) - Math.min(segment.startYVal, segment.endYVal);
+	        var _a = geometry.vertices, leftTop = _a[0], rightTop = _a[1], leftBottom = _a[2], rightBottom = _a[3];
+	        leftTop.set(-width / 2, height / 2, 0);
+	        rightTop.set(width / 2, height / 2, 0);
+	        leftBottom.set(-width / 2, -height / 2, 0);
+	        rightBottom.set(width / 2, -height / 2, 0);
+	        material.color.set(color);
+	        geometry.verticesNeedUpdate = true;
+	        // update line
+	        var lineGeometry = this.line.geometry;
+	        var lineMaterial = this.line.material;
+	        var lineTop = segment.maxYVal - segment.yVal;
+	        var lineBottom = segment.minYVal - segment.yVal;
+	        lineGeometry.vertices[0].set(0, lineTop, 0);
+	        lineGeometry.vertices[1].set(0, lineBottom, 0);
+	        lineMaterial.color.set(color);
+	        lineGeometry.verticesNeedUpdate = true;
+	    };
+	    CandleWidget.prototype.initObject = function () {
+	        this.rect = new Mesh(new PlaneGeometry(1, 1), new MeshBasicMaterial() //db4931
+	        );
+	        var lineGeometry = new Geometry();
+	        lineGeometry.vertices.push(new Vector3(), new Vector3);
+	        this.line = new Line(lineGeometry, new LineBasicMaterial({ linewidth: 3 }));
+	        this.rect.add(this.line);
+	    };
+	    return CandleWidget;
+	}());
+
+
+/***/ },
+/* 26 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
 	var deps_1 = __webpack_require__(3);
 	var Utils_1 = __webpack_require__(18);
 	var Vector3 = THREE.Vector3;
 	var Widget_1 = __webpack_require__(20);
-	var Trends_1 = __webpack_require__(23);
-	var Screen_1 = __webpack_require__(27);
-	var AxisMarks_1 = __webpack_require__(28);
-	var interfaces_1 = __webpack_require__(29);
+	var Trends_1 = __webpack_require__(27);
+	var Screen_1 = __webpack_require__(28);
+	var AxisMarks_1 = __webpack_require__(29);
+	var interfaces_1 = __webpack_require__(30);
 	var Chart_1 = __webpack_require__(2);
 	/**
 	 * main class for manage chart state
@@ -13019,7 +13987,22 @@ var demoApp =
 	            }
 	        }
 	        this.savePrevState(changedProps);
+	        // temporary remove trends data from newState by performance reasons
+	        var trendsData = {};
+	        if (newState.trends)
+	            for (var trendName in newState.trends) {
+	                var trendOptions = newState.trends[trendName];
+	                if (trendOptions.data)
+	                    trendsData[trendName] = trendOptions.data;
+	                delete trendOptions.data;
+	            }
+	        var newStateContainsData = Object.keys(trendsData).length > 0;
 	        this.data = Utils_1.Utils.deepMerge(this.data, newState);
+	        // return data to state
+	        if (newStateContainsData)
+	            for (var trendName in trendsData) {
+	                this.data.trends[trendName].data = trendsData[trendName];
+	            }
 	        if (silent)
 	            return;
 	        // recalculate all dynamic state props
@@ -13164,7 +14147,9 @@ var demoApp =
 	            var to = from + actualData.width / (scaleFactor * zoom);
 	            var rangeLength = to - from;
 	            var needToRecalculateZoom = false;
-	            if (rangeLength > axisRange.maxLength || rangeLength < axisRange.minLength) {
+	            var rangeMoreThenMaxValue = (axisRange.maxLength && rangeLength > axisRange.maxLength);
+	            var rangeLessThenMinValue = (axisRange.minLength && rangeLength < axisRange.minLength);
+	            if (rangeMoreThenMaxValue || rangeLessThenMinValue) {
 	                var fixScale = rangeLength > axisRange.maxLength ?
 	                    rangeLength / axisRange.maxLength :
 	                    rangeLength / axisRange.minLength;
@@ -13245,14 +14230,33 @@ var demoApp =
 	        return patch;
 	    };
 	    ChartState.prototype.zoom = function (zoomValue) {
-	        var _a = this.data.xAxis.range, zoom = _a.zoom, scroll = _a.scroll, zeroVal = _a.zeroVal;
+	        var _a = this.data.xAxis.range, zoom = _a.zoom, scroll = _a.scroll;
 	        var newZoom = zoom * zoomValue;
-	        var screenLeftVal = this.getValueByScreenX(0);
-	        var screenCenterVal = this.getValueByScreenX(this.data.width / 2);
-	        var halfScreenLength = screenCenterVal - screenLeftVal;
-	        var scrollDelta = halfScreenLength * zoomValue - halfScreenLength;
-	        var newScroll = scroll + scrollDelta;
+	        // var screenLeftVal = this.getValueByScreenX(0);
+	        // var screenCenterVal = this.getValueByScreenX(this.data.width / 2);
+	        // var halfScreenLength = screenCenterVal - screenLeftVal;
+	        // var scrollDelta = halfScreenLength * zoomValue - halfScreenLength;
+	        // var newScroll = scroll + scrollDelta;
+	        var newScroll = this.getScrollForZoomAction(this.data.width / 2, newZoom);
 	        this.setState({ xAxis: { range: { zoom: newZoom, scroll: newScroll } } });
+	    };
+	    ChartState.prototype.zoomToRange = function (range) {
+	        var width = this.data.width;
+	        var scaleFactor = this.data.xAxis.range.scaleFactor;
+	        var currentRange = width / scaleFactor;
+	        var newZoom = currentRange / range;
+	        var newScroll = this.getScrollForZoomAction(this.data.width / 2, newZoom);
+	        this.setState({ xAxis: { range: { zoom: newZoom, scroll: newScroll } } });
+	    };
+	    ChartState.prototype.getScrollForZoomAction = function (screenOrigin, newZoom) {
+	        var _a = this.data.xAxis.range, zoom = _a.zoom, scroll = _a.scroll;
+	        var screenLeftVal = this.getValueByScreenX(0);
+	        var zoomDelta = newZoom / zoom;
+	        var screenCenterVal = this.getValueByScreenX(0);
+	        var halfScreenLength = screenCenterVal - screenLeftVal;
+	        var scrollDelta = halfScreenLength * zoomDelta - halfScreenLength;
+	        var newScroll = scroll + scrollDelta;
+	        return newScroll;
 	    };
 	    /**
 	     *  returns offset in pixels from xAxis.range.zeroVal to xVal
@@ -13356,11 +14360,11 @@ var demoApp =
 
 
 /***/ },
-/* 23 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var Trend_1 = __webpack_require__(24);
+	var Trend_1 = __webpack_require__(22);
 	/**
 	 * Trends collection
 	 */
@@ -13411,6 +14415,8 @@ var demoApp =
 	        }
 	        for (var _i = 0, trends_1 = trends; _i < trends_1.length; _i++) {
 	            var trend = trends_1[_i];
+	            // TODO: refactor this shit
+	            // if (!trend.segments) {
 	            var trendData = trend.getData(fromX, toX);
 	            var trendYValues = trendData.map(function (dataItem) { return dataItem.yVal; });
 	            result = compareFn.apply(void 0, [result].concat(trendYValues));
@@ -13427,530 +14433,7 @@ var demoApp =
 
 
 /***/ },
-/* 24 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-	var Utils_1 = __webpack_require__(18);
-	var Chart_1 = __webpack_require__(2);
-	var TrendMarks_1 = __webpack_require__(25);
-	var TrendPoints_1 = __webpack_require__(26);
-	var deps_1 = __webpack_require__(3);
-	var DEFAULT_OPTIONS = {
-	    enabled: true,
-	    data: [],
-	    marks: [],
-	    lineWidth: 2,
-	    lineColor: 0xFFFFFF,
-	    hasGradient: true,
-	    hasBeacon: false
-	};
-	var Trend = (function () {
-	    function Trend(chartState, trendName, initialState) {
-	        var options = initialState.trends[trendName];
-	        this.name = trendName;
-	        this.chartState = chartState;
-	        this.calculatedOptions = Utils_1.Utils.deepMerge(DEFAULT_OPTIONS, options);
-	        this.calculatedOptions.name = trendName;
-	        if (options.dataset)
-	            this.calculatedOptions.data = Trend.prepareData(options.dataset);
-	        this.ee = new deps_1.EventEmitter();
-	        this.canRequestPrepend = !!options.onPrependRequest;
-	        this.bindEvents();
-	    }
-	    Trend.prototype.onInitialStateApplied = function () {
-	        this.points = new TrendPoints_1.TrendPoints(this.chartState, this, Chart_1.MAX_DATA_LENGTH, this.getData()[0]);
-	        this.marks = new TrendMarks_1.TrendMarks(this.chartState, this);
-	    };
-	    Trend.prototype.bindEvents = function () {
-	        var _this = this;
-	        var chartState = this.chartState;
-	        chartState.onInitialStateApplied(function () { return _this.onInitialStateApplied(); });
-	        chartState.onScrollStop(function () { return _this.checkForPrependRequest(); });
-	        chartState.onZoom(function () { return _this.checkForPrependRequest(); });
-	        chartState.onTrendChange(function (trendName, changedOptions, newData) { return _this.ee.emit('change', changedOptions, newData); });
-	    };
-	    Trend.prototype.getCalculatedOptions = function () {
-	        return this.calculatedOptions;
-	    };
-	    Trend.prototype.appendData = function (rawData) {
-	        var options = this.getOptions();
-	        var newData = Trend.prepareData(rawData, this.getData());
-	        var updatedTrendData = options.data.concat(newData);
-	        this.changeData(updatedTrendData, newData);
-	    };
-	    Trend.prototype.prependData = function (rawData) {
-	        var options = this.getOptions();
-	        var newData = Trend.prepareData(rawData, this.getData(), true);
-	        var updatedTrendData = newData.concat(options.data);
-	        this.changeData(updatedTrendData, newData);
-	    };
-	    Trend.prototype.changeData = function (allData, newData) {
-	        if (allData.length > Chart_1.MAX_DATA_LENGTH)
-	            Utils_1.Utils.error('max data length reached');
-	        var options = this.getOptions();
-	        var statePatch = { trends: (_a = {}, _a[options.name] = { data: allData }, _a) };
-	        this.chartState.setState(statePatch, newData);
-	        var _a;
-	    };
-	    Trend.prototype.getData = function (fromX, toX) {
-	        var data = this.getOptions().data;
-	        if (fromX == void 0 && toX == void 0)
-	            return data;
-	        fromX = fromX !== void 0 ? fromX : data[0].xVal;
-	        toX = toX !== void 0 ? toX : data[data.length].xVal;
-	        var filteredData = [];
-	        for (var _i = 0, data_1 = data; _i < data_1.length; _i++) {
-	            var item = data_1[_i];
-	            if (item.xVal < fromX)
-	                continue;
-	            if (item.xVal > toX)
-	                break;
-	            filteredData.push(item);
-	        }
-	        return filteredData;
-	    };
-	    Trend.prototype.getFirstItem = function () {
-	        return this.getOptions().data[0];
-	    };
-	    Trend.prototype.getLastItem = function () {
-	        var data = this.getOptions().data;
-	        return data[data.length - 1];
-	    };
-	    Trend.prototype.getOptions = function () {
-	        return this.chartState.data.trends[this.name];
-	    };
-	    Trend.prototype.onPrependRequest = function (cb) {
-	        var _this = this;
-	        this.canRequestPrepend = true;
-	        this.ee.on('prependRequest', cb);
-	        return function () {
-	            _this.ee.off('prependRequest', cb);
-	        };
-	    };
-	    /**
-	     * shortcut for ChartState.onTrendChange
-	     */
-	    Trend.prototype.onChange = function (cb) {
-	        var _this = this;
-	        this.ee.on('change', cb);
-	        return function () {
-	            _this.ee.off('change', cb);
-	        };
-	    };
-	    Trend.prototype.onDataChange = function (cb) {
-	        var _this = this;
-	        var onChangeCb = function (changedOptions, newData) {
-	            if (changedOptions.data)
-	                cb(newData);
-	        };
-	        this.ee.on('change', onChangeCb);
-	        return function () {
-	            _this.ee.off('change', onChangeCb);
-	        };
-	    };
-	    Trend.prototype.checkForPrependRequest = function () {
-	        var _this = this;
-	        if (this.prependRequest)
-	            return;
-	        var chartState = this.chartState;
-	        var minXVal = chartState.data.computedData.trends.minXVal;
-	        var minScreenX = chartState.getScreenXByValue(minXVal);
-	        var needToRequest = this.canRequestPrepend && minScreenX > 0;
-	        var _a = chartState.data.xAxis.range, from = _a.from, to = _a.to;
-	        var requestedDataLength = to - from;
-	        if (!needToRequest)
-	            return;
-	        this.prependRequest = new deps_1.Promise(function (resolve, reject) {
-	            _this.ee.emit('prependRequest', requestedDataLength, resolve, reject);
-	        });
-	        this.prependRequest.then(function (newData) {
-	            _this.prependData(newData);
-	            _this.prependRequest = null;
-	        }, function () {
-	            _this.prependRequest = null;
-	        });
-	    };
-	    Trend.prepareData = function (newData, currentData, isPrepend) {
-	        if (isPrepend === void 0) { isPrepend = false; }
-	        var data = [];
-	        if (typeof newData[0] == 'number') {
-	            currentData = currentData || [];
-	            var initialItem = void 0;
-	            var xVal = void 0;
-	            if (isPrepend) {
-	                initialItem = currentData[0];
-	                xVal = initialItem.xVal - newData.length;
-	            }
-	            else {
-	                initialItem = currentData[currentData.length - 1];
-	                xVal = initialItem ? initialItem.xVal + 1 : 0;
-	            }
-	            for (var _i = 0, _a = newData; _i < _a.length; _i++) {
-	                var yVal = _a[_i];
-	                data.push({ xVal: xVal, yVal: yVal, id: Utils_1.Utils.getUid() });
-	                xVal++;
-	            }
-	        }
-	        else {
-	            data = newData;
-	        }
-	        return data;
-	    };
-	    return Trend;
-	}());
-	exports.Trend = Trend;
-
-
-/***/ },
-/* 25 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-	var Utils_1 = __webpack_require__(18);
-	var deps_1 = __webpack_require__(3);
-	(function (TREND_MARK_SIDE) {
-	    TREND_MARK_SIDE[TREND_MARK_SIDE["TOP"] = 0] = "TOP";
-	    TREND_MARK_SIDE[TREND_MARK_SIDE["BOTTOM"] = 1] = "BOTTOM";
-	})(exports.TREND_MARK_SIDE || (exports.TREND_MARK_SIDE = {}));
-	var TREND_MARK_SIDE = exports.TREND_MARK_SIDE;
-	var AXIS_MARK_DEFAULT_OPTIONS = {
-	    title: '',
-	    description: '',
-	    value: 0,
-	    iconColor: 'rgb(255, 102, 217)',
-	    orientation: TREND_MARK_SIDE.TOP
-	};
-	var TrendMarks = (function () {
-	    function TrendMarks(chartState, trend) {
-	        this.items = {};
-	        this.chartState = chartState;
-	        this.ee = new deps_1.EventEmitter();
-	        this.trend = trend;
-	        this.onMarksChange();
-	        this.bindEvents();
-	    }
-	    TrendMarks.prototype.bindEvents = function () {
-	        var _this = this;
-	        this.trend.onDataChange(function () { return _this.updateMarksPoints(); });
-	        this.trend.onChange(function (changedOptions) { return _this.onTrendChange(changedOptions); });
-	    };
-	    TrendMarks.prototype.onTrendChange = function (changedOptions) {
-	        if (!changedOptions.marks)
-	            return;
-	        this.onMarksChange();
-	        this.ee.emit('change');
-	    };
-	    TrendMarks.prototype.onChange = function (cb) {
-	        var _this = this;
-	        this.ee.on('change', cb);
-	        return function () {
-	            _this.ee.off('change', cb);
-	        };
-	    };
-	    TrendMarks.prototype.updateMarksPoints = function () {
-	        var marks = this.items;
-	        var marksArr = [];
-	        var xVals = [];
-	        for (var markName in marks) {
-	            var mark = marks[markName];
-	            xVals.push(mark.options.value);
-	            marksArr.push(mark);
-	            mark.setPoint(null);
-	        }
-	        marksArr.sort(function (a, b) { return a.options.value - b.options.value; });
-	        var points = this.trend.points.getPointsForXValues(xVals.sort(function (a, b) { return a - b; }));
-	        for (var markInd = 0; markInd < marksArr.length; markInd++) {
-	            marksArr[markInd].setPoint(points[markInd]);
-	        }
-	    };
-	    TrendMarks.prototype.onMarksChange = function () {
-	        var trendsMarksOptions = this.trend.getOptions().marks;
-	        for (var _i = 0, trendsMarksOptions_1 = trendsMarksOptions; _i < trendsMarksOptions_1.length; _i++) {
-	            var options = trendsMarksOptions_1[_i];
-	            var marks = this.items;
-	            // set mark name
-	            if (!options.name) {
-	                options.name = Utils_1.Utils.getUid().toString();
-	                if (marks[options.name])
-	                    Utils_1.Utils.error('duplicated mark name ' + options.name);
-	            }
-	            else if (marks[options.name]) {
-	                continue;
-	            }
-	            options = Utils_1.Utils.deepMerge(AXIS_MARK_DEFAULT_OPTIONS, options);
-	            var mark = new TrendMark(this.chartState, options, this.trend);
-	            marks[options.name] = mark;
-	        }
-	        this.updateMarksPoints();
-	    };
-	    TrendMarks.prototype.createMark = function (options) {
-	        var marksOptions = this.trend.getOptions().marks;
-	        var newMarkOptions = marksOptions.concat([options]);
-	        this.chartState.setState({ trends: (_a = {}, _a[this.trend.name] = { marks: newMarkOptions }, _a) });
-	        var _a;
-	    };
-	    TrendMarks.prototype.getItems = function () {
-	        return this.items;
-	    };
-	    TrendMarks.prototype.getItem = function (markName) {
-	        return this.items[markName];
-	    };
-	    return TrendMarks;
-	}());
-	exports.TrendMarks = TrendMarks;
-	var TrendMark = (function () {
-	    function TrendMark(chartState, options, trend) {
-	        this.renderOnTrendsChange = false;
-	        this.ee = new deps_1.EventEmitter();
-	        this.options = options;
-	        this.chartState = chartState;
-	        this.trend = trend;
-	    }
-	    TrendMark.prototype.onAnimationFrame = function (cb) {
-	        var _this = this;
-	        this.ee.on('onAnimationFrame', cb);
-	        return function () {
-	            _this.ee.off('onAnimationFrame', cb);
-	        };
-	    };
-	    /**
-	     * only for internal usage
-	     */
-	    TrendMark.prototype.setPoint = function (point) {
-	        this.point = point;
-	    };
-	    return TrendMark;
-	}());
-	exports.TrendMark = TrendMark;
-
-
-/***/ },
-/* 26 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-	var deps_1 = __webpack_require__(3);
-	var Vector3 = THREE.Vector3;
-	var Utils_1 = __webpack_require__(18);
-	// class helps to animate trends points
-	var TrendPoints = (function () {
-	    function TrendPoints(chartState, trend, pointsCount, initialItem) {
-	        this.points = {};
-	        //pointsByXVal: {[scrollXVal: string]: TrendPoint} = {};
-	        // objects like {x0: 1, y0: 2, x1: 2, y2: 3, ...}
-	        this.current = {};
-	        this.targets = {};
-	        this.nextEmptyId = 0;
-	        this.startPointId = 0;
-	        this.endPointId = 0;
-	        this.chartState = chartState;
-	        this.trend = trend;
-	        this.ee = new deps_1.EventEmitter();
-	        var point;
-	        for (var i = 0; i < pointsCount; i++) {
-	            var id = i;
-	            point = new TrendPoint(this, id, initialItem.xVal, initialItem.yVal);
-	            this.points[id] = point;
-	            this.current['x' + id] = initialItem.xVal;
-	            this.current['y' + id] = initialItem.yVal;
-	        }
-	        this.appendData(this.trend.getData());
-	        this.bindEvents();
-	    }
-	    TrendPoints.prototype.bindEvents = function () {
-	        var _this = this;
-	        this.trend.onChange(function (changedOptions, newData) {
-	            if (newData) {
-	                var data = _this.trend.getData();
-	                var isAppend = (!data.length || data[0].xVal < newData[0].xVal);
-	                isAppend ? _this.appendData(newData) : _this.prependData(newData);
-	            }
-	        });
-	    };
-	    TrendPoints.prototype.getEndPoint = function () {
-	        return this.points[this.endPointId];
-	    };
-	    TrendPoints.prototype.getStartPoint = function () {
-	        return this.points[this.startPointId];
-	    };
-	    /**
-	     * returns array of points for values array
-	     * values must be sorted!
-	     */
-	    TrendPoints.prototype.getPointsForXValues = function (values) {
-	        var valueInd = 0;
-	        var value = values[valueInd];
-	        var lastValueInd = values.length - 1;
-	        var results = [];
-	        var point = this.getStartPoint();
-	        if (!point.hasValue)
-	            return [];
-	        while (point) {
-	            while (value < point.startXVal) {
-	                results.push(void 0);
-	                value = values[++valueInd];
-	            }
-	            while (value > point.endXVal) {
-	                point = point.getNext();
-	                if (!point)
-	                    break;
-	            }
-	            var valueInPoint = (point.startXVal == value || point.endXVal == value ||
-	                (point.startXVal < value && point.endXVal < value));
-	            if (valueInPoint) {
-	                results.push(point);
-	                value = values[++valueInd];
-	            }
-	            if (valueInd > lastValueInd)
-	                break;
-	        }
-	        return results;
-	    };
-	    TrendPoints.prototype.onAnimationFrame = function (cb) {
-	        var _this = this;
-	        var eventName = 'animationFrame';
-	        this.ee.on('animationFrame', cb);
-	        return function () {
-	            _this.ee.removeListener(eventName, cb);
-	        };
-	    };
-	    TrendPoints.prototype.appendPoint = function (item) {
-	        var id = this.nextEmptyId++;
-	        var point = this.points[id];
-	        var prevPoint = this.points[this.endPointId];
-	        if (prevPoint.hasValue) {
-	            prevPoint.nextId = id;
-	            point.prevId = prevPoint.id;
-	        }
-	        point.hasValue = true;
-	        point.startXVal = item.xVal;
-	        point.endXVal = item.xVal;
-	        point.xVal = item.xVal;
-	        point.yVal = item.yVal;
-	        this.endPointId = id;
-	        return point;
-	    };
-	    TrendPoints.prototype.prependPoint = function (item) {
-	        var id = this.nextEmptyId++;
-	        var point = this.points[id];
-	        var nextPoint = this.points[this.startPointId];
-	        if (nextPoint.hasValue) {
-	            nextPoint.prevId = id;
-	            point.nextId = nextPoint.id;
-	        }
-	        point.hasValue = true;
-	        point.startXVal = item.xVal;
-	        point.endXVal = item.xVal;
-	        point.xVal = item.xVal;
-	        point.yVal = item.yVal;
-	        this.startPointId = id;
-	        return point;
-	    };
-	    TrendPoints.prototype.prependData = function (newData) {
-	        var chartState = this.chartState;
-	        var trendData = this.trend.getData();
-	        var animationsOptions = chartState.data.animations;
-	        var startItemInd = newData.length;
-	        var startItem = trendData[startItemInd] || newData[0];
-	        var current = {};
-	        var targets = {};
-	        for (var itemInd = startItemInd - 1; itemInd >= 0; itemInd--) {
-	            var trendItem = trendData[itemInd];
-	            var point = this.prependPoint(trendItem);
-	            var id = point.id;
-	            current['x' + id] = startItem.xVal;
-	            current['y' + id] = startItem.yVal;
-	            targets['x' + id] = trendItem.xVal;
-	            targets['y' + id] = trendItem.yVal;
-	        }
-	        targets.ease = animationsOptions.trendChangeEase;
-	        var time = animationsOptions.enabled ? animationsOptions.trendChangeSpeed : 0;
-	        this.animate(time, targets, current);
-	    };
-	    TrendPoints.prototype.appendData = function (newData) {
-	        var chartState = this.chartState;
-	        var trendData = this.trend.getData();
-	        var animationsOptions = chartState.data.animations;
-	        var startItemInd = trendData.length - newData.length;
-	        var startItem = trendData[startItemInd - 1] || newData[0];
-	        var current = {};
-	        var targets = {};
-	        for (var itemInd = startItemInd; itemInd < trendData.length; itemInd++) {
-	            var trendItem = trendData[itemInd];
-	            var point = this.appendPoint(trendItem);
-	            var id = point.id;
-	            current['x' + id] = startItem.xVal;
-	            current['y' + id] = startItem.yVal;
-	            targets['x' + id] = trendItem.xVal;
-	            targets['y' + id] = trendItem.yVal;
-	        }
-	        targets.ease = animationsOptions.trendChangeEase;
-	        var time = animationsOptions.enabled ? animationsOptions.trendChangeSpeed : 0;
-	        this.animate(time, targets, current);
-	    };
-	    TrendPoints.prototype.animate = function (time, newTargets, current) {
-	        var _this = this;
-	        var cb = function () {
-	            _this.ee.emit('animationFrame', _this);
-	        };
-	        var cb = function () {
-	            _this.ee.emit('animationFrame', _this);
-	        };
-	        if (this.currentAnimation)
-	            this.currentAnimation.kill();
-	        if (current)
-	            this.current = Utils_1.Utils.deepMerge(this.current, current);
-	        this.targets = Utils_1.Utils.deepMerge(this.targets, newTargets);
-	        this.currentAnimation = TweenLite.to(this.current, time, this.targets);
-	        this.currentAnimation.eventCallback('onUpdate', cb);
-	        this.currentAnimation.eventCallback('onComplete', function () {
-	            _this.current = {};
-	            _this.targets = {};
-	            _this.currentAnimation = null;
-	        });
-	    };
-	    return TrendPoints;
-	}());
-	exports.TrendPoints = TrendPoints;
-	var TrendPoint = (function () {
-	    function TrendPoint(trendPoints, id, xVal, yVal) {
-	        this.trendPoints = trendPoints;
-	        this.id = id;
-	        this.xVal = xVal;
-	        this.yVal = yVal;
-	    }
-	    TrendPoint.prototype.getNext = function () {
-	        var nextPoint = this.trendPoints.points[this.nextId];
-	        return nextPoint && nextPoint.hasValue ? nextPoint : null;
-	    };
-	    TrendPoint.prototype.getPrev = function () {
-	        var prevPoint = this.trendPoints.points[this.prevId];
-	        return prevPoint && prevPoint.hasValue ? prevPoint : null;
-	    };
-	    TrendPoint.prototype.getFrameVal = function () {
-	        var current = this.trendPoints.current;
-	        var frameValX = current['x' + this.id];
-	        var frameValY = current['y' + this.id];
-	        var xVal = frameValX != void 0 ? frameValX : this.xVal;
-	        var yVal = frameValY != void 0 ? frameValY : this.yVal;
-	        return new Vector3(xVal, yVal, 0);
-	    };
-	    TrendPoint.prototype.getFramePoint = function () {
-	        var frameVal = this.getFrameVal();
-	        return this.trendPoints.chartState.screen.getPointOnChart(frameVal.x, frameVal.y);
-	    };
-	    TrendPoint.prototype.getCurrentVec = function () {
-	        var current = this.trendPoints.current;
-	        return new Vector3(current['x' + this.id], current['y' + this.id], 0);
-	    };
-	    return TrendPoint;
-	}());
-	exports.TrendPoint = TrendPoint;
-
-
-/***/ },
-/* 27 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14181,66 +14664,6 @@ var demoApp =
 	            cb();
 	        }
 	    };
-	    Screen.prototype.onScroll = function (changedProps) {
-	        // var state = this.chartState;
-	        // var isDragMode = state.data.cursor.dragMode;
-	        // var animations =  state.data.animations;
-	        // var targetScrollX = state.valueToPxByXAxis(state.data.xAxis.range.scroll);
-	        // var targetScrollY = state.valueToPxByYAxis(state.data.yAxis.range.scroll);
-	        // var scrollXChanged = targetScrollX !== state.data.prevState.xAxis.range.scroll;
-	        // var scrollYChanged = targetScrollY !== state.data.prevState.yAxis.range.scroll;
-	        // var zoomXChanged = changedProps.xAxis && changedProps.xAxis.range && changedProps.xAxis.range.zoom != void 0;
-	        // var canAnimate = animations.enabled;
-	        //
-	        //
-	        // if (scrollYChanged) {
-	        // 	if (this.scrollYAnimation) this.scrollYAnimation.pause();
-	        // 	this.currentScrollY = this.currentScrollY || {val: this.cameraScrollY};
-	        // 	if (canAnimate) {
-	        // 		this.scrollYAnimation = TweenLite.to(this.currentScrollY, animations.zoomSpeed, {
-	        // 			val: targetScrollY, ease: animations.zoomEase
-	        // 		});
-	        // 		this.scrollYAnimation.eventCallback('onUpdate', () => {
-	        // 			this.scrollTo(null, this.currentScrollY.val);
-	        // 		});
-	        // 	} else {
-	        // 		this.currentScrollY.val = targetScrollY;
-	        // 		this.scrollTo(null, targetScrollY);
-	        // 	}
-	        // }
-	        //
-	        // if (scrollXChanged) {
-	        // 	canAnimate = canAnimate && !isDragMode && !zoomXChanged;
-	        // 	if (this.scrollXAnimation) this.scrollXAnimation.pause();
-	        // 	this.currentScrollX = this.currentScrollX || {val: this.cameraScrollX};
-	        // 	if (canAnimate) {
-	        // 		this.scrollXAnimation = TweenLite.to(this.currentScrollX, animations.autoScrollSpeed, {
-	        // 			val: targetScrollX, ease: animations.autoScrollEase
-	        // 		});
-	        // 		this.scrollXAnimation.eventCallback('onUpdate', () => {
-	        // 			this.scrollTo(this.currentScrollX.val);
-	        // 		});
-	        // 	} else {
-	        // 		this.currentScrollX.val = targetScrollX;
-	        // 		this.scrollTo(targetScrollX);
-	        // 	}
-	        // }
-	        // //canAnimate = false;
-	        // this.currentScroll = this.currentScroll || {scrollXVal: this.cameraScrollXVal, scrollYVal: this.cameraScrollYVal};
-	        // var targetXVal = state.data.xAxis.range.scroll;
-	        // var targetYVal = state.data.yAxis.range.scroll;
-	        // if (this.cameraAnimation) this.cameraAnimation.pause();
-	        // if (canAnimate) {
-	        // 	this.cameraAnimation = TweenLite.to(this.currentScroll, animations.autoScrollSpeed, {
-	        // 		scrollXVal: targetXVal, scrollYVal: targetYVal, ease: animations.autoScrollEase
-	        // 	});
-	        // 	this.cameraAnimation.eventCallback('onUpdate', () => {
-	        // 		this.scrollTo(this.currentScroll.scrollXVal, this.currentScroll.scrollYVal);
-	        // 	});
-	        // 	return;
-	        // }
-	        // this.scrollTo(targetXVal, targetYVal);
-	    };
 	    /**
 	     *  returns offset in pixels from xAxis.range.zeroVal to scrollXVal
 	     */
@@ -14349,7 +14772,7 @@ var demoApp =
 
 
 /***/ },
-/* 28 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14359,7 +14782,7 @@ var demoApp =
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
 	var Utils_1 = __webpack_require__(18);
-	var interfaces_1 = __webpack_require__(29);
+	var interfaces_1 = __webpack_require__(30);
 	var deps_1 = __webpack_require__(3);
 	var AXIS_MARK_DEFAULT_OPTIONS = {
 	    type: 'simple',
@@ -14504,7 +14927,7 @@ var demoApp =
 
 
 /***/ },
-/* 29 */
+/* 30 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -14515,6 +14938,7 @@ var demoApp =
 	    AXIS_RANGE_TYPE[AXIS_RANGE_TYPE["ALL"] = 3] = "ALL"; // TODO: AXIS_RANGE_TYPE.ALL
 	})(exports.AXIS_RANGE_TYPE || (exports.AXIS_RANGE_TYPE = {}));
 	var AXIS_RANGE_TYPE = exports.AXIS_RANGE_TYPE;
+	;
 	(function (AXIS_TYPE) {
 	    AXIS_TYPE[AXIS_TYPE["X"] = 0] = "X";
 	    AXIS_TYPE[AXIS_TYPE["Y"] = 1] = "Y";
@@ -14528,7 +14952,7 @@ var demoApp =
 
 
 /***/ },
-/* 30 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14542,6 +14966,7 @@ var demoApp =
 	var PlaneBufferGeometry = THREE.PlaneBufferGeometry;
 	var MeshBasicMaterial = THREE.MeshBasicMaterial;
 	var TrendsWidget_1 = __webpack_require__(19);
+	var Trend_1 = __webpack_require__(22);
 	/**
 	 * widget adds blinking beacon on trends end
 	 * activated when trend.hasBeacon = true
@@ -14569,10 +14994,13 @@ var demoApp =
 	        }
 	    }
 	    TrendBeacon.widgetIsEnabled = function (trendOptions) {
-	        return trendOptions.enabled && trendOptions.hasBeacon;
+	        return trendOptions.enabled && trendOptions.hasBeacon && trendOptions.type == Trend_1.TREND_TYPE.LINE;
 	    };
 	    TrendBeacon.prototype.getObject3D = function () {
 	        return this.mesh;
+	    };
+	    TrendBeacon.prototype.onTrendChange = function () {
+	        this.updatePosition();
 	    };
 	    TrendBeacon.prototype.bindEvents = function () {
 	        var _this = this;
@@ -14616,16 +15044,26 @@ var demoApp =
 	        });
 	    };
 	    TrendBeacon.prototype.onTransformationFrame = function () {
-	        this.point = this.trend.points.getEndPoint();
+	        this.segment = this.trend.segments.getEndSegment();
 	        this.updatePosition();
 	    };
 	    TrendBeacon.prototype.onPointsMove = function (trendPoints) {
-	        this.point = trendPoints.getEndPoint();
+	        this.segment = trendPoints.getEndSegment();
 	        this.updatePosition();
 	    };
 	    TrendBeacon.prototype.updatePosition = function () {
 	        var state = this.chartState;
-	        var endPointVector = this.point.getFramePoint();
+	        var xVal, yVal;
+	        var currentAnimationState = this.segment.currentAnimationState;
+	        if (this.trend.getOptions().type == Trend_1.TREND_TYPE.LINE) {
+	            xVal = currentAnimationState.endXVal;
+	            yVal = currentAnimationState.endYVal;
+	        }
+	        else {
+	            xVal = currentAnimationState.xVal;
+	            yVal = currentAnimationState.endYVal;
+	        }
+	        var endPointVector = state.screen.getPointOnChart(xVal, yVal);
 	        var screenWidth = state.data.width;
 	        var x = endPointVector.x;
 	        var screenX = state.screen.getScreenXByPoint(endPointVector.x);
@@ -14641,7 +15079,7 @@ var demoApp =
 
 
 /***/ },
-/* 31 */
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14653,9 +15091,9 @@ var demoApp =
 	var Mesh = THREE.Mesh;
 	var Object3D = THREE.Object3D;
 	var Widget_1 = __webpack_require__(20);
-	var GridWidget_1 = __webpack_require__(32);
+	var GridWidget_1 = __webpack_require__(33);
 	var Utils_1 = __webpack_require__(18);
-	var interfaces_1 = __webpack_require__(29);
+	var interfaces_1 = __webpack_require__(30);
 	/**
 	 * widget for drawing axis
 	 */
@@ -14707,7 +15145,7 @@ var demoApp =
 	        var texture = Utils_1.Utils.createTexture(canvasWidth, canvasHeight, function (ctx) {
 	            ctx.beginPath();
 	            ctx.font = "10px Arial";
-	            ctx.fillStyle = "rgba(255,255,255,0.3)";
+	            ctx.fillStyle = "rgba(255,255,255,0.5)";
 	            ctx.strokeStyle = "rgba(255,255,255,0.1)";
 	        });
 	        texture.magFilter = THREE.NearestFilter;
@@ -14844,7 +15282,7 @@ var demoApp =
 
 
 /***/ },
-/* 32 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14873,8 +15311,12 @@ var demoApp =
 	    GridWidget.prototype.bindEvents = function () {
 	        var _this = this;
 	        // grid is bigger then screen, so it's no need to update it on each scroll event
-	        this.chartState.onScroll(Utils_1.Utils.throttle(function () { return _this.updateGrid(); }, 1000));
-	        this.chartState.screen.onZoomFrame(function (options) { return _this.onZoomFrame(options); });
+	        var updateGridThrettled = Utils_1.Utils.throttle(function () { return _this.updateGrid(); }, 1000);
+	        this.chartState.onScroll(function () { return updateGridThrettled(); });
+	        this.chartState.screen.onZoomFrame(function (options) {
+	            updateGridThrettled();
+	            _this.onZoomFrame(options);
+	        });
 	    };
 	    GridWidget.prototype.initGrid = function () {
 	        var geometry = new THREE.Geometry();
@@ -15000,7 +15442,7 @@ var demoApp =
 
 
 /***/ },
-/* 33 */
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -15026,7 +15468,7 @@ var demoApp =
 	    TrendsLoadingWidget.prototype.getTrendWidgetClass = function () {
 	        return TrendLoading;
 	    };
-	    TrendsLoadingWidget.widgetName = 'trendsLoading';
+	    TrendsLoadingWidget.widgetName = 'TrendsLoading';
 	    return TrendsLoadingWidget;
 	}(TrendsWidget_1.TrendsWidget));
 	exports.TrendsLoadingWidget = TrendsLoadingWidget;
@@ -15094,7 +15536,7 @@ var demoApp =
 	        if (!this.isActive)
 	            return;
 	        // set new widget position
-	        var pointVector = this.trend.points.getStartPoint().getFramePoint();
+	        var pointVector = this.trend.segments.getStartPoint().getFramePoint();
 	        this.mesh.position.set(pointVector.x, pointVector.y, 0);
 	    };
 	    return TrendLoading;
@@ -15103,7 +15545,7 @@ var demoApp =
 
 
 /***/ },
-/* 34 */
+/* 35 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -15120,7 +15562,7 @@ var demoApp =
 	var Utils_1 = __webpack_require__(18);
 	var Line = THREE.Line;
 	var Mesh = THREE.Mesh;
-	var interfaces_1 = __webpack_require__(29);
+	var interfaces_1 = __webpack_require__(30);
 	// TODO: support for yAxis
 	/**
 	 * widget for shows marks on axis
@@ -15159,7 +15601,7 @@ var demoApp =
 	    AxisMarksWidget.prototype.getObject3D = function () {
 	        return this.object3D;
 	    };
-	    AxisMarksWidget.widgetName = 'axisMarks';
+	    AxisMarksWidget.widgetName = 'AxisMarks';
 	    return AxisMarksWidget;
 	}(Widget_1.ChartWidget));
 	exports.AxisMarksWidget = AxisMarksWidget;
@@ -15261,7 +15703,7 @@ var demoApp =
 
 
 /***/ },
-/* 35 */
+/* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -15432,7 +15874,7 @@ var demoApp =
 
 
 /***/ },
-/* 36 */
+/* 37 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";

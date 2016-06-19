@@ -1,6 +1,6 @@
 import { ChartState } from "./State";
 import { Trend } from "./Trend";
-import { TrendPoint } from "./TrendPoints";
+import { TrendSegment } from "./TrendSegments";
 export declare enum TREND_MARK_SIDE {
     TOP = 0,
     BOTTOM = 1,
@@ -33,7 +33,7 @@ export declare class TrendMarks {
 }
 export declare class TrendMark {
     options: ITrendMarkOptions;
-    point: TrendPoint;
+    point: TrendSegment;
     protected trend: Trend;
     protected chartState: ChartState;
     protected renderOnTrendsChange: boolean;
@@ -43,5 +43,5 @@ export declare class TrendMark {
     /**
      * only for internal usage
      */
-    setPoint(point: TrendPoint): void;
+    setPoint(point: TrendSegment): void;
 }

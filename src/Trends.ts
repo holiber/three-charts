@@ -65,9 +65,16 @@ export class Trends {
 			compareFn = Math.min;
 		}
 		for (let trend of trends) {
-			var trendData = trend.getData(fromX, toX);
-			var trendYValues = trendData.map((dataItem) => dataItem.yVal);
-			result = compareFn(result, ...trendYValues);
+			// TODO: refactor this shit
+			// if (!trend.segments) {
+				var trendData = trend.getData(fromX, toX);
+				var trendYValues = trendData.map((dataItem) => dataItem.yVal);
+				result = compareFn(result, ...trendYValues);
+			// } else {
+			// 	let segments = trend.segments.getSegments(fromX, toX);
+			// 	let segmentsYValues = segments.map((segment) => extremumIsMax ? segment.maxYVal: segment.minYVal);
+			// 	result = compareFn(result, ...segmentsYValues);
+			// }
 		}
 		if (result == Infinity || result == -Infinity) result = NaN;
 		return result;

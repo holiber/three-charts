@@ -4,7 +4,7 @@ import {Utils} from "./Utils";
 import {TEase} from "./interfaces";
 import {Trend, ITrendOptions} from "./Trend";
 import Vector3 = THREE.Vector3;
-import {TrendPoint} from "./TrendPoints";
+import {TrendSegment} from "./TrendSegments";
 import {EventEmitter} from './deps';
 
 export enum TREND_MARK_SIDE {TOP, BOTTOM}
@@ -70,7 +70,7 @@ export class TrendMarks {
 			mark.setPoint(null);
 		}
 		marksArr.sort((a, b) => a.options.value - b.options.value);
-		var points = this.trend.points.getPointsForXValues(xVals.sort((a, b) => a - b));
+		var points = this.trend.segments.getPointsForXValues(xVals.sort((a, b) => a - b));
 		for (let markInd = 0; markInd < marksArr.length; markInd++) {
 			marksArr[markInd].setPoint(points[markInd]);
 		}
@@ -115,7 +115,7 @@ export class TrendMarks {
 
 export class TrendMark {
 	options: ITrendMarkOptions;
-	point: TrendPoint;
+	point: TrendSegment;
 	protected trend: Trend;
 	protected chartState: ChartState;
 	protected renderOnTrendsChange = false;
@@ -138,7 +138,7 @@ export class TrendMark {
 	/**
 	 * only for internal usage
 	 */
-	setPoint(point: TrendPoint) {
+	setPoint(point: TrendSegment) {
 		this.point = point;
 	}
 

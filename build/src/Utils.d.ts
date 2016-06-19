@@ -1,5 +1,5 @@
 import Texture = THREE.Texture;
-import { TIteralable } from "./interfaces";
+import { TIteralable, IIteralable } from "./interfaces";
 export declare type TUid = number;
 /**
  * project utils static class
@@ -43,9 +43,8 @@ export declare class Utils {
      * @returns new unique id
      */
     static getUid(): TUid;
-    static eq(num1: number, num2: number): boolean;
-    static gte(num1: number, num2: number): boolean;
-    static lte(num1: number, num2: number): boolean;
+    static binarySearchClosestInd(arr: IIteralable[], num: number, key: string): number;
+    static binarySearchClosest<ArrayItem>(arr: ArrayItem[], num: number, key: string): ArrayItem;
     /**!
      * @preserve $.parseColor
      * Copyright 2011 THEtheChad Elliott

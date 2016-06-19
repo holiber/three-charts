@@ -2,7 +2,7 @@ import { ChartState } from "../State";
 import Mesh = THREE.Mesh;
 import { TrendWidget, TrendsWidget } from "./TrendsWidget";
 import { ITrendOptions } from "../Trend";
-import { TrendPoints } from "../TrendPoints";
+import { TrendSegments } from "../TrendSegments.ts";
 /**
  * widget adds blinking beacon on trends end
  * activated when trend.hasBeacon = true
@@ -14,15 +14,16 @@ export declare class TrendsBeaconWidget extends TrendsWidget<TrendBeacon> {
 export declare class TrendBeacon extends TrendWidget {
     private mesh;
     private animated;
-    private point;
+    private segment;
     static widgetIsEnabled(trendOptions: ITrendOptions): boolean;
     constructor(state: ChartState, trendName: string);
     getObject3D(): Mesh;
+    onTrendChange(): void;
     protected bindEvents(): void;
     private initObject();
     private animate();
     private static createTexture();
     protected onTransformationFrame(): void;
-    protected onPointsMove(trendPoints: TrendPoints): void;
+    protected onPointsMove(trendPoints: TrendSegments): void;
     private updatePosition();
 }

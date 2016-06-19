@@ -5,7 +5,7 @@ import {ChartState} from "../State";
 import {ITrendOptions, ITrendData, Trend} from "../Trend";
 import Vector2 = THREE.Vector2;
 import Vector3 = THREE.Vector3;
-import {TrendPoints} from "../TrendPoints";
+import {TrendSegments} from "../TrendSegments.ts";
 import {IScreenTransformOptions} from "../Screen";
 
 
@@ -41,19 +41,20 @@ export abstract class TrendsWidget<TrendWidgetType extends TrendWidget> extends 
 		var TrendWidgetClass = this.getTrendWidgetClass();
 		for (let trendName in trendsOptions) {
 			let trendOptions = trendsOptions[trendName];
-			if (TrendWidgetClass.widgetIsEnabled(trendOptions, this.chartState) && !this.widgets[trendName]) {
+			let widgetCanBeEnabled = TrendWidgetClass.widgetIsEnabled(trendOptions, this.chartState);
+			if (widgetCanBeEnabled && !this.widgets[trendName]) {
 				this.createTrendWidget(trendName);
-			} else if (!trendOptions.enabled && this.widgets[trendName]){
+			} else if (!widgetCanBeEnabled && this.widgets[trendName]){
 				this.destroyTrendWidget(trendName);
 			}
 		}
 	}
 
 	private onTrendChange(trendName: string, changedOptions: ITrendOptions, newData: ITrendData) {
-		if (!changedOptions.data) return;
 		var widget = this.widgets[trendName];
 		if (!widget) return;
 		widget.onTrendChange(changedOptions);
+		if (!changedOptions.data) return;
 		if (newData) {
 			var data = this.chartState.getTrend(trendName).getData();
 			var isAppend = (!data.length || data[0].xVal < newData[0].xVal);
@@ -106,7 +107,7 @@ export abstract class TrendWidget {
 			unsubscriber();
 		}
 	}
-	protected onPointsMove(trendPoints: TrendPoints) {
+	protected onPointsMove(trendPoints: TrendSegments) {
 	}
 	protected onZoomFrame(options: IScreenTransformOptions) {
 	}
@@ -118,8 +119,8 @@ export abstract class TrendWidget {
 
 	protected bindEvents() {
 
-		this.bindEvent(this.trend.points.onAnimationFrame(
-			(trendPoints: TrendPoints) => this.onPointsMove(trendPoints)
+		this.bindEvent(this.trend.segments.onAnimationFrame(
+			(trendPoints: TrendSegments) => this.onPointsMove(trendPoints)
 		));
 
 		this.bindEvent(this.chartState.screen.onTransformationFrame(

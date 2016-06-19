@@ -10,10 +10,12 @@ import Face3 = THREE.Face3;
 import Texture = THREE.Texture;
 import Vector2 = THREE.Vector2;
 import {TrendsWidget, TrendWidget} from "./TrendsWidget";
-import {TrendPoints} from "../TrendPoints";
+import { TrendSegments, ITrendSegmentState } from "../TrendSegments.ts";
 import LineSegments = THREE.LineSegments;
-import forestgreen = THREE.ColorKeywords.forestgreen;
 import {IScreenTransformOptions} from "../Screen";
+import { ITrendOptions, TREND_TYPE } from '../Trend';
+
+const MAX_DISPLAYED_SEGMENTS = 2000;
 
 /**
  * widget for drawing trends lines
@@ -31,6 +33,12 @@ export class TrendLine extends TrendWidget {
 	private lineSegments: LineSegments;
 	private scaleXFactor: number;
 	private scaleYFactor: number;
+	private vertices: Vector3[];
+	private displayedSegments: {[segmentId: number]: ITrendSegmentState} = {};
+	
+	static widgetIsEnabled(trendOptions: ITrendOptions) {
+		return trendOptions.enabled && trendOptions.type == TREND_TYPE.LINE;
+	}
 	
 	constructor (chartState: ChartState, trendName: string) {
 		super(chartState, trendName);
@@ -42,54 +50,82 @@ export class TrendLine extends TrendWidget {
 	getObject3D() {
 		return this.lineSegments;
 	}
+
+	protected bindEvents() {
+		super.bindEvents();
+		this.bindEvent(this.trend.segments.onRebuild(() => {
+			this.destroySegments();
+			this.setupSegments();
+		}));
+		this.bindEvent(this.trend.segments.onDisplayedRangeChanged(() => {
+			this.setupSegments();
+		}));
+	}
 	
 	private initLine() {
-		var geometry = new Geometry();
-		var animationState = this.trend.points;
-		var points = animationState.points;
-		this.scaleXFactor = this.chartState.valueToPxByXAxis(1);
-		this.scaleYFactor = this.chartState.valueToPxByYAxis(1);
-
-		for (let pointId in points) {
-			let point = points[pointId];
-			let nextPoint = points[Number(pointId) + 1];
-			if (!nextPoint) break;
-			let vert1 = point.getFrameVal();
-			let vert2 = nextPoint.getFrameVal();
-			if (!nextPoint.hasValue) vert2 = vert1.clone();
-			vert1 = this.toLocalVec(vert1);
-			vert2 = this.toLocalVec(vert2);
-			geometry.vertices.push(vert1, vert2);
-
-		}
-
+		let geometry = new Geometry();
+		let {scaleFactor: scaleXFactor, zoom: zoomX} = this.chartState.data.xAxis.range;
+		let {scaleFactor: scaleYFactor, zoom: zoomY} = this.chartState.data.yAxis.range;
+		this.scaleXFactor = scaleXFactor;
+		this.scaleYFactor = scaleYFactor;
 		this.lineSegments = new LineSegments(geometry, this.material);
-		this.lineSegments.scale.set(this.scaleXFactor, this.scaleYFactor, 1);
-		// this.lineSegments.position.set(
-		// 	- this.chartState.data.xAxis.range.from * this.scaleXFactor,
-		// 	- this.chartState.data.yAxis.range.from * this.scaleYFactor,
-		// 	0
-		// );
+		this.lineSegments.scale.set(scaleXFactor * zoomX, scaleYFactor * zoomY, 1);
 		this.lineSegments.frustumCulled = false;
+		for (let i = 0; i < MAX_DISPLAYED_SEGMENTS; i++) {
+			geometry.vertices.push(new  Vector3(), new Vector3());
+		}
+		this.vertices = geometry.vertices;
+		this.setupSegments();
 	}
 
-	// protected onZoom() {
-	// 	var currentScale = this.lineSegments.scale;
-	// 	var zoomX = this.chartState.data.xAxis.range.zoom;
-	// 	var zoomY = this.chartState.data.yAxis.range.zoom;
-	// 	currentScale.set(this.scaleXFactor * zoomX, this.scaleYFactor * zoomY, 1);
-	// 	// setInterval(() => {
-	// 	// 	currentScale.setY(currentScale.scrollY + 0.4);
-	// 	// }, 500)
-	// }
+	private setupSegments() {
+		let geometry = this.lineSegments.geometry as Geometry;
 
-	// protected onZoomFrame(zoomX: number, zoomY: number) {
-	// 	// var currentScale = this.lineSegments.scale;
-	// 	// currentScale.set(this.scaleXFactor * zoomX, this.scaleYFactor * zoomY, 1);
-	// 	// setInterval(() => {
-	// 	// 	currentScale.setY(currentScale.scrollY + 0.4);
-	// 	// }, 500)
-	// }
+		let {firstDisplayedSegment, lastDisplayedSegment} = this.trend.segments;
+
+		for (let segmentId in this.displayedSegments) {
+			let segment = this.displayedSegments[segmentId];
+			let segmentIsNotDisplayed = (
+				segment.startXVal < firstDisplayedSegment.startXVal ||
+				segment.endXVal > lastDisplayedSegment.endXVal
+			);
+			if (segmentIsNotDisplayed) this.destroySegment(Number(segmentId));
+		}
+
+		let segment = firstDisplayedSegment;
+		while (segment && segment.xVal <= lastDisplayedSegment.xVal) {
+			this.setupSegment(segment.id, segment.currentAnimationState);
+			segment = segment.getNext();
+		}
+		geometry.verticesNeedUpdate = true;
+
+	}
+
+	private setupSegment(segmentId: number, segmentState: ITrendSegmentState) {
+		let segment = this.displayedSegments[segmentId];
+		if (!segment) {
+			segment = segmentState;
+			this.displayedSegments[segmentId] = segment;
+		}
+		let segmentInd = segmentId % MAX_DISPLAYED_SEGMENTS;
+		let lineStartVertex = this.vertices[segmentInd * 2];
+		let lineEndVertex = this.vertices[segmentInd * 2 + 1];
+		lineStartVertex.set(this.toLocalX(segmentState.startXVal), this.toLocalY(segmentState.startYVal), 0);
+		lineEndVertex.set(this.toLocalX(segmentState.endXVal), this.toLocalY(segmentState.endYVal), 0);
+	}
+
+	private destroySegments() {
+		for (let segmentId in this.displayedSegments) this.destroySegment(Number(segmentId));
+	}
+
+	private destroySegment(segmentId: number) {
+		let segmentInd = segmentId % MAX_DISPLAYED_SEGMENTS;
+		let lineStartVertex = this.vertices[segmentInd * 2];
+		let lineEndVertex = this.vertices[segmentInd * 2 + 1];
+		lineStartVertex.set(0, 0, 0);
+		lineEndVertex.set(0, 0, 0);
+		delete this.displayedSegments[segmentId];
+	}
 
 
 	protected onZoomFrame(options: IScreenTransformOptions) {
@@ -98,57 +134,16 @@ export class TrendLine extends TrendWidget {
 		if (options.zoomY) currentScale.setY(this.scaleYFactor * options.zoomY);
 	}
 
-	protected onPointsMove(animationState: TrendPoints) {
 
-		var trendData = this.trend.getData();
+	protected onPointsMove(trendSegments: TrendSegments) {
 		var geometry = this.lineSegments.geometry as Geometry;
-		var vertices = geometry.vertices;
-		var {current} = animationState;
-		var lastInd = trendData.length - 1;
-		for (var vertexValue in current) {
-			let firstChar = vertexValue.charAt(0);
-			if (firstChar !== 'x' && firstChar !== 'y') continue;
-			let isX = firstChar == 'x';
-			let ind = Number(vertexValue.substr(1));
-			if (ind > lastInd) continue;
-			let point = animationState.points[ind];
-			let nextPoint = point.getNext();
-			let prevPoint = point.getPrev();
-			let lineStartVertex = vertices[ind * 2];
-			let lineEndVertex = vertices[ind * 2 + 1];
-			let isAppend = (prevPoint);
-
-			if (isX) {
-				let value = this.toLocalX(current[vertexValue]);
-				if (prevPoint) {
-					lineStartVertex.setX(this.toLocalX(prevPoint.getFrameVal().x));
-					lineEndVertex.setX(value);
-				} else {
-					lineStartVertex.setX(value);
-					lineEndVertex.setX(value);
-				}
-				if (nextPoint) {
-					let nextPointLineStartVertex = vertices[(nextPoint.id) * 2];
-					if (nextPointLineStartVertex.x !== value) nextPointLineStartVertex.setX(value);
-				}
-			} else {
-				let value = this.toLocalY(current[vertexValue]);
-				if (isAppend) {
-					lineStartVertex.setY(this.toLocalY(prevPoint.getFrameVal().y));
-					lineEndVertex.setY(value);
-				} else {
-					lineStartVertex.setY(value);
-					lineEndVertex.setY(value);
-				}
-				if (nextPoint) {
-					let nextPointLineStartVertex = vertices[(nextPoint.id) * 2];
-					if (nextPointLineStartVertex.y !== value) nextPointLineStartVertex.setY(value);
-				}
-
-			}
+		for (let segmentId of trendSegments.animatedSegmentsIds) {
+			if (!this.displayedSegments[segmentId]) continue;
+			this.setupSegment(segmentId, trendSegments.segmentsById[segmentId].currentAnimationState);
 		}
 		geometry.verticesNeedUpdate = true;
 	}
+
 
 	private toLocalX(xVal: number): number {
 		return xVal - this.chartState.data.xAxis.range.zeroVal;

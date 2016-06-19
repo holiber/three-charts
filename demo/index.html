@@ -29,6 +29,18 @@
     </div>
     <div class="center-content">
         <div class="chart"></div>
+        <div class="timeframe-component">
+            <button name="switch-line">LINE</button>
+            <button name="switch-bars">BARS</button>
+            <button class="timeframe" data-range="30000" data-segment-length="1">30s</button>
+            <button class="timeframe" data-range="60000" data-segment-length="5000">1m</button>
+            <button class="timeframe" data-range="300000" data-segment-length="25000">5m</button>
+            <button class="timeframe" data-range="600000" data-segment-length="30000">10m</button>
+            <button class="timeframe" data-range="1800000" data-segment-length="90000">30m</button>
+            <button class="timeframe" data-range="3600000" data-segment-length="180000">1h</button>
+            <button class="timeframe" data-range="43200000" data-segment-length="2160000">12h</button>
+            <button class="timeframe" data-range="86400000" data-segment-length="4320000">1d</button>
+        </div>
     </div>
     <div class="controls">
         <label><input name="maintrend" type="checkbox" checked="checked"/> Main trend</label><br/>

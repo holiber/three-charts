@@ -1,6 +1,6 @@
 import Texture = THREE.Texture;
 import Color = THREE.Color;
-import {TIteralable} from "./interfaces";
+import { TIteralable, IIteralable } from "./interfaces";
 import { deepmerge, isPlainObject } from './deps';
 
 
@@ -97,18 +97,40 @@ export class Utils {
 		return this.currentId++;
 	}
 	
-	static eq(num1: number, num2: number) {
-		return Math.abs(num1 - num2) < 0.01
+	// static eq(num1: number, num2: number) {
+	// 	return Math.abs(num1 - num2) < 0.01
+	// }
+	//
+	// static gte(num1: number, num2: number) {
+	// 	return this.eq(num1, num2) || num1 > num2;
+	// }
+	//
+	// static lte(num1: number, num2: number) {
+	// 	return this.eq(num1, num2) || num1 < num2;
+	// }
+
+	static binarySearchClosestInd(arr: IIteralable[], num: number, key: string): number {
+		var mid: number;
+		var lo = 0;
+		var hi = arr.length - 1;
+		while (hi - lo > 1) {
+			mid = Math.floor ((lo + hi) / 2);
+			if (arr[mid][key] < num) {
+				lo = mid;
+			} else {
+				hi = mid;
+			}
+		}
+		if (num - arr[lo][key] <= arr[hi][key] - num) {
+			return lo;
+		}
+		return hi;
 	}
 	
-	static gte(num1: number, num2: number) {
-		return this.eq(num1, num2) || num1 > num2;
+	static binarySearchClosest<ArrayItem>(arr: ArrayItem[], num: number, key: string): ArrayItem {
+		let ind = this.binarySearchClosestInd(arr, num, key);
+		return arr[ind];
 	}
-
-	static lte(num1: number, num2: number) {
-		return this.eq(num1, num2) || num1 < num2;
-	}
-
 
 
 	/**!
@@ -216,6 +238,7 @@ export class Utils {
 			}
 		}
 	}
+
 
 }
 

@@ -4,7 +4,8 @@
     "module": "commonjs",
     "sourceMap": true,
     "outDir": "build/tmp",
-    "declaration": true
+    "declaration": true,
+    "noImplicitAny": true
   },
   "exclude": [
     "node_modules",

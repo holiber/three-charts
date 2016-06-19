@@ -2,20 +2,20 @@ import { ChartState } from "../State";
 import Mesh = THREE.Mesh;
 import { TrendWidget, TrendsWidget } from "./TrendsWidget";
 import { ITrendOptions } from "../Trend";
-import { TrendPoints } from "../TrendPoints";
+import { TrendSegments } from "../TrendSegments.ts";
 export declare class TrendsIndicatorWidget extends TrendsWidget<TrendIndicator> {
     static widgetName: string;
     protected getTrendWidgetClass(): typeof TrendIndicator;
 }
 export declare class TrendIndicator extends TrendWidget {
     private mesh;
-    private point;
+    private segment;
     static widgetIsEnabled(trendOptions: ITrendOptions): boolean;
     constructor(state: ChartState, trendName: string);
     getObject3D(): Mesh;
     onTrendChange(): void;
     private initObject();
     protected onTransformationFrame(): void;
-    protected onPointsMove(animationState: TrendPoints): void;
+    protected onPointsMove(animationState: TrendSegments): void;
     private updatePosition();
 }

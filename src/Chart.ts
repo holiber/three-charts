@@ -1,5 +1,4 @@
 // deps must be always on top
-
 require('./deps');
 
 import {Trend} from "./Trend";
@@ -11,6 +10,7 @@ import WebGLRenderer = THREE.WebGLRenderer;
 import Object3D = THREE.Object3D;
 import {TrendsIndicatorWidget} from "./widgets/TrendsIndicatorWidget";
 import {TrendsLineWidget} from "./widgets/TrendsLineWidget";
+import {TrendsCandlesWidget} from './widgets/TrendsCandleWidget';
 import {ChartState, IChartState} from "./State";
 import {ChartWidget, IChartWidgetConstructor} from "./Widget";
 import {Utils} from "./Utils";
@@ -24,7 +24,7 @@ import {AxisMarksWidget} from "./widgets/AxisMarksWidget";
 import {TrendsMarksWidget} from "./widgets/TrendsMarksWidget";
 import {BorderWidget} from "./widgets/BorderWidget";
 
-export const MAX_DATA_LENGTH = 1000;
+export const MAX_DATA_LENGTH = 2692000;//1000;
 
 export class Chart {
 	state: ChartState;
@@ -244,6 +244,7 @@ export class Chart {
 
 // install built-in widgets
 Chart.installWidget(TrendsLineWidget);
+Chart.installWidget(TrendsCandlesWidget);
 Chart.installWidget(AxisWidget);
 Chart.installWidget(GridWidget);
 Chart.installWidget(TrendsBeaconWidget);

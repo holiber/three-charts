@@ -46,7 +46,6 @@ export declare class Screen {
     private onScrollYHandler();
     private onZoomXHandler();
     private onZoomYHandler();
-    private onScroll(changedProps);
     /**
      *  returns offset in pixels from xAxis.range.zeroVal to scrollXVal
      */

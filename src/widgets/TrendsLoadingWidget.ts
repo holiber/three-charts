@@ -8,14 +8,14 @@ import MeshBasicMaterial = THREE.MeshBasicMaterial;
 import Vector3 = THREE.Vector3;
 import {TrendWidget, TrendsWidget} from "./TrendsWidget";
 import {ITrendOptions} from "../Trend";
-import {TrendPoints} from "../TrendPoints";
+import {TrendSegments} from "../TrendSegments.ts";
 
 /**
  * widget adds loading indicator
  * activated when animations enabled
  */
 export class TrendsLoadingWidget extends TrendsWidget<TrendLoading> {
-	static widgetName = 'trendsLoading';
+	static widgetName = 'TrendsLoading';
 	protected getTrendWidgetClass() {
 		return TrendLoading;
 	}
@@ -99,7 +99,7 @@ export class TrendLoading extends TrendWidget {
 	private updatePosition() {
 		if (!this.isActive) return;
 		// set new widget position
-		var pointVector = this.trend.points.getStartPoint().getFramePoint();
+		var pointVector = this.trend.segments.getStartPoint().getFramePoint();
 		this.mesh.position.set(pointVector.x, pointVector.y, 0);
 	}
 }

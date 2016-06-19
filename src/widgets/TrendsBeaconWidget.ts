@@ -7,8 +7,8 @@ import PlaneBufferGeometry = THREE.PlaneBufferGeometry;
 import MeshBasicMaterial = THREE.MeshBasicMaterial;
 import Vector3 = THREE.Vector3;
 import {TrendWidget, TrendsWidget} from "./TrendsWidget";
-import {ITrendOptions} from "../Trend";
-import {TrendPoints, TrendPoint} from "../TrendPoints";
+import { ITrendOptions, TREND_TYPE } from "../Trend";
+import {TrendSegments, TrendSegment} from "../TrendSegments.ts";
 import chartreuse = THREE.ColorKeywords.chartreuse;
 
 /**
@@ -25,10 +25,10 @@ export class TrendsBeaconWidget extends TrendsWidget<TrendBeacon> {
 export class TrendBeacon extends TrendWidget {
 	private mesh: Mesh;
 	private animated: boolean;
-	private point: TrendPoint;
+	private segment: TrendSegment;
 
 	static widgetIsEnabled(trendOptions: ITrendOptions) {
-		return trendOptions.enabled && trendOptions.hasBeacon;
+		return trendOptions.enabled && trendOptions.hasBeacon && trendOptions.type == TREND_TYPE.LINE;
 	}
 
 	constructor(state: ChartState, trendName: string) {
@@ -44,6 +44,11 @@ export class TrendBeacon extends TrendWidget {
 	getObject3D() {
 		return this.mesh;
 	}
+
+	onTrendChange() {
+		this.updatePosition();
+	}
+
 	protected bindEvents() {
 		super.bindEvents();
 		this.bindEvent(this.chartState.onScroll(() => this.updatePosition()));
@@ -105,18 +110,27 @@ export class TrendBeacon extends TrendWidget {
 	}
 
 	protected onTransformationFrame() {
-		this.point = this.trend.points.getEndPoint();
+		this.segment = this.trend.segments.getEndSegment();
 		this.updatePosition();
 	}
 
-	protected onPointsMove(trendPoints: TrendPoints) {
-		this.point = trendPoints.getEndPoint();
+	protected onPointsMove(trendPoints: TrendSegments) {
+		this.segment = trendPoints.getEndSegment();
 		this.updatePosition();
 	}
 
 	private updatePosition() {
 		var state = this.chartState;
-		var endPointVector = this.point.getFramePoint();
+		var xVal: number, yVal: number;
+		var currentAnimationState =  this.segment.currentAnimationState;
+		if (this.trend.getOptions().type == TREND_TYPE.LINE) {
+			xVal = currentAnimationState.endXVal;
+			yVal = currentAnimationState.endYVal;
+		} else {
+			xVal = currentAnimationState.xVal;
+			yVal = currentAnimationState.endYVal;
+		}
+		var endPointVector = state.screen.getPointOnChart(xVal, yVal);
 		var screenWidth = state.data.width;
 		var x = endPointVector.x;
 		var screenX = state.screen.getScreenXByPoint(endPointVector.x);

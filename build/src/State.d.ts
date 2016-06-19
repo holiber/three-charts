@@ -77,6 +77,8 @@ export declare class ChartState {
     private recalculateXAxis(actualData);
     private recalculateYAxis(actualData);
     zoom(zoomValue: number): void;
+    zoomToRange(range: number): void;
+    getScrollForZoomAction(screenOrigin: number, newZoom: number): number;
     /**
      *  returns offset in pixels from xAxis.range.zeroVal to xVal
      */

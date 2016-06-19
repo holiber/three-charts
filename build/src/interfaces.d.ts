@@ -19,6 +19,9 @@ export declare type TEase = Ease | Linear;
 export declare type TIteralable = {
     [key: string]: any;
 };
+export interface IIteralable {
+    [key: string]: any;
+}
 export declare enum AXIS_TYPE {
     X = 0,
     Y = 1,

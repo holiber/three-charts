@@ -7,7 +7,10 @@ import {Trends, ITrendsOptions} from "./Trends";
 import {Screen} from "./Screen";
 import {IChartEvent} from "./Events";
 import {AxisMarks} from "./AxisMarks";
-import {AXIS_TYPE, AXIS_DATA_TYPE, IAxisOptions, IAnimationsOptions, AXIS_RANGE_TYPE} from "./interfaces";
+import {
+	AXIS_TYPE, AXIS_DATA_TYPE, IAxisOptions, IAnimationsOptions, AXIS_RANGE_TYPE,
+	IIteralable
+} from "./interfaces";
 import {Chart} from "./Chart";
 
 
@@ -191,7 +194,24 @@ export class ChartState {
 
 		this.savePrevState(changedProps);
 
+
+		// temporary remove trends data from newState by performance reasons
+		let trendsData: {[trendName: string]: ITrendData} = {};
+		if (newState.trends) for (let trendName in newState.trends) {
+			let trendOptions = newState.trends[trendName];
+			if (trendOptions.data) trendsData[trendName] = trendOptions.data;
+			delete trendOptions.data;
+		}
+		let newStateContainsData = Object.keys(trendsData).length > 0;
+		
+
 		this.data = Utils.deepMerge(this.data, newState);
+
+		// return data to state
+		if (newStateContainsData) for (let trendName in trendsData) {
+			this.data.trends[trendName].data = trendsData[trendName];
+		}
+
 		if (silent) return;
 
 		// recalculate all dynamic state props
@@ -370,8 +390,9 @@ export class ChartState {
 			var to = from + actualData.width / (scaleFactor * zoom);
 			var rangeLength = to - from;
 			var needToRecalculateZoom = false;
-			
-			if (rangeLength > axisRange.maxLength || rangeLength < axisRange.minLength) {
+			var rangeMoreThenMaxValue = (axisRange.maxLength && rangeLength > axisRange.maxLength);
+			var rangeLessThenMinValue = (axisRange.minLength && rangeLength < axisRange.minLength);
+			if (rangeMoreThenMaxValue || rangeLessThenMinValue) {
 				var fixScale = rangeLength > axisRange.maxLength ?
 					rangeLength / axisRange.maxLength :
 					rangeLength / axisRange.minLength;
@@ -460,14 +481,35 @@ export class ChartState {
 	}
 
 	zoom(zoomValue: number) {
-		var {zoom, scroll, zeroVal} = this.data.xAxis.range;
+		var {zoom, scroll} = this.data.xAxis.range;
 		var newZoom = zoom * zoomValue;
-		var screenLeftVal = this.getValueByScreenX(0);
-		var screenCenterVal = this.getValueByScreenX(this.data.width / 2);
-		var halfScreenLength = screenCenterVal - screenLeftVal;
-		var scrollDelta = halfScreenLength * zoomValue - halfScreenLength;
-		var newScroll = scroll + scrollDelta;
+		// var screenLeftVal = this.getValueByScreenX(0);
+		// var screenCenterVal = this.getValueByScreenX(this.data.width / 2);
+		// var halfScreenLength = screenCenterVal - screenLeftVal;
+		// var scrollDelta = halfScreenLength * zoomValue - halfScreenLength;
+		// var newScroll = scroll + scrollDelta;
+		var newScroll = this.getScrollForZoomAction(this.data.width / 2, newZoom);
 		this.setState({xAxis: {range: {zoom: newZoom, scroll: newScroll}}});
+	}
+	
+	zoomToRange(range: number) {
+		var width = this.data.width;
+		var {scaleFactor} = this.data.xAxis.range;
+		var currentRange = width / scaleFactor;
+		var newZoom = currentRange / range;
+		var newScroll = this.getScrollForZoomAction(this.data.width / 2, newZoom);
+		this.setState({xAxis: {range: {zoom: newZoom, scroll: newScroll}}});
+	}
+
+	getScrollForZoomAction(screenOrigin: number, newZoom: number) {
+		var {zoom, scroll} = this.data.xAxis.range;
+		var screenLeftVal = this.getValueByScreenX(0);
+		var zoomDelta = newZoom / zoom;
+		var screenCenterVal = this.getValueByScreenX(0);
+		var halfScreenLength = screenCenterVal - screenLeftVal;
+		var scrollDelta = halfScreenLength * zoomDelta - halfScreenLength;
+		var newScroll = scroll + scrollDelta ;
+		return newScroll;
 	}
 
 	/**

@@ -254,67 +254,6 @@ export class Screen {
 		}
 	}
 
-	private onScroll(changedProps: IChartState) {
-		// var state = this.chartState;
-		// var isDragMode = state.data.cursor.dragMode;
-		// var animations =  state.data.animations;
-		// var targetScrollX = state.valueToPxByXAxis(state.data.xAxis.range.scroll);
-		// var targetScrollY = state.valueToPxByYAxis(state.data.yAxis.range.scroll);
-		// var scrollXChanged = targetScrollX !== state.data.prevState.xAxis.range.scroll;
-		// var scrollYChanged = targetScrollY !== state.data.prevState.yAxis.range.scroll;
-		// var zoomXChanged = changedProps.xAxis && changedProps.xAxis.range && changedProps.xAxis.range.zoom != void 0;
-		// var canAnimate = animations.enabled;
-		//
-		//
-		// if (scrollYChanged) {
-		// 	if (this.scrollYAnimation) this.scrollYAnimation.pause();
-		// 	this.currentScrollY = this.currentScrollY || {val: this.cameraScrollY};
-		// 	if (canAnimate) {
-		// 		this.scrollYAnimation = TweenLite.to(this.currentScrollY, animations.zoomSpeed, {
-		// 			val: targetScrollY, ease: animations.zoomEase
-		// 		});
-		// 		this.scrollYAnimation.eventCallback('onUpdate', () => {
-		// 			this.scrollTo(null, this.currentScrollY.val);
-		// 		});
-		// 	} else {
-		// 		this.currentScrollY.val = targetScrollY;
-		// 		this.scrollTo(null, targetScrollY);
-		// 	}
-		// }
-		//
-		// if (scrollXChanged) {
-		// 	canAnimate = canAnimate && !isDragMode && !zoomXChanged;
-		// 	if (this.scrollXAnimation) this.scrollXAnimation.pause();
-		// 	this.currentScrollX = this.currentScrollX || {val: this.cameraScrollX};
-		// 	if (canAnimate) {
-		// 		this.scrollXAnimation = TweenLite.to(this.currentScrollX, animations.autoScrollSpeed, {
-		// 			val: targetScrollX, ease: animations.autoScrollEase
-		// 		});
-		// 		this.scrollXAnimation.eventCallback('onUpdate', () => {
-		// 			this.scrollTo(this.currentScrollX.val);
-		// 		});
-		// 	} else {
-		// 		this.currentScrollX.val = targetScrollX;
-		// 		this.scrollTo(targetScrollX);
-		// 	}
-		// }
-		// //canAnimate = false;
-		// this.currentScroll = this.currentScroll || {scrollXVal: this.cameraScrollXVal, scrollYVal: this.cameraScrollYVal};
-		// var targetXVal = state.data.xAxis.range.scroll;
-		// var targetYVal = state.data.yAxis.range.scroll;
-		// if (this.cameraAnimation) this.cameraAnimation.pause();
-		// if (canAnimate) {
-		// 	this.cameraAnimation = TweenLite.to(this.currentScroll, animations.autoScrollSpeed, {
-		// 		scrollXVal: targetXVal, scrollYVal: targetYVal, ease: animations.autoScrollEase
-		// 	});
-		// 	this.cameraAnimation.eventCallback('onUpdate', () => {
-		// 		this.scrollTo(this.currentScroll.scrollXVal, this.currentScroll.scrollYVal);
-		// 	});
-		// 	return;
-		// }
-		// this.scrollTo(targetXVal, targetYVal);
-	}
-
 
 	/**
 	 *  returns offset in pixels from xAxis.range.zeroVal to scrollXVal

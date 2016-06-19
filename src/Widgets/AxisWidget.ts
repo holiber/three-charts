@@ -80,7 +80,7 @@ export class AxisWidget extends ChartWidget {
 		var texture = Utils.createTexture(canvasWidth, canvasHeight, (ctx) => {
 			ctx.beginPath();
 			ctx.font = "10px Arial";
-			ctx.fillStyle = "rgba(255,255,255,0.3)";
+			ctx.fillStyle = "rgba(255,255,255,0.5)";
 			ctx.strokeStyle = "rgba(255,255,255,0.1)";
 		});
 

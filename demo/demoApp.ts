@@ -1,5 +1,6 @@
 
 import {Chart, AXIS_RANGE_TYPE, ITrendItem, ITrendMarkOptions, Utils, AXIS_DATA_TYPE} from '../src';
+import { TREND_TYPE } from '../src/Trend';
 
 var chart: Chart;
 
@@ -13,7 +14,7 @@ class DataSourse {
 		let val = 70;
 		this.startTime = Date.now();
 
-		while (sec < 20) {
+		while (sec < 2000) { //2592000
 			this.data.push({
 				xVal: this.startTime + sec * 1000,
 				yVal: val
@@ -22,6 +23,10 @@ class DataSourse {
 			sec++;
 		}
 		this.endTime = this.data[this.data.length - 1].xVal;
+	}
+
+	getData() {
+		return Utils.deepCopy(this.data);
 	}
 
 	getNext() {
@@ -88,12 +93,12 @@ window.onload = function () {
 				type: AXIS_RANGE_TYPE.FIXED,
 				from: Date.now(),
 				to: Date.now() + 20000,
-				maxLength: 500000,
+				// maxLength: 500000,
 				minLength: 5000
 			},
 			marks: [
-				{value: Date.now() + 30000, name: 'deadline', title: 'DEADLINE', lineColor: '#ff6600', type: 'timeleft'},
-				{value: Date.now() + 40000, name: 'close', title: 'CLOSE', lineColor: '#005187', type: 'timeleft'}
+				{value: dsMain.endTime + 30000, name: 'deadline', title: 'DEADLINE', lineColor: '#ff6600', type: 'timeleft'},
+				{value: dsMain.endTime + 40000, name: 'close', title: 'CLOSE', lineColor: '#005187', type: 'timeleft'}
 			]
 			// range: {
 			// 	from: 80,
@@ -102,7 +107,8 @@ window.onload = function () {
 		},
 		trends: {
 			'main': {
-				dataset: dsMain.data,
+				type: TREND_TYPE.CANDLE,
+				dataset: dsMain.getData(),
 				hasBeacon: true,
 				hasIndicator: true,
 				hasGradient: false,
@@ -120,7 +126,9 @@ window.onload = function () {
 			TrendsGradient: {enabled: false},
 			//TrendsBeacon: {enabled: false},
 			//TrendsIndicator: {enabled: false},
-			//TrendsMarks: {enabled: false}
+			TrendsMarks: {enabled: false},
+			TrendsLoading: {enabled: false},
+			AxisMarks: {enabled: false}
 		}
 	});
 	
@@ -188,12 +196,12 @@ window.onload = function () {
 	var i = 0;
 
 	chart.getTrend('main').onPrependRequest((requestedLength, resolve, reject) => {
-		var responseData: ITrendItem[] = [];
-		var ticksCount = Math.round(requestedLength / 1000) ;
-		while (ticksCount--) responseData.unshift(dsMain.getPrev());
-		setTimeout(() => {
-			resolve(responseData);
-		}, 1000)
+		// var responseData: ITrendItem[] = [];
+		// var ticksCount = Math.round(requestedLength / 1000) ;
+		// while (ticksCount--) responseData.unshift(dsMain.getPrev());
+		// setTimeout(() => {
+		// 	resolve(responseData);
+		// }, 1000)
 	});
 
 	setInterval(() => {
@@ -239,6 +247,28 @@ function initListeners() {
 	$checkboxBluetrend.addEventListener('change', () => {
 		chart.setState({trends: {blue: {enabled: $checkboxBluetrend.checked}}});
 	});
+
+	var $switchLineBtn = document.querySelector('[name="switch-line"]') as HTMLInputElement;
+	$switchLineBtn.addEventListener('click', () => {
+		chart.getTrend('main').setOptions({type: TREND_TYPE.LINE});
+	});
+
+	var $switchBarsBtn = document.querySelector('[name="switch-bars"]') as HTMLInputElement;
+	$switchBarsBtn.addEventListener('click', () => {
+		chart.getTrend('main').setOptions({type: TREND_TYPE.CANDLE});
+	});
+	
+	var timeframeButtons = document.querySelectorAll(".timeframe");
+	for (var i = 0; i < timeframeButtons.length; i++) {
+		timeframeButtons[i].addEventListener("click", function() {
+			var range = Number(this.getAttribute('data-range'));
+			var segmentLength = Number(this.getAttribute('data-segment-length'));
+			chart.state.zoomToRange(range);
+			// setTimeout(() => {
+			// 	chart.getTrend('main').setOptions({maxSegmentLength: segmentLength});
+			// }, 400);
+		});
+	}
 }
 
 

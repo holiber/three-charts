@@ -10,10 +10,11 @@ import {TrendWidget, TrendsWidget} from "./TrendsWidget";
 import {ITrendOptions} from "../Trend";
 import PlaneGeometry = THREE.PlaneGeometry;
 import Color = THREE.Color;
-import {TrendPoints, TrendPoint} from "../TrendPoints";
+import {TrendSegments, TrendSegment} from "../TrendSegments.ts";
 
 const CANVAS_WIDTH = 128;
 const CANVAS_HEIGHT = 64;
+const OFFSET_X = 15;
 
 export class TrendsIndicatorWidget extends TrendsWidget<TrendIndicator> {
 	static widgetName = 'TrendsIndicator';
@@ -24,7 +25,7 @@ export class TrendsIndicatorWidget extends TrendsWidget<TrendIndicator> {
 
 export class TrendIndicator extends TrendWidget {
 	private mesh: Mesh;
-	private point: TrendPoint;
+	private segment: TrendSegment;
 
 	static widgetIsEnabled(trendOptions: ITrendOptions) {
 		return trendOptions.enabled && trendOptions.hasIndicator;
@@ -74,24 +75,27 @@ export class TrendIndicator extends TrendWidget {
 
 	protected onTransformationFrame() {
 		// set new widget position
-		this.point = this.trend.points.getEndPoint();
+		this.segment = this.trend.segments.getEndSegment();
 		this.updatePosition();
 	}
 
-	protected onPointsMove(animationState: TrendPoints) {
+	protected onPointsMove(animationState: TrendSegments) {
 		// set new widget position
-		this.point = animationState.getEndPoint();
+		this.segment = animationState.getEndSegment();
 		this.updatePosition();
 	}
 
 	private updatePosition() {
 		var state = this.chartState;
-		var endPointVector = this.point.getFramePoint();
+		var {endXVal: segmentEndXVal, endYVal: segmentEndYVal} = this.segment.currentAnimationState;
+		var endPointVector = state.screen.getPointOnChart(segmentEndXVal, segmentEndYVal);
 		var screenWidth = state.data.width;
-		var x = endPointVector.x;
+		var x = endPointVector.x + OFFSET_X;
 		var y = endPointVector.y;
+		
 		var screenX = state.screen.getScreenXByPoint(endPointVector.x);
-		if (screenX < 0 || screenX > screenWidth) {
+		var indicatorIsOutOfScreen = screenX < 0 || screenX > screenWidth;
+		if (indicatorIsOutOfScreen) {
 			if (screenX < 0) x = state.screen.getPointByScreenX(0) + 20;
 			if (screenX > screenWidth) x = state.screen.getPointByScreenX(screenWidth) - CANVAS_WIDTH / 2 - 10;
 			y -= 25;

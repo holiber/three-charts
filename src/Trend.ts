@@ -2,33 +2,42 @@ import {ChartState, IChartState} from "./State";
 import {Utils} from "./Utils";
 import {MAX_DATA_LENGTH} from "./Chart";
 import {ITrendMarkOptions, TrendMarks} from "./TrendMarks";
-import {TrendPoints} from "./TrendPoints";
+import {TrendSegments} from "./TrendSegments";
 import {EventEmitter, Promise} from './deps';
 
 export interface IPrependPromiseExecutor {
 	(requestedDataLength: number, resolve: (data: TTrendRawData) => void, reject: () => void): void;
 }
+export enum TREND_TYPE {LINE, CANDLE}
 export type TTrendRawData = ITrendData | number[];
 export interface ITrendItem {xVal: number, yVal: number, id?: number}
 export interface ITrendData extends Array<ITrendItem>{}
 export interface ITrendOptions {
 	enabled?: boolean,
 	data?: ITrendData
-	dataset?: ITrendData | number[],
-	name?: string,
-	lineWidth?: number,
-	lineColor?: number,
-	hasGradient?: boolean,
-	hasIndicator?: boolean,
-	hasBeacon?: boolean,
-	marks?: ITrendMarkOptions[],
+	dataset?: ITrendData | number[];
+	name?: string;
+	type?: TREND_TYPE;
+	lineWidth?: number;
+	lineColor?: number;
+	hasGradient?: boolean;
+	hasIndicator?: boolean;
+	hasBeacon?: boolean;
+	maxSegmentLength?: number;
+	minSegmentLengthInPx?: number;
+	maxSegmentLengthInPx?: number;
+	marks?: ITrendMarkOptions[];
 	onPrependRequest?: IPrependPromiseExecutor;
 }
 
 const DEFAULT_OPTIONS: ITrendOptions = {
 	enabled: true,
+	type: TREND_TYPE.LINE,
 	data: [],
 	marks: [],
+	maxSegmentLength: 1000,
+	minSegmentLengthInPx: 30,
+	maxSegmentLengthInPx: 60,
 	lineWidth: 2,
 	lineColor: 0xFFFFFF,
 	hasGradient: true,
@@ -38,7 +47,11 @@ const DEFAULT_OPTIONS: ITrendOptions = {
 export class Trend {
 	name: string;
 	marks: TrendMarks;
-	points: TrendPoints;
+	segments: TrendSegments;
+	minXVal = Infinity;
+	minYVal = Infinity;
+	maxXVal = -Infinity;
+	maxYVal = -Infinity;
 	private chartState: ChartState;
 	private calculatedOptions: ITrendOptions;
 	private prependRequest: Promise<TTrendRawData>;
@@ -52,13 +65,14 @@ export class Trend {
 		this.calculatedOptions = Utils.deepMerge(DEFAULT_OPTIONS, options);
 		this.calculatedOptions.name = trendName;
 		if (options.dataset) this.calculatedOptions.data = Trend.prepareData(options.dataset);
+		this.calculatedOptions.dataset = [];
 		this.ee = new EventEmitter();
 		this.canRequestPrepend = !!options.onPrependRequest;
 		this.bindEvents();
 	}
 
 	private onInitialStateApplied() {
-		this.points = new TrendPoints(this.chartState, this, MAX_DATA_LENGTH, this.getData()[0]);
+		this.segments = new TrendSegments(this.chartState, this);
 		this.marks = new TrendMarks(this.chartState, this);
 	}
 
@@ -89,7 +103,13 @@ export class Trend {
 	}
 
 	private changeData(allData: ITrendData, newData: ITrendData) {
-		if (allData.length > MAX_DATA_LENGTH) Utils.error('max data length reached')
+		// if (allData.length > MAX_DATA_LENGTH) Utils.error('max data length reached')
+		for (let item of newData) {
+			if (item.xVal < this.minXVal) this.minXVal = item.xVal;
+			if (item.xVal > this.maxXVal) this.maxXVal = item.xVal;
+			if (item.yVal < this.minYVal) this.minYVal = item.yVal;
+			if (item.yVal > this.maxYVal) this.maxYVal = item.yVal;
+		}
 		var options = this.getOptions();
 		var statePatch: IChartState = {trends: {[options.name]: {data: allData}}};
 		this.chartState.setState(statePatch, newData);
@@ -121,6 +141,10 @@ export class Trend {
 
 	getOptions() {
 		return this.chartState.data.trends[this.name]
+	}
+
+	setOptions(options: ITrendOptions) {
+		this.chartState.setState({trends: {[this.name]: options}});
 	}
 
 	onPrependRequest(cb: IPrependPromiseExecutor): Function {

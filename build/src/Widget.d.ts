@@ -7,7 +7,6 @@ export interface IChartWidgetConstructor {
 }
 /**
  * base class for all widgets
- * widgets must not change state!
  * each widget must have widgetName static property
  */
 export declare abstract class ChartWidget {
