@@ -81,10 +81,10 @@ export class ChartState {
 		},
 		animations: {
 			enabled: true,
-			trendChangeSpeed: 0.5,
-			trendChangeEase: void 0, //Linear.easeNone
-			zoomSpeed: 0.5,
-			zoomEase: void 0,//Linear.easeNone,
+			trendChangeSpeed: 1,
+			trendChangeEase: Linear.easeNone,
+			zoomSpeed: 1,
+			zoomEase: Linear.easeNone,
 			autoScrollSpeed: 1,
 			autoScrollEase: Linear.easeNone
 		},
@@ -307,19 +307,9 @@ export class ChartState {
 		if (!changedProps) changedProps = this.data;
 		var prevState = this.data.prevState;
 
-
 		// prevent to store prev trend data by performance reasons
 		Utils.copyProps(this.data, prevState, changedProps, ['trends']);
-		// for (let propName of propsToSave) {
-		// 	if (this.data[propName] == void 0) continue;
-		//
-		// 	// prevent to store prev trend data by performance reasons
-		// 	if (propName == 'trends') {
-		// 		continue;
-		// 	}
-		//
-		// 	prevState[propName] = Utils.deepCopy(this.data[propName]);
-		// }
+
 	}
 
 	private emitChangedStateEvents(changedProps: IChartState, eventData: any) {
@@ -480,36 +470,27 @@ export class ChartState {
 		return patch;
 	}
 
-	zoom(zoomValue: number) {
-		var {zoom, scroll} = this.data.xAxis.range;
-		var newZoom = zoom * zoomValue;
-		// var screenLeftVal = this.getValueByScreenX(0);
-		// var screenCenterVal = this.getValueByScreenX(this.data.width / 2);
-		// var halfScreenLength = screenCenterVal - screenLeftVal;
-		// var scrollDelta = halfScreenLength * zoomValue - halfScreenLength;
-		// var newScroll = scroll + scrollDelta;
-		var newScroll = this.getScrollForZoomAction(this.data.width / 2, newZoom);
+	zoom(zoomValue: number, origin = 0.5) {
+		let {zoom, scroll, scaleFactor} = this.data.xAxis.range;
+		let newZoom = zoom * zoomValue;
+		let currentRange = this.data.width / (scaleFactor * zoom);
+		let nextRange = this.data.width / (scaleFactor * newZoom);
+		let newScroll = scroll + (currentRange - nextRange) * origin;
 		this.setState({xAxis: {range: {zoom: newZoom, scroll: newScroll}}});
 	}
 	
-	zoomToRange(range: number) {
-		var width = this.data.width;
-		var {scaleFactor} = this.data.xAxis.range;
-		var currentRange = width / scaleFactor;
-		var newZoom = currentRange / range;
-		var newScroll = this.getScrollForZoomAction(this.data.width / 2, newZoom);
-		this.setState({xAxis: {range: {zoom: newZoom, scroll: newScroll}}});
+	zoomToRange(range: number, origin?: number) {
+		var {scaleFactor, zoom} = this.data.xAxis.range;
+		let currentRange = this.data.width / (scaleFactor * zoom);
+		this.zoom(currentRange / range, origin);
 	}
 
-	getScrollForZoomAction(screenOrigin: number, newZoom: number) {
-		var {zoom, scroll} = this.data.xAxis.range;
-		var screenLeftVal = this.getValueByScreenX(0);
-		var zoomDelta = newZoom / zoom;
-		var screenCenterVal = this.getValueByScreenX(0);
-		var halfScreenLength = screenCenterVal - screenLeftVal;
-		var scrollDelta = halfScreenLength * zoomDelta - halfScreenLength;
-		var newScroll = scroll + scrollDelta ;
-		return newScroll;
+	scrollToEnd() {
+		let state = this.data;
+		let endXVal = this.trends.getEndXVal();
+		let range = state.xAxis.range;
+		var scroll = endXVal - this.pxToValueByXAxis(state.width) + this.pxToValueByXAxis(range.padding.end) - range.zeroVal;
+		this.setState({xAxis: {range: {scroll: scroll}}});
 	}
 
 	/**

@@ -20,7 +20,7 @@ import remove = THREE.Cache.remove;
 const RISE_COLOR = 0x2CAC40;
 const FALL_COLOR = 0xEE5533;
 const MARGIN_PERCENT = 0.3;
-// const MAX_CANDLES = 100;
+const MAX_CANDLES = 100;
 
 /**
  * widget for drawing trends candles
@@ -37,6 +37,7 @@ export class TrendCandlesWidget extends TrendWidget {
 	private scaleXFactor: number;
 	private scaleYFactor: number;
 	private object3D: Object3D;
+	private candlesPool: CandleWidget[] = [];
 	private candles: {[segmentId: number]: CandleWidget} = {};
 
 	static widgetIsEnabled(trendOptions: ITrendOptions) {
@@ -79,13 +80,6 @@ export class TrendCandlesWidget extends TrendWidget {
 	private setupCandles() {
 
 		// remove invisible
-
-		// let segments = this.trend.segments.segmentsById;
-		// let object3D = this.object3D;
-		// while (object3D.children.length) object3D.remove(object3D.children[0]);
-		// this.candles = {};
-		//
-
 		let {firstDisplayedSegment, lastDisplayedSegment} = this.trend.segments;
 
 		for (let segmentId in this.candles) {
@@ -102,10 +96,6 @@ export class TrendCandlesWidget extends TrendWidget {
 			this.setupCandle(segment.id, segment.currentAnimationState);
 			segment = segment.getNext();
 		}
-
-		// for (let segmentId in segments) {
-		// 	this.setupCandle(Number(segmentId), segments[segmentId].createAnimationState());
-		// }
 	}
 
 	private destroyCandles() {
@@ -124,7 +114,7 @@ export class TrendCandlesWidget extends TrendWidget {
 		if (options.zoomY) currentScale.setY(this.scaleYFactor * options.zoomY);
 	}
 
-	protected onPointsMove(trendSegments: TrendSegments) {
+	protected onSegmentsAnimate(trendSegments: TrendSegments) {
 		for (let segmentId of trendSegments.animatedSegmentsIds) {
 			if (!this.candles[segmentId]) continue;
 			let segmentState = trendSegments.segmentsById[segmentId].currentAnimationState;
@@ -132,13 +122,20 @@ export class TrendCandlesWidget extends TrendWidget {
 		}
 	}
 
+	/**
+	 * create or modify candle
+	 */
 	private setupCandle(candleId: number, segmentState: ITrendSegmentState) {
-		let candle = this.candles[candleId];
+		let candleInd = candleId % MAX_CANDLES;
+
+		// get candle from candlesPool to avoid creating new Objects by performance reasons
+		let candle = this.candlesPool[candleInd];
 		if (!candle) {
-			candle = this.candles[candleId] = new CandleWidget();
-			let candleObject = candle.getObject3D();
-			this.object3D.add(candleObject);
+			candle = this.candlesPool[candleInd] = new CandleWidget();
 		}
+
+		if (!this.candles[candleId]) this.candles[candleId] = candle;
+		this.object3D.add(candle.getObject3D());
 		candle.getObject3D().position.set(this.toLocalX(segmentState.xVal), this.toLocalY(segmentState.yVal), 0);
 		candle.setSegment(segmentState);
 	}
@@ -157,7 +154,6 @@ export class TrendCandlesWidget extends TrendWidget {
 }
 
 class CandleWidget {
-	// isDisplaied: boolean;
 	segment: ITrendSegmentState;
 	private rect: Mesh;
 	private line: Line;
@@ -201,8 +197,8 @@ class CandleWidget {
 
 	private initObject() {
 		this.rect = new Mesh(
-			new PlaneGeometry( 1, 1),
-			new MeshBasicMaterial() //db4931
+			new PlaneGeometry(1, 1),
+			new MeshBasicMaterial()
 		);
 		let lineGeometry  = new Geometry();
 		lineGeometry.vertices.push(new Vector3(), new Vector3);

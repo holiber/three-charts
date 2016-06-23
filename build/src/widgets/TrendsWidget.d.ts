@@ -40,7 +40,7 @@ export declare abstract class TrendWidget {
     prependData(newData: ITrendData): void;
     onTrendChange(changedOptions?: ITrendOptions): void;
     onDestroy(): void;
-    protected onPointsMove(trendPoints: TrendSegments): void;
+    protected onSegmentsAnimate(segments: TrendSegments): void;
     protected onZoomFrame(options: IScreenTransformOptions): void;
     protected onTransformationFrame(options: IScreenTransformOptions): void;
     protected onZoom(): void;

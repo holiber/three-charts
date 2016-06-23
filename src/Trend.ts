@@ -167,7 +167,7 @@ export class Trend {
 
 	onDataChange(cb: (newData: ITrendData) => void): Function {
 		var onChangeCb = (changedOptions: ITrendOptions, newData: ITrendData) => {
-			if (changedOptions.data) cb(newData);
+			if (newData) cb(newData);
 		};
 		this.ee.on('change', onChangeCb);
 		return () => {

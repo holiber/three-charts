@@ -7,7 +7,7 @@ import PlaneBufferGeometry = THREE.PlaneBufferGeometry;
 import MeshBasicMaterial = THREE.MeshBasicMaterial;
 import Vector3 = THREE.Vector3;
 import {TrendWidget, TrendsWidget} from "./TrendsWidget";
-import {ITrendOptions} from "../Trend";
+import { ITrendOptions, TREND_TYPE } from "../Trend";
 import {TrendSegments} from "../TrendSegments.ts";
 
 /**
@@ -46,7 +46,7 @@ export class TrendLoading extends TrendWidget {
 	
 	bindEvents() {
 		super.bindEvents();
-		this.bindEvent(this.trend.onPrependRequest(() => this.activate()))
+		this.bindEvent(this.trend.onPrependRequest(() => this.activate()));
 	}
 
 	prependData() {
@@ -98,8 +98,18 @@ export class TrendLoading extends TrendWidget {
 
 	private updatePosition() {
 		if (!this.isActive) return;
+		let trend = this.trend;
 		// set new widget position
-		var pointVector = this.trend.segments.getStartPoint().getFramePoint();
+		let segment = trend.segments.getStartSegment();
+		let x: number, y: number;
+		if (trend.getOptions().type == TREND_TYPE.LINE) {
+			x = segment.currentAnimationState.startXVal;
+			y = segment.currentAnimationState.startYVal;
+		} else {
+			x = segment.currentAnimationState.xVal - segment.maxLength;
+			y = segment.currentAnimationState.yVal
+		}
+		let pointVector = this.chartState.screen.getPointOnChart(x, y);
 		this.mesh.position.set(pointVector.x, pointVector.y, 0);
 	}
 }

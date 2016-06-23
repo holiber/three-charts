@@ -4,6 +4,7 @@ import { ChartState } from "./State";
 import Vector3 = THREE.Vector3;
 import { ITrendData, ITrendOptions, ITrendItem, Trend } from "./Trend";
 import { Utils } from "./Utils";
+import convertArray = THREE.AnimationUtils.convertArray;
 
 export interface ITargets {
 	ease?: Linear | Ease
@@ -14,13 +15,12 @@ interface ICurrent {
 	[key: string]: number
 }
 
-const MAX_ANIMATED_SEGMENTS = 200;
+const MAX_ANIMATED_SEGMENTS = 100;
 
 /**
  *  Class helps to display and animate trends segments
  */
 export class TrendSegments {
-	currentAnimation: TweenLite;
 	segmentsById: {[id: string]: TrendSegment} = {};
 	segments: TrendSegment[] = [];
 	chartState: ChartState;
@@ -29,9 +29,13 @@ export class TrendSegments {
 	segmentsLength = 0;
 	firstDisplayedSegment: TrendSegment;
 	lastDisplayedSegment: TrendSegment;
+	private appendAnimation: TweenLite;
+	private prependAnimation: TweenLite;
+	private animatedSegmentsForAppend: number[] = [];
+	private animatedSegmentsForPrepend: number[] = [];
 	private nextEmptyId = 0;
-	private startPointId = 0;
-	private endPointId = 0;
+	private startSegmentId = 0;
+	private endSegmentId = 0;
 	private trend: Trend;
 	private ee: EventEmitter2;
 
@@ -40,7 +44,7 @@ export class TrendSegments {
 		this.ee = new EventEmitter();
 		this.trend = trend;
 		this.maxSegmentLength = trend.getOptions().maxSegmentLength;
-		this.rebuildSegments();
+		this.tryToRebuildSegments();
 		this.bindEvents();
 	}
 
@@ -51,13 +55,7 @@ export class TrendSegments {
 	}
 
 	private onZoomHandler() {
-		// let {maxSegmentLength, minSegmentLengthInPx} = this.trend.getOptions();
-		// let currentSegmentLengthInPx = this.chartState.valueToPxByXAxis(this.maxSegmentLength);
-		// let needToRebuildSegments = (
-		// 	currentSegmentLengthInPx < minSegmentLengthInPx ||
-		// 	this.maxSegmentLength > maxSegmentLength
-		// );
-		let segmentsRebuilded = this.rebuildSegments();
+		let segmentsRebuilded = this.tryToRebuildSegments();
 		if (!segmentsRebuilded) {
 			this.recalculateDisplayedRange()
 		}
@@ -68,7 +66,7 @@ export class TrendSegments {
 
 
 		if (needRebuildSegments) {
-			this.rebuildSegments();
+			this.tryToRebuildSegments(true);
 			return;
 		}
 
@@ -81,28 +79,29 @@ export class TrendSegments {
 	}
 
 	getEndSegment(): TrendSegment {
-		return this.segmentsById[this.endPointId];
+		return this.segmentsById[this.endSegmentId];
 	}
 
-	getStartPoint(): TrendSegment {
-		return this.segmentsById[this.startPointId];
+	getStartSegment(): TrendSegment {
+		return this.segmentsById[this.startSegmentId];
 	}
 	
-	private rebuildSegments(): boolean {
+	private tryToRebuildSegments(force = false): boolean {
 		let {
 			maxSegmentLength,
 			minSegmentLengthInPx,
 			maxSegmentLengthInPx
 		} = this.trend.getOptions();
 
-		let needToRebuild = this.segments.length === 0;
+		let needToRebuild = this.segments.length === 0 || force;
 		let segmentLength = this.maxSegmentLength;
 
-		let currentSegmentLengthInPx = this.chartState.valueToPxByXAxis(segmentLength);
+		// call toFixed(2) to prevent floating segment error compare
+		let currentSegmentLengthInPx = Number(this.chartState.valueToPxByXAxis(segmentLength).toFixed(2));
 
 		if (currentSegmentLengthInPx < minSegmentLengthInPx) {
 			needToRebuild = true;
-			segmentLength = Math.ceil(this.chartState.pxToValueByXAxis(maxSegmentLengthInPx));//Math.ceil(maxSegmentLength * (minSegmentLengthInPx / currentSegmentLengthInPx));
+			segmentLength = Math.ceil(this.chartState.pxToValueByXAxis(maxSegmentLengthInPx));
 		} else if (this.chartState.valueToPxByXAxis(this.maxSegmentLength) >= maxSegmentLengthInPx) {
 			needToRebuild = true;
 			segmentLength = this.chartState.pxToValueByXAxis(minSegmentLengthInPx);
@@ -114,8 +113,8 @@ export class TrendSegments {
 		this.segmentsById = {};
 		this.segments = [];
 		this.nextEmptyId = 0;
-		this.startPointId = 0;
-		this.endPointId = 0;
+		this.startSegmentId = 0;
+		this.endSegmentId = 0;
 		this.segmentsLength = 0;
 		this.appendData(null, true);
 		this.recalculateDisplayedRange(true);
@@ -149,40 +148,39 @@ export class TrendSegments {
 	// }
 
 	/**
-	 * returns array of segmentsById for values array
+	 * returns array of segments for values array
 	 * values must be sorted!
 	 */
-	getPointsForXValues(values: number[]): TrendSegment[] {return[]
-		// var valueInd = 0;
-		// var value = values[valueInd];
-		// var lastValueInd = values.length - 1;
-		// var results: TrendSegment[] = [];
-		// var point = this.getStartPoint();
-		// if (!point.hasValue) return [];
-		//
-		// while (point) {
-		//
-		// 	while (value < point.startXVal) {
-		// 		results.push(void 0);
-		// 		value = values[++valueInd];
-		// 	}
-		//
-		// 	while (value > point.endXVal) {
-		// 		point = point.getNext();
-		// 		if (!point) break;
-		// 	}
-		//
-		// 	var valueInPoint = (
-		// 		point.startXVal == value || point.endXVal == value ||
-		// 		(point.startXVal < value && point.endXVal < value)
-		// 	);
-		// 	if (valueInPoint) {
-		// 		results.push(point);
-		// 		value = values[++valueInd];
-		// 	}
-		// 	if (valueInd > lastValueInd) break;
-		// }
-		// return results;
+	getSegmentsForXValues(values: number[]): TrendSegment[] {
+		var valueInd = 0;
+		var value = values[valueInd];
+		var lastValueInd = values.length - 1;
+		var results: TrendSegment[] = [];
+		var segment = this.getStartSegment();
+		if (!segment.hasValue) return [];
+		while (segment) {
+		
+			while (value < segment.startXVal) {
+				results.push(void 0);
+				value = values[++valueInd];
+			}
+		
+			while (value > segment.endXVal) {
+				segment = segment.getNext();
+				if (!segment) break;
+			}
+		
+			var valueInPoint = (
+				segment.startXVal == value || segment.endXVal == value ||
+				(segment.startXVal < value && segment.endXVal > value)
+			);
+			if (valueInPoint) {
+				results.push(segment);
+				value = values[++valueInd];
+			}
+			if (valueInd > lastValueInd) break;
+		}
+		return results;
 	}
 
 	onAnimationFrame(cb: (animationState: TrendSegments) => void): Function {
@@ -209,48 +207,66 @@ export class TrendSegments {
 		}
 	}
 
-	prependPoint(items: ITrendItem[]): TrendSegment {
-		var id = this.nextEmptyId++;
-		var point = this.segmentsById[id];
-		var nextPoint = this.segmentsById[this.startPointId];
-		if (nextPoint.hasValue) {
-			nextPoint.prevId = id;
-			point.nextId = nextPoint.id;
-		}
-		point.hasValue = true;
-		//point.appendItems(items);
-		this.startPointId = id;
-		return point;
-	}
+	// prependPoint(items: ITrendItem[]): TrendSegment {
+	// 	var id = this.nextEmptyId++;
+	// 	var segment = this.segmentsById[id];
+	// 	var nextPoint = this.segmentsById[this.startPointId];
+	// 	if (nextPoint.hasValue) {
+	// 		nextPoint.prevId = id;
+	// 		segment.nextId = nextPoint.id;
+	// 	}
+	// 	segment.hasValue = true;
+	// 	//segment.appendItems(items);
+	// 	this.startPointId = id;
+	// 	return segment;
+	// }
 
 	allocateNextSegment() {
 		var id = this.nextEmptyId++;
 		var segment = new TrendSegment(this, id);
-		var prevSegment = this.segmentsById[this.endPointId];
+		var prevSegment = this.segmentsById[this.endSegmentId];
 		if (prevSegment && prevSegment.hasValue) {
 			prevSegment.nextId = id;
 			segment.prevId = prevSegment.id;
 		}
-		this.endPointId = id;
+		this.endSegmentId = id;
 		this.segmentsLength++;
 		this.segmentsById[id] = segment;
 		this.segments.push(segment);
 		return segment;
 	}
 
+	allocatePrevSegment() {
+		var id = this.nextEmptyId++;
+		var segment = new TrendSegment(this, id);
+		var nextSegment = this.segmentsById[this.startSegmentId];
+		if (nextSegment && nextSegment.hasValue) {
+			nextSegment.prevId = id;
+			segment.nextId = nextSegment.id;
+		}
+		this.startSegmentId = id;
+		this.segmentsLength++;
+		this.segmentsById[id] = segment;
+		this.segments.unshift(segment);
+		return segment;
+	}
+
 	private appendData(newData: ITrendData, needRebuildSegments = false) {
+
+		// WARNING: bottleneck method!
+
+		// var t1 = performance.now();
 		var trendData = this.trend.getData();
 		if (needRebuildSegments) {
 			newData = trendData;
-			this.animatedSegmentsIds = [];
+			this.animatedSegmentsForAppend = [];
 		}
 
 		var startItemInd = trendData.length - newData.length;
-		var endSegment = this.getEndSegment() || this.allocateNextSegment();
-		var initialAnimationState = endSegment.hasValue ? endSegment.createAnimationState() : null;
-		var segment = endSegment || this.segmentsById[0];
+		var segment = this.getEndSegment() || this.allocateNextSegment();
+		var initialSegment = segment.hasValue ? segment : null;
+		var initialAnimationState = segment.createAnimationState();
 		var itemInd = 0;
-		var animatedSegments: TrendSegment[] = [];
 		while (itemInd < newData.length) {
 			let item = newData[itemInd];
 			let itemIsInserted = segment.appendItem(item);
@@ -268,20 +284,18 @@ export class TrendSegments {
 
 			let segmentIsReadyForAnimate = segment.isCompleted || (isLastItem && itemIsInserted);
 			if (segmentIsReadyForAnimate) {
-				animatedSegments.push(segment);
 				let id = segment.id;
-				if (!initialAnimationState) initialAnimationState = animatedSegments[0].createAnimationState();
+				if (!initialSegment) initialSegment = segment;
+				if (!initialAnimationState) initialAnimationState = initialSegment.createAnimationState();
 
-				let ias = initialAnimationState;
+				segment.initialAnimationState = Utils.deepMerge({}, initialAnimationState);
+				if (this.animatedSegmentsForAppend.length > 0) {
+					segment.initialAnimationState.startXVal = initialAnimationState.endXVal;
+					segment.initialAnimationState.startYVal = initialAnimationState.endYVal;
+				}
 
-				segment.initialAnimationState = ias;
-
-				if (animatedSegments.length > 1) segment.initialAnimationState = Utils.deepMerge(ias, {
-					startXVal: ias.endXVal,
-					startYVal: ias.endYVal
-				});
 				segment.targetAnimationState = segment.createAnimationState();
-				this.animatedSegmentsIds.push(id);
+				this.animatedSegmentsForAppend.push(id);
 
 			}
 
@@ -297,55 +311,110 @@ export class TrendSegments {
 
 		var animationsOptions = this.chartState.data.animations;
 		var time = animationsOptions.enabled ? animationsOptions.trendChangeSpeed : 0;
-		if (needRebuildSegments || this.animatedSegmentsIds.length > MAX_ANIMATED_SEGMENTS) time = 0;
+
+		// var t2 = performance.now();
+		// console.log(t2 - t1);
+
+		// do not create animation if segments was rebuilded
+		if (needRebuildSegments) {
+			for (let segmentId of this.animatedSegmentsForAppend) {
+				let segment = this.segmentsById[segmentId];
+				segment.currentAnimationState = segment.createAnimationState();
+			}
+			this.animatedSegmentsForAppend = [];
+			return;
+		}
+		if (this.animatedSegmentsForAppend.length > MAX_ANIMATED_SEGMENTS) time = 0;
 		this.animate(time);
 	}
 
-	private prependData(newData: ITrendData) {
-		var chartState = this.chartState;
-		var trendData = this.trend.getData();
-		var animationsOptions = chartState.data.animations;
 
-		var startItemInd = newData.length;
-		var startItem = trendData[startItemInd] || newData[0];
-		var current: ICurrent = {};
-		var targets: ITargets = {};
-		for (let itemInd = startItemInd - 1; itemInd >= 0; itemInd--) {
-			let trendItem = trendData[itemInd];
-			let point = this.prependPoint([trendItem]);
-			let id = point.id;
-			current['x' + id] = startItem.xVal;
-			current['y' + id] = startItem.yVal;
-			targets['x' + id] = trendItem.xVal;
-			targets['y' + id] = trendItem.yVal;
+	// TODO: refactor duplicated code from appendData
+	private prependData(newData: ITrendData) {
+		var trendData = this.trend.getData();
+		var segment = this.getStartSegment() || this.segmentsById[0];
+		var initialSegment = segment.hasValue ? segment : null;
+		var itemInd = newData.length - 1;
+		var initialAnimationState = segment.createAnimationState();
+		while (itemInd >= 0) {
+			let item = newData[itemInd];
+			let itemIsInserted = segment.prependItem(item);
+			let isLastItem = itemInd == 0;
+
+			if (itemIsInserted) {
+				if (!isLastItem) itemInd--;
+			} else {
+				if (!segment.isCompleted) segment.complete();
+			}
+
+			if (isLastItem && itemIsInserted) {
+				segment.recalculateItems();
+			}
+
+			let segmentIsReadyForAnimate = segment.isCompleted || (isLastItem && itemIsInserted);
+			if (segmentIsReadyForAnimate) {
+				let id = segment.id;
+				if (!initialSegment) initialSegment = segment;
+				if (!initialAnimationState) initialAnimationState = initialSegment.createAnimationState();
+
+				segment.initialAnimationState = Utils.deepMerge({}, initialAnimationState);
+				if (this.animatedSegmentsForPrepend.length > 0) {
+					segment.initialAnimationState.endXVal = initialAnimationState.startXVal;
+					segment.initialAnimationState.endYVal =  initialAnimationState.startYVal;
+				}
+
+				segment.targetAnimationState = segment.createAnimationState();
+				this.animatedSegmentsForPrepend.push(id);
+
+			}
+
+			if (isLastItem && itemIsInserted) break;
+			if (!segment.isCompleted) continue;
+
+			segment = this.allocatePrevSegment();
+			let nextItem = trendData[itemInd + 1];
+			segment.prependItem(nextItem);
+
 		}
-		targets.ease = animationsOptions.trendChangeEase;
+
+		var animationsOptions = this.chartState.data.animations;
 		var time = animationsOptions.enabled ? animationsOptions.trendChangeSpeed : 0;
-		// this.animate(time, targets, current);
+
+		if (this.animatedSegmentsForPrepend.length > MAX_ANIMATED_SEGMENTS) time = 0;
+		this.animate(time, true);
 	}
 
-	private animate(time: number) {
+	private animate(time: number, isPrepend = false) {
 
-		if (this.currentAnimation) this.currentAnimation.kill();
-		if (time == 0) {
-			this.onAnimationFrameHandler(1);
-			this.animatedSegmentsIds = [];
-			this.currentAnimation = null;
+		var animatedSegmentsIds = isPrepend ? this.animatedSegmentsForPrepend : this.animatedSegmentsForAppend;
+		var animation = isPrepend ? this.prependAnimation : this.appendAnimation;
+
+		if ((animation && animation.isActive()) || time == 0) {
+			if (animation) animation.kill();
+			this.onAnimationFrameHandler(1, isPrepend);
+			animatedSegmentsIds.length = 0;
 			return;
 		}
 		var animationsOptions = this.chartState.data.animations;
 		var ease = animationsOptions.trendChangeEase;
 		var objectToAnimate = {animationValue: 0};
-		this.currentAnimation = TweenLite.to(objectToAnimate, time, {animationValue: 1, ease});
-		this.currentAnimation.eventCallback('onUpdate', () => this.onAnimationFrameHandler(objectToAnimate.animationValue));
-		this.currentAnimation.eventCallback('onComplete', () => {
-			this.animatedSegmentsIds = [];
-			this.currentAnimation = null;
+		animation = TweenLite.to(objectToAnimate, time, {animationValue: 1, ease});
+		animation.eventCallback('onUpdate', () => this.onAnimationFrameHandler(objectToAnimate.animationValue, isPrepend));
+		animation.eventCallback('onComplete', () => {
+			animatedSegmentsIds.length = 0;
+			this.appendAnimation = null;
 		});
+
+		if (isPrepend) {
+			this.prependAnimation = animation;
+		} else {
+			this.appendAnimation = animation;
+		}
 	}
 
-	private onAnimationFrameHandler(coefficient: number) {
-		for (let segmentId of this.animatedSegmentsIds) {
+	private onAnimationFrameHandler(coefficient: number, isPrepend = false) {
+		let animatedSegmentsIds = isPrepend ? this.animatedSegmentsForPrepend : this.animatedSegmentsForAppend;
+		for (let segmentId of animatedSegmentsIds) {
 			let segment = this.segmentsById[segmentId];
 			for (let key in segment.targetAnimationState) {
 				let targetValue = segment.targetAnimationState[key] as number;
@@ -354,6 +423,7 @@ export class TrendSegments {
 				segment.currentAnimationState[key] = currentValue;
 			}
 		}
+		this.animatedSegmentsIds = this.animatedSegmentsForAppend.concat(this.animatedSegmentsForPrepend);
 		this.ee.emit('animationFrame', this);
 	}
 
@@ -426,6 +496,8 @@ export class TrendSegment implements ITrendSegmentState {
 	};
 	
 	appendItem(item: ITrendItem): boolean {
+		if (this.isCompleted) return false;
+
 		var items = this.items;
 		if (items.length < 2) {
 			this.items.push(item);
@@ -435,6 +507,20 @@ export class TrendSegment implements ITrendSegmentState {
 		var startXVal = items[0].xVal;
 		if (item.xVal - startXVal > this.maxLength) return false;
 		items.push(item);
+		return true;
+	}
+
+	prependItem(item: ITrendItem): boolean {
+		if (this.isCompleted) return false;
+		var items = this.items;
+		if (items.length < 2) {
+			this.items.unshift(item);
+			this.hasValue = true;
+			return true;
+		}
+		var endXVal = items[items.length - 1].xVal;
+		if (endXVal - item.xVal > this.maxLength) return false;
+		items.unshift(item);
 		return true;
 	}
 

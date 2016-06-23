@@ -100,17 +100,27 @@ export class Screen {
 		if (scrollYVal != void 0) this.options.scrollYVal = scrollYVal;
 		if (zoomX != void 0) this.options.zoomX = zoomX;
 		if (zoomY != void 0) this.options.zoomY = zoomY;
-		
+
+		// if (scrollXVal != void 0 || zoomX) {
+		// 	options.scrollX = this.valueToPxByXAxis(scrollXVal != void 0 ? scrollXVal : this.options.scrollXVal);
+		// 	this.options.scrollX = options.scrollX;
+		// }
+		//
+		// if (scrollYVal != void 0 || zoomY) {
+		// 	options.scrollY = this.valueToPxByYAxis(scrollYVal != void 0 ? scrollYVal : this.options.scrollYVal);
+		// 	this.options.scrollY = options.scrollY;
+		// }
+
 		if (scrollXVal != void 0 || zoomX) {
-			options.scrollX = this.valueToPxByXAxis(scrollXVal != void 0 ? scrollXVal : this.options.scrollXVal);
+			options.scrollX = this.chartState.valueToPxByXAxis(scrollXVal != void 0 ? scrollXVal : this.options.scrollXVal);
 			this.options.scrollX = options.scrollX;
 		}
 
 		if (scrollYVal != void 0 || zoomY) {
-			options.scrollY = this.valueToPxByYAxis(scrollYVal != void 0 ? scrollYVal : this.options.scrollYVal);
+			options.scrollY = this.chartState.valueToPxByYAxis(scrollYVal != void 0 ? scrollYVal : this.options.scrollYVal);
 			this.options.scrollY = options.scrollY;
 		}
-		
+
 		this.ee.emit('transformationFrame', options);
 		
 		if (options.scrollXVal != void 0 || options.scrollYVal != void 0) {
@@ -122,24 +132,6 @@ export class Screen {
 		}
 	}
 
-	private scrollTo(x: number, y?: number) {
-		//
-		// if (scrollX != void 0) {
-		// 	this.cameraScrollX = scrollX;
-		// 	//var pointX = this.cameraInitialPosition.scrollX + this.chartState.valueToPxByXAxis(scrollX);
-		// 	this.camera.position.scrollX = this.cameraInitialPosition.scrollX + scrollX;
-		// }
-		//
-		// if (scrollY != void 0) {
-		// 	this.cameraScrollY = scrollY;
-		// 	//var pointY = this.cameraInitialPosition.scrollY + this.chartState.valueToPxByYAxis(scrollY);
-		// 	this.camera.position.scrollY = this.cameraInitialPosition.scrollY + scrollY;
-		// }
-		//
-		// // dirty hack, used only for performance reasons, in ideal world we always must use ChartState.setState
-		// // this.chartState.emit('cameraChange', {scrollX: scrollX, scrollY: scrollY});
-		this.ee.emit('cameraChange', x, y);
-	}
 
 	private bindEvents() {
 		var state = this.chartState;

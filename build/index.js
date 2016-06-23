@@ -250,7 +250,8 @@ var ThreeChart =
 	    Chart.prototype.onMouseWheel = function (ev) {
 	        ev.stopPropagation();
 	        ev.preventDefault();
-	        this.state.zoom(1 + ev.wheelDeltaY * 0.0002);
+	        var zoomOrigin = ev.layerX / this.state.data.width;
+	        this.state.zoom(1 + ev.wheelDeltaY * 0.002, zoomOrigin);
 	    };
 	    Chart.prototype.onTouchMove = function (ev) {
 	        this.setState({ cursor: { dragMode: true, x: ev.touches[0].clientX, y: ev.touches[0].clientY } });
@@ -12162,9 +12163,9 @@ var ThreeChart =
 	        this.segment = this.trend.segments.getEndSegment();
 	        this.updatePosition();
 	    };
-	    TrendIndicator.prototype.onPointsMove = function (animationState) {
+	    TrendIndicator.prototype.onSegmentsAnimate = function (segments) {
 	        // set new widget position
-	        this.segment = animationState.getEndSegment();
+	        this.segment = segments.getEndSegment();
 	        this.updatePosition();
 	    };
 	    TrendIndicator.prototype.updatePosition = function () {
@@ -12210,8 +12211,10 @@ var ThreeChart =
 	    };
 	    /**
 	     * deepCopy based on JSON.stringify function
+	     * @deprecated
 	     */
 	    Utils.deepCopy = function (obj) {
+	        // TODO: use deepMerge function to copy
 	        return JSON.parse(JSON.stringify(obj));
 	    };
 	    /**
@@ -12449,8 +12452,6 @@ var ThreeChart =
 	        if (!widget)
 	            return;
 	        widget.onTrendChange(changedOptions);
-	        if (!changedOptions.data)
-	            return;
 	        if (newData) {
 	            var data = this.chartState.getTrend(trendName).getData();
 	            var isAppend = (!data.length || data[0].xVal < newData[0].xVal);
@@ -12503,7 +12504,7 @@ var ThreeChart =
 	            unsubscriber();
 	        }
 	    };
-	    TrendWidget.prototype.onPointsMove = function (trendPoints) {
+	    TrendWidget.prototype.onSegmentsAnimate = function (segments) {
 	    };
 	    TrendWidget.prototype.onZoomFrame = function (options) {
 	    };
@@ -12513,7 +12514,7 @@ var ThreeChart =
 	    };
 	    TrendWidget.prototype.bindEvents = function () {
 	        var _this = this;
-	        this.bindEvent(this.trend.segments.onAnimationFrame(function (trendPoints) { return _this.onPointsMove(trendPoints); }));
+	        this.bindEvent(this.trend.segments.onAnimationFrame(function (trendPoints) { return _this.onSegmentsAnimate(trendPoints); }));
 	        this.bindEvent(this.chartState.screen.onTransformationFrame(function (options) { return _this.onTransformationFrame(options); }));
 	        this.bindEvent(this.chartState.screen.onZoomFrame(function (options) { return _this.onZoomFrame(options); }));
 	        this.bindEvent(this.chartState.onZoom(function () { return _this.onZoom(); }));
@@ -12672,7 +12673,7 @@ var ThreeChart =
 	        if (options.zoomY)
 	            currentScale.setY(this.scaleYFactor * options.zoomY);
 	    };
-	    TrendLine.prototype.onPointsMove = function (trendSegments) {
+	    TrendLine.prototype.onSegmentsAnimate = function (trendSegments) {
 	        var geometry = this.lineSegments.geometry;
 	        for (var _i = 0, _a = trendSegments.animatedSegmentsIds; _i < _a.length; _i++) {
 	            var segmentId = _a[_i];
@@ -12838,7 +12839,7 @@ var ThreeChart =
 	    Trend.prototype.onDataChange = function (cb) {
 	        var _this = this;
 	        var onChangeCb = function (changedOptions, newData) {
-	            if (changedOptions.data)
+	            if (newData)
 	                cb(newData);
 	        };
 	        this.ee.on('change', onChangeCb);
@@ -12953,12 +12954,12 @@ var ThreeChart =
 	            var mark = marks[markName];
 	            xVals.push(mark.options.value);
 	            marksArr.push(mark);
-	            mark.setPoint(null);
+	            mark._setSegment(null);
 	        }
 	        marksArr.sort(function (a, b) { return a.options.value - b.options.value; });
-	        var points = this.trend.segments.getPointsForXValues(xVals.sort(function (a, b) { return a - b; }));
+	        var points = this.trend.segments.getSegmentsForXValues(xVals.sort(function (a, b) { return a - b; }));
 	        for (var markInd = 0; markInd < marksArr.length; markInd++) {
-	            marksArr[markInd].setPoint(points[markInd]);
+	            marksArr[markInd]._setSegment(points[markInd]);
 	        }
 	    };
 	    TrendMarks.prototype.onMarksChange = function () {
@@ -12998,7 +12999,6 @@ var ThreeChart =
 	exports.TrendMarks = TrendMarks;
 	var TrendMark = (function () {
 	    function TrendMark(chartState, options, trend) {
-	        this.renderOnTrendsChange = false;
 	        this.ee = new deps_1.EventEmitter();
 	        this.options = options;
 	        this.chartState = chartState;
@@ -13014,8 +13014,8 @@ var ThreeChart =
 	    /**
 	     * only for internal usage
 	     */
-	    TrendMark.prototype.setPoint = function (point) {
-	        this.point = point;
+	    TrendMark.prototype._setSegment = function (segment) {
+	        this.segment = segment;
 	    };
 	    return TrendMark;
 	}());
@@ -13030,7 +13030,7 @@ var ThreeChart =
 	var deps_1 = __webpack_require__(3);
 	var Vector3 = THREE.Vector3;
 	var Utils_1 = __webpack_require__(18);
-	var MAX_ANIMATED_SEGMENTS = 200;
+	var MAX_ANIMATED_SEGMENTS = 100;
 	/**
 	 *  Class helps to display and animate trends segments
 	 */
@@ -13040,14 +13040,16 @@ var ThreeChart =
 	        this.segments = [];
 	        this.animatedSegmentsIds = [];
 	        this.segmentsLength = 0;
+	        this.animatedSegmentsForAppend = [];
+	        this.animatedSegmentsForPrepend = [];
 	        this.nextEmptyId = 0;
-	        this.startPointId = 0;
-	        this.endPointId = 0;
+	        this.startSegmentId = 0;
+	        this.endSegmentId = 0;
 	        this.chartState = chartState;
 	        this.ee = new deps_1.EventEmitter();
 	        this.trend = trend;
 	        this.maxSegmentLength = trend.getOptions().maxSegmentLength;
-	        this.rebuildSegments();
+	        this.tryToRebuildSegments();
 	        this.bindEvents();
 	    }
 	    TrendSegments.prototype.bindEvents = function () {
@@ -13057,13 +13059,7 @@ var ThreeChart =
 	        this.chartState.onScroll(function () { return _this.recalculateDisplayedRange(); });
 	    };
 	    TrendSegments.prototype.onZoomHandler = function () {
-	        // let {maxSegmentLength, minSegmentLengthInPx} = this.trend.getOptions();
-	        // let currentSegmentLengthInPx = this.chartState.valueToPxByXAxis(this.maxSegmentLength);
-	        // let needToRebuildSegments = (
-	        // 	currentSegmentLengthInPx < minSegmentLengthInPx ||
-	        // 	this.maxSegmentLength > maxSegmentLength
-	        // );
-	        var segmentsRebuilded = this.rebuildSegments();
+	        var segmentsRebuilded = this.tryToRebuildSegments();
 	        if (!segmentsRebuilded) {
 	            this.recalculateDisplayedRange();
 	        }
@@ -13071,7 +13067,7 @@ var ThreeChart =
 	    TrendSegments.prototype.onTrendChangeHandler = function (changedOptions, newData) {
 	        var needRebuildSegments = changedOptions.maxSegmentLength != void 0;
 	        if (needRebuildSegments) {
-	            this.rebuildSegments();
+	            this.tryToRebuildSegments(true);
 	            return;
 	        }
 	        if (!newData)
@@ -13082,19 +13078,21 @@ var ThreeChart =
 	        this.recalculateDisplayedRange();
 	    };
 	    TrendSegments.prototype.getEndSegment = function () {
-	        return this.segmentsById[this.endPointId];
+	        return this.segmentsById[this.endSegmentId];
 	    };
-	    TrendSegments.prototype.getStartPoint = function () {
-	        return this.segmentsById[this.startPointId];
+	    TrendSegments.prototype.getStartSegment = function () {
+	        return this.segmentsById[this.startSegmentId];
 	    };
-	    TrendSegments.prototype.rebuildSegments = function () {
+	    TrendSegments.prototype.tryToRebuildSegments = function (force) {
+	        if (force === void 0) { force = false; }
 	        var _a = this.trend.getOptions(), maxSegmentLength = _a.maxSegmentLength, minSegmentLengthInPx = _a.minSegmentLengthInPx, maxSegmentLengthInPx = _a.maxSegmentLengthInPx;
-	        var needToRebuild = this.segments.length === 0;
+	        var needToRebuild = this.segments.length === 0 || force;
 	        var segmentLength = this.maxSegmentLength;
-	        var currentSegmentLengthInPx = this.chartState.valueToPxByXAxis(segmentLength);
+	        // call toFixed(2) to prevent floating segment error compare
+	        var currentSegmentLengthInPx = Number(this.chartState.valueToPxByXAxis(segmentLength).toFixed(2));
 	        if (currentSegmentLengthInPx < minSegmentLengthInPx) {
 	            needToRebuild = true;
-	            segmentLength = Math.ceil(this.chartState.pxToValueByXAxis(maxSegmentLengthInPx)); //Math.ceil(maxSegmentLength * (minSegmentLengthInPx / currentSegmentLengthInPx));
+	            segmentLength = Math.ceil(this.chartState.pxToValueByXAxis(maxSegmentLengthInPx));
 	        }
 	        else if (this.chartState.valueToPxByXAxis(this.maxSegmentLength) >= maxSegmentLengthInPx) {
 	            needToRebuild = true;
@@ -13106,8 +13104,8 @@ var ThreeChart =
 	        this.segmentsById = {};
 	        this.segments = [];
 	        this.nextEmptyId = 0;
-	        this.startPointId = 0;
-	        this.endPointId = 0;
+	        this.startSegmentId = 0;
+	        this.endSegmentId = 0;
 	        this.segmentsLength = 0;
 	        this.appendData(null, true);
 	        this.recalculateDisplayedRange(true);
@@ -13137,41 +13135,37 @@ var ThreeChart =
 	    // 	return segments.slice(startSegmentInd, endSegmentInd);
 	    // }
 	    /**
-	     * returns array of segmentsById for values array
+	     * returns array of segments for values array
 	     * values must be sorted!
 	     */
-	    TrendSegments.prototype.getPointsForXValues = function (values) {
-	        return [];
-	        // var valueInd = 0;
-	        // var value = values[valueInd];
-	        // var lastValueInd = values.length - 1;
-	        // var results: TrendSegment[] = [];
-	        // var point = this.getStartPoint();
-	        // if (!point.hasValue) return [];
-	        //
-	        // while (point) {
-	        //
-	        // 	while (value < point.startXVal) {
-	        // 		results.push(void 0);
-	        // 		value = values[++valueInd];
-	        // 	}
-	        //
-	        // 	while (value > point.endXVal) {
-	        // 		point = point.getNext();
-	        // 		if (!point) break;
-	        // 	}
-	        //
-	        // 	var valueInPoint = (
-	        // 		point.startXVal == value || point.endXVal == value ||
-	        // 		(point.startXVal < value && point.endXVal < value)
-	        // 	);
-	        // 	if (valueInPoint) {
-	        // 		results.push(point);
-	        // 		value = values[++valueInd];
-	        // 	}
-	        // 	if (valueInd > lastValueInd) break;
-	        // }
-	        // return results;
+	    TrendSegments.prototype.getSegmentsForXValues = function (values) {
+	        var valueInd = 0;
+	        var value = values[valueInd];
+	        var lastValueInd = values.length - 1;
+	        var results = [];
+	        var segment = this.getStartSegment();
+	        if (!segment.hasValue)
+	            return [];
+	        while (segment) {
+	            while (value < segment.startXVal) {
+	                results.push(void 0);
+	                value = values[++valueInd];
+	            }
+	            while (value > segment.endXVal) {
+	                segment = segment.getNext();
+	                if (!segment)
+	                    break;
+	            }
+	            var valueInPoint = (segment.startXVal == value || segment.endXVal == value ||
+	                (segment.startXVal < value && segment.endXVal > value));
+	            if (valueInPoint) {
+	                results.push(segment);
+	                value = values[++valueInd];
+	            }
+	            if (valueInd > lastValueInd)
+	                break;
+	        }
+	        return results;
 	    };
 	    TrendSegments.prototype.onAnimationFrame = function (cb) {
 	        var _this = this;
@@ -13197,46 +13191,61 @@ var ThreeChart =
 	            _this.ee.removeListener(eventName, cb);
 	        };
 	    };
-	    TrendSegments.prototype.prependPoint = function (items) {
-	        var id = this.nextEmptyId++;
-	        var point = this.segmentsById[id];
-	        var nextPoint = this.segmentsById[this.startPointId];
-	        if (nextPoint.hasValue) {
-	            nextPoint.prevId = id;
-	            point.nextId = nextPoint.id;
-	        }
-	        point.hasValue = true;
-	        //point.appendItems(items);
-	        this.startPointId = id;
-	        return point;
-	    };
+	    // prependPoint(items: ITrendItem[]): TrendSegment {
+	    // 	var id = this.nextEmptyId++;
+	    // 	var segment = this.segmentsById[id];
+	    // 	var nextPoint = this.segmentsById[this.startPointId];
+	    // 	if (nextPoint.hasValue) {
+	    // 		nextPoint.prevId = id;
+	    // 		segment.nextId = nextPoint.id;
+	    // 	}
+	    // 	segment.hasValue = true;
+	    // 	//segment.appendItems(items);
+	    // 	this.startPointId = id;
+	    // 	return segment;
+	    // }
 	    TrendSegments.prototype.allocateNextSegment = function () {
 	        var id = this.nextEmptyId++;
 	        var segment = new TrendSegment(this, id);
-	        var prevSegment = this.segmentsById[this.endPointId];
+	        var prevSegment = this.segmentsById[this.endSegmentId];
 	        if (prevSegment && prevSegment.hasValue) {
 	            prevSegment.nextId = id;
 	            segment.prevId = prevSegment.id;
 	        }
-	        this.endPointId = id;
+	        this.endSegmentId = id;
 	        this.segmentsLength++;
 	        this.segmentsById[id] = segment;
 	        this.segments.push(segment);
 	        return segment;
 	    };
+	    TrendSegments.prototype.allocatePrevSegment = function () {
+	        var id = this.nextEmptyId++;
+	        var segment = new TrendSegment(this, id);
+	        var nextSegment = this.segmentsById[this.startSegmentId];
+	        if (nextSegment && nextSegment.hasValue) {
+	            nextSegment.prevId = id;
+	            segment.nextId = nextSegment.id;
+	        }
+	        this.startSegmentId = id;
+	        this.segmentsLength++;
+	        this.segmentsById[id] = segment;
+	        this.segments.unshift(segment);
+	        return segment;
+	    };
 	    TrendSegments.prototype.appendData = function (newData, needRebuildSegments) {
+	        // WARNING: bottleneck method!
 	        if (needRebuildSegments === void 0) { needRebuildSegments = false; }
+	        // var t1 = performance.now();
 	        var trendData = this.trend.getData();
 	        if (needRebuildSegments) {
 	            newData = trendData;
-	            this.animatedSegmentsIds = [];
+	            this.animatedSegmentsForAppend = [];
 	        }
 	        var startItemInd = trendData.length - newData.length;
-	        var endSegment = this.getEndSegment() || this.allocateNextSegment();
-	        var initialAnimationState = endSegment.hasValue ? endSegment.createAnimationState() : null;
-	        var segment = endSegment || this.segmentsById[0];
+	        var segment = this.getEndSegment() || this.allocateNextSegment();
+	        var initialSegment = segment.hasValue ? segment : null;
+	        var initialAnimationState = segment.createAnimationState();
 	        var itemInd = 0;
-	        var animatedSegments = [];
 	        while (itemInd < newData.length) {
 	            var item = newData[itemInd];
 	            var itemIsInserted = segment.appendItem(item);
@@ -13254,19 +13263,18 @@ var ThreeChart =
 	            }
 	            var segmentIsReadyForAnimate = segment.isCompleted || (isLastItem && itemIsInserted);
 	            if (segmentIsReadyForAnimate) {
-	                animatedSegments.push(segment);
 	                var id = segment.id;
+	                if (!initialSegment)
+	                    initialSegment = segment;
 	                if (!initialAnimationState)
-	                    initialAnimationState = animatedSegments[0].createAnimationState();
-	                var ias = initialAnimationState;
-	                segment.initialAnimationState = ias;
-	                if (animatedSegments.length > 1)
-	                    segment.initialAnimationState = Utils_1.Utils.deepMerge(ias, {
-	                        startXVal: ias.endXVal,
-	                        startYVal: ias.endYVal
-	                    });
+	                    initialAnimationState = initialSegment.createAnimationState();
+	                segment.initialAnimationState = Utils_1.Utils.deepMerge({}, initialAnimationState);
+	                if (this.animatedSegmentsForAppend.length > 0) {
+	                    segment.initialAnimationState.startXVal = initialAnimationState.endXVal;
+	                    segment.initialAnimationState.startYVal = initialAnimationState.endYVal;
+	                }
 	                segment.targetAnimationState = segment.createAnimationState();
-	                this.animatedSegmentsIds.push(id);
+	                this.animatedSegmentsForAppend.push(id);
 	            }
 	            if (isLastItem && itemIsInserted)
 	                break;
@@ -13278,54 +13286,106 @@ var ThreeChart =
 	        }
 	        var animationsOptions = this.chartState.data.animations;
 	        var time = animationsOptions.enabled ? animationsOptions.trendChangeSpeed : 0;
-	        if (needRebuildSegments || this.animatedSegmentsIds.length > MAX_ANIMATED_SEGMENTS)
+	        // var t2 = performance.now();
+	        // console.log(t2 - t1);
+	        // do not create animation if segments was rebuilded
+	        if (needRebuildSegments) {
+	            for (var _i = 0, _a = this.animatedSegmentsForAppend; _i < _a.length; _i++) {
+	                var segmentId = _a[_i];
+	                var segment_1 = this.segmentsById[segmentId];
+	                segment_1.currentAnimationState = segment_1.createAnimationState();
+	            }
+	            this.animatedSegmentsForAppend = [];
+	            return;
+	        }
+	        if (this.animatedSegmentsForAppend.length > MAX_ANIMATED_SEGMENTS)
 	            time = 0;
 	        this.animate(time);
 	    };
+	    // TODO: refactor duplicated code from appendData
 	    TrendSegments.prototype.prependData = function (newData) {
-	        var chartState = this.chartState;
 	        var trendData = this.trend.getData();
-	        var animationsOptions = chartState.data.animations;
-	        var startItemInd = newData.length;
-	        var startItem = trendData[startItemInd] || newData[0];
-	        var current = {};
-	        var targets = {};
-	        for (var itemInd = startItemInd - 1; itemInd >= 0; itemInd--) {
-	            var trendItem = trendData[itemInd];
-	            var point = this.prependPoint([trendItem]);
-	            var id = point.id;
-	            current['x' + id] = startItem.xVal;
-	            current['y' + id] = startItem.yVal;
-	            targets['x' + id] = trendItem.xVal;
-	            targets['y' + id] = trendItem.yVal;
+	        var segment = this.getStartSegment() || this.segmentsById[0];
+	        var initialSegment = segment.hasValue ? segment : null;
+	        var itemInd = newData.length - 1;
+	        var initialAnimationState = segment.createAnimationState();
+	        while (itemInd >= 0) {
+	            var item = newData[itemInd];
+	            var itemIsInserted = segment.prependItem(item);
+	            var isLastItem = itemInd == 0;
+	            if (itemIsInserted) {
+	                if (!isLastItem)
+	                    itemInd--;
+	            }
+	            else {
+	                if (!segment.isCompleted)
+	                    segment.complete();
+	            }
+	            if (isLastItem && itemIsInserted) {
+	                segment.recalculateItems();
+	            }
+	            var segmentIsReadyForAnimate = segment.isCompleted || (isLastItem && itemIsInserted);
+	            if (segmentIsReadyForAnimate) {
+	                var id = segment.id;
+	                if (!initialSegment)
+	                    initialSegment = segment;
+	                if (!initialAnimationState)
+	                    initialAnimationState = initialSegment.createAnimationState();
+	                segment.initialAnimationState = Utils_1.Utils.deepMerge({}, initialAnimationState);
+	                if (this.animatedSegmentsForPrepend.length > 0) {
+	                    segment.initialAnimationState.endXVal = initialAnimationState.startXVal;
+	                    segment.initialAnimationState.endYVal = initialAnimationState.startYVal;
+	                }
+	                segment.targetAnimationState = segment.createAnimationState();
+	                this.animatedSegmentsForPrepend.push(id);
+	            }
+	            if (isLastItem && itemIsInserted)
+	                break;
+	            if (!segment.isCompleted)
+	                continue;
+	            segment = this.allocatePrevSegment();
+	            var nextItem = trendData[itemInd + 1];
+	            segment.prependItem(nextItem);
 	        }
-	        targets.ease = animationsOptions.trendChangeEase;
+	        var animationsOptions = this.chartState.data.animations;
 	        var time = animationsOptions.enabled ? animationsOptions.trendChangeSpeed : 0;
-	        // this.animate(time, targets, current);
+	        if (this.animatedSegmentsForPrepend.length > MAX_ANIMATED_SEGMENTS)
+	            time = 0;
+	        this.animate(time, true);
 	    };
-	    TrendSegments.prototype.animate = function (time) {
+	    TrendSegments.prototype.animate = function (time, isPrepend) {
 	        var _this = this;
-	        if (this.currentAnimation)
-	            this.currentAnimation.kill();
-	        if (time == 0) {
-	            this.onAnimationFrameHandler(1);
-	            this.animatedSegmentsIds = [];
-	            this.currentAnimation = null;
+	        if (isPrepend === void 0) { isPrepend = false; }
+	        var animatedSegmentsIds = isPrepend ? this.animatedSegmentsForPrepend : this.animatedSegmentsForAppend;
+	        var animation = isPrepend ? this.prependAnimation : this.appendAnimation;
+	        if ((animation && animation.isActive()) || time == 0) {
+	            if (animation)
+	                animation.kill();
+	            this.onAnimationFrameHandler(1, isPrepend);
+	            animatedSegmentsIds.length = 0;
 	            return;
 	        }
 	        var animationsOptions = this.chartState.data.animations;
 	        var ease = animationsOptions.trendChangeEase;
 	        var objectToAnimate = { animationValue: 0 };
-	        this.currentAnimation = TweenLite.to(objectToAnimate, time, { animationValue: 1, ease: ease });
-	        this.currentAnimation.eventCallback('onUpdate', function () { return _this.onAnimationFrameHandler(objectToAnimate.animationValue); });
-	        this.currentAnimation.eventCallback('onComplete', function () {
-	            _this.animatedSegmentsIds = [];
-	            _this.currentAnimation = null;
+	        animation = TweenLite.to(objectToAnimate, time, { animationValue: 1, ease: ease });
+	        animation.eventCallback('onUpdate', function () { return _this.onAnimationFrameHandler(objectToAnimate.animationValue, isPrepend); });
+	        animation.eventCallback('onComplete', function () {
+	            animatedSegmentsIds.length = 0;
+	            _this.appendAnimation = null;
 	        });
+	        if (isPrepend) {
+	            this.prependAnimation = animation;
+	        }
+	        else {
+	            this.appendAnimation = animation;
+	        }
 	    };
-	    TrendSegments.prototype.onAnimationFrameHandler = function (coefficient) {
-	        for (var _i = 0, _a = this.animatedSegmentsIds; _i < _a.length; _i++) {
-	            var segmentId = _a[_i];
+	    TrendSegments.prototype.onAnimationFrameHandler = function (coefficient, isPrepend) {
+	        if (isPrepend === void 0) { isPrepend = false; }
+	        var animatedSegmentsIds = isPrepend ? this.animatedSegmentsForPrepend : this.animatedSegmentsForAppend;
+	        for (var _i = 0, animatedSegmentsIds_1 = animatedSegmentsIds; _i < animatedSegmentsIds_1.length; _i++) {
+	            var segmentId = animatedSegmentsIds_1[_i];
 	            var segment = this.segmentsById[segmentId];
 	            for (var key in segment.targetAnimationState) {
 	                var targetValue = segment.targetAnimationState[key];
@@ -13334,6 +13394,7 @@ var ThreeChart =
 	                segment.currentAnimationState[key] = currentValue;
 	            }
 	        }
+	        this.animatedSegmentsIds = this.animatedSegmentsForAppend.concat(this.animatedSegmentsForPrepend);
 	        this.ee.emit('animationFrame', this);
 	    };
 	    return TrendSegments;
@@ -13366,6 +13427,8 @@ var ThreeChart =
 	    };
 	    ;
 	    TrendSegment.prototype.appendItem = function (item) {
+	        if (this.isCompleted)
+	            return false;
 	        var items = this.items;
 	        if (items.length < 2) {
 	            this.items.push(item);
@@ -13376,6 +13439,21 @@ var ThreeChart =
 	        if (item.xVal - startXVal > this.maxLength)
 	            return false;
 	        items.push(item);
+	        return true;
+	    };
+	    TrendSegment.prototype.prependItem = function (item) {
+	        if (this.isCompleted)
+	            return false;
+	        var items = this.items;
+	        if (items.length < 2) {
+	            this.items.unshift(item);
+	            this.hasValue = true;
+	            return true;
+	        }
+	        var endXVal = items[items.length - 1].xVal;
+	        if (endXVal - item.xVal > this.maxLength)
+	            return false;
+	        items.unshift(item);
 	        return true;
 	    };
 	    TrendSegment.prototype.complete = function () {
@@ -13456,7 +13534,7 @@ var ThreeChart =
 	var RISE_COLOR = 0x2CAC40;
 	var FALL_COLOR = 0xEE5533;
 	var MARGIN_PERCENT = 0.3;
-	// const MAX_CANDLES = 100;
+	var MAX_CANDLES = 100;
 	/**
 	 * widget for drawing trends candles
 	 */
@@ -13476,6 +13554,7 @@ var ThreeChart =
 	    __extends(TrendCandlesWidget, _super);
 	    function TrendCandlesWidget(chartState, trendName) {
 	        _super.call(this, chartState, trendName);
+	        this.candlesPool = [];
 	        this.candles = {};
 	        this.initObject();
 	    }
@@ -13509,11 +13588,6 @@ var ThreeChart =
 	    };
 	    TrendCandlesWidget.prototype.setupCandles = function () {
 	        // remove invisible
-	        // let segments = this.trend.segments.segmentsById;
-	        // let object3D = this.object3D;
-	        // while (object3D.children.length) object3D.remove(object3D.children[0]);
-	        // this.candles = {};
-	        //
 	        var _a = this.trend.segments, firstDisplayedSegment = _a.firstDisplayedSegment, lastDisplayedSegment = _a.lastDisplayedSegment;
 	        for (var segmentId in this.candles) {
 	            var segment_1 = this.candles[segmentId].segment;
@@ -13527,9 +13601,6 @@ var ThreeChart =
 	            this.setupCandle(segment.id, segment.currentAnimationState);
 	            segment = segment.getNext();
 	        }
-	        // for (let segmentId in segments) {
-	        // 	this.setupCandle(Number(segmentId), segments[segmentId].createAnimationState());
-	        // }
 	    };
 	    TrendCandlesWidget.prototype.destroyCandles = function () {
 	        for (var segmentId in this.candles)
@@ -13547,7 +13618,7 @@ var ThreeChart =
 	        if (options.zoomY)
 	            currentScale.setY(this.scaleYFactor * options.zoomY);
 	    };
-	    TrendCandlesWidget.prototype.onPointsMove = function (trendSegments) {
+	    TrendCandlesWidget.prototype.onSegmentsAnimate = function (trendSegments) {
 	        for (var _i = 0, _a = trendSegments.animatedSegmentsIds; _i < _a.length; _i++) {
 	            var segmentId = _a[_i];
 	            if (!this.candles[segmentId])
@@ -13556,13 +13627,19 @@ var ThreeChart =
 	            this.setupCandle(segmentId, segmentState);
 	        }
 	    };
+	    /**
+	     * create or modify candle
+	     */
 	    TrendCandlesWidget.prototype.setupCandle = function (candleId, segmentState) {
-	        var candle = this.candles[candleId];
+	        var candleInd = candleId % MAX_CANDLES;
+	        // get candle from candlesPool to avoid creating new Objects by performance reasons
+	        var candle = this.candlesPool[candleInd];
 	        if (!candle) {
-	            candle = this.candles[candleId] = new CandleWidget();
-	            var candleObject = candle.getObject3D();
-	            this.object3D.add(candleObject);
+	            candle = this.candlesPool[candleInd] = new CandleWidget();
 	        }
+	        if (!this.candles[candleId])
+	            this.candles[candleId] = candle;
+	        this.object3D.add(candle.getObject3D());
 	        candle.getObject3D().position.set(this.toLocalX(segmentState.xVal), this.toLocalY(segmentState.yVal), 0);
 	        candle.setSegment(segmentState);
 	    };
@@ -13612,8 +13689,7 @@ var ThreeChart =
 	        lineGeometry.verticesNeedUpdate = true;
 	    };
 	    CandleWidget.prototype.initObject = function () {
-	        this.rect = new Mesh(new PlaneGeometry(1, 1), new MeshBasicMaterial() //db4931
-	        );
+	        this.rect = new Mesh(new PlaneGeometry(1, 1), new MeshBasicMaterial());
 	        var lineGeometry = new Geometry();
 	        lineGeometry.vertices.push(new Vector3(), new Vector3);
 	        this.line = new Line(lineGeometry, new LineBasicMaterial({ linewidth: 3 }));
@@ -13661,10 +13737,10 @@ var ThreeChart =
 	            },
 	            animations: {
 	                enabled: true,
-	                trendChangeSpeed: 0.5,
-	                trendChangeEase: void 0,
-	                zoomSpeed: 0.5,
-	                zoomEase: void 0,
+	                trendChangeSpeed: 1,
+	                trendChangeEase: Linear.easeNone,
+	                zoomSpeed: 1,
+	                zoomEase: Linear.easeNone,
 	                autoScrollSpeed: 1,
 	                autoScrollEase: Linear.easeNone
 	            },
@@ -13851,16 +13927,6 @@ var ThreeChart =
 	        var prevState = this.data.prevState;
 	        // prevent to store prev trend data by performance reasons
 	        Utils_1.Utils.copyProps(this.data, prevState, changedProps, ['trends']);
-	        // for (let propName of propsToSave) {
-	        // 	if (this.data[propName] == void 0) continue;
-	        //
-	        // 	// prevent to store prev trend data by performance reasons
-	        // 	if (propName == 'trends') {
-	        // 		continue;
-	        // 	}
-	        //
-	        // 	prevState[propName] = Utils.deepCopy(this.data[propName]);
-	        // }
 	    };
 	    ChartState.prototype.emitChangedStateEvents = function (changedProps, eventData) {
 	        var prevState = this.data.prevState;
@@ -13996,34 +14062,26 @@ var ThreeChart =
 	            patch.range.zoom = zoom;
 	        return patch;
 	    };
-	    ChartState.prototype.zoom = function (zoomValue) {
-	        var _a = this.data.xAxis.range, zoom = _a.zoom, scroll = _a.scroll;
+	    ChartState.prototype.zoom = function (zoomValue, origin) {
+	        if (origin === void 0) { origin = 0.5; }
+	        var _a = this.data.xAxis.range, zoom = _a.zoom, scroll = _a.scroll, scaleFactor = _a.scaleFactor;
 	        var newZoom = zoom * zoomValue;
-	        // var screenLeftVal = this.getValueByScreenX(0);
-	        // var screenCenterVal = this.getValueByScreenX(this.data.width / 2);
-	        // var halfScreenLength = screenCenterVal - screenLeftVal;
-	        // var scrollDelta = halfScreenLength * zoomValue - halfScreenLength;
-	        // var newScroll = scroll + scrollDelta;
-	        var newScroll = this.getScrollForZoomAction(this.data.width / 2, newZoom);
+	        var currentRange = this.data.width / (scaleFactor * zoom);
+	        var nextRange = this.data.width / (scaleFactor * newZoom);
+	        var newScroll = scroll + (currentRange - nextRange) * origin;
 	        this.setState({ xAxis: { range: { zoom: newZoom, scroll: newScroll } } });
 	    };
-	    ChartState.prototype.zoomToRange = function (range) {
-	        var width = this.data.width;
-	        var scaleFactor = this.data.xAxis.range.scaleFactor;
-	        var currentRange = width / scaleFactor;
-	        var newZoom = currentRange / range;
-	        var newScroll = this.getScrollForZoomAction(this.data.width / 2, newZoom);
-	        this.setState({ xAxis: { range: { zoom: newZoom, scroll: newScroll } } });
+	    ChartState.prototype.zoomToRange = function (range, origin) {
+	        var _a = this.data.xAxis.range, scaleFactor = _a.scaleFactor, zoom = _a.zoom;
+	        var currentRange = this.data.width / (scaleFactor * zoom);
+	        this.zoom(currentRange / range, origin);
 	    };
-	    ChartState.prototype.getScrollForZoomAction = function (screenOrigin, newZoom) {
-	        var _a = this.data.xAxis.range, zoom = _a.zoom, scroll = _a.scroll;
-	        var screenLeftVal = this.getValueByScreenX(0);
-	        var zoomDelta = newZoom / zoom;
-	        var screenCenterVal = this.getValueByScreenX(0);
-	        var halfScreenLength = screenCenterVal - screenLeftVal;
-	        var scrollDelta = halfScreenLength * zoomDelta - halfScreenLength;
-	        var newScroll = scroll + scrollDelta;
-	        return newScroll;
+	    ChartState.prototype.scrollToEnd = function () {
+	        var state = this.data;
+	        var endXVal = this.trends.getEndXVal();
+	        var range = state.xAxis.range;
+	        var scroll = endXVal - this.pxToValueByXAxis(state.width) + this.pxToValueByXAxis(range.padding.end) - range.zeroVal;
+	        this.setState({ xAxis: { range: { scroll: scroll } } });
 	    };
 	    /**
 	     *  returns offset in pixels from xAxis.range.zeroVal to xVal
@@ -14282,12 +14340,21 @@ var ThreeChart =
 	            this.options.zoomX = zoomX;
 	        if (zoomY != void 0)
 	            this.options.zoomY = zoomY;
+	        // if (scrollXVal != void 0 || zoomX) {
+	        // 	options.scrollX = this.valueToPxByXAxis(scrollXVal != void 0 ? scrollXVal : this.options.scrollXVal);
+	        // 	this.options.scrollX = options.scrollX;
+	        // }
+	        //
+	        // if (scrollYVal != void 0 || zoomY) {
+	        // 	options.scrollY = this.valueToPxByYAxis(scrollYVal != void 0 ? scrollYVal : this.options.scrollYVal);
+	        // 	this.options.scrollY = options.scrollY;
+	        // }
 	        if (scrollXVal != void 0 || zoomX) {
-	            options.scrollX = this.valueToPxByXAxis(scrollXVal != void 0 ? scrollXVal : this.options.scrollXVal);
+	            options.scrollX = this.chartState.valueToPxByXAxis(scrollXVal != void 0 ? scrollXVal : this.options.scrollXVal);
 	            this.options.scrollX = options.scrollX;
 	        }
 	        if (scrollYVal != void 0 || zoomY) {
-	            options.scrollY = this.valueToPxByYAxis(scrollYVal != void 0 ? scrollYVal : this.options.scrollYVal);
+	            options.scrollY = this.chartState.valueToPxByYAxis(scrollYVal != void 0 ? scrollYVal : this.options.scrollYVal);
 	            this.options.scrollY = options.scrollY;
 	        }
 	        this.ee.emit('transformationFrame', options);
@@ -14297,24 +14364,6 @@ var ThreeChart =
 	        if (options.zoomX != void 0 || options.zoomY != void 0) {
 	            this.ee.emit('zoomFrame', options);
 	        }
-	    };
-	    Screen.prototype.scrollTo = function (x, y) {
-	        //
-	        // if (scrollX != void 0) {
-	        // 	this.cameraScrollX = scrollX;
-	        // 	//var pointX = this.cameraInitialPosition.scrollX + this.chartState.valueToPxByXAxis(scrollX);
-	        // 	this.camera.position.scrollX = this.cameraInitialPosition.scrollX + scrollX;
-	        // }
-	        //
-	        // if (scrollY != void 0) {
-	        // 	this.cameraScrollY = scrollY;
-	        // 	//var pointY = this.cameraInitialPosition.scrollY + this.chartState.valueToPxByYAxis(scrollY);
-	        // 	this.camera.position.scrollY = this.cameraInitialPosition.scrollY + scrollY;
-	        // }
-	        //
-	        // // dirty hack, used only for performance reasons, in ideal world we always must use ChartState.setState
-	        // // this.chartState.emit('cameraChange', {scrollX: scrollX, scrollY: scrollY});
-	        this.ee.emit('cameraChange', x, y);
 	    };
 	    Screen.prototype.bindEvents = function () {
 	        var _this = this;
@@ -14785,6 +14834,7 @@ var ThreeChart =
 	        }
 	        // add dot
 	        light.add(new Mesh(new PlaneBufferGeometry(5, 5), new MeshBasicMaterial({ map: TrendBeacon.createTexture() })));
+	        this.segment = this.trend.segments.getEndSegment();
 	    };
 	    TrendBeacon.prototype.animate = function () {
 	        var object = this.mesh;
@@ -14814,8 +14864,8 @@ var ThreeChart =
 	        this.segment = this.trend.segments.getEndSegment();
 	        this.updatePosition();
 	    };
-	    TrendBeacon.prototype.onPointsMove = function (trendPoints) {
-	        this.segment = trendPoints.getEndSegment();
+	    TrendBeacon.prototype.onSegmentsAnimate = function (trendsSegments) {
+	        this.segment = trendsSegments.getEndSegment();
 	        this.updatePosition();
 	    };
 	    TrendBeacon.prototype.updatePosition = function () {
@@ -15223,6 +15273,7 @@ var ThreeChart =
 	var PlaneBufferGeometry = THREE.PlaneBufferGeometry;
 	var MeshBasicMaterial = THREE.MeshBasicMaterial;
 	var TrendsWidget_1 = __webpack_require__(19);
+	var Trend_1 = __webpack_require__(22);
 	/**
 	 * widget adds loading indicator
 	 * activated when animations enabled
@@ -15302,8 +15353,19 @@ var ThreeChart =
 	    TrendLoading.prototype.updatePosition = function () {
 	        if (!this.isActive)
 	            return;
+	        var trend = this.trend;
 	        // set new widget position
-	        var pointVector = this.trend.segments.getStartPoint().getFramePoint();
+	        var segment = trend.segments.getStartSegment();
+	        var x, y;
+	        if (trend.getOptions().type == Trend_1.TREND_TYPE.LINE) {
+	            x = segment.currentAnimationState.startXVal;
+	            y = segment.currentAnimationState.startYVal;
+	        }
+	        else {
+	            x = segment.currentAnimationState.xVal - segment.maxLength;
+	            y = segment.currentAnimationState.yVal;
+	        }
+	        var pointVector = this.chartState.screen.getPointOnChart(x, y);
 	        this.mesh.position.set(pointVector.x, pointVector.y, 0);
 	    };
 	    return TrendLoading;
@@ -15542,10 +15604,10 @@ var ThreeChart =
 	            widgets[markName].onZoomFrameHandler();
 	        }
 	    };
-	    TrendMarksWidget.prototype.onPointsMove = function () {
+	    TrendMarksWidget.prototype.onSegmentsAnimate = function () {
 	        var widgets = this.marksWidgets;
 	        for (var markName in widgets) {
-	            widgets[markName].onPointsMove();
+	            widgets[markName].onSegmentsAnimate();
 	        }
 	    };
 	    return TrendMarksWidget;
@@ -15615,20 +15677,20 @@ var ThreeChart =
 	    TrendMarkWidget.prototype.getObject3D = function () {
 	        return this.object3D;
 	    };
-	    TrendMarkWidget.prototype.onPointsMove = function () {
+	    TrendMarkWidget.prototype.onSegmentsAnimate = function () {
 	        this.updatePosition();
 	    };
 	    TrendMarkWidget.prototype.onZoomFrameHandler = function () {
 	        this.updatePosition();
 	    };
 	    TrendMarkWidget.prototype.updatePosition = function () {
-	        if (!this.mark.point)
+	        if (!this.mark.segment)
 	            return;
-	        var pos = this.mark.point.getFramePoint();
+	        var pos = this.mark.segment.getFramePoint();
 	        this.object3D.position.set(pos.x, pos.y, 0);
 	    };
 	    TrendMarkWidget.prototype.show = function () {
-	        if (!this.mark.point)
+	        if (!this.mark.segment)
 	            return;
 	        this.updatePosition();
 	        var animations = this.chartState.data.animations;
@@ -15663,7 +15725,7 @@ var ThreeChart =
 	        var _a = chartState.data, width = _a.width, height = _a.height;
 	        var geometry = new THREE.Geometry();
 	        var material = new THREE.LineBasicMaterial({ linewidth: 1, opacity: 0.0, transparent: true });
-	        geometry.vertices.push(new Vector3(0, 0, 0), new Vector3(0, height, 0), new Vector3(0, height, 0), new Vector3(width, height, 0), new Vector3(width, height, 0), new Vector3(width, 0, 0), new Vector3(width, 0, 0), new Vector3(0, 0, 0));
+	        geometry.vertices.push(new Vector3(0, 0, 0), new Vector3(0, height, 0), new Vector3(0, height, 0), new Vector3(width, height, 0), new Vector3(width, height, 0), new Vector3(width, 0, 0), new Vector3(width, 0, 0), new Vector3(0, 0, 0), new Vector3(width / 2, height, 0), new Vector3(width / 2, 0, 0));
 	        this.lineSegments = new LineSegments(geometry, material);
 	    }
 	    BorderWidget.prototype.getObject3D = function () {

@@ -6,7 +6,7 @@ import Vector3 = THREE.Vector3;
 /**
  * widget for drawing chart grid
  */
-export class BorderWidget extends ChartWidget{
+export class BorderWidget extends ChartWidget {
 	static widgetName = 'Border';
 	private lineSegments: LineSegments;
 
@@ -21,7 +21,8 @@ export class BorderWidget extends ChartWidget{
 			new Vector3(0, 0, 0), new Vector3(0, height, 0),
 			new Vector3(0, height, 0), new Vector3(width, height, 0),
 			new Vector3(width, height, 0), new Vector3(width, 0, 0),
-			new Vector3(width, 0, 0), new Vector3(0, 0, 0)
+			new Vector3(width, 0, 0), new Vector3(0, 0, 0),
+			new Vector3(width / 2, height, 0), new Vector3(width / 2, 0, 0)
 		);
 		this.lineSegments = new LineSegments(geometry, material);
 	}

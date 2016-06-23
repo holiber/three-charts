@@ -16,6 +16,7 @@ export declare class TrendCandlesWidget extends TrendWidget {
     private scaleXFactor;
     private scaleYFactor;
     private object3D;
+    private candlesPool;
     private candles;
     static widgetIsEnabled(trendOptions: ITrendOptions): boolean;
     constructor(chartState: ChartState, trendName: string);
@@ -26,7 +27,10 @@ export declare class TrendCandlesWidget extends TrendWidget {
     private destroyCandles();
     private destroyCandle(segmentId);
     protected onZoomFrame(options: IScreenTransformOptions): void;
-    protected onPointsMove(trendSegments: TrendSegments): void;
+    protected onSegmentsAnimate(trendSegments: TrendSegments): void;
+    /**
+     * create or modify candle
+     */
     private setupCandle(candleId, segmentState);
     toLocalX(xVal: number): number;
     toLocalY(yVal: number): number;

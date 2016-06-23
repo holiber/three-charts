@@ -73,8 +73,8 @@ export class TrendBeacon extends TrendWidget {
 			new PlaneBufferGeometry(5, 5),
 			new MeshBasicMaterial({map: TrendBeacon.createTexture()})
 		));
-	
 
+		this.segment = this.trend.segments.getEndSegment();
 	}
 
 	private animate() {
@@ -114,8 +114,8 @@ export class TrendBeacon extends TrendWidget {
 		this.updatePosition();
 	}
 
-	protected onPointsMove(trendPoints: TrendSegments) {
-		this.segment = trendPoints.getEndSegment();
+	protected onSegmentsAnimate(trendsSegments: TrendSegments) {
+		this.segment = trendsSegments.getEndSegment();
 		this.updatePosition();
 	}
 

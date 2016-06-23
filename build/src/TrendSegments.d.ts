@@ -10,7 +10,6 @@ export interface ITargets {
  *  Class helps to display and animate trends segments
  */
 export declare class TrendSegments {
-    currentAnimation: TweenLite;
     segmentsById: {
         [id: string]: TrendSegment;
     };
@@ -21,9 +20,13 @@ export declare class TrendSegments {
     segmentsLength: number;
     firstDisplayedSegment: TrendSegment;
     lastDisplayedSegment: TrendSegment;
+    private appendAnimation;
+    private prependAnimation;
+    private animatedSegmentsForAppend;
+    private animatedSegmentsForPrepend;
     private nextEmptyId;
-    private startPointId;
-    private endPointId;
+    private startSegmentId;
+    private endSegmentId;
     private trend;
     private ee;
     constructor(chartState: ChartState, trend: Trend);
@@ -31,23 +34,23 @@ export declare class TrendSegments {
     private onZoomHandler();
     private onTrendChangeHandler(changedOptions, newData);
     getEndSegment(): TrendSegment;
-    getStartPoint(): TrendSegment;
-    private rebuildSegments();
+    getStartSegment(): TrendSegment;
+    private tryToRebuildSegments(force?);
     private recalculateDisplayedRange(segmentsAreRebuilded?);
     /**
-     * returns array of segmentsById for values array
+     * returns array of segments for values array
      * values must be sorted!
      */
-    getPointsForXValues(values: number[]): TrendSegment[];
+    getSegmentsForXValues(values: number[]): TrendSegment[];
     onAnimationFrame(cb: (animationState: TrendSegments) => void): Function;
     onRebuild(cb: Function): () => void;
     onDisplayedRangeChanged(cb: Function): () => void;
-    prependPoint(items: ITrendItem[]): TrendSegment;
     allocateNextSegment(): TrendSegment;
+    allocatePrevSegment(): TrendSegment;
     private appendData(newData, needRebuildSegments?);
     private prependData(newData);
-    private animate(time);
-    private onAnimationFrameHandler(coefficient);
+    private animate(time, isPrepend?);
+    private onAnimationFrameHandler(coefficient, isPrepend?);
 }
 export interface ITrendSegmentState extends IIteralable {
     xVal?: number;
@@ -83,6 +86,7 @@ export declare class TrendSegment implements ITrendSegmentState {
     constructor(trendPoints: TrendSegments, id: number);
     createAnimationState(): ITrendSegmentState;
     appendItem(item: ITrendItem): boolean;
+    prependItem(item: ITrendItem): boolean;
     complete(): void;
     recalculateItems(): void;
     getNext(): TrendSegment;

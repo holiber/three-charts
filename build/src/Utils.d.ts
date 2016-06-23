@@ -12,6 +12,7 @@ export declare class Utils {
     static deepMerge<T>(obj1: T, obj2: T): T;
     /**
      * deepCopy based on JSON.stringify function
+     * @deprecated
      */
     static deepCopy<T>(obj: T): T;
     /**

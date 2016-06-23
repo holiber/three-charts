@@ -33,15 +33,14 @@ export declare class TrendMarks {
 }
 export declare class TrendMark {
     options: ITrendMarkOptions;
-    point: TrendSegment;
+    segment: TrendSegment;
     protected trend: Trend;
     protected chartState: ChartState;
-    protected renderOnTrendsChange: boolean;
     protected ee: EventEmitter2;
     constructor(chartState: ChartState, options: ITrendMarkOptions, trend: Trend);
     onAnimationFrame(cb: () => void): Function;
     /**
      * only for internal usage
      */
-    setPoint(point: TrendSegment): void;
+    _setSegment(segment: TrendSegment): void;
 }

@@ -24,6 +24,6 @@ export declare class TrendBeacon extends TrendWidget {
     private animate();
     private static createTexture();
     protected onTransformationFrame(): void;
-    protected onPointsMove(trendPoints: TrendSegments): void;
+    protected onSegmentsAnimate(trendsSegments: TrendSegments): void;
     private updatePosition();
 }

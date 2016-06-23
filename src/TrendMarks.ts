@@ -67,12 +67,12 @@ export class TrendMarks {
 			let mark = marks[markName];
 			xVals.push(mark.options.value);
 			marksArr.push(mark);
-			mark.setPoint(null);
+			mark._setSegment(null);
 		}
 		marksArr.sort((a, b) => a.options.value - b.options.value);
-		var points = this.trend.segments.getPointsForXValues(xVals.sort((a, b) => a - b));
+		var points = this.trend.segments.getSegmentsForXValues(xVals.sort((a, b) => a - b));
 		for (let markInd = 0; markInd < marksArr.length; markInd++) {
-			marksArr[markInd].setPoint(points[markInd]);
+			marksArr[markInd]._setSegment(points[markInd]);
 		}
 	}
 
@@ -115,10 +115,9 @@ export class TrendMarks {
 
 export class TrendMark {
 	options: ITrendMarkOptions;
-	point: TrendSegment;
+	segment: TrendSegment;
 	protected trend: Trend;
 	protected chartState: ChartState;
-	protected renderOnTrendsChange = false;
 	protected ee: EventEmitter2;
 
 	constructor(chartState: ChartState, options: ITrendMarkOptions, trend: Trend) {
@@ -138,8 +137,8 @@ export class TrendMark {
 	/**
 	 * only for internal usage
 	 */
-	setPoint(point: TrendSegment) {
-		this.point = point;
+	_setSegment(segment: TrendSegment) {
+		this.segment = segment;
 	}
 
 

@@ -213,7 +213,8 @@ export class Chart {
 	private onMouseWheel(ev: MouseWheelEvent) {
 		ev.stopPropagation();
 		ev.preventDefault();
-		this.state.zoom(1 + ev.wheelDeltaY * 0.0002);
+		let zoomOrigin = ev.layerX / this.state.data.width;
+		this.state.zoom(1 + ev.wheelDeltaY * 0.002, zoomOrigin);
 	}
 
 	private onTouchMove(ev: TouchEvent) {

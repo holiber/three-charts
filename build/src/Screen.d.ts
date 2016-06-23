@@ -40,7 +40,6 @@ export declare class Screen {
     onScrollFrame(cb: (options: IScreenTransformOptions) => void): Function;
     onTransformationFrame(cb: (options: IScreenTransformOptions) => void): Function;
     transform(options: IScreenTransformOptions): void;
-    private scrollTo(x, y?);
     private bindEvents();
     private onScrollXHandler(changedProps);
     private onScrollYHandler();

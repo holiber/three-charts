@@ -76,9 +76,9 @@ export declare class ChartState {
     private handleTrendsChange(changedTrends, newData);
     private recalculateXAxis(actualData);
     private recalculateYAxis(actualData);
-    zoom(zoomValue: number): void;
-    zoomToRange(range: number): void;
-    getScrollForZoomAction(screenOrigin: number, newZoom: number): number;
+    zoom(zoomValue: number, origin?: number): void;
+    zoomToRange(range: number, origin?: number): void;
+    scrollToEnd(): void;
     /**
      *  returns offset in pixels from xAxis.range.zeroVal to xVal
      */

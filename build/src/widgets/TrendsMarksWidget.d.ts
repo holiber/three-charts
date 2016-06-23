@@ -20,5 +20,5 @@ export declare class TrendMarksWidget extends TrendWidget {
     private onMarksChange();
     private createMarkWidget(mark);
     protected onZoomFrame(): void;
-    protected onPointsMove(): void;
+    protected onSegmentsAnimate(): void;
 }

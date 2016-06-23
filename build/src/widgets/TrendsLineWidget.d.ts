@@ -28,7 +28,7 @@ export declare class TrendLine extends TrendWidget {
     private destroySegments();
     private destroySegment(segmentId);
     protected onZoomFrame(options: IScreenTransformOptions): void;
-    protected onPointsMove(trendSegments: TrendSegments): void;
+    protected onSegmentsAnimate(trendSegments: TrendSegments): void;
     private toLocalX(xVal);
     private toLocalY(yVal);
     private toLocalVec(vec);

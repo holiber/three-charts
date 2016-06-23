@@ -22,8 +22,10 @@ export class Utils {
 
 	/**
 	 * deepCopy based on JSON.stringify function
+	 * @deprecated
 	 */
 	static deepCopy<T> (obj: T) {
+		// TODO: use deepMerge function to copy
 		return JSON.parse(JSON.stringify(obj)) as T;
 	}
 

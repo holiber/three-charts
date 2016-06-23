@@ -76,10 +76,10 @@ export class TrendMarksWidget extends TrendWidget {
 		}
 	}
 
-	protected onPointsMove() {
+	protected onSegmentsAnimate() {
 		var widgets = this.marksWidgets;
 		for (let markName in widgets) {
-			widgets[markName].onPointsMove();
+			widgets[markName].onSegmentsAnimate();
 		}
 	}
 }
@@ -169,7 +169,7 @@ class TrendMarkWidget {
 		return this.object3D;
 	}
 
-	onPointsMove() {
+	onSegmentsAnimate() {
 		this.updatePosition();
 	}
 
@@ -178,13 +178,13 @@ class TrendMarkWidget {
 	}
 
 	private updatePosition() {
-		if (!this.mark.point) return;
-		var pos = this.mark.point.getFramePoint();
+		if (!this.mark.segment) return;
+		var pos = this.mark.segment.getFramePoint();
 		this.object3D.position.set(pos.x, pos.y, 0);
 	}
 
 	private show() {
-		if (!this.mark.point) return;
+		if (!this.mark.segment) return;
 		this.updatePosition();
 		var animations = this.chartState.data.animations;
 		var time = animations.enabled ? 1 : 0;

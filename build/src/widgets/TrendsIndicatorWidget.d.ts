@@ -16,6 +16,6 @@ export declare class TrendIndicator extends TrendWidget {
     onTrendChange(): void;
     private initObject();
     protected onTransformationFrame(): void;
-    protected onPointsMove(animationState: TrendSegments): void;
+    protected onSegmentsAnimate(segments: TrendSegments): void;
     private updatePosition();
 }

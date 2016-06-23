@@ -135,7 +135,7 @@ export class TrendLine extends TrendWidget {
 	}
 
 
-	protected onPointsMove(trendSegments: TrendSegments) {
+	protected onSegmentsAnimate(trendSegments: TrendSegments) {
 		var geometry = this.lineSegments.geometry as Geometry;
 		for (let segmentId of trendSegments.animatedSegmentsIds) {
 			if (!this.displayedSegments[segmentId]) continue;

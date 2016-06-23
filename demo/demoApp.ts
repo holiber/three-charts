@@ -1,5 +1,4 @@
-
-import {Chart, AXIS_RANGE_TYPE, ITrendItem, ITrendMarkOptions, Utils, AXIS_DATA_TYPE} from '../src';
+import { Chart, AXIS_RANGE_TYPE, ITrendItem, ITrendMarkOptions, Utils, AXIS_DATA_TYPE } from '../src';
 import { TREND_TYPE } from '../src/Trend';
 
 var chart: Chart;
@@ -14,7 +13,7 @@ class DataSourse {
 		let val = 70;
 		this.startTime = Date.now();
 
-		while (sec < 2000) { //2592000
+		while (sec < 200) { //2592000
 			this.data.push({
 				xVal: this.startTime + sec * 1000,
 				yVal: val
@@ -107,7 +106,7 @@ window.onload = function () {
 		},
 		trends: {
 			'main': {
-				type: TREND_TYPE.CANDLE,
+				type: TREND_TYPE.LINE,
 				dataset: dsMain.getData(),
 				hasBeacon: true,
 				hasIndicator: true,
@@ -126,8 +125,8 @@ window.onload = function () {
 			TrendsGradient: {enabled: false},
 			//TrendsBeacon: {enabled: false},
 			//TrendsIndicator: {enabled: false},
-			TrendsMarks: {enabled: false},
-			TrendsLoading: {enabled: false},
+			 TrendsMarks: {enabled: false},
+			// TrendsLoading: {enabled: false},
 			AxisMarks: {enabled: false}
 		}
 	});
@@ -196,12 +195,12 @@ window.onload = function () {
 	var i = 0;
 
 	chart.getTrend('main').onPrependRequest((requestedLength, resolve, reject) => {
-		// var responseData: ITrendItem[] = [];
-		// var ticksCount = Math.round(requestedLength / 1000) ;
-		// while (ticksCount--) responseData.unshift(dsMain.getPrev());
-		// setTimeout(() => {
-		// 	resolve(responseData);
-		// }, 1000)
+		var responseData: ITrendItem[] = [];
+		var ticksCount = Math.round(requestedLength / 1000) ;
+		while (ticksCount--) responseData.unshift(dsMain.getPrev());
+		setTimeout(() => {
+			resolve(responseData);
+		}, 2000)
 	});
 
 	setInterval(() => {
@@ -209,8 +208,10 @@ window.onload = function () {
 		var val = dsMain.getNext();
 
 		// [i % 2 ? 10 : 20]
-		
-		chart.getTrend('main').appendData([val]);
+
+		// chart.getTrend('main').appendData([val]);
+		// chart.getTrend('main').prependData([dsMain.getPrev(), dsMain.getPrev()].reverse());
+		// chart.getTrend('main').appendData([val, dsMain.getNext(), dsMain.getNext(), dsMain.getNext(), dsMain.getNext()]);
 		// chart.getTrend('main').prependData([val, dsMain.getNext(), dsMain.getNext(), dsMain.getNext()]);
 		// chart.getTrend('red').appendData([val + 10 + Math.random() * 20]);
 		// chart.getTrend('blue').appendData([val + 20 + Math.random() * 20]);
@@ -264,9 +265,13 @@ function initListeners() {
 			var range = Number(this.getAttribute('data-range'));
 			var segmentLength = Number(this.getAttribute('data-segment-length'));
 			chart.state.zoomToRange(range);
+			// chart.state.scrollToEnd();
 			// setTimeout(() => {
-			// 	chart.getTrend('main').setOptions({maxSegmentLength: segmentLength});
-			// }, 400);
+			//
+			// 	let origin = (chart.state.data.width - chart.state.data.xAxis.range.padding.end) / chart.state.data.width;
+			// 	chart.state.zoomToRange(range, origin);
+			// 	// chart.getTrend('main').setOptions({maxSegmentLength: segmentLength});
+			// }, 1000);
 		});
 	}
 }

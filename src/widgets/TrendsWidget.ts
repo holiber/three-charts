@@ -54,7 +54,6 @@ export abstract class TrendsWidget<TrendWidgetType extends TrendWidget> extends 
 		var widget = this.widgets[trendName];
 		if (!widget) return;
 		widget.onTrendChange(changedOptions);
-		if (!changedOptions.data) return;
 		if (newData) {
 			var data = this.chartState.getTrend(trendName).getData();
 			var isAppend = (!data.length || data[0].xVal < newData[0].xVal);
@@ -107,7 +106,7 @@ export abstract class TrendWidget {
 			unsubscriber();
 		}
 	}
-	protected onPointsMove(trendPoints: TrendSegments) {
+	protected onSegmentsAnimate(segments: TrendSegments) {
 	}
 	protected onZoomFrame(options: IScreenTransformOptions) {
 	}
@@ -120,7 +119,7 @@ export abstract class TrendWidget {
 	protected bindEvents() {
 
 		this.bindEvent(this.trend.segments.onAnimationFrame(
-			(trendPoints: TrendSegments) => this.onPointsMove(trendPoints)
+			(trendPoints: TrendSegments) => this.onSegmentsAnimate(trendPoints)
 		));
 
 		this.bindEvent(this.chartState.screen.onTransformationFrame(

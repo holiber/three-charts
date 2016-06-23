@@ -79,9 +79,9 @@ export class TrendIndicator extends TrendWidget {
 		this.updatePosition();
 	}
 
-	protected onPointsMove(animationState: TrendSegments) {
+	protected onSegmentsAnimate(segments: TrendSegments) {
 		// set new widget position
-		this.segment = animationState.getEndSegment();
+		this.segment = segments.getEndSegment();
 		this.updatePosition();
 	}
 
