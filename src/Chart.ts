@@ -36,12 +36,14 @@ export class Chart {
 	private cameraInitialPosition: Vector3;
 	private widgets: Array<ChartWidget> = [];
 	private stats: Stats;
+	private zoomThrottled: Function;
 
 	static devicePixelRatio = window.devicePixelRatio;
 	static installedWidgets: {[name: string]: typeof ChartWidget} = {};
 
 	constructor(state: IChartState) {
 		this.state = new ChartState(state);
+		this.zoomThrottled = Utils.throttle((zoomValue: number, origin: number) => this.zoom(zoomValue, origin), 200);
 		this.init();
 	};
 
@@ -173,11 +175,11 @@ export class Chart {
 	
 	private autoscroll() {
 		var state = this.state;
-		if (state.data.cursor.dragMode) return;
+		if (!state.data.autoScroll) return;
 		var oldTrendsMaxX = state.data.prevState.computedData.trends.maxXVal;
 		var trendsMaxXDelta = state.data.computedData.trends.maxXVal - oldTrendsMaxX;
 		if (trendsMaxXDelta > 0) {
-			var maxVisibleX = this.state.getScreenRightVal();
+			var maxVisibleX = this.state.screen.getScreenRightVal();
 			var paddingRightX = this.state.getPaddingRight();
 			var currentScroll = state.data.xAxis.range.scroll;
 			if (oldTrendsMaxX < paddingRightX || oldTrendsMaxX > maxVisibleX) {
@@ -214,7 +216,8 @@ export class Chart {
 		ev.stopPropagation();
 		ev.preventDefault();
 		let zoomOrigin = ev.layerX / this.state.data.width;
-		this.state.zoom(1 + ev.wheelDeltaY * 0.002, zoomOrigin);
+		let zoomValue = 1 + ev.wheelDeltaY * 0.001;
+		this.zoom(zoomValue, zoomOrigin);
 	}
 
 	private onTouchMove(ev: TouchEvent) {
@@ -223,6 +226,18 @@ export class Chart {
 
 	private onTouchEnd(ev: TouchEvent) {
 		this.setState({cursor: {dragMode: false}});
+	}
+
+	private zoom(zoomValue: number, zoomOrigin: number) {
+		const MAX_ZOOM_VALUE = 1.5;
+		const MIN_ZOOM_VALUE = 0.7;
+		zoomValue = Math.min(zoomValue, MAX_ZOOM_VALUE);
+		zoomValue = Math.max(zoomValue, MIN_ZOOM_VALUE);
+		let autoScrollIsEnabled = this.state.data.autoScroll;
+		if (autoScrollIsEnabled) this.state.setState({autoScroll: false});
+		this.state.zoom(zoomValue, zoomOrigin).then(() => {
+			if (autoScrollIsEnabled) this.setState({autoScroll: true});
+		});
 	}
 
 	/**

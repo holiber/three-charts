@@ -2,7 +2,7 @@ import { IIteralable } from "./interfaces";
 import { EventEmitter } from './deps';
 import { ChartState } from "./State";
 import Vector3 = THREE.Vector3;
-import { ITrendData, ITrendOptions, ITrendItem, Trend } from "./Trend";
+import { ITrendData, ITrendOptions, ITrendItem, Trend, TREND_TYPE, ITrendTypeSettings } from "./Trend";
 import { Utils } from "./Utils";
 import convertArray = THREE.AnimationUtils.convertArray;
 
@@ -62,10 +62,13 @@ export class TrendSegments {
 	}
 
 	private onTrendChangeHandler(changedOptions: ITrendOptions, newData: ITrendData) {
-		var needRebuildSegments = changedOptions.maxSegmentLength != void 0;
+		var needToRebuildSegments = (
+			changedOptions.type != void 0 ||
+			changedOptions.maxSegmentLength != void 0
+		);
 
 
-		if (needRebuildSegments) {
+		if (needToRebuildSegments) {
 			this.tryToRebuildSegments(true);
 			return;
 		}
@@ -87,22 +90,26 @@ export class TrendSegments {
 	}
 	
 	private tryToRebuildSegments(force = false): boolean {
+		let options = this.trend.getOptions();
+		let trendTypeName = TREND_TYPE[options.type] as string;
+		let trendTypesSettings =  options.settingsForTypes as IIteralable;
+		let trendTypeSettings = trendTypesSettings[trendTypeName] as ITrendTypeSettings;
 		let {
-			maxSegmentLength,
 			minSegmentLengthInPx,
 			maxSegmentLengthInPx
-		} = this.trend.getOptions();
+		} = trendTypeSettings;
 
 		let needToRebuild = this.segments.length === 0 || force;
 		let segmentLength = this.maxSegmentLength;
 
 		// call toFixed(2) to prevent floating segment error compare
 		let currentSegmentLengthInPx = Number(this.chartState.valueToPxByXAxis(segmentLength).toFixed(2));
+		let currentMaxSegmentLengthInPx = Number(this.chartState.valueToPxByXAxis(this.maxSegmentLength).toFixed(2));
 
 		if (currentSegmentLengthInPx < minSegmentLengthInPx) {
 			needToRebuild = true;
 			segmentLength = Math.ceil(this.chartState.pxToValueByXAxis(maxSegmentLengthInPx));
-		} else if (this.chartState.valueToPxByXAxis(this.maxSegmentLength) >= maxSegmentLengthInPx) {
+		} else if (currentMaxSegmentLengthInPx > maxSegmentLengthInPx) {
 			needToRebuild = true;
 			segmentLength = this.chartState.pxToValueByXAxis(minSegmentLengthInPx);
 		}
@@ -116,9 +123,18 @@ export class TrendSegments {
 		this.startSegmentId = 0;
 		this.endSegmentId = 0;
 		this.segmentsLength = 0;
+		this.stopAllAnimations();
 		this.appendData(null, true);
 		this.recalculateDisplayedRange(true);
 		this.ee.emit('rebuild');
+	}
+
+	private stopAllAnimations() {
+		this.animatedSegmentsIds = [];
+		this.animatedSegmentsForAppend = [];
+		this.animatedSegmentsForAppend = [];
+		if (this.prependAnimation) this.prependAnimation.kill();
+		if (this.appendAnimation) this.appendAnimation.kill();
 	}
 	
 	private recalculateDisplayedRange(segmentsAreRebuilded = false) {

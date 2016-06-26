@@ -17,6 +17,7 @@ export declare class TrendLine extends TrendWidget {
     private scaleXFactor;
     private scaleYFactor;
     private vertices;
+    private freeSegmentsInds;
     private displayedSegments;
     static widgetIsEnabled(trendOptions: ITrendOptions): boolean;
     constructor(chartState: ChartState, trendName: string);

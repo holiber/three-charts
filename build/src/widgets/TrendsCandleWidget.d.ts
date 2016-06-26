@@ -16,6 +16,7 @@ export declare class TrendCandlesWidget extends TrendWidget {
     private scaleXFactor;
     private scaleYFactor;
     private object3D;
+    private freeCandlesInds;
     private candlesPool;
     private candles;
     static widgetIsEnabled(trendOptions: ITrendOptions): boolean;

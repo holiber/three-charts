@@ -12,6 +12,10 @@ export enum TREND_TYPE {LINE, CANDLE}
 export type TTrendRawData = ITrendData | number[];
 export interface ITrendItem {xVal: number, yVal: number, id?: number}
 export interface ITrendData extends Array<ITrendItem>{}
+export interface ITrendTypeSettings {
+	minSegmentLengthInPx?: number;
+	maxSegmentLengthInPx?: number;
+}
 export interface ITrendOptions {
 	enabled?: boolean,
 	data?: ITrendData
@@ -24,10 +28,12 @@ export interface ITrendOptions {
 	hasIndicator?: boolean;
 	hasBeacon?: boolean;
 	maxSegmentLength?: number;
-	minSegmentLengthInPx?: number;
-	maxSegmentLengthInPx?: number;
 	marks?: ITrendMarkOptions[];
 	onPrependRequest?: IPrependPromiseExecutor;
+	settingsForTypes?: {
+		CANDLE?: ITrendTypeSettings,
+		LINE?: ITrendTypeSettings
+	}
 }
 
 const DEFAULT_OPTIONS: ITrendOptions = {
@@ -36,12 +42,20 @@ const DEFAULT_OPTIONS: ITrendOptions = {
 	data: [],
 	marks: [],
 	maxSegmentLength: 1000,
-	minSegmentLengthInPx: 30,
-	maxSegmentLengthInPx: 60,
 	lineWidth: 2,
 	lineColor: 0xFFFFFF,
 	hasGradient: true,
-	hasBeacon: false
+	hasBeacon: false,
+	settingsForTypes: {
+		CANDLE: {
+			minSegmentLengthInPx: 30,
+			maxSegmentLengthInPx: 60,
+		},
+		LINE: {
+			minSegmentLengthInPx: 2,
+			maxSegmentLengthInPx: 10,
+		}
+	}
 };
 
 export class Trend {
@@ -103,7 +117,6 @@ export class Trend {
 	}
 
 	private changeData(allData: ITrendData, newData: ITrendData) {
-		// if (allData.length > MAX_DATA_LENGTH) Utils.error('max data length reached')
 		for (let item of newData) {
 			if (item.xVal < this.minXVal) this.minXVal = item.xVal;
 			if (item.xVal > this.maxXVal) this.maxXVal = item.xVal;

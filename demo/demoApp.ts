@@ -1,5 +1,6 @@
 import { Chart, AXIS_RANGE_TYPE, ITrendItem, ITrendMarkOptions, Utils, AXIS_DATA_TYPE } from '../src';
 import { TREND_TYPE } from '../src/Trend';
+import { TREND_MARK_SIDE } from '../src/TrendMarks';
 
 var chart: Chart;
 
@@ -13,7 +14,7 @@ class DataSourse {
 		let val = 70;
 		this.startTime = Date.now();
 
-		while (sec < 200) { //2592000
+		while (sec < 100) { //2592000
 			this.data.push({
 				xVal: this.startTime + sec * 1000,
 				yVal: val
@@ -62,12 +63,20 @@ class MarksSource {
 	}
 
 	static generate(val: number): ITrendMarkOptions {
+		let descriptionColor = 'rgb(40,136,75)';
+		let orientation =  Utils.getRandomItem([TREND_MARK_SIDE.TOP, TREND_MARK_SIDE.BOTTOM]);
+		if (orientation == TREND_MARK_SIDE.BOTTOM) {
+			descriptionColor = 'rgb(219,73,49)';
+		}
+			
 		return {
 			value: val,
 			title: Utils.getRandomItem(['Alex Malcon', 'Serg Morrs', 'Harry Potter']),
 			description: Utils.getRandomItem(['$10 -> 20$', '$15 -> 30$', '40$ -> 80$']),
 			icon: Utils.getRandomItem(['AM', 'SM', 'HP']),
-			iconColor: Utils.getRandomItem(['rgb(255, 102, 217)', 'rgb(69,67,130)', 'rgb(124,39,122)']),
+			iconColor: Utils.getRandomItem(['rgb(69,67,130)', 'rgb(124,39,122)']),
+			orientation: orientation,
+			descriptionColor: descriptionColor
 		}
 	}
 }
@@ -79,6 +88,7 @@ window.onload = function () {
 	var dsMain = new DataSourse();
 	var dsRed = new DataSourse();
 	var dsBlue = new DataSourse();
+	var now = Date.now();
 
 	chart = new Chart({
 		$el: document.querySelector('.chart'),
@@ -92,7 +102,7 @@ window.onload = function () {
 				type: AXIS_RANGE_TYPE.FIXED,
 				from: Date.now(),
 				to: Date.now() + 20000,
-				// maxLength: 500000,
+				maxLength: 5000000,
 				minLength: 5000
 			},
 			marks: [
@@ -111,7 +121,7 @@ window.onload = function () {
 				hasBeacon: true,
 				hasIndicator: true,
 				hasGradient: false,
-				marks: [MarksSource.generate(Date.now() + 3000)]
+				marks: [MarksSource.generate(now + 3000), MarksSource.generate(now + 3000), MarksSource.generate(now + 4000)]
 			},
 			// 'red': {dataset: dsRed.data, lineColor: 0xFF2222, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
 			// 'blue': {dataset: dsBlue.data, lineColor: 0x2222FF, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
@@ -125,7 +135,7 @@ window.onload = function () {
 			TrendsGradient: {enabled: false},
 			//TrendsBeacon: {enabled: false},
 			//TrendsIndicator: {enabled: false},
-			 TrendsMarks: {enabled: false},
+			// TrendsMarks: {enabled: false},
 			// TrendsLoading: {enabled: false},
 			AxisMarks: {enabled: false}
 		}
@@ -209,7 +219,7 @@ window.onload = function () {
 
 		// [i % 2 ? 10 : 20]
 
-		// chart.getTrend('main').appendData([val]);
+		 chart.getTrend('main').appendData([val]);
 		// chart.getTrend('main').prependData([dsMain.getPrev(), dsMain.getPrev()].reverse());
 		// chart.getTrend('main').appendData([val, dsMain.getNext(), dsMain.getNext(), dsMain.getNext(), dsMain.getNext()]);
 		// chart.getTrend('main').prependData([val, dsMain.getNext(), dsMain.getNext(), dsMain.getNext()]);
@@ -264,8 +274,14 @@ function initListeners() {
 		timeframeButtons[i].addEventListener("click", function() {
 			var range = Number(this.getAttribute('data-range'));
 			var segmentLength = Number(this.getAttribute('data-segment-length'));
+
+
+			chart.state.setState({autoScroll: false});
 			chart.state.zoomToRange(range);
-			// chart.state.scrollToEnd();
+			chart.state.scrollToEnd().then(() => {
+				chart.state.setState({autoScroll: true});
+			});
+			// chart.state.setState({autoScroll: true});
 			// setTimeout(() => {
 			//
 			// 	let origin = (chart.state.data.width - chart.state.data.xAxis.range.padding.end) / chart.state.data.width;

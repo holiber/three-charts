@@ -14,6 +14,7 @@ import { TrendSegments, ITrendSegmentState } from "../TrendSegments.ts";
 import LineSegments = THREE.LineSegments;
 import {IScreenTransformOptions} from "../Screen";
 import { ITrendOptions, TREND_TYPE } from '../Trend';
+import { Utils } from '../Utils';
 
 const MAX_DISPLAYED_SEGMENTS = 2000;
 
@@ -27,6 +28,10 @@ export class TrendsLineWidget extends TrendsWidget<TrendLine> {
 	}
 }
 
+interface ILineSegment {
+	ind: number,
+	segmentId: number
+}
 
 export class TrendLine extends TrendWidget {
 	private material: LineBasicMaterial;
@@ -34,7 +39,12 @@ export class TrendLine extends TrendWidget {
 	private scaleXFactor: number;
 	private scaleYFactor: number;
 	private vertices: Vector3[];
-	private displayedSegments: {[segmentId: number]: ITrendSegmentState} = {};
+
+	// contains indexes of free segments
+	private freeSegmentsInds: number[] = [];
+
+	// contains segments to display
+	private displayedSegments: {[segmentId: number]: ILineSegment} = {};
 	
 	static widgetIsEnabled(trendOptions: ITrendOptions) {
 		return trendOptions.enabled && trendOptions.type == TREND_TYPE.LINE;
@@ -73,6 +83,7 @@ export class TrendLine extends TrendWidget {
 		this.lineSegments.frustumCulled = false;
 		for (let i = 0; i < MAX_DISPLAYED_SEGMENTS; i++) {
 			geometry.vertices.push(new  Vector3(), new Vector3());
+			this.freeSegmentsInds.push(i);
 		}
 		this.vertices = geometry.vertices;
 		this.setupSegments();
@@ -84,7 +95,8 @@ export class TrendLine extends TrendWidget {
 		let {firstDisplayedSegment, lastDisplayedSegment} = this.trend.segments;
 
 		for (let segmentId in this.displayedSegments) {
-			let segment = this.displayedSegments[segmentId];
+			let lineSegment = this.displayedSegments[segmentId];
+			let segment = this.trend.segments.segments[lineSegment.segmentId];
 			let segmentIsNotDisplayed = (
 				segment.startXVal < firstDisplayedSegment.startXVal ||
 				segment.endXVal > lastDisplayedSegment.endXVal
@@ -102,12 +114,13 @@ export class TrendLine extends TrendWidget {
 	}
 
 	private setupSegment(segmentId: number, segmentState: ITrendSegmentState) {
-		let segment = this.displayedSegments[segmentId];
-		if (!segment) {
-			segment = segmentState;
-			this.displayedSegments[segmentId] = segment;
+		let lineSegment = this.displayedSegments[segmentId];
+		if (!lineSegment) {
+			if (this.freeSegmentsInds.length == 0) Utils.error('Max allocated segments reached');
+			let ind = this.freeSegmentsInds.pop();
+			lineSegment = this.displayedSegments[segmentId] = {segmentId, ind};
 		}
-		let segmentInd = segmentId % MAX_DISPLAYED_SEGMENTS;
+		let segmentInd = lineSegment.ind;
 		let lineStartVertex = this.vertices[segmentInd * 2];
 		let lineEndVertex = this.vertices[segmentInd * 2 + 1];
 		lineStartVertex.set(this.toLocalX(segmentState.startXVal), this.toLocalY(segmentState.startYVal), 0);
@@ -119,12 +132,13 @@ export class TrendLine extends TrendWidget {
 	}
 
 	private destroySegment(segmentId: number) {
-		let segmentInd = segmentId % MAX_DISPLAYED_SEGMENTS;
-		let lineStartVertex = this.vertices[segmentInd * 2];
-		let lineEndVertex = this.vertices[segmentInd * 2 + 1];
+		let lineSegment = this.displayedSegments[segmentId];
+		let lineStartVertex = this.vertices[lineSegment.ind * 2];
+		let lineEndVertex = this.vertices[lineSegment.ind * 2 + 1];
 		lineStartVertex.set(0, 0, 0);
 		lineEndVertex.set(0, 0, 0);
 		delete this.displayedSegments[segmentId];
+		this.freeSegmentsInds.push(lineSegment.ind);
 	}
 
 

@@ -12,6 +12,7 @@ export declare class Chart {
     private cameraInitialPosition;
     private widgets;
     private stats;
+    private zoomThrottled;
     static devicePixelRatio: number;
     static installedWidgets: {
         [name: string]: typeof ChartWidget;
@@ -43,6 +44,7 @@ export declare class Chart {
     private onMouseWheel(ev);
     private onTouchMove(ev);
     private onTouchEnd(ev);
+    private zoom(zoomValue, zoomOrigin);
     /**
      * creates simple chart without animations and minimal widgets set
      */

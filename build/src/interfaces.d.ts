@@ -58,6 +58,8 @@ export interface IAnimationsOptions {
     enabled?: boolean;
     trendChangeSpeed?: number;
     trendChangeEase?: TEase;
+    scrollSpeed?: number;
+    scrollEase?: TEase;
     autoScrollSpeed?: number;
     autoScrollEase?: TEase;
     zoomSpeed?: number;

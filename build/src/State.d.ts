@@ -1,4 +1,5 @@
 import { ITrendOptions, Trend, ITrendData } from "./Trend";
+import { Promise } from './deps';
 import Vector3 = THREE.Vector3;
 import { IChartWidgetOptions } from "./Widget";
 import { Trends, ITrendsOptions } from "./Trends";
@@ -41,8 +42,13 @@ export interface IChartState {
         enabled?: boolean;
         fps?: number;
     };
+    autoScroll?: boolean;
     showStats?: boolean;
     computedData?: IChartStateComputedData;
+    /**
+     * overridden settings for single setState operation
+     */
+    operationState?: IChartState;
     [key: string]: any;
 }
 /**
@@ -76,9 +82,9 @@ export declare class ChartState {
     private handleTrendsChange(changedTrends, newData);
     private recalculateXAxis(actualData);
     private recalculateYAxis(actualData);
-    zoom(zoomValue: number, origin?: number): void;
-    zoomToRange(range: number, origin?: number): void;
-    scrollToEnd(): void;
+    zoom(zoomValue: number, origin?: number): Promise<void>;
+    zoomToRange(range: number, origin?: number): Promise<void>;
+    scrollToEnd(): Promise<void>;
     /**
      *  returns offset in pixels from xAxis.range.zeroVal to xVal
      */

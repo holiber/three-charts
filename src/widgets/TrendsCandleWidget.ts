@@ -37,6 +37,9 @@ export class TrendCandlesWidget extends TrendWidget {
 	private scaleXFactor: number;
 	private scaleYFactor: number;
 	private object3D: Object3D;
+	
+	// contains indexes of free candles
+	private freeCandlesInds: number[] = [];
 	private candlesPool: CandleWidget[] = [];
 	private candles: {[segmentId: number]: CandleWidget} = {};
 
@@ -74,6 +77,7 @@ export class TrendCandlesWidget extends TrendWidget {
 		this.object3D = new Object3D();
 		this.object3D.scale.set(scaleXFactor * zoomX, scaleYFactor * zoomY, 1);
 		this.object3D.frustumCulled = false;
+		for (let i = 0; i < MAX_CANDLES; i++) this.freeCandlesInds.push(i);
 		this.setupCandles();
 	}
 
@@ -134,8 +138,10 @@ export class TrendCandlesWidget extends TrendWidget {
 			candle = this.candlesPool[candleInd] = new CandleWidget();
 		}
 
-		if (!this.candles[candleId]) this.candles[candleId] = candle;
-		this.object3D.add(candle.getObject3D());
+		if (!this.candles[candleId]) {
+			this.candles[candleId] = candle;
+			this.object3D.add(candle.getObject3D());
+		}
 		candle.getObject3D().position.set(this.toLocalX(segmentState.xVal), this.toLocalY(segmentState.yVal), 0);
 		candle.setSegment(segmentState);
 	}

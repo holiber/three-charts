@@ -16,6 +16,10 @@ export interface ITrendItem {
 }
 export interface ITrendData extends Array<ITrendItem> {
 }
+export interface ITrendTypeSettings {
+    minSegmentLengthInPx?: number;
+    maxSegmentLengthInPx?: number;
+}
 export interface ITrendOptions {
     enabled?: boolean;
     data?: ITrendData;
@@ -28,10 +32,12 @@ export interface ITrendOptions {
     hasIndicator?: boolean;
     hasBeacon?: boolean;
     maxSegmentLength?: number;
-    minSegmentLengthInPx?: number;
-    maxSegmentLengthInPx?: number;
     marks?: ITrendMarkOptions[];
     onPrependRequest?: IPrependPromiseExecutor;
+    settingsForTypes?: {
+        CANDLE?: ITrendTypeSettings;
+        LINE?: ITrendTypeSettings;
+    };
 }
 export declare class Trend {
     name: string;

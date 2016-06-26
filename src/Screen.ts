@@ -24,8 +24,8 @@ export class Screen {
 	private scrollYAnimation: TweenLite;
 	private zoomXAnimation: TweenLite;
 	private zoomYAnimation: TweenLite;
-	private currentScrollX = {val: 0};
-	private currentScrollY = {val: 0};
+	private currentScrollX = {x: 0};
+	private currentScrollY = {y: 0};
 	private currentZoomX = {val: 1};
 	private currentZoomY = {val: 1};
 	private ee: EventEmitter2;
@@ -62,13 +62,6 @@ export class Screen {
 		}
 	}
 
-	onCameraChange(cb: (x: number, y: number) => void ): Function {
-		this.ee.on('cameraChange', cb);
-		return () => {
-			this.ee.off('cameraChange', cb);
-		}
-	}
-
 	onZoomFrame(cb: (zoomX: number, zoomY: number) => void): Function {
 		var eventName = 'zoomFrame';
 		this.ee.on(eventName, cb);
@@ -93,33 +86,40 @@ export class Screen {
 		}
 	}
 
-	transform (options: IScreenTransformOptions) {
-		var {scrollXVal, scrollYVal, zoomX, zoomY} = options;
+	cameraIsMoving(): boolean {
+		return !!(
+			this.scrollXAnimation && this.scrollXAnimation.isActive() ||
+				this.zoomXAnimation && this.zoomXAnimation.isActive()
+		);
+	}
+
+	private transform (options: IScreenTransformOptions) {
+		var {scrollX, scrollY, zoomX, zoomY} = options;
 		
-		if (scrollXVal != void 0) this.options.scrollXVal = scrollXVal;
-		if (scrollYVal != void 0) this.options.scrollYVal = scrollYVal;
+		if (scrollX != void 0) this.options.scrollX = scrollX;
+		if (scrollY != void 0) this.options.scrollY = scrollY;
 		if (zoomX != void 0) this.options.zoomX = zoomX;
 		if (zoomY != void 0) this.options.zoomY = zoomY;
 
+		if (scrollX != void 0 || zoomX) {
+			options.scrollXVal = this.pxToValueByXAxis(scrollX != void 0 ? scrollX : this.options.scrollX);
+			this.options.scrollXVal = options.scrollXVal;
+		}
+
+		if (scrollY != void 0 || zoomY) {
+			options.scrollYVal = this.pxToValueByYAxis(scrollY != void 0 ? scrollY : this.options.scrollY);
+			this.options.scrollYVal = options.scrollYVal;
+		}
+
 		// if (scrollXVal != void 0 || zoomX) {
-		// 	options.scrollX = this.valueToPxByXAxis(scrollXVal != void 0 ? scrollXVal : this.options.scrollXVal);
+		// 	options.scrollX = this.chartState.valueToPxByXAxis(scrollXVal != void 0 ? scrollXVal : this.options.scrollXVal);
 		// 	this.options.scrollX = options.scrollX;
 		// }
 		//
 		// if (scrollYVal != void 0 || zoomY) {
-		// 	options.scrollY = this.valueToPxByYAxis(scrollYVal != void 0 ? scrollYVal : this.options.scrollYVal);
+		// 	options.scrollY = this.chartState.valueToPxByYAxis(scrollYVal != void 0 ? scrollYVal : this.options.scrollYVal);
 		// 	this.options.scrollY = options.scrollY;
 		// }
-
-		if (scrollXVal != void 0 || zoomX) {
-			options.scrollX = this.chartState.valueToPxByXAxis(scrollXVal != void 0 ? scrollXVal : this.options.scrollXVal);
-			this.options.scrollX = options.scrollX;
-		}
-
-		if (scrollYVal != void 0 || zoomY) {
-			options.scrollY = this.chartState.valueToPxByYAxis(scrollYVal != void 0 ? scrollYVal : this.options.scrollYVal);
-			this.options.scrollY = options.scrollY;
-		}
 
 		this.ee.emit('transformationFrame', options);
 		
@@ -155,23 +155,25 @@ export class Screen {
 		var animations =  state.data.animations;
 		var canAnimate = animations.enabled && !isDragMode;
 		var zoomXChanged = changedProps.xAxis.range.zoom;
-		var isAutoscroll = !isDragMode && !zoomXChanged;
+		var isAutoscroll = state.data.autoScroll && !isDragMode && !zoomXChanged;
 		var time = isAutoscroll ? animations.autoScrollSpeed : animations.zoomSpeed;
 		var ease = isAutoscroll ? animations.autoScrollEase : animations.zoomEase;
-		var targetXVal = state.data.xAxis.range.scroll;
 		if (this.scrollXAnimation) this.scrollXAnimation.pause();
 
+		var range = state.data.xAxis.range;
+		var targetX = range.scroll * range.scaleFactor * range.zoom;
+
 		var cb = () => {
-			this.transform({scrollXVal: this.currentScrollX.val});
+			this.transform({scrollX: this.currentScrollX.x});
 		};
 
 		if (canAnimate) {
 			this.scrollXAnimation = TweenLite.to(this.currentScrollX, time, {
-				val: targetXVal, ease: ease
+				x: targetX, ease: ease
 			});
 			this.scrollXAnimation.eventCallback('onUpdate', cb);
 		} else {
-			this.currentScrollX.val = targetXVal;
+			this.currentScrollX.x = targetX;
 			cb();
 		}
 
@@ -182,20 +184,21 @@ export class Screen {
 		var animations =  state.data.animations;
 		var canAnimate = animations.enabled;
 		var time = animations.zoomSpeed;
-		var targetYVal = state.data.yAxis.range.scroll;
-		if (this.scrollXAnimation) this.scrollXAnimation.pause();
+		if (this.scrollYAnimation) this.scrollYAnimation.pause();
+		var range = state.data.yAxis.range;
+		var targetY = range.scroll * range.scaleFactor * range.zoom;
 
 		var cb = () => {
-			this.transform({scrollYVal: this.currentScrollY.val});
+			this.transform({scrollY: this.currentScrollY.y});
 		};
 
 		if (canAnimate) {
 			this.scrollYAnimation = TweenLite.to(this.currentScrollY, time, {
-				val: targetYVal, ease: animations.zoomEase
+				y: targetY, ease: animations.zoomEase
 			});
 			this.scrollYAnimation.eventCallback('onUpdate', cb);
 		} else {
-			this.currentScrollY.val = targetYVal;
+			this.currentScrollY.y = targetY;
 			cb();
 		}
 	}
@@ -369,4 +372,9 @@ export class Screen {
 	getBottom(): number {
 		return this.getPointByScreenY(0);
 	}
+
+	getScreenRightVal() {
+		return this.getValueByScreenX(this.chartState.data.width);
+	}
+
 }

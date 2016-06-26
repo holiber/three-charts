@@ -46,6 +46,7 @@ export declare class Utils {
     static getUid(): TUid;
     static binarySearchClosestInd(arr: IIteralable[], num: number, key: string): number;
     static binarySearchClosest<ArrayItem>(arr: ArrayItem[], num: number, key: string): ArrayItem;
+    static rectsIntersect(r1: number[], r2: number[]): boolean;
     /**!
      * @preserve $.parseColor
      * Copyright 2011 THEtheChad Elliott

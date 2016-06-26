@@ -48,6 +48,7 @@ var demoApp =
 	"use strict";
 	var src_1 = __webpack_require__(1);
 	var Trend_1 = __webpack_require__(22);
+	var TrendMarks_1 = __webpack_require__(23);
 	var chart;
 	var DataSourse = (function () {
 	    function DataSourse() {
@@ -55,7 +56,7 @@ var demoApp =
 	        var sec = 0;
 	        var val = 70;
 	        this.startTime = Date.now();
-	        while (sec < 200) {
+	        while (sec < 100) {
 	            this.data.push({
 	                xVal: this.startTime + sec * 1000,
 	                yVal: val
@@ -103,12 +104,19 @@ var demoApp =
 	        return this.generate(val);
 	    };
 	    MarksSource.generate = function (val) {
+	        var descriptionColor = 'rgb(40,136,75)';
+	        var orientation = src_1.Utils.getRandomItem([TrendMarks_1.TREND_MARK_SIDE.TOP, TrendMarks_1.TREND_MARK_SIDE.BOTTOM]);
+	        if (orientation == TrendMarks_1.TREND_MARK_SIDE.BOTTOM) {
+	            descriptionColor = 'rgb(219,73,49)';
+	        }
 	        return {
 	            value: val,
 	            title: src_1.Utils.getRandomItem(['Alex Malcon', 'Serg Morrs', 'Harry Potter']),
 	            description: src_1.Utils.getRandomItem(['$10 -> 20$', '$15 -> 30$', '40$ -> 80$']),
 	            icon: src_1.Utils.getRandomItem(['AM', 'SM', 'HP']),
-	            iconColor: src_1.Utils.getRandomItem(['rgb(255, 102, 217)', 'rgb(69,67,130)', 'rgb(124,39,122)']),
+	            iconColor: src_1.Utils.getRandomItem(['rgb(69,67,130)', 'rgb(124,39,122)']),
+	            orientation: orientation,
+	            descriptionColor: descriptionColor
 	        };
 	    };
 	    return MarksSource;
@@ -118,6 +126,7 @@ var demoApp =
 	    var dsMain = new DataSourse();
 	    var dsRed = new DataSourse();
 	    var dsBlue = new DataSourse();
+	    var now = Date.now();
 	    chart = new src_1.Chart({
 	        $el: document.querySelector('.chart'),
 	        // yAxis: {
@@ -130,7 +139,7 @@ var demoApp =
 	                type: src_1.AXIS_RANGE_TYPE.FIXED,
 	                from: Date.now(),
 	                to: Date.now() + 20000,
-	                // maxLength: 500000,
+	                maxLength: 5000000,
 	                minLength: 5000
 	            },
 	            marks: [
@@ -145,7 +154,7 @@ var demoApp =
 	                hasBeacon: true,
 	                hasIndicator: true,
 	                hasGradient: false,
-	                marks: [MarksSource.generate(Date.now() + 3000)]
+	                marks: [MarksSource.generate(now + 3000), MarksSource.generate(now + 3000), MarksSource.generate(now + 4000)]
 	            },
 	        },
 	        showStats: true,
@@ -157,7 +166,7 @@ var demoApp =
 	            TrendsGradient: { enabled: false },
 	            //TrendsBeacon: {enabled: false},
 	            //TrendsIndicator: {enabled: false},
-	            TrendsMarks: { enabled: false },
+	            // TrendsMarks: {enabled: false},
 	            // TrendsLoading: {enabled: false},
 	            AxisMarks: { enabled: false }
 	        }
@@ -233,7 +242,7 @@ var demoApp =
 	        i++;
 	        var val = dsMain.getNext();
 	        // [i % 2 ? 10 : 20]
-	        // chart.getTrend('main').appendData([val]);
+	        chart.getTrend('main').appendData([val]);
 	        // chart.getTrend('main').prependData([dsMain.getPrev(), dsMain.getPrev()].reverse());
 	        // chart.getTrend('main').appendData([val, dsMain.getNext(), dsMain.getNext(), dsMain.getNext(), dsMain.getNext()]);
 	        // chart.getTrend('main').prependData([val, dsMain.getNext(), dsMain.getNext(), dsMain.getNext()]);
@@ -279,8 +288,12 @@ var demoApp =
 	        timeframeButtons[i].addEventListener("click", function () {
 	            var range = Number(this.getAttribute('data-range'));
 	            var segmentLength = Number(this.getAttribute('data-segment-length'));
+	            chart.state.setState({ autoScroll: false });
 	            chart.state.zoomToRange(range);
-	            // chart.state.scrollToEnd();
+	            chart.state.scrollToEnd().then(function () {
+	                chart.state.setState({ autoScroll: true });
+	            });
+	            // chart.state.setState({autoScroll: true});
 	            // setTimeout(() => {
 	            //
 	            // 	let origin = (chart.state.data.width - chart.state.data.xAxis.range.padding.end) / chart.state.data.width;
@@ -337,8 +350,10 @@ var demoApp =
 	exports.MAX_DATA_LENGTH = 2692000; //1000;
 	var Chart = (function () {
 	    function Chart(state) {
+	        var _this = this;
 	        this.widgets = [];
 	        this.state = new State_1.ChartState(state);
+	        this.zoomThrottled = Utils_1.Utils.throttle(function (zoomValue, origin) { return _this.zoom(zoomValue, origin); }, 200);
 	        this.init();
 	    }
 	    ;
@@ -454,12 +469,12 @@ var demoApp =
 	    };
 	    Chart.prototype.autoscroll = function () {
 	        var state = this.state;
-	        if (state.data.cursor.dragMode)
+	        if (!state.data.autoScroll)
 	            return;
 	        var oldTrendsMaxX = state.data.prevState.computedData.trends.maxXVal;
 	        var trendsMaxXDelta = state.data.computedData.trends.maxXVal - oldTrendsMaxX;
 	        if (trendsMaxXDelta > 0) {
-	            var maxVisibleX = this.state.getScreenRightVal();
+	            var maxVisibleX = this.state.screen.getScreenRightVal();
 	            var paddingRightX = this.state.getPaddingRight();
 	            var currentScroll = state.data.xAxis.range.scroll;
 	            if (oldTrendsMaxX < paddingRightX || oldTrendsMaxX > maxVisibleX) {
@@ -491,13 +506,28 @@ var demoApp =
 	        ev.stopPropagation();
 	        ev.preventDefault();
 	        var zoomOrigin = ev.layerX / this.state.data.width;
-	        this.state.zoom(1 + ev.wheelDeltaY * 0.002, zoomOrigin);
+	        var zoomValue = 1 + ev.wheelDeltaY * 0.001;
+	        this.zoom(zoomValue, zoomOrigin);
 	    };
 	    Chart.prototype.onTouchMove = function (ev) {
 	        this.setState({ cursor: { dragMode: true, x: ev.touches[0].clientX, y: ev.touches[0].clientY } });
 	    };
 	    Chart.prototype.onTouchEnd = function (ev) {
 	        this.setState({ cursor: { dragMode: false } });
+	    };
+	    Chart.prototype.zoom = function (zoomValue, zoomOrigin) {
+	        var _this = this;
+	        var MAX_ZOOM_VALUE = 1.5;
+	        var MIN_ZOOM_VALUE = 0.7;
+	        zoomValue = Math.min(zoomValue, MAX_ZOOM_VALUE);
+	        zoomValue = Math.max(zoomValue, MIN_ZOOM_VALUE);
+	        var autoScrollIsEnabled = this.state.data.autoScroll;
+	        if (autoScrollIsEnabled)
+	            this.state.setState({ autoScroll: false });
+	        this.state.zoom(zoomValue, zoomOrigin).then(function () {
+	            if (autoScrollIsEnabled)
+	                _this.setState({ autoScroll: true });
+	        });
 	    };
 	    /**
 	     * creates simple chart without animations and minimal widgets set
@@ -12556,6 +12586,15 @@ var demoApp =
 	        var ind = this.binarySearchClosestInd(arr, num, key);
 	        return arr[ind];
 	    };
+	    Utils.rectsIntersect = function (r1, r2) {
+	        var left1 = r1[0], top1 = r1[1], width1 = r1[2], height1 = r1[3];
+	        var left2 = r2[0], top2 = r2[1], width2 = r2[2], height2 = r2[3];
+	        var _a = [left1 + width1, left2 + width2, top1 + height1, top2 + height2], right1 = _a[0], right2 = _a[1], bottom1 = _a[2], bottom2 = _a[3];
+	        return !(left2 > right1 ||
+	            right2 < left1 ||
+	            top2 > bottom1 ||
+	            bottom2 < top1);
+	    };
 	    /**!
 	     * @preserve $.parseColor
 	     * Copyright 2011 THEtheChad Elliott
@@ -12808,6 +12847,7 @@ var demoApp =
 	var TrendsWidget_1 = __webpack_require__(19);
 	var LineSegments = THREE.LineSegments;
 	var Trend_1 = __webpack_require__(22);
+	var Utils_1 = __webpack_require__(18);
 	var MAX_DISPLAYED_SEGMENTS = 2000;
 	/**
 	 * widget for drawing trends lines
@@ -12828,6 +12868,9 @@ var demoApp =
 	    __extends(TrendLine, _super);
 	    function TrendLine(chartState, trendName) {
 	        _super.call(this, chartState, trendName);
+	        // contains indexes of free segments
+	        this.freeSegmentsInds = [];
+	        // contains segments to display
 	        this.displayedSegments = {};
 	        var options = this.trend.getOptions();
 	        this.material = new LineBasicMaterial({ color: options.lineColor, linewidth: options.lineWidth });
@@ -12861,6 +12904,7 @@ var demoApp =
 	        this.lineSegments.frustumCulled = false;
 	        for (var i = 0; i < MAX_DISPLAYED_SEGMENTS; i++) {
 	            geometry.vertices.push(new Vector3(), new Vector3());
+	            this.freeSegmentsInds.push(i);
 	        }
 	        this.vertices = geometry.vertices;
 	        this.setupSegments();
@@ -12869,7 +12913,8 @@ var demoApp =
 	        var geometry = this.lineSegments.geometry;
 	        var _a = this.trend.segments, firstDisplayedSegment = _a.firstDisplayedSegment, lastDisplayedSegment = _a.lastDisplayedSegment;
 	        for (var segmentId in this.displayedSegments) {
-	            var segment_1 = this.displayedSegments[segmentId];
+	            var lineSegment = this.displayedSegments[segmentId];
+	            var segment_1 = this.trend.segments.segments[lineSegment.segmentId];
 	            var segmentIsNotDisplayed = (segment_1.startXVal < firstDisplayedSegment.startXVal ||
 	                segment_1.endXVal > lastDisplayedSegment.endXVal);
 	            if (segmentIsNotDisplayed)
@@ -12883,12 +12928,14 @@ var demoApp =
 	        geometry.verticesNeedUpdate = true;
 	    };
 	    TrendLine.prototype.setupSegment = function (segmentId, segmentState) {
-	        var segment = this.displayedSegments[segmentId];
-	        if (!segment) {
-	            segment = segmentState;
-	            this.displayedSegments[segmentId] = segment;
+	        var lineSegment = this.displayedSegments[segmentId];
+	        if (!lineSegment) {
+	            if (this.freeSegmentsInds.length == 0)
+	                Utils_1.Utils.error('Max allocated segments reached');
+	            var ind = this.freeSegmentsInds.pop();
+	            lineSegment = this.displayedSegments[segmentId] = { segmentId: segmentId, ind: ind };
 	        }
-	        var segmentInd = segmentId % MAX_DISPLAYED_SEGMENTS;
+	        var segmentInd = lineSegment.ind;
 	        var lineStartVertex = this.vertices[segmentInd * 2];
 	        var lineEndVertex = this.vertices[segmentInd * 2 + 1];
 	        lineStartVertex.set(this.toLocalX(segmentState.startXVal), this.toLocalY(segmentState.startYVal), 0);
@@ -12899,12 +12946,13 @@ var demoApp =
 	            this.destroySegment(Number(segmentId));
 	    };
 	    TrendLine.prototype.destroySegment = function (segmentId) {
-	        var segmentInd = segmentId % MAX_DISPLAYED_SEGMENTS;
-	        var lineStartVertex = this.vertices[segmentInd * 2];
-	        var lineEndVertex = this.vertices[segmentInd * 2 + 1];
+	        var lineSegment = this.displayedSegments[segmentId];
+	        var lineStartVertex = this.vertices[lineSegment.ind * 2];
+	        var lineEndVertex = this.vertices[lineSegment.ind * 2 + 1];
 	        lineStartVertex.set(0, 0, 0);
 	        lineEndVertex.set(0, 0, 0);
 	        delete this.displayedSegments[segmentId];
+	        this.freeSegmentsInds.push(lineSegment.ind);
 	    };
 	    TrendLine.prototype.onZoomFrame = function (options) {
 	        var currentScale = this.lineSegments.scale;
@@ -12957,12 +13005,20 @@ var demoApp =
 	    data: [],
 	    marks: [],
 	    maxSegmentLength: 1000,
-	    minSegmentLengthInPx: 30,
-	    maxSegmentLengthInPx: 60,
 	    lineWidth: 2,
 	    lineColor: 0xFFFFFF,
 	    hasGradient: true,
-	    hasBeacon: false
+	    hasBeacon: false,
+	    settingsForTypes: {
+	        CANDLE: {
+	            minSegmentLengthInPx: 30,
+	            maxSegmentLengthInPx: 60,
+	        },
+	        LINE: {
+	            minSegmentLengthInPx: 2,
+	            maxSegmentLengthInPx: 10,
+	        }
+	    }
 	};
 	var Trend = (function () {
 	    function Trend(chartState, trendName, initialState) {
@@ -13010,7 +13066,6 @@ var demoApp =
 	        this.changeData(updatedTrendData, newData);
 	    };
 	    Trend.prototype.changeData = function (allData, newData) {
-	        // if (allData.length > MAX_DATA_LENGTH) Utils.error('max data length reached')
 	        for (var _i = 0, newData_1 = newData; _i < newData_1.length; _i++) {
 	            var item = newData_1[_i];
 	            if (item.xVal < this.minXVal)
@@ -13146,22 +13201,33 @@ var demoApp =
 
 	"use strict";
 	var Utils_1 = __webpack_require__(18);
+	var Trend_1 = __webpack_require__(22);
 	var deps_1 = __webpack_require__(3);
 	(function (TREND_MARK_SIDE) {
 	    TREND_MARK_SIDE[TREND_MARK_SIDE["TOP"] = 0] = "TOP";
 	    TREND_MARK_SIDE[TREND_MARK_SIDE["BOTTOM"] = 1] = "BOTTOM";
 	})(exports.TREND_MARK_SIDE || (exports.TREND_MARK_SIDE = {}));
 	var TREND_MARK_SIDE = exports.TREND_MARK_SIDE;
+	(function (EVENTS) {
+	    EVENTS[EVENTS["CHANGE"] = 0] = "CHANGE";
+	})(exports.EVENTS || (exports.EVENTS = {}));
+	var EVENTS = exports.EVENTS;
 	var AXIS_MARK_DEFAULT_OPTIONS = {
 	    title: '',
 	    description: '',
+	    descriptionColor: 'rgb(40,136,75)',
 	    value: 0,
 	    iconColor: 'rgb(255, 102, 217)',
-	    orientation: TREND_MARK_SIDE.TOP
+	    orientation: TREND_MARK_SIDE.TOP,
+	    width: 65,
+	    height: 80,
+	    offset: 40,
+	    margin: 20
 	};
 	var TrendMarks = (function () {
 	    function TrendMarks(chartState, trend) {
 	        this.items = {};
+	        this.rects = {};
 	        this.chartState = chartState;
 	        this.ee = new deps_1.EventEmitter();
 	        this.trend = trend;
@@ -13170,23 +13236,25 @@ var demoApp =
 	    }
 	    TrendMarks.prototype.bindEvents = function () {
 	        var _this = this;
-	        this.trend.onDataChange(function () { return _this.updateMarksPoints(); });
+	        this.trend.segments.onRebuild(function () { return _this.updateMarksSegments(); });
 	        this.trend.onChange(function (changedOptions) { return _this.onTrendChange(changedOptions); });
+	        this.chartState.screen.onZoomFrame(function () { return _this.calclulateMarksPositions(); });
 	    };
 	    TrendMarks.prototype.onTrendChange = function (changedOptions) {
 	        if (!changedOptions.marks)
 	            return;
 	        this.onMarksChange();
-	        this.ee.emit('change');
+	        this.ee.emit(EVENTS[EVENTS.CHANGE]);
 	    };
 	    TrendMarks.prototype.onChange = function (cb) {
 	        var _this = this;
-	        this.ee.on('change', cb);
+	        var eventName = EVENTS[EVENTS.CHANGE];
+	        this.ee.on(eventName, cb);
 	        return function () {
-	            _this.ee.off('change', cb);
+	            _this.ee.off(eventName, cb);
 	        };
 	    };
-	    TrendMarks.prototype.updateMarksPoints = function () {
+	    TrendMarks.prototype.updateMarksSegments = function () {
 	        var marks = this.items;
 	        var marksArr = [];
 	        var xVals = [];
@@ -13201,6 +13269,7 @@ var demoApp =
 	        for (var markInd = 0; markInd < marksArr.length; markInd++) {
 	            marksArr[markInd]._setSegment(points[markInd]);
 	        }
+	        this.calclulateMarksPositions();
 	    };
 	    TrendMarks.prototype.onMarksChange = function () {
 	        var trendsMarksOptions = this.trend.getOptions().marks;
@@ -13220,7 +13289,7 @@ var demoApp =
 	            var mark = new TrendMark(this.chartState, options, this.trend);
 	            marks[options.name] = mark;
 	        }
-	        this.updateMarksPoints();
+	        this.updateMarksSegments();
 	    };
 	    TrendMarks.prototype.createMark = function (options) {
 	        var marksOptions = this.trend.getOptions().marks;
@@ -13234,28 +13303,90 @@ var demoApp =
 	    TrendMarks.prototype.getItem = function (markName) {
 	        return this.items[markName];
 	    };
+	    TrendMarks.prototype.calclulateMarksPositions = function () {
+	        this.rects = {};
+	        for (var markName in this.items) {
+	            this.createMarkRect(this.items[markName]);
+	        }
+	    };
+	    TrendMarks.prototype.createMarkRect = function (mark) {
+	        var state = this.chartState;
+	        var options = mark.options;
+	        var width = options.width, height = options.height, offset = options.offset, name = options.name;
+	        var left = state.getPointOnXAxis(mark.xVal) - width / 2;
+	        var top = state.getPointOnYAxis(mark.yVal);
+	        var isTopSideMark = options.orientation == TREND_MARK_SIDE.TOP;
+	        var newOffset;
+	        var row = 0;
+	        if (isTopSideMark) {
+	            top += offset + height;
+	        }
+	        else {
+	            top -= offset;
+	        }
+	        var markRect = [left, top, width, height];
+	        var hasIntersection = false;
+	        do {
+	            for (var markName in this.rects) {
+	                var rect = this.rects[markName];
+	                hasIntersection = Utils_1.Utils.rectsIntersect(rect, markRect);
+	                if (!hasIntersection)
+	                    continue;
+	                if (isTopSideMark) {
+	                    markRect[1] = rect[1] + markRect[3] + options.margin;
+	                }
+	                else {
+	                    markRect[1] = rect[1] - rect[3] - options.margin;
+	                }
+	                row++;
+	                break;
+	            }
+	        } while (hasIntersection);
+	        if (isTopSideMark) {
+	            newOffset = markRect[1] - markRect[3] - state.getPointOnYAxis(mark.yVal);
+	        }
+	        else {
+	            newOffset = state.getPointOnYAxis(mark.yVal) - markRect[1];
+	        }
+	        mark._setOffset(newOffset);
+	        mark._setRow(row);
+	        this.rects[name] = markRect;
+	    };
 	    return TrendMarks;
 	}());
 	exports.TrendMarks = TrendMarks;
 	var TrendMark = (function () {
 	    function TrendMark(chartState, options, trend) {
-	        this.ee = new deps_1.EventEmitter();
+	        this.row = 0;
 	        this.options = options;
 	        this.chartState = chartState;
 	        this.trend = trend;
 	    }
-	    TrendMark.prototype.onAnimationFrame = function (cb) {
-	        var _this = this;
-	        this.ee.on('onAnimationFrame', cb);
-	        return function () {
-	            _this.ee.off('onAnimationFrame', cb);
-	        };
-	    };
 	    /**
 	     * only for internal usage
 	     */
 	    TrendMark.prototype._setSegment = function (segment) {
 	        this.segment = segment;
+	        if (!segment)
+	            return;
+	        if (this.trend.getOptions().type == Trend_1.TREND_TYPE.LINE) {
+	            this.xVal = segment.endXVal;
+	            this.yVal = segment.endYVal;
+	        }
+	        else if (this.options.orientation == TREND_MARK_SIDE.TOP) {
+	            this.xVal = segment.xVal;
+	            this.yVal = segment.maxYVal;
+	        }
+	        else {
+	            this.xVal = segment.xVal;
+	            this.yVal = segment.minYVal;
+	        }
+	    };
+	    TrendMark.prototype._setOffset = function (offset) {
+	        this.offset = offset;
+	    };
+	    TrendMark.prototype._setRow = function (row) {
+	        this.row = row;
 	    };
 	    return TrendMark;
 	}());
@@ -13269,6 +13400,7 @@ var demoApp =
 	"use strict";
 	var deps_1 = __webpack_require__(3);
 	var Vector3 = THREE.Vector3;
+	var Trend_1 = __webpack_require__(22);
 	var Utils_1 = __webpack_require__(18);
 	var MAX_ANIMATED_SEGMENTS = 100;
 	/**
@@ -13305,8 +13437,9 @@ var demoApp =
 	        }
 	    };
 	    TrendSegments.prototype.onTrendChangeHandler = function (changedOptions, newData) {
-	        var needRebuildSegments = changedOptions.maxSegmentLength != void 0;
-	        if (needRebuildSegments) {
+	        var needToRebuildSegments = (changedOptions.type != void 0 ||
+	            changedOptions.maxSegmentLength != void 0);
+	        if (needToRebuildSegments) {
 	            this.tryToRebuildSegments(true);
 	            return;
 	        }
@@ -13325,16 +13458,21 @@ var demoApp =
 	    };
 	    TrendSegments.prototype.tryToRebuildSegments = function (force) {
 	        if (force === void 0) { force = false; }
-	        var _a = this.trend.getOptions(), maxSegmentLength = _a.maxSegmentLength, minSegmentLengthInPx = _a.minSegmentLengthInPx, maxSegmentLengthInPx = _a.maxSegmentLengthInPx;
+	        var options = this.trend.getOptions();
+	        var trendTypeName = Trend_1.TREND_TYPE[options.type];
+	        var trendTypesSettings = options.settingsForTypes;
+	        var trendTypeSettings = trendTypesSettings[trendTypeName];
+	        var minSegmentLengthInPx = trendTypeSettings.minSegmentLengthInPx, maxSegmentLengthInPx = trendTypeSettings.maxSegmentLengthInPx;
 	        var needToRebuild = this.segments.length === 0 || force;
 	        var segmentLength = this.maxSegmentLength;
 	        // call toFixed(2) to prevent floating segment error compare
 	        var currentSegmentLengthInPx = Number(this.chartState.valueToPxByXAxis(segmentLength).toFixed(2));
+	        var currentMaxSegmentLengthInPx = Number(this.chartState.valueToPxByXAxis(this.maxSegmentLength).toFixed(2));
 	        if (currentSegmentLengthInPx < minSegmentLengthInPx) {
 	            needToRebuild = true;
 	            segmentLength = Math.ceil(this.chartState.pxToValueByXAxis(maxSegmentLengthInPx));
 	        }
-	        else if (this.chartState.valueToPxByXAxis(this.maxSegmentLength) >= maxSegmentLengthInPx) {
+	        else if (currentMaxSegmentLengthInPx > maxSegmentLengthInPx) {
 	            needToRebuild = true;
 	            segmentLength = this.chartState.pxToValueByXAxis(minSegmentLengthInPx);
 	        }
@@ -13347,9 +13485,19 @@ var demoApp =
 	        this.startSegmentId = 0;
 	        this.endSegmentId = 0;
 	        this.segmentsLength = 0;
+	        this.stopAllAnimations();
 	        this.appendData(null, true);
 	        this.recalculateDisplayedRange(true);
 	        this.ee.emit('rebuild');
+	    };
+	    TrendSegments.prototype.stopAllAnimations = function () {
+	        this.animatedSegmentsIds = [];
+	        this.animatedSegmentsForAppend = [];
+	        this.animatedSegmentsForAppend = [];
+	        if (this.prependAnimation)
+	            this.prependAnimation.kill();
+	        if (this.appendAnimation)
+	            this.appendAnimation.kill();
 	    };
 	    TrendSegments.prototype.recalculateDisplayedRange = function (segmentsAreRebuilded) {
 	        if (segmentsAreRebuilded === void 0) { segmentsAreRebuilded = false; }
@@ -13794,6 +13942,8 @@ var demoApp =
 	    __extends(TrendCandlesWidget, _super);
 	    function TrendCandlesWidget(chartState, trendName) {
 	        _super.call(this, chartState, trendName);
+	        // contains indexes of free candles
+	        this.freeCandlesInds = [];
 	        this.candlesPool = [];
 	        this.candles = {};
 	        this.initObject();
@@ -13824,6 +13974,8 @@ var demoApp =
 	        this.object3D = new Object3D();
 	        this.object3D.scale.set(scaleXFactor * zoomX, scaleYFactor * zoomY, 1);
 	        this.object3D.frustumCulled = false;
+	        for (var i = 0; i < MAX_CANDLES; i++)
+	            this.freeCandlesInds.push(i);
 	        this.setupCandles();
 	    };
 	    TrendCandlesWidget.prototype.setupCandles = function () {
@@ -13877,9 +14029,10 @@ var demoApp =
 	        if (!candle) {
 	            candle = this.candlesPool[candleInd] = new CandleWidget();
 	        }
-	        if (!this.candles[candleId])
+	        if (!this.candles[candleId]) {
 	            this.candles[candleId] = candle;
-	        this.object3D.add(candle.getObject3D());
+	            this.object3D.add(candle.getObject3D());
+	        }
 	        candle.getObject3D().position.set(this.toLocalX(segmentState.xVal), this.toLocalY(segmentState.yVal), 0);
 	        candle.setSegment(segmentState);
 	    };
@@ -13977,14 +14130,17 @@ var demoApp =
 	            },
 	            animations: {
 	                enabled: true,
-	                trendChangeSpeed: 1,
-	                trendChangeEase: Linear.easeNone,
-	                zoomSpeed: 1,
+	                trendChangeSpeed: 0.5,
+	                trendChangeEase: void 0,
+	                zoomSpeed: 0.5,
 	                zoomEase: Linear.easeNone,
+	                scrollSpeed: 0.5,
+	                scrollEase: Linear.easeNone,
 	                autoScrollSpeed: 1,
-	                autoScrollEase: Linear.easeNone
+	                autoScrollEase: Linear.easeNone,
 	            },
 	            autoRender: { enabled: true, fps: 0 },
+	            autoScroll: true,
 	            cursor: {
 	                dragMode: false,
 	                x: 0,
@@ -14111,8 +14267,8 @@ var demoApp =
 	        }
 	        // recalculate scroll position by changed cursor options
 	        var cursorOptions = changedProps.cursor;
-	        var scrollChanged = cursorOptions && data.cursor.dragMode && data.prevState.cursor.dragMode;
-	        if (scrollChanged) {
+	        var isMouseDrag = cursorOptions && data.cursor.dragMode && data.prevState.cursor.dragMode;
+	        if (isMouseDrag) {
 	            var oldX = data.prevState.cursor.x;
 	            var currentX = cursorOptions.x;
 	            var currentScroll = data.xAxis.range.scroll;
@@ -14120,19 +14276,21 @@ var demoApp =
 	            patch.xAxis = { range: { scroll: currentScroll + deltaXVal } };
 	            actualData = Utils_1.Utils.deepMerge(actualData, { xAxis: patch.xAxis });
 	        }
-	        var needToRecalculateXAxis = (scrollChanged ||
+	        var scrollXChanged = false;
+	        var needToRecalculateXAxis = (isMouseDrag ||
 	            (changedProps.xAxis && (changedProps.xAxis.range)) ||
 	            this.data.xAxis.range.zeroVal == void 0);
 	        if (needToRecalculateXAxis) {
 	            var xAxisPatch = this.recalculateXAxis(actualData);
 	            if (xAxisPatch) {
+	                scrollXChanged = true;
 	                patch = Utils_1.Utils.deepMerge(patch, { xAxis: xAxisPatch });
 	                actualData = Utils_1.Utils.deepMerge(actualData, { xAxis: xAxisPatch });
 	            }
 	        }
 	        // recalculate axis "from" and "to" for dynamics AXIS_RANGE_TYPE
 	        var needToRecalculateYAxis = ((data.yAxis.range.type === interfaces_1.AXIS_RANGE_TYPE.RELATIVE_END || data.yAxis.range.type === interfaces_1.AXIS_RANGE_TYPE.AUTO) &&
-	            (scrollChanged || changedProps.trends || changedProps.yAxis) ||
+	            (scrollXChanged || changedProps.trends || changedProps.yAxis) ||
 	            this.data.yAxis.range.zeroVal == void 0);
 	        if (needToRecalculateYAxis) {
 	            var yAxisPatch = this.recalculateYAxis(actualData);
@@ -14303,6 +14461,7 @@ var demoApp =
 	        return patch;
 	    };
 	    ChartState.prototype.zoom = function (zoomValue, origin) {
+	        var _this = this;
 	        if (origin === void 0) { origin = 0.5; }
 	        var _a = this.data.xAxis.range, zoom = _a.zoom, scroll = _a.scroll, scaleFactor = _a.scaleFactor;
 	        var newZoom = zoom * zoomValue;
@@ -14310,18 +14469,27 @@ var demoApp =
 	        var nextRange = this.data.width / (scaleFactor * newZoom);
 	        var newScroll = scroll + (currentRange - nextRange) * origin;
 	        this.setState({ xAxis: { range: { zoom: newZoom, scroll: newScroll } } });
+	        return new deps_1.Promise(function (resolve) {
+	            var animationTime = _this.data.animations.enabled ? _this.data.animations.zoomSpeed : 0;
+	            setTimeout(resolve, animationTime * 1000);
+	        });
 	    };
 	    ChartState.prototype.zoomToRange = function (range, origin) {
 	        var _a = this.data.xAxis.range, scaleFactor = _a.scaleFactor, zoom = _a.zoom;
 	        var currentRange = this.data.width / (scaleFactor * zoom);
-	        this.zoom(currentRange / range, origin);
+	        return this.zoom(currentRange / range, origin);
 	    };
 	    ChartState.prototype.scrollToEnd = function () {
+	        var _this = this;
 	        var state = this.data;
 	        var endXVal = this.trends.getEndXVal();
 	        var range = state.xAxis.range;
 	        var scroll = endXVal - this.pxToValueByXAxis(state.width) + this.pxToValueByXAxis(range.padding.end) - range.zeroVal;
 	        this.setState({ xAxis: { range: { scroll: scroll } } });
+	        return new deps_1.Promise(function (resolve) {
+	            var animationTime = _this.data.animations.enabled ? _this.data.animations.scrollSpeed : 0;
+	            setTimeout(resolve, animationTime * 1000);
+	        });
 	    };
 	    /**
 	     *  returns offset in pixels from xAxis.range.zeroVal to xVal
@@ -14511,8 +14679,8 @@ var demoApp =
 	var Screen = (function () {
 	    function Screen(chartState) {
 	        this.options = { scrollXVal: 0, scrollX: 0, scrollYVal: 0, scrollY: 0, zoomX: 1, zoomY: 1 };
-	        this.currentScrollX = { val: 0 };
-	        this.currentScrollY = { val: 0 };
+	        this.currentScrollX = { x: 0 };
+	        this.currentScrollY = { y: 0 };
 	        this.currentZoomX = { val: 1 };
 	        this.currentZoomY = { val: 1 };
 	        this.chartState = chartState;
@@ -14539,13 +14707,6 @@ var demoApp =
 	            y: h / 2
 	        };
 	    };
-	    Screen.prototype.onCameraChange = function (cb) {
-	        var _this = this;
-	        this.ee.on('cameraChange', cb);
-	        return function () {
-	            _this.ee.off('cameraChange', cb);
-	        };
-	    };
 	    Screen.prototype.onZoomFrame = function (cb) {
 	        var _this = this;
 	        var eventName = 'zoomFrame';
@@ -14570,33 +14731,37 @@ var demoApp =
 	            _this.ee.removeListener(eventName, cb);
 	        };
 	    };
+	    Screen.prototype.cameraIsMoving = function () {
+	        return !!(this.scrollXAnimation && this.scrollXAnimation.isActive() ||
+	            this.zoomXAnimation && this.zoomXAnimation.isActive());
+	    };
 	    Screen.prototype.transform = function (options) {
-	        var scrollXVal = options.scrollXVal, scrollYVal = options.scrollYVal, zoomX = options.zoomX, zoomY = options.zoomY;
-	        if (scrollXVal != void 0)
-	            this.options.scrollXVal = scrollXVal;
-	        if (scrollYVal != void 0)
-	            this.options.scrollYVal = scrollYVal;
+	        var scrollX = options.scrollX, scrollY = options.scrollY, zoomX = options.zoomX, zoomY = options.zoomY;
+	        if (scrollX != void 0)
+	            this.options.scrollX = scrollX;
+	        if (scrollY != void 0)
+	            this.options.scrollY = scrollY;
 	        if (zoomX != void 0)
 	            this.options.zoomX = zoomX;
 	        if (zoomY != void 0)
 	            this.options.zoomY = zoomY;
+	        if (scrollX != void 0 || zoomX) {
+	            options.scrollXVal = this.pxToValueByXAxis(scrollX != void 0 ? scrollX : this.options.scrollX);
+	            this.options.scrollXVal = options.scrollXVal;
+	        }
+	        if (scrollY != void 0 || zoomY) {
+	            options.scrollYVal = this.pxToValueByYAxis(scrollY != void 0 ? scrollY : this.options.scrollY);
+	            this.options.scrollYVal = options.scrollYVal;
+	        }
 	        // if (scrollXVal != void 0 || zoomX) {
-	        // 	options.scrollX = this.valueToPxByXAxis(scrollXVal != void 0 ? scrollXVal : this.options.scrollXVal);
+	        // 	options.scrollX = this.chartState.valueToPxByXAxis(scrollXVal != void 0 ? scrollXVal : this.options.scrollXVal);
 	        // 	this.options.scrollX = options.scrollX;
 	        // }
 	        //
 	        // if (scrollYVal != void 0 || zoomY) {
-	        // 	options.scrollY = this.valueToPxByYAxis(scrollYVal != void 0 ? scrollYVal : this.options.scrollYVal);
+	        // 	options.scrollY = this.chartState.valueToPxByYAxis(scrollYVal != void 0 ? scrollYVal : this.options.scrollYVal);
 	        // 	this.options.scrollY = options.scrollY;
 	        // }
-	        if (scrollXVal != void 0 || zoomX) {
-	            options.scrollX = this.chartState.valueToPxByXAxis(scrollXVal != void 0 ? scrollXVal : this.options.scrollXVal);
-	            this.options.scrollX = options.scrollX;
-	        }
-	        if (scrollYVal != void 0 || zoomY) {
-	            options.scrollY = this.chartState.valueToPxByYAxis(scrollYVal != void 0 ? scrollYVal : this.options.scrollYVal);
-	            this.options.scrollY = options.scrollY;
-	        }
 	        this.ee.emit('transformationFrame', options);
 	        if (options.scrollXVal != void 0 || options.scrollYVal != void 0) {
 	            this.ee.emit('scrollFrame', options);
@@ -14631,23 +14796,24 @@ var demoApp =
 	        var animations = state.data.animations;
 	        var canAnimate = animations.enabled && !isDragMode;
 	        var zoomXChanged = changedProps.xAxis.range.zoom;
-	        var isAutoscroll = !isDragMode && !zoomXChanged;
+	        var isAutoscroll = state.data.autoScroll && !isDragMode && !zoomXChanged;
 	        var time = isAutoscroll ? animations.autoScrollSpeed : animations.zoomSpeed;
 	        var ease = isAutoscroll ? animations.autoScrollEase : animations.zoomEase;
-	        var targetXVal = state.data.xAxis.range.scroll;
 	        if (this.scrollXAnimation)
 	            this.scrollXAnimation.pause();
+	        var range = state.data.xAxis.range;
+	        var targetX = range.scroll * range.scaleFactor * range.zoom;
 	        var cb = function () {
-	            _this.transform({ scrollXVal: _this.currentScrollX.val });
+	            _this.transform({ scrollX: _this.currentScrollX.x });
 	        };
 	        if (canAnimate) {
 	            this.scrollXAnimation = TweenLite.to(this.currentScrollX, time, {
-	                val: targetXVal, ease: ease
+	                x: targetX, ease: ease
 	            });
 	            this.scrollXAnimation.eventCallback('onUpdate', cb);
 	        }
 	        else {
-	            this.currentScrollX.val = targetXVal;
+	            this.currentScrollX.x = targetX;
 	            cb();
 	        }
 	    };
@@ -14657,20 +14823,21 @@ var demoApp =
 	        var animations = state.data.animations;
 	        var canAnimate = animations.enabled;
 	        var time = animations.zoomSpeed;
-	        var targetYVal = state.data.yAxis.range.scroll;
-	        if (this.scrollXAnimation)
-	            this.scrollXAnimation.pause();
+	        if (this.scrollYAnimation)
+	            this.scrollYAnimation.pause();
+	        var range = state.data.yAxis.range;
+	        var targetY = range.scroll * range.scaleFactor * range.zoom;
 	        var cb = function () {
-	            _this.transform({ scrollYVal: _this.currentScrollY.val });
+	            _this.transform({ scrollY: _this.currentScrollY.y });
 	        };
 	        if (canAnimate) {
 	            this.scrollYAnimation = TweenLite.to(this.currentScrollY, time, {
-	                val: targetYVal, ease: animations.zoomEase
+	                y: targetY, ease: animations.zoomEase
 	            });
 	            this.scrollYAnimation.eventCallback('onUpdate', cb);
 	        }
 	        else {
-	            this.currentScrollY.val = targetYVal;
+	            this.currentScrollY.y = targetY;
 	            cb();
 	        }
 	    };
@@ -14821,6 +14988,9 @@ var demoApp =
 	    };
 	    Screen.prototype.getBottom = function () {
 	        return this.getPointByScreenY(0);
+	    };
+	    Screen.prototype.getScreenRightVal = function () {
+	        return this.getValueByScreenX(this.chartState.data.width);
 	    };
 	    return Screen;
 	}());
@@ -15781,10 +15951,13 @@ var demoApp =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
+	var Geometry = THREE.Geometry;
 	var Mesh = THREE.Mesh;
 	var Object3D = THREE.Object3D;
 	var TrendsWidget_1 = __webpack_require__(19);
+	var TrendMarks_1 = __webpack_require__(23);
 	var Utils_1 = __webpack_require__(18);
+	var MAX_MARKS_IN_ROW = 3;
 	/**
 	 * widget for drawing trends marks for all trends
 	 */
@@ -15869,27 +16042,28 @@ var demoApp =
 	    TrendMarkWidget.prototype.initObject = function () {
 	        this.object3D = new Object3D();
 	        this.markMesh = this.createMarkMesh();
+	        this.line = this.createMarkLine();
 	        this.object3D.add(this.markMesh);
+	        this.object3D.add(this.line);
 	    };
 	    TrendMarkWidget.prototype.createMarkMesh = function () {
 	        var _a = this, markHeight = _a.markHeight, markWidth = _a.markWidth;
-	        var lineHeight = this.position.lineHeight;
-	        var meshHeight = markHeight + lineHeight;
-	        var meshWidth = markWidth;
 	        var mark = this.mark.options;
-	        var texture = Utils_1.Utils.createPixelPerfectTexture(meshWidth, meshHeight, function (ctx) {
-	            var circleOffset = 30;
+	        var isTopSide = mark.orientation == TrendMarks_1.TREND_MARK_SIDE.TOP;
+	        var texture = Utils_1.Utils.createPixelPerfectTexture(markWidth, markHeight, function (ctx) {
+	            var circleOffset = isTopSide ? 30 : 0;
 	            var circleR = 22;
 	            var circleX = markWidth / 2;
 	            var circleY = circleOffset + circleR;
+	            var textOffset = isTopSide ? 10 : circleR * 2 + 15;
 	            // title and description
 	            ctx.beginPath();
 	            ctx.textAlign = 'center';
 	            ctx.font = "11px Arial";
-	            ctx.fillStyle = 'rgb(129,129,129)';
-	            ctx.fillText(mark.title, circleX, 10);
-	            ctx.fillStyle = 'rgb(40,136,75)';
-	            ctx.fillText(mark.description, circleX, 22);
+	            ctx.fillStyle = 'rgba(255,255,255, 0.6)';
+	            ctx.fillText(mark.title, circleX, textOffset);
+	            ctx.fillStyle = mark.descriptionColor;
+	            ctx.fillText(mark.description, circleX, textOffset + 12);
 	            // icon circle
 	            ctx.beginPath();
 	            ctx.fillStyle = mark.iconColor;
@@ -15899,20 +16073,22 @@ var demoApp =
 	            ctx.font = "19px Arial";
 	            ctx.fillStyle = 'rgb(255, 255, 255)';
 	            ctx.fillText(mark.icon, circleX, circleY + 7);
-	            // line
-	            ctx.beginPath();
-	            ctx.strokeStyle = 'rgb(255, 255, 255)';
-	            ctx.lineWidth = 1;
-	            ctx.setLineDash([1, 4]);
-	            ctx.moveTo(markWidth / 2 + 0.5, circleY + circleR);
-	            ctx.lineTo(markWidth / 2 + 0.5, meshHeight);
-	            ctx.stroke();
 	        });
 	        var material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.FrontSide });
 	        material.transparent = true;
-	        var mesh = new Mesh(new THREE.PlaneGeometry(meshWidth, meshHeight), material);
-	        mesh.position.setY(meshHeight / 2);
+	        var mesh = new Mesh(new THREE.PlaneGeometry(markWidth, markHeight), material);
+	        var offset = this.mark.options.orientation == TrendMarks_1.TREND_MARK_SIDE.TOP ? this.mark.offset : -this.mark.offset;
+	        // mesh.position.setY(markHeight / 2 + offset);
 	        return mesh;
+	    };
+	    TrendMarkWidget.prototype.createMarkLine = function () {
+	        var lineGeometry = new Geometry();
+	        lineGeometry.vertices.push(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, this.mark.offset, 0));
+	        lineGeometry.computeLineDistances();
+	        var lineMaterial = new THREE.LineDashedMaterial({ dashSize: 1, gapSize: 4, transparent: true, opacity: 0.6 });
+	        var line = new THREE.Line(lineGeometry, lineMaterial);
+	        line.position.setZ(-0.1);
+	        return line;
 	    };
 	    TrendMarkWidget.prototype.getObject3D = function () {
 	        return this.object3D;
@@ -15926,8 +16102,33 @@ var demoApp =
 	    TrendMarkWidget.prototype.updatePosition = function () {
 	        if (!this.mark.segment)
 	            return;
-	        var pos = this.mark.segment.getFramePoint();
-	        this.object3D.position.set(pos.x, pos.y, 0);
+	        var mark = this.mark;
+	        var meshMaterial = this.markMesh.material;
+	        var lineMaterial = this.line.material;
+	        if (mark.row >= MAX_MARKS_IN_ROW - 1) {
+	            meshMaterial.opacity = 0;
+	            lineMaterial.opacity = 0;
+	        }
+	        else {
+	            meshMaterial.opacity = 1;
+	            lineMaterial.opacity = 1;
+	        }
+	        var screen = this.chartState.screen;
+	        var posX = screen.getPointOnXAxis(mark.xVal);
+	        var posY = screen.getPointOnYAxis(mark.yVal);
+	        var lineGeometry = this.line.geometry;
+	        if (mark.options.orientation == TrendMarks_1.TREND_MARK_SIDE.TOP) {
+	            this.markMesh.position.setY(this.markHeight / 2 + mark.offset);
+	            lineGeometry.vertices[1].setY(mark.offset);
+	        }
+	        else {
+	            this.markMesh.position.setY(-mark.offset - this.markHeight / 2);
+	            lineGeometry.vertices[1].setY(-mark.offset);
+	        }
+	        lineGeometry.verticesNeedUpdate = true;
+	        lineGeometry.lineDistancesNeedUpdate = true;
+	        lineGeometry.computeLineDistances();
+	        this.object3D.position.set(posX, posY, 0);
 	    };
 	    TrendMarkWidget.prototype.show = function () {
 	        if (!this.mark.segment)

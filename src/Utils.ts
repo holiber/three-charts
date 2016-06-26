@@ -135,6 +135,18 @@ export class Utils {
 	}
 
 
+	static rectsIntersect(r1: number[], r2: number[]) {
+		let [left1, top1, width1, height1] = r1;
+		let [left2, top2, width2, height2] = r2;
+		let [right1, right2, bottom1, bottom2] = [left1 + width1, left2 + width2, top1 + height1, top2 + height2];
+		return !(left2 > right1 ||
+			right2 < left1 ||
+			top2 > bottom1 ||
+			bottom2 < top1
+		);
+	}
+
+
 	/**!
 	 * @preserve $.parseColor
 	 * Copyright 2011 THEtheChad Elliott

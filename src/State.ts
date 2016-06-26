@@ -1,5 +1,5 @@
 import {ITrendOptions, Trend, ITrendData} from "./Trend";
-import {EventEmitter} from './deps';
+import {EventEmitter, Promise} from './deps';
 import {Utils} from './Utils';
 import Vector3 = THREE.Vector3;
 import {IChartWidgetOptions, ChartWidget} from "./Widget";
@@ -52,8 +52,13 @@ export interface IChartState {
 	 * use fps = 0 for no limits
 	 */
 	autoRender?: {enabled?: boolean, fps?: number}
+	autoScroll?: boolean;
 	showStats?: boolean;
-	computedData?: IChartStateComputedData
+	computedData?: IChartStateComputedData,
+	/**
+	 * overridden settings for single setState operation
+	 */
+	operationState?: IChartState;
 	[key: string]: any; // for "for in" loops
 }
 
@@ -81,14 +86,17 @@ export class ChartState {
 		},
 		animations: {
 			enabled: true,
-			trendChangeSpeed: 1,
-			trendChangeEase: Linear.easeNone,
-			zoomSpeed: 1,
+			trendChangeSpeed: 0.5,
+			trendChangeEase: void 0, //Linear.easeNone,
+			zoomSpeed: 0.5,
 			zoomEase: Linear.easeNone,
+			scrollSpeed: 0.5,
+			scrollEase: Linear.easeNone,
 			autoScrollSpeed: 1,
-			autoScrollEase: Linear.easeNone
+			autoScrollEase: Linear.easeNone,
 		},
 		autoRender: {enabled: true, fps: 0},
+		autoScroll: true,
 		cursor: {
 			dragMode: false,
 			x: 0,
@@ -242,8 +250,8 @@ export class ChartState {
 
 		// recalculate scroll position by changed cursor options
 		var cursorOptions = changedProps.cursor;
-		var scrollChanged = cursorOptions && data.cursor.dragMode && data.prevState.cursor.dragMode;
-		if (scrollChanged) {
+		var isMouseDrag = cursorOptions && data.cursor.dragMode && data.prevState.cursor.dragMode;
+		if (isMouseDrag) {
 			var oldX = data.prevState.cursor.x;
 			var currentX =  cursorOptions.x;
 			var currentScroll = data.xAxis.range.scroll;
@@ -252,24 +260,27 @@ export class ChartState {
 			actualData = Utils.deepMerge(actualData, {xAxis: patch.xAxis} as IChartState)
 		}
 
+		var scrollXChanged = false;
 		var needToRecalculateXAxis = (
-			scrollChanged ||
+			isMouseDrag ||
 			(changedProps.xAxis && (changedProps.xAxis.range)) ||
 			this.data.xAxis.range.zeroVal == void 0
 		);
 		if (needToRecalculateXAxis) {
 			let xAxisPatch = this.recalculateXAxis(actualData);
 			if (xAxisPatch) {
+				scrollXChanged = true;
 				patch = Utils.deepMerge(patch, {xAxis: xAxisPatch});
 				actualData = Utils.deepMerge(actualData, {xAxis: xAxisPatch} as IChartState);
 			}
 		}
 
 
+
 		// recalculate axis "from" and "to" for dynamics AXIS_RANGE_TYPE
 		var needToRecalculateYAxis = (
 			(data.yAxis.range.type === AXIS_RANGE_TYPE.RELATIVE_END || data.yAxis.range.type === AXIS_RANGE_TYPE.AUTO) &&
-			(scrollChanged || changedProps.trends || changedProps.yAxis) ||
+			(scrollXChanged || changedProps.trends || changedProps.yAxis) ||
 			this.data.yAxis.range.zeroVal == void 0
 		);
 		if (needToRecalculateYAxis){
@@ -470,27 +481,35 @@ export class ChartState {
 		return patch;
 	}
 
-	zoom(zoomValue: number, origin = 0.5) {
+	zoom(zoomValue: number, origin = 0.5): Promise<void> {
 		let {zoom, scroll, scaleFactor} = this.data.xAxis.range;
 		let newZoom = zoom * zoomValue;
 		let currentRange = this.data.width / (scaleFactor * zoom);
 		let nextRange = this.data.width / (scaleFactor * newZoom);
 		let newScroll = scroll + (currentRange - nextRange) * origin;
 		this.setState({xAxis: {range: {zoom: newZoom, scroll: newScroll}}});
+		return new Promise<void>((resolve) => {
+			let animationTime = this.data.animations.enabled ? this.data.animations.zoomSpeed : 0;
+			setTimeout(resolve, animationTime * 1000);
+		});
 	}
 	
-	zoomToRange(range: number, origin?: number) {
+	zoomToRange(range: number, origin?: number): Promise<void> {
 		var {scaleFactor, zoom} = this.data.xAxis.range;
 		let currentRange = this.data.width / (scaleFactor * zoom);
-		this.zoom(currentRange / range, origin);
+		return this.zoom(currentRange / range, origin);
 	}
 
-	scrollToEnd() {
+	scrollToEnd(): Promise<void> {
 		let state = this.data;
 		let endXVal = this.trends.getEndXVal();
 		let range = state.xAxis.range;
 		var scroll = endXVal - this.pxToValueByXAxis(state.width) + this.pxToValueByXAxis(range.padding.end) - range.zeroVal;
 		this.setState({xAxis: {range: {scroll: scroll}}});
+		return new Promise<void>((resolve) => {
+			let animationTime = this.data.animations.enabled ? this.data.animations.scrollSpeed : 0;
+			setTimeout(resolve, animationTime * 1000);
+		});
 	}
 
 	/**

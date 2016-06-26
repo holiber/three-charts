@@ -35,11 +35,11 @@ export declare class Screen {
         x: number;
         y: number;
     };
-    onCameraChange(cb: (x: number, y: number) => void): Function;
     onZoomFrame(cb: (zoomX: number, zoomY: number) => void): Function;
     onScrollFrame(cb: (options: IScreenTransformOptions) => void): Function;
     onTransformationFrame(cb: (options: IScreenTransformOptions) => void): Function;
-    transform(options: IScreenTransformOptions): void;
+    cameraIsMoving(): boolean;
+    private transform(options);
     private bindEvents();
     private onScrollXHandler(changedProps);
     private onScrollYHandler();
@@ -102,4 +102,5 @@ export declare class Screen {
      */
     getPointByScreenY(screenY: number): number;
     getBottom(): number;
+    getScreenRightVal(): number;
 }

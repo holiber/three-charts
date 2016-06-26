@@ -36,6 +36,7 @@ export declare class TrendSegments {
     getEndSegment(): TrendSegment;
     getStartSegment(): TrendSegment;
     private tryToRebuildSegments(force?);
+    private stopAllAnimations();
     private recalculateDisplayedRange(segmentsAreRebuilded?);
     /**
      * returns array of segments for values array

@@ -11,9 +11,13 @@ import Texture = THREE.Texture;
 import Vector2 = THREE.Vector2;
 import {TrendsWidget, TrendWidget} from "./TrendsWidget";
 import LineSegments = THREE.LineSegments;
-import {TrendMark} from "../TrendMarks";
+import { TrendMark, TREND_MARK_SIDE } from "../TrendMarks";
 import {Utils} from "../Utils";
 import LineDashedMaterial = THREE.LineDashedMaterial;
+import MeshBasicMaterial = THREE.MeshBasicMaterial;
+
+
+const MAX_MARKS_IN_ROW = 3;
 
 /**
  * widget for drawing trends marks for all trends
@@ -107,31 +111,32 @@ class TrendMarkWidget {
 	protected initObject() {
 		this.object3D = new Object3D();
 		this.markMesh = this.createMarkMesh();
+		this.line = this.createMarkLine();
 		this.object3D.add(this.markMesh);
+		this.object3D.add(this.line);
 	}
 
 	protected createMarkMesh(): Mesh {
 		var {markHeight, markWidth} = this;
-		var lineHeight = this.position.lineHeight;
-		var meshHeight = markHeight + lineHeight;
-		var meshWidth = markWidth;
 		var mark = this.mark.options;
+		var isTopSide = mark.orientation == TREND_MARK_SIDE.TOP;
 
-		var texture = Utils.createPixelPerfectTexture(meshWidth, meshHeight, (ctx) => {
+		var texture = Utils.createPixelPerfectTexture(markWidth, markHeight, (ctx) => {
 
-			var circleOffset = 30;
+			var circleOffset = isTopSide ? 30 : 0;
 			var circleR = 22;
 			var circleX = markWidth / 2;
 			var circleY = circleOffset + circleR;
+			var textOffset = isTopSide ? 10 : circleR * 2 + 15;
 
 			// title and description
 			ctx.beginPath();
 			ctx.textAlign = 'center';
 			ctx.font = "11px Arial";
-			ctx.fillStyle = 'rgb(129,129,129)';
-			ctx.fillText(mark.title, circleX, 10);
-			ctx.fillStyle = 'rgb(40,136,75)';
-			ctx.fillText(mark.description, circleX, 22);
+			ctx.fillStyle = 'rgba(255,255,255, 0.6)';
+			ctx.fillText(mark.title, circleX, textOffset);
+			ctx.fillStyle = mark.descriptionColor;
+			ctx.fillText(mark.description, circleX, textOffset + 12);
 
 			// icon circle
 			ctx.beginPath();
@@ -144,25 +149,30 @@ class TrendMarkWidget {
 			ctx.fillStyle = 'rgb(255, 255, 255)';
 			ctx.fillText(mark.icon, circleX, circleY + 7);
 
-			// line
-			ctx.beginPath();
-			ctx.strokeStyle = 'rgb(255, 255, 255)';
-			ctx.lineWidth = 1;
-			ctx.setLineDash([1, 4]);
-			ctx.moveTo(markWidth / 2 + 0.5, circleY + circleR);
-			ctx.lineTo(markWidth / 2  + 0.5, meshHeight);
-			ctx.stroke();
 		});
 
 		var material = new THREE.MeshBasicMaterial( {map: texture, side: THREE.FrontSide} );
 		material.transparent = true;
 
 		var mesh = new Mesh(
-			new THREE.PlaneGeometry(meshWidth, meshHeight),
+			new THREE.PlaneGeometry(markWidth, markHeight),
 			material
 		);
-		mesh.position.setY(meshHeight / 2);
+
+		let offset = this.mark.options.orientation == TREND_MARK_SIDE.TOP ? this.mark.offset : -this.mark.offset;
+		// mesh.position.setY(markHeight / 2 + offset);
+
 		return mesh;
+	}
+
+	protected createMarkLine() {
+		let lineGeometry = new Geometry();
+		lineGeometry.vertices.push( new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, this.mark.offset, 0) );
+		lineGeometry.computeLineDistances();
+		let lineMaterial = new THREE.LineDashedMaterial( {dashSize: 1, gapSize: 4, transparent: true, opacity: 0.6 } );
+		let line = new THREE.Line( lineGeometry, lineMaterial );
+		line.position.setZ(-0.1);
+		return line
 	}
 
 	getObject3D() {
@@ -179,8 +189,33 @@ class TrendMarkWidget {
 
 	private updatePosition() {
 		if (!this.mark.segment) return;
-		var pos = this.mark.segment.getFramePoint();
-		this.object3D.position.set(pos.x, pos.y, 0);
+		let mark = this.mark;
+		let meshMaterial = this.markMesh.material as MeshBasicMaterial;
+		let lineMaterial = this.line.material as LineBasicMaterial;
+		if (mark.row >= MAX_MARKS_IN_ROW - 1) {
+			meshMaterial.opacity = 0;
+			lineMaterial.opacity = 0;
+		} else {
+			meshMaterial.opacity = 1;
+			lineMaterial.opacity = 1;
+		}
+
+		let screen = this.chartState.screen;
+		let posX = screen.getPointOnXAxis(mark.xVal);
+		let posY = screen.getPointOnYAxis(mark.yVal);
+		let lineGeometry = this.line.geometry as Geometry;
+
+		if (mark.options.orientation == TREND_MARK_SIDE.TOP) {
+			this.markMesh.position.setY(this.markHeight / 2 + mark.offset);
+			lineGeometry.vertices[1].setY(mark.offset);
+		} else {
+			this.markMesh.position.setY(-mark.offset - this.markHeight / 2);
+			lineGeometry.vertices[1].setY(-mark.offset);
+		}
+		lineGeometry.verticesNeedUpdate = true;
+		lineGeometry.lineDistancesNeedUpdate = true;
+		lineGeometry.computeLineDistances();
+		this.object3D.position.set(posX, posY, 0);
 	}
 
 	private show() {
