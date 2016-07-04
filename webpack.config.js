@@ -24,7 +24,7 @@ module.exports = {
             {
                 exclude: [__dirname + '/src/node_modules'],
                 test: /\.ts$/,
-                loader: 'awesome-typescript-loader', //'ts-loader'
+                loader: 'awesome-typescript-loader'
             }
         ]
     },
