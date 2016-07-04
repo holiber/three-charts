@@ -1,4 +1,4 @@
-var ThreeChart =
+var simpleDemo =
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -46,10 +46,88 @@ var ThreeChart =
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	function __export(m) {
-	    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
-	}
-	__export(__webpack_require__(1));
+	var src_1 = __webpack_require__(1);
+	var Trend_1 = __webpack_require__(22);
+	var chart;
+	var DataSourse = (function () {
+	    function DataSourse() {
+	        this.data = [];
+	        var sec = 0;
+	        var val = 70;
+	        this.startTime = Date.now();
+	        while (sec < 15) {
+	            this.data.push({
+	                xVal: this.startTime + sec * 1000,
+	                yVal: val
+	            });
+	            val += Math.random() * 14 - 7;
+	            sec++;
+	        }
+	        this.endTime = this.data[this.data.length - 1].xVal;
+	    }
+	    DataSourse.prototype.getData = function () {
+	        return src_1.Utils.deepCopy(this.data);
+	    };
+	    DataSourse.prototype.getNext = function () {
+	        var lastVal = this.data[this.data.length - 1];
+	        var yVal = lastVal.yVal + Math.random() * 14 - 7;
+	        var xVal = this.endTime + 1000;
+	        this.endTime = xVal;
+	        var item = {
+	            xVal: xVal,
+	            yVal: yVal
+	        };
+	        this.data.push(item);
+	        return item;
+	    };
+	    DataSourse.prototype.getPrev = function () {
+	        var firstVal = this.data[0];
+	        var yVal = firstVal.yVal + Math.random() * 14 - 7;
+	        var xVal = this.startTime - 1000;
+	        this.startTime = xVal;
+	        var item = {
+	            xVal: xVal,
+	            yVal: yVal
+	        };
+	        this.data.unshift(item);
+	        return item;
+	    };
+	    return DataSourse;
+	}());
+	window.onload = function () {
+	    var dsMain = new DataSourse();
+	    chart = new src_1.Chart({
+	        $el: document.querySelector('.chart'),
+	        xAxis: {
+	            dataType: src_1.AXIS_DATA_TYPE.DATE,
+	            range: {
+	                type: src_1.AXIS_RANGE_TYPE.FIXED,
+	                from: Date.now(),
+	                to: Date.now() + 20000,
+	                maxLength: 5000000,
+	                minLength: 5000
+	            },
+	            marks: [
+	                { value: dsMain.endTime + 30000, name: 'brake', title: 'BRAKE', lineColor: '#ff6600' },
+	                { value: dsMain.endTime + 40000, name: 'close', title: 'CLOSE', lineColor: '#005187' }
+	            ]
+	        },
+	        trends: {
+	            'main': {
+	                type: Trend_1.TREND_TYPE.LINE,
+	                dataset: dsMain.getData(),
+	                hasBeacon: true,
+	                hasIndicator: true
+	            }
+	        },
+	        showStats: true
+	    });
+	    window['chart'] = chart;
+	    setInterval(function () {
+	        var val = dsMain.getNext();
+	        chart.getTrend('main').appendData([val]);
+	    }, 1000);
+	};
 
 
 /***/ },
@@ -15926,5 +16004,4 @@ var ThreeChart =
 
 /***/ }
 /******/ ]);
-//# sourceMappingURL=ThreeChart.js.map
- if (typeof module !== "undefined" && module.exports) module.exports = ThreeChart;
+//# sourceMappingURL=simpleDemo.js.map

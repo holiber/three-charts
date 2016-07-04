@@ -75,7 +75,7 @@ window.onload = function () {
 				minLength: 5000
 			},
 			marks: [
-				{value: dsMain.endTime + 30000, name: 'deadline', title: 'DEADLINE', lineColor: '#ff6600'},
+				{value: dsMain.endTime + 30000, name: 'brake', title: 'BRAKE', lineColor: '#ff6600'},
 				{value: dsMain.endTime + 40000, name: 'close', title: 'CLOSE', lineColor: '#005187'}
 			]
 		},
