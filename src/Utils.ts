@@ -255,6 +255,3 @@ export class Utils {
 
 
 }
-
-
-console.log(Utils.msToTimeString(1000));

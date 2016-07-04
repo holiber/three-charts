@@ -12678,7 +12678,6 @@ var demoApp =
 	    return Utils;
 	}());
 	exports.Utils = Utils;
-	console.log(Utils.msToTimeString(1000));
 
 
 /***/ },

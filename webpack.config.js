@@ -6,14 +6,13 @@ var CopyWebpackPlugin = require('copy-webpack-plugin');
 module.exports = {
     entry: {
         ThreeChart: './index.ts',
-        demoApp: "./demo/demoApp.ts"
-        //vendor: ["EventEmitter2"]
+        demoApp: './demo/demoApp.ts',
+        simpleDemo: './demo/simple/simpleDemo.ts'
     },
     output: {
         path: __dirname + '/build',
         filename: '[name].js',
         library: '[name]'
-        //filename: 'build/webpackbundle.js'
     },
     resolve: {
         // Add `.ts` and `.tsx` as a resolvable extension.
@@ -26,17 +25,15 @@ module.exports = {
                 exclude: [__dirname + '/src/node_modules'],
                 test: /\.ts$/,
                 loader: 'awesome-typescript-loader', //'ts-loader'
-                //include: [__dirname + '/src/**/*', __dirname + '/demo/**/*']
             }
         ]
     },
 
     plugins: [
-        //new CommonsPlugin(/* chunkName= */"vendor", /* filename= */"vendor.bundle.js"),
         new CopyWebpackPlugin([
-            // {output}/file.txt
             { from: 'node_modules/three/three.js' }
         ]),
+        
         // make webgl-chart.js index file
         new WebpackOnBuildPlugin(function(stats) {
             var fs = require('fs');
