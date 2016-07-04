@@ -1,5 +1,5 @@
 {
-  "name": "webgl-chart",
+  "name": "ThreeChart",
   "version": "0.0.1",
   "description": "line chart based on threejs",
   "main": "index.js",
