@@ -8,5 +8,4 @@ require('gsap/src/uncompressed/easing/EasePack.js');
 export var isPlainObject = require('is-plain-object') as Function;
 export var deepmerge = require('deepmerge') as Function;
 export var EventEmitter = require('EventEmitter2') as typeof EventEmitter2;
-(<any>window).ES6PROMISE = {Promise: (<any>window)['Promise']};
-export {Promise} from './polyfils/es6-promise';
+export {Promise} from './polyfills/es6-promise';

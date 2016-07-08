@@ -403,7 +403,6 @@ var simpleDemo =
 	exports.isPlainObject = __webpack_require__(9);
 	exports.deepmerge = __webpack_require__(11);
 	exports.EventEmitter = __webpack_require__(12);
-	window.ES6PROMISE = { Promise: window['Promise'] };
 	var es6_promise_1 = __webpack_require__(13);
 	exports.Promise = es6_promise_1.Promise;
 

@@ -31,7 +31,8 @@ module.exports = {
 
     plugins: [
         new CopyWebpackPlugin([
-            { from: 'node_modules/three/three.js' }
+            { from: 'node_modules/three/three.js' },
+            { from: 'src/polyfills', to: 'src/polyfills' }
         ]),
         
         // make webgl-chart.js index file
