@@ -1,5 +1,5 @@
 {
-  "name": "ThreeChart",
+  "name": "three-chart",
   "version": "0.0.1",
   "description": "line chart based on threejs",
   "main": "index.js",
@@ -28,6 +28,6 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "rimraf": "rimraf"
   },
-  "author": "",
+  "author": "Alexander Nazarov github.com/holiber",
   "license": "ISC"
 }
