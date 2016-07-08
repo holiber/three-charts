@@ -12,7 +12,7 @@ import {
 	IIteralable
 } from "./interfaces";
 import {Chart} from "./Chart";
-import Promise = ES6PROMISE.Promise;
+import {Promise} from './deps';
 
 
 interface IRecalculatedStateResult {

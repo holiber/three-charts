@@ -3,8 +3,7 @@ import {Utils} from "./Utils";
 import {MAX_DATA_LENGTH} from "./Chart";
 import {ITrendMarkOptions, TrendMarks} from "./TrendMarks";
 import {TrendSegments} from "./TrendSegments";
-import {EventEmitter} from './deps';
-import Promise = ES6PROMISE.Promise;
+import {EventEmitter, Promise} from './deps';
 
 export interface IPrependPromiseExecutor {
 	(requestedDataLength: number, resolve: (data: TTrendRawData) => void, reject: () => void): void;

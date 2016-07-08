@@ -47,7 +47,7 @@ var simpleDemo =
 
 	"use strict";
 	var src_1 = __webpack_require__(1);
-	var Trend_1 = __webpack_require__(18);
+	var Trend_1 = __webpack_require__(19);
 	var chart;
 	var DataSourse = (function () {
 	    function DataSourse() {
@@ -139,16 +139,16 @@ var simpleDemo =
 	    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
 	}
 	__export(__webpack_require__(2));
+	__export(__webpack_require__(27));
 	__export(__webpack_require__(26));
 	__export(__webpack_require__(25));
-	__export(__webpack_require__(24));
-	__export(__webpack_require__(22));
-	__export(__webpack_require__(18));
+	__export(__webpack_require__(23));
 	__export(__webpack_require__(19));
 	__export(__webpack_require__(20));
-	__export(__webpack_require__(23));
-	__export(__webpack_require__(14));
-	__export(__webpack_require__(16));
+	__export(__webpack_require__(21));
+	__export(__webpack_require__(24));
+	__export(__webpack_require__(15));
+	__export(__webpack_require__(17));
 
 
 /***/ },
@@ -160,18 +160,18 @@ var simpleDemo =
 	__webpack_require__(3);
 	var PerspectiveCamera = THREE.PerspectiveCamera;
 	var WebGLRenderer = THREE.WebGLRenderer;
-	var TrendsIndicatorWidget_1 = __webpack_require__(13);
-	var TrendsLineWidget_1 = __webpack_require__(17);
-	var TrendsCandleWidget_1 = __webpack_require__(21);
-	var State_1 = __webpack_require__(22);
-	var Utils_1 = __webpack_require__(14);
-	var TrendsBeaconWidget_1 = __webpack_require__(27);
-	var AxisWidget_1 = __webpack_require__(28);
-	var GridWidget_1 = __webpack_require__(29);
-	var TrendsLoadingWidget_1 = __webpack_require__(30);
-	var AxisMarksWidget_1 = __webpack_require__(31);
-	var TrendsMarksWidget_1 = __webpack_require__(32);
-	var BorderWidget_1 = __webpack_require__(33);
+	var TrendsIndicatorWidget_1 = __webpack_require__(14);
+	var TrendsLineWidget_1 = __webpack_require__(18);
+	var TrendsCandleWidget_1 = __webpack_require__(22);
+	var State_1 = __webpack_require__(23);
+	var Utils_1 = __webpack_require__(15);
+	var TrendsBeaconWidget_1 = __webpack_require__(28);
+	var AxisWidget_1 = __webpack_require__(29);
+	var GridWidget_1 = __webpack_require__(30);
+	var TrendsLoadingWidget_1 = __webpack_require__(31);
+	var AxisMarksWidget_1 = __webpack_require__(32);
+	var TrendsMarksWidget_1 = __webpack_require__(33);
+	var BorderWidget_1 = __webpack_require__(34);
 	exports.MAX_DATA_LENGTH = 2692000; //1000;
 	var Chart = (function () {
 	    function Chart(state) {
@@ -404,6 +404,8 @@ var simpleDemo =
 	exports.deepmerge = __webpack_require__(11);
 	exports.EventEmitter = __webpack_require__(12);
 	window.ES6PROMISE = { Promise: window['Promise'] };
+	var es6_promise_1 = __webpack_require__(13);
+	exports.Promise = es6_promise_1.Promise;
 
 
 /***/ },
@@ -11098,6 +11100,12 @@ var simpleDemo =
 
 /***/ },
 /* 13 */
+/***/ function(module, exports) {
+
+	module.exports = {Promise: window['Promise']}
+
+/***/ },
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -11106,9 +11114,9 @@ var simpleDemo =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Utils_1 = __webpack_require__(14);
+	var Utils_1 = __webpack_require__(15);
 	var Mesh = THREE.Mesh;
-	var TrendsWidget_1 = __webpack_require__(15);
+	var TrendsWidget_1 = __webpack_require__(16);
 	var Color = THREE.Color;
 	var CANVAS_WIDTH = 128;
 	var CANVAS_HEIGHT = 64;
@@ -11197,7 +11205,7 @@ var simpleDemo =
 
 
 /***/ },
-/* 14 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -11416,7 +11424,7 @@ var simpleDemo =
 
 
 /***/ },
-/* 15 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -11425,7 +11433,7 @@ var simpleDemo =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Widget_1 = __webpack_require__(16);
+	var Widget_1 = __webpack_require__(17);
 	var Object3D = THREE.Object3D;
 	/**
 	 * abstract manager class for all trends widgets
@@ -11542,7 +11550,7 @@ var simpleDemo =
 
 
 /***/ },
-/* 16 */
+/* 17 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -11566,7 +11574,7 @@ var simpleDemo =
 
 
 /***/ },
-/* 17 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -11578,10 +11586,10 @@ var simpleDemo =
 	var Geometry = THREE.Geometry;
 	var LineBasicMaterial = THREE.LineBasicMaterial;
 	var Vector3 = THREE.Vector3;
-	var TrendsWidget_1 = __webpack_require__(15);
+	var TrendsWidget_1 = __webpack_require__(16);
 	var LineSegments = THREE.LineSegments;
-	var Trend_1 = __webpack_require__(18);
-	var Utils_1 = __webpack_require__(14);
+	var Trend_1 = __webpack_require__(19);
+	var Utils_1 = __webpack_require__(15);
 	var MAX_DISPLAYED_SEGMENTS = 2000;
 	/**
 	 * widget for drawing trends lines
@@ -11720,15 +11728,14 @@ var simpleDemo =
 
 
 /***/ },
-/* 18 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var Utils_1 = __webpack_require__(14);
-	var TrendMarks_1 = __webpack_require__(19);
-	var TrendSegments_1 = __webpack_require__(20);
+	var Utils_1 = __webpack_require__(15);
+	var TrendMarks_1 = __webpack_require__(20);
+	var TrendSegments_1 = __webpack_require__(21);
 	var deps_1 = __webpack_require__(3);
-	var Promise = ES6PROMISE.Promise;
 	(function (TREND_TYPE) {
 	    TREND_TYPE[TREND_TYPE["LINE"] = 0] = "LINE";
 	    TREND_TYPE[TREND_TYPE["CANDLE"] = 1] = "CANDLE";
@@ -11888,7 +11895,7 @@ var simpleDemo =
 	        var requestedDataLength = to - from;
 	        if (!needToRequest)
 	            return;
-	        this.prependRequest = new Promise(function (resolve, reject) {
+	        this.prependRequest = new deps_1.Promise(function (resolve, reject) {
 	            _this.ee.emit('prependRequest', requestedDataLength, resolve, reject);
 	        });
 	        this.prependRequest.then(function (newData) {
@@ -11930,12 +11937,12 @@ var simpleDemo =
 
 
 /***/ },
-/* 19 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var Utils_1 = __webpack_require__(14);
-	var Trend_1 = __webpack_require__(18);
+	var Utils_1 = __webpack_require__(15);
+	var Trend_1 = __webpack_require__(19);
 	var deps_1 = __webpack_require__(3);
 	(function (TREND_MARK_SIDE) {
 	    TREND_MARK_SIDE[TREND_MARK_SIDE["TOP"] = 0] = "TOP";
@@ -12128,14 +12135,14 @@ var simpleDemo =
 
 
 /***/ },
-/* 20 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 	var deps_1 = __webpack_require__(3);
 	var Vector3 = THREE.Vector3;
-	var Trend_1 = __webpack_require__(18);
-	var Utils_1 = __webpack_require__(14);
+	var Trend_1 = __webpack_require__(19);
+	var Utils_1 = __webpack_require__(15);
 	var MAX_ANIMATED_SEGMENTS = 100;
 	/**
 	 *  Class helps to display and animate trends segments
@@ -12634,7 +12641,7 @@ var simpleDemo =
 
 
 /***/ },
-/* 21 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -12643,7 +12650,7 @@ var simpleDemo =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var TrendsWidget_1 = __webpack_require__(15);
+	var TrendsWidget_1 = __webpack_require__(16);
 	var Object3D = THREE.Object3D;
 	var Geometry = THREE.Geometry;
 	var Vector3 = THREE.Vector3;
@@ -12651,7 +12658,7 @@ var simpleDemo =
 	var Line = THREE.Line;
 	var MeshBasicMaterial = THREE.MeshBasicMaterial;
 	var PlaneGeometry = THREE.PlaneGeometry;
-	var Trend_1 = __webpack_require__(18);
+	var Trend_1 = __webpack_require__(19);
 	var LineBasicMaterial = THREE.LineBasicMaterial;
 	var RISE_COLOR = 0x2CAC40;
 	var FALL_COLOR = 0xEE5533;
@@ -12827,20 +12834,20 @@ var simpleDemo =
 
 
 /***/ },
-/* 22 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 	var deps_1 = __webpack_require__(3);
-	var Utils_1 = __webpack_require__(14);
+	var Utils_1 = __webpack_require__(15);
 	var Vector3 = THREE.Vector3;
-	var Widget_1 = __webpack_require__(16);
-	var Trends_1 = __webpack_require__(23);
-	var Screen_1 = __webpack_require__(24);
-	var AxisMarks_1 = __webpack_require__(25);
-	var interfaces_1 = __webpack_require__(26);
+	var Widget_1 = __webpack_require__(17);
+	var Trends_1 = __webpack_require__(24);
+	var Screen_1 = __webpack_require__(25);
+	var AxisMarks_1 = __webpack_require__(26);
+	var interfaces_1 = __webpack_require__(27);
 	var Chart_1 = __webpack_require__(2);
-	var Promise = ES6PROMISE.Promise;
+	var deps_2 = __webpack_require__(3);
 	/**
 	 * main class for manage chart state
 	 */
@@ -13204,7 +13211,7 @@ var simpleDemo =
 	        var nextRange = this.data.width / (scaleFactor * newZoom);
 	        var newScroll = scroll + (currentRange - nextRange) * origin;
 	        this.setState({ xAxis: { range: { zoom: newZoom, scroll: newScroll } } });
-	        return new Promise(function (resolve) {
+	        return new deps_2.Promise(function (resolve) {
 	            var animationTime = _this.data.animations.enabled ? _this.data.animations.zoomSpeed : 0;
 	            setTimeout(resolve, animationTime * 1000);
 	        });
@@ -13221,7 +13228,7 @@ var simpleDemo =
 	        var range = state.xAxis.range;
 	        var scroll = endXVal - this.pxToValueByXAxis(state.width) + this.pxToValueByXAxis(range.padding.end) - range.zeroVal;
 	        this.setState({ xAxis: { range: { scroll: scroll } } });
-	        return new Promise(function (resolve) {
+	        return new deps_2.Promise(function (resolve) {
 	            var animationTime = _this.data.animations.enabled ? _this.data.animations.scrollSpeed : 0;
 	            setTimeout(resolve, animationTime * 1000);
 	        });
@@ -13328,11 +13335,11 @@ var simpleDemo =
 
 
 /***/ },
-/* 23 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var Trend_1 = __webpack_require__(18);
+	var Trend_1 = __webpack_require__(19);
 	/**
 	 * Trends collection
 	 */
@@ -13401,7 +13408,7 @@ var simpleDemo =
 
 
 /***/ },
-/* 24 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -13733,7 +13740,7 @@ var simpleDemo =
 
 
 /***/ },
-/* 25 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -13742,8 +13749,8 @@ var simpleDemo =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Utils_1 = __webpack_require__(14);
-	var interfaces_1 = __webpack_require__(26);
+	var Utils_1 = __webpack_require__(15);
+	var interfaces_1 = __webpack_require__(27);
 	var deps_1 = __webpack_require__(3);
 	var AXIS_MARK_DEFAULT_OPTIONS = {
 	    type: 'simple',
@@ -13888,7 +13895,7 @@ var simpleDemo =
 
 
 /***/ },
-/* 26 */
+/* 27 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -13913,7 +13920,7 @@ var simpleDemo =
 
 
 /***/ },
-/* 27 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -13922,12 +13929,12 @@ var simpleDemo =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Utils_1 = __webpack_require__(14);
+	var Utils_1 = __webpack_require__(15);
 	var Mesh = THREE.Mesh;
 	var PlaneBufferGeometry = THREE.PlaneBufferGeometry;
 	var MeshBasicMaterial = THREE.MeshBasicMaterial;
-	var TrendsWidget_1 = __webpack_require__(15);
-	var Trend_1 = __webpack_require__(18);
+	var TrendsWidget_1 = __webpack_require__(16);
+	var Trend_1 = __webpack_require__(19);
 	/**
 	 * widget adds blinking beacon on trends end
 	 * activated when trend.hasBeacon = true
@@ -14041,7 +14048,7 @@ var simpleDemo =
 
 
 /***/ },
-/* 28 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14052,10 +14059,10 @@ var simpleDemo =
 	};
 	var Mesh = THREE.Mesh;
 	var Object3D = THREE.Object3D;
-	var Widget_1 = __webpack_require__(16);
-	var GridWidget_1 = __webpack_require__(29);
-	var Utils_1 = __webpack_require__(14);
-	var interfaces_1 = __webpack_require__(26);
+	var Widget_1 = __webpack_require__(17);
+	var GridWidget_1 = __webpack_require__(30);
+	var Utils_1 = __webpack_require__(15);
+	var interfaces_1 = __webpack_require__(27);
 	/**
 	 * widget for drawing axis
 	 */
@@ -14244,7 +14251,7 @@ var simpleDemo =
 
 
 /***/ },
-/* 29 */
+/* 30 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14254,9 +14261,9 @@ var simpleDemo =
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
 	var Vector3 = THREE.Vector3;
-	var Widget_1 = __webpack_require__(16);
+	var Widget_1 = __webpack_require__(17);
 	var LineSegments = THREE.LineSegments;
-	var Utils_1 = __webpack_require__(14);
+	var Utils_1 = __webpack_require__(15);
 	/**
 	 * widget for drawing chart grid
 	 */
@@ -14404,7 +14411,7 @@ var simpleDemo =
 
 
 /***/ },
-/* 30 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14413,12 +14420,12 @@ var simpleDemo =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Utils_1 = __webpack_require__(14);
+	var Utils_1 = __webpack_require__(15);
 	var Mesh = THREE.Mesh;
 	var PlaneBufferGeometry = THREE.PlaneBufferGeometry;
 	var MeshBasicMaterial = THREE.MeshBasicMaterial;
-	var TrendsWidget_1 = __webpack_require__(15);
-	var Trend_1 = __webpack_require__(18);
+	var TrendsWidget_1 = __webpack_require__(16);
+	var Trend_1 = __webpack_require__(19);
 	/**
 	 * widget adds loading indicator
 	 * activated when animations enabled
@@ -14519,7 +14526,7 @@ var simpleDemo =
 
 
 /***/ },
-/* 31 */
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14528,15 +14535,15 @@ var simpleDemo =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Widget_1 = __webpack_require__(16);
+	var Widget_1 = __webpack_require__(17);
 	var Object3D = THREE.Object3D;
 	var Geometry = THREE.Geometry;
 	var LineBasicMaterial = THREE.LineBasicMaterial;
 	var Vector3 = THREE.Vector3;
-	var Utils_1 = __webpack_require__(14);
+	var Utils_1 = __webpack_require__(15);
 	var Line = THREE.Line;
 	var Mesh = THREE.Mesh;
-	var interfaces_1 = __webpack_require__(26);
+	var interfaces_1 = __webpack_require__(27);
 	// TODO: support for yAxis
 	/**
 	 * widget for shows marks on axis
@@ -14677,7 +14684,7 @@ var simpleDemo =
 
 
 /***/ },
-/* 32 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14689,9 +14696,9 @@ var simpleDemo =
 	var Geometry = THREE.Geometry;
 	var Mesh = THREE.Mesh;
 	var Object3D = THREE.Object3D;
-	var TrendsWidget_1 = __webpack_require__(15);
-	var TrendMarks_1 = __webpack_require__(19);
-	var Utils_1 = __webpack_require__(14);
+	var TrendsWidget_1 = __webpack_require__(16);
+	var TrendMarks_1 = __webpack_require__(20);
+	var Utils_1 = __webpack_require__(15);
 	var MAX_MARKS_IN_ROW = 3;
 	/**
 	 * widget for drawing trends marks for all trends
@@ -14879,7 +14886,7 @@ var simpleDemo =
 
 
 /***/ },
-/* 33 */
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14888,7 +14895,7 @@ var simpleDemo =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Widget_1 = __webpack_require__(16);
+	var Widget_1 = __webpack_require__(17);
 	var LineSegments = THREE.LineSegments;
 	var Vector3 = THREE.Vector3;
 	/**
