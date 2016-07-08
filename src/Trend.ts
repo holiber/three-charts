@@ -161,7 +161,6 @@ export class Trend {
 	}
 
 	onPrependRequest(cb: IPrependPromiseExecutor): Function {
-		this.canRequestPrepend = true;
 		this.ee.on('prependRequest', cb);
 		return () => {
 			this.ee.off('prependRequest', cb);
