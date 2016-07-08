@@ -12939,7 +12939,6 @@ var simpleDemo =
 	    };
 	    Trend.prototype.onPrependRequest = function (cb) {
 	        var _this = this;
-	        this.canRequestPrepend = true;
 	        this.ee.on('prependRequest', cb);
 	        return function () {
 	            _this.ee.off('prependRequest', cb);
