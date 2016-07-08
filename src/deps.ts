@@ -1,4 +1,4 @@
-// TODO: think about different bundles build
+// TODO: think about different bundles
 // (<any>window).THREE = require('three/three');
 (<any>window).Stats = require('three/examples/js/libs/stats.min');
 (<any>window).TweenLite = require('gsap/src/uncompressed/TweenMax');
@@ -8,5 +8,4 @@ require('gsap/src/uncompressed/easing/EasePack.js');
 export var isPlainObject = require('is-plain-object') as Function;
 export var deepmerge = require('deepmerge') as Function;
 export var EventEmitter = require('EventEmitter2') as typeof EventEmitter2;
-
-export {Promise} from 'es6promise-custom';
+(<any>window).ES6PROMISE = {Promise: (<any>window)['Promise']};

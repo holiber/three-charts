@@ -1,5 +1,5 @@
 import {ITrendOptions, Trend, ITrendData} from "./Trend";
-import {EventEmitter, Promise} from './deps';
+import {EventEmitter} from './deps';
 import {Utils} from './Utils';
 import Vector3 = THREE.Vector3;
 import {IChartWidgetOptions, ChartWidget} from "./Widget";
@@ -12,6 +12,7 @@ import {
 	IIteralable
 } from "./interfaces";
 import {Chart} from "./Chart";
+import Promise = ES6PROMISE.Promise;
 
 
 interface IRecalculatedStateResult {
