@@ -101,6 +101,11 @@ export declare class Screen {
      * returns offset in pixels from yAxis.range.zeroVal value by screen scrollY coordinate
      */
     getPointByScreenY(screenY: number): number;
+    getTop(): number;
     getBottom(): number;
+    getLeft(): number;
     getScreenRightVal(): number;
+    getTopVal(): number;
+    getBottomVal(): number;
+    getCenterYVal(): number;
 }

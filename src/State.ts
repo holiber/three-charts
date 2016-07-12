@@ -108,6 +108,7 @@ export class ChartState {
 	trends: Trends;
 	screen: Screen;
 	xAxisMarks: AxisMarks;
+	yAxisMarks: AxisMarks;
 	private ee: EventEmitter2;
 
 	constructor(initialState: IChartState) {
@@ -130,6 +131,7 @@ export class ChartState {
 		this.setState({computedData: this.getComputedData()});
 		this.savePrevState();
 		this.xAxisMarks = new AxisMarks(this, AXIS_TYPE.X);
+		this.yAxisMarks = new AxisMarks(this, AXIS_TYPE.Y);
 		this.initListeners();
 		
 		// message to other modules that ChartState.data is ready for use 

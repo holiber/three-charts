@@ -92,9 +92,11 @@ window.onload = function () {
 
 	chart = new Chart({
 		$el: document.querySelector('.chart'),
-		// yAxis: {
-		// 	range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 100}
-		// },
+		yAxis: {
+			marks: [
+				{value: dsMain.data[0].yVal, name: 'openprice', title: 'OPEN PRICE', lineColor: '#29874b', stickToEdges: true},
+			]
+		},
 		xAxis: {
 			//range: {type: AXIS_RANGE_TYPE.FIXED, from: 10, to: 30},
 			dataType: AXIS_DATA_TYPE.DATE,
@@ -106,8 +108,8 @@ window.onload = function () {
 				minLength: 5000
 			},
 			marks: [
-				{value: dsMain.endTime + 30000, name: 'deadline', title: 'DEADLINE', lineColor: '#ff6600', type: 'timeleft'},
-				{value: dsMain.endTime + 40000, name: 'close', title: 'CLOSE', lineColor: '#005187', type: 'timeleft'}
+				{value: dsMain.endTime + 30000, name: 'deadline', title: 'DEADLINE', lineColor: '#ff6600', type: 'timeleft', showValue: true},
+				{value: dsMain.endTime + 40000, name: 'close', title: 'CLOSE', lineColor: '#005187', type: 'timeleft', showValue: true}
 			]
 			// range: {
 			// 	from: 80,
@@ -121,6 +123,7 @@ window.onload = function () {
 				hasBeacon: true,
 				hasIndicator: true,
 				hasGradient: false,
+				canRequestPrepend: true,
 				marks: [MarksSource.generate(now + 3000), MarksSource.generate(now + 3000), MarksSource.generate(now + 4000)]
 			},
 			// 'red': {dataset: dsRed.data, lineColor: 0xFF2222, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
@@ -137,7 +140,7 @@ window.onload = function () {
 			//TrendsIndicator: {enabled: false},
 			// TrendsMarks: {enabled: false},
 			// TrendsLoading: {enabled: false},
-			AxisMarks: {enabled: false}
+			// AxisMarks: {enabled: false}
 		}
 	});
 	

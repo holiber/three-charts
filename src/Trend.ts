@@ -29,6 +29,7 @@ export interface ITrendOptions {
 	hasBeacon?: boolean;
 	maxSegmentLength?: number;
 	marks?: ITrendMarkOptions[];
+	canRequestPrepend? :boolean;
 	onPrependRequest?: IPrependPromiseExecutor;
 	settingsForTypes?: {
 		CANDLE?: ITrendTypeSettings,
@@ -48,8 +49,8 @@ const DEFAULT_OPTIONS: ITrendOptions = {
 	hasBeacon: false,
 	settingsForTypes: {
 		CANDLE: {
-			minSegmentLengthInPx: 30,
-			maxSegmentLengthInPx: 60,
+			minSegmentLengthInPx: 20,
+			maxSegmentLengthInPx: 40,
 		},
 		LINE: {
 			minSegmentLengthInPx: 2,
@@ -81,7 +82,7 @@ export class Trend {
 		if (options.dataset) this.calculatedOptions.data = Trend.prepareData(options.dataset);
 		this.calculatedOptions.dataset = [];
 		this.ee = new EventEmitter();
-		this.canRequestPrepend = !!options.onPrependRequest;
+		this.canRequestPrepend = options.canRequestPrepend != void 0 ? options.canRequestPrepend : !!options.onPrependRequest;
 		this.bindEvents();
 	}
 

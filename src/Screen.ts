@@ -368,13 +368,33 @@ export class Screen {
 	getPointByScreenY(screenY: number): number {
 		return this.getPointOnYAxis(this.getValueByScreenY(screenY));
 	}
+
+	getTop(): number {
+		return this.getPointByScreenY(this.chartState.data.height);
+	}
 	
 	getBottom(): number {
 		return this.getPointByScreenY(0);
 	}
 
+	getLeft(): number {
+		return this.getPointByScreenX(0);
+	}
+
 	getScreenRightVal() {
 		return this.getValueByScreenX(this.chartState.data.width);
+	}
+
+	getTopVal() {
+		return this.getValueByScreenY(this.chartState.data.height);
+	}
+	
+	getBottomVal() {
+		return this.getValueByScreenY(0);
+	}
+
+	getCenterYVal() {
+		return this.getValueByScreenY(this.chartState.data.height / 2);
 	}
 
 }

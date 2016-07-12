@@ -222,21 +222,7 @@ export class TrendSegments {
 			this.ee.removeListener(eventName, cb);
 		}
 	}
-
-	// prependPoint(items: ITrendItem[]): TrendSegment {
-	// 	var id = this.nextEmptyId++;
-	// 	var segment = this.segmentsById[id];
-	// 	var nextPoint = this.segmentsById[this.startPointId];
-	// 	if (nextPoint.hasValue) {
-	// 		nextPoint.prevId = id;
-	// 		segment.nextId = nextPoint.id;
-	// 	}
-	// 	segment.hasValue = true;
-	// 	//segment.appendItems(items);
-	// 	this.startPointId = id;
-	// 	return segment;
-	// }
-
+	
 	allocateNextSegment() {
 		var id = this.nextEmptyId++;
 		var segment = new TrendSegment(this, id);

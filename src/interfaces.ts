@@ -49,7 +49,7 @@ export interface IAxisRange {
 export enum AXIS_DATA_TYPE {NUMBER, DATE}
 
 export interface IAxisOptions {
-	range: IAxisRange;
+	range?: IAxisRange;
 	dataType?: AXIS_DATA_TYPE;
 	gridMinSize?: number;
 	autoScroll?: boolean;

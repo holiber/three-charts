@@ -79,7 +79,7 @@ export class Utils {
 	 */
 	static createPixelPerfectTexture(width: number, height: number, fn: (ctx: CanvasRenderingContext2D) => void ): Texture{
 		var texture = this.createTexture(width, height, fn);
-		texture.magFilter = THREE.NearestFilter;
+		// texture.magFilter = THREE.NearestFilter;
 		texture.minFilter = THREE.NearestFilter;
 		return texture;
 	}

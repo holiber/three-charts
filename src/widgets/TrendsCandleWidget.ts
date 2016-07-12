@@ -208,7 +208,7 @@ class CandleWidget {
 		);
 		let lineGeometry  = new Geometry();
 		lineGeometry.vertices.push(new Vector3(), new Vector3);
-		this.line = new Line(lineGeometry, new LineBasicMaterial({linewidth: 3}));
+		this.line = new Line(lineGeometry, new LineBasicMaterial({linewidth: 1}));
 		this.rect.add(this.line);
 	}
 }

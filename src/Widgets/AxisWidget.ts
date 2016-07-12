@@ -77,15 +77,13 @@ export class AxisWidget extends ChartWidget {
 			canvasHeight = visibleHeight * 3;
 		}
 
-		var texture = Utils.createTexture(canvasWidth, canvasHeight, (ctx) => {
+		var texture = Utils.createPixelPerfectTexture(canvasWidth, canvasHeight, (ctx) => {
 			ctx.beginPath();
 			ctx.font = "10px Arial";
 			ctx.fillStyle = "rgba(255,255,255,0.5)";
 			ctx.strokeStyle = "rgba(255,255,255,0.1)";
 		});
 
-		texture.magFilter = THREE.NearestFilter;
-		texture.minFilter = THREE.NearestFilter;
 
 		var material = new THREE.MeshBasicMaterial( {map: texture, side: THREE.FrontSide} );
 		material.transparent = true;

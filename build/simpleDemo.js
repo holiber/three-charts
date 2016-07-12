@@ -276,20 +276,16 @@ var simpleDemo =
 	        //this.state.screen.onCameraChange((scrollX, scrollY) => this.onCameraChangeHandler(scrollX, scrollY))
 	        this.state.screen.onTransformationFrame(function (options) { return _this.onScreenTransform(options); });
 	    };
-	    Chart.prototype.onCameraChangeHandler = function (x, y) {
-	        if (x != void 0) {
-	            this.camera.position.setX(this.cameraInitialPosition.x + x);
-	        }
-	        if (y != void 0) {
-	            this.camera.position.setY(this.cameraInitialPosition.y + y);
-	        }
-	    };
 	    Chart.prototype.onScreenTransform = function (options) {
 	        if (options.scrollX != void 0) {
-	            this.camera.position.setX(this.cameraInitialPosition.x + options.scrollX);
+	            var scrollX_1 = this.cameraInitialPosition.x + options.scrollX;
+	            // scrollX =  Math.round(scrollX); // prevent to set camera beetween pixels
+	            this.camera.position.setX(scrollX_1);
 	        }
 	        if (options.scrollY != void 0) {
-	            this.camera.position.setY(this.cameraInitialPosition.y + options.scrollY);
+	            var scrollY_1 = this.cameraInitialPosition.y + options.scrollY;
+	            // scrollY = Math.round(scrollY); // prevent to set camera beetween pixels
+	            this.camera.position.setY(scrollY_1);
 	        }
 	    };
 	    Chart.prototype.autoscroll = function () {
@@ -11278,7 +11274,7 @@ var simpleDemo =
 	     */
 	    Utils.createPixelPerfectTexture = function (width, height, fn) {
 	        var texture = this.createTexture(width, height, fn);
-	        texture.magFilter = THREE.NearestFilter;
+	        // texture.magFilter = THREE.NearestFilter;
 	        texture.minFilter = THREE.NearestFilter;
 	        return texture;
 	    };
@@ -11752,8 +11748,8 @@ var simpleDemo =
 	    hasBeacon: false,
 	    settingsForTypes: {
 	        CANDLE: {
-	            minSegmentLengthInPx: 30,
-	            maxSegmentLengthInPx: 60,
+	            minSegmentLengthInPx: 20,
+	            maxSegmentLengthInPx: 40,
 	        },
 	        LINE: {
 	            minSegmentLengthInPx: 2,
@@ -11776,7 +11772,7 @@ var simpleDemo =
 	            this.calculatedOptions.data = Trend.prepareData(options.dataset);
 	        this.calculatedOptions.dataset = [];
 	        this.ee = new deps_1.EventEmitter();
-	        this.canRequestPrepend = !!options.onPrependRequest;
+	        this.canRequestPrepend = options.canRequestPrepend != void 0 ? options.canRequestPrepend : !!options.onPrependRequest;
 	        this.bindEvents();
 	    }
 	    Trend.prototype.onInitialStateApplied = function () {
@@ -12319,19 +12315,6 @@ var simpleDemo =
 	            _this.ee.removeListener(eventName, cb);
 	        };
 	    };
-	    // prependPoint(items: ITrendItem[]): TrendSegment {
-	    // 	var id = this.nextEmptyId++;
-	    // 	var segment = this.segmentsById[id];
-	    // 	var nextPoint = this.segmentsById[this.startPointId];
-	    // 	if (nextPoint.hasValue) {
-	    // 		nextPoint.prevId = id;
-	    // 		segment.nextId = nextPoint.id;
-	    // 	}
-	    // 	segment.hasValue = true;
-	    // 	//segment.appendItems(items);
-	    // 	this.startPointId = id;
-	    // 	return segment;
-	    // }
 	    TrendSegments.prototype.allocateNextSegment = function () {
 	        var id = this.nextEmptyId++;
 	        var segment = new TrendSegment(this, id);
@@ -12825,7 +12808,7 @@ var simpleDemo =
 	        this.rect = new Mesh(new PlaneGeometry(1, 1), new MeshBasicMaterial());
 	        var lineGeometry = new Geometry();
 	        lineGeometry.vertices.push(new Vector3(), new Vector3);
-	        this.line = new Line(lineGeometry, new LineBasicMaterial({ linewidth: 3 }));
+	        this.line = new Line(lineGeometry, new LineBasicMaterial({ linewidth: 1 }));
 	        this.rect.add(this.line);
 	    };
 	    return CandleWidget;
@@ -12905,6 +12888,7 @@ var simpleDemo =
 	        this.setState({ computedData: this.getComputedData() });
 	        this.savePrevState();
 	        this.xAxisMarks = new AxisMarks_1.AxisMarks(this, interfaces_1.AXIS_TYPE.X);
+	        this.yAxisMarks = new AxisMarks_1.AxisMarks(this, interfaces_1.AXIS_TYPE.Y);
 	        this.initListeners();
 	        // message to other modules that ChartState.data is ready for use 
 	        this.ee.emit('initialStateApplied', initialState);
@@ -13727,11 +13711,26 @@ var simpleDemo =
 	    Screen.prototype.getPointByScreenY = function (screenY) {
 	        return this.getPointOnYAxis(this.getValueByScreenY(screenY));
 	    };
+	    Screen.prototype.getTop = function () {
+	        return this.getPointByScreenY(this.chartState.data.height);
+	    };
 	    Screen.prototype.getBottom = function () {
 	        return this.getPointByScreenY(0);
 	    };
+	    Screen.prototype.getLeft = function () {
+	        return this.getPointByScreenX(0);
+	    };
 	    Screen.prototype.getScreenRightVal = function () {
 	        return this.getValueByScreenX(this.chartState.data.width);
+	    };
+	    Screen.prototype.getTopVal = function () {
+	        return this.getValueByScreenY(this.chartState.data.height);
+	    };
+	    Screen.prototype.getBottomVal = function () {
+	        return this.getValueByScreenY(0);
+	    };
+	    Screen.prototype.getCenterYVal = function () {
+	        return this.getValueByScreenY(this.chartState.data.height / 2);
 	    };
 	    return Screen;
 	}());
@@ -13753,22 +13752,19 @@ var simpleDemo =
 	var deps_1 = __webpack_require__(3);
 	var AXIS_MARK_DEFAULT_OPTIONS = {
 	    type: 'simple',
-	    lineWidth: 2,
-	    value: 0
+	    lineWidth: 1,
+	    value: 0,
+	    showValue: false,
+	    stickToEdges: false
 	};
 	var AxisMarks = (function () {
 	    function AxisMarks(chartState, axisType) {
 	        this.items = {};
-	        if (axisType == interfaces_1.AXIS_TYPE.Y) {
-	            // TODO: axis mark on Y axis
-	            Utils_1.Utils.error('axis mark on Y axis not supported yet');
-	            return;
-	        }
 	        this.chartState = chartState;
 	        this.ee = new deps_1.EventEmitter();
 	        this.axisType = axisType;
 	        var marks = this.items;
-	        var axisMarksOptions = chartState.data.xAxis.marks;
+	        var axisMarksOptions = axisType == interfaces_1.AXIS_TYPE.X ? chartState.data.xAxis.marks : chartState.data.yAxis.marks;
 	        for (var _i = 0, axisMarksOptions_1 = axisMarksOptions; _i < axisMarksOptions_1.length; _i++) {
 	            var options = axisMarksOptions_1[_i];
 	            var axisMark = void 0;
@@ -13780,15 +13776,21 @@ var simpleDemo =
 	                Utils_1.Utils.error('duplicated mark name ' + options.name);
 	            // create mark instance based on type option
 	            if (options.type == 'timeleft') {
-	                axisMark = new AxisTimeleftMark(chartState, interfaces_1.AXIS_TYPE.X, options);
+	                axisMark = new AxisTimeleftMark(chartState, axisType, options);
 	            }
 	            else {
-	                axisMark = new AxisMark(chartState, interfaces_1.AXIS_TYPE.X, options);
+	                axisMark = new AxisMark(chartState, axisType, options);
 	            }
 	            marks[options.name] = axisMark;
 	        }
 	        this.bindEvents();
 	    }
+	    AxisMarks.prototype.bindEvents = function () {
+	        var _this = this;
+	        this.chartState.onTrendChange(function (trendName, changedOptions, newData) {
+	            _this.onTrendChange(trendName, newData);
+	        });
+	    };
 	    AxisMarks.prototype.onTrendChange = function (trendName, newData) {
 	        if (!newData)
 	            return;
@@ -13803,10 +13805,6 @@ var simpleDemo =
 	                this.ee.emit('markCrossed', trendName, newData);
 	        }
 	    };
-	    AxisMarks.prototype.bindEvents = function () {
-	        var _this = this;
-	        this.chartState.onTrendChange(function (trendName, changedOptions, newData) { return _this.onTrendChange(trendName, newData); });
-	    };
 	    AxisMarks.prototype.getItems = function () {
 	        return this.items;
 	    };
@@ -13819,10 +13817,6 @@ var simpleDemo =
 	var AxisMark = (function () {
 	    function AxisMark(chartState, axisType, options) {
 	        this.renderOnTrendsChange = false;
-	        if (axisType == interfaces_1.AXIS_TYPE.Y) {
-	            // TODO: axis mark on Y axis
-	            Utils_1.Utils.error('axis mark on Y axis not supported yet');
-	        }
 	        this.ee = new deps_1.EventEmitter();
 	        this.options = options;
 	        this.axisType = axisType;
@@ -14110,14 +14104,12 @@ var simpleDemo =
 	            canvasWidth = 50;
 	            canvasHeight = visibleHeight * 3;
 	        }
-	        var texture = Utils_1.Utils.createTexture(canvasWidth, canvasHeight, function (ctx) {
+	        var texture = Utils_1.Utils.createPixelPerfectTexture(canvasWidth, canvasHeight, function (ctx) {
 	            ctx.beginPath();
 	            ctx.font = "10px Arial";
 	            ctx.fillStyle = "rgba(255,255,255,0.5)";
 	            ctx.strokeStyle = "rgba(255,255,255,0.1)";
 	        });
-	        texture.magFilter = THREE.NearestFilter;
-	        texture.minFilter = THREE.NearestFilter;
 	        var material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.FrontSide });
 	        material.transparent = true;
 	        var axisMesh = new Mesh(new THREE.PlaneGeometry(canvasWidth, canvasHeight), material);
@@ -14288,7 +14280,7 @@ var simpleDemo =
 	    };
 	    GridWidget.prototype.initGrid = function () {
 	        var geometry = new THREE.Geometry();
-	        var material = new THREE.LineBasicMaterial({ linewidth: 1, opacity: 0.09, transparent: true });
+	        var material = new THREE.LineBasicMaterial({ linewidth: 2.5, opacity: 0.05, transparent: true });
 	        var xLinesCount = this.gridSizeH;
 	        var yLinesCount = this.gridSizeV;
 	        while (xLinesCount--)
@@ -14353,6 +14345,7 @@ var simpleDemo =
 	        if (options.zoomY)
 	            this.lineSegments.scale.setY(yAxis.range.scaleFactor * options.zoomY);
 	    };
+	    // TODO: move this code to core
 	    GridWidget.getGridParamsForAxis = function (axisOptions, axisWidth, scroll, zoom) {
 	        var axisRange = axisOptions.range;
 	        var from = axisOptions.range.zeroVal + scroll;
@@ -14543,7 +14536,6 @@ var simpleDemo =
 	var Line = THREE.Line;
 	var Mesh = THREE.Mesh;
 	var interfaces_1 = __webpack_require__(27);
-	// TODO: support for yAxis
 	/**
 	 * widget for shows marks on axis
 	 */
@@ -14553,8 +14545,12 @@ var simpleDemo =
 	        _super.call(this, chartState);
 	        this.axisMarksWidgets = [];
 	        this.object3D = new Object3D();
-	        this.xAxisMarks = chartState.xAxisMarks;
-	        var items = this.xAxisMarks.getItems();
+	        var xAxisMarks = chartState.xAxisMarks, yAxisMarks = chartState.yAxisMarks;
+	        var items = xAxisMarks.getItems();
+	        for (var markName in items) {
+	            this.createAxisMark(items[markName]);
+	        }
+	        items = yAxisMarks.getItems();
 	        for (var markName in items) {
 	            this.createAxisMark(items[markName]);
 	        }
@@ -14569,8 +14565,7 @@ var simpleDemo =
 	        this.chartState.screen.onTransformationFrame(function (options) { return _this.onTransformationFrame(options); });
 	    };
 	    AxisMarksWidget.prototype.onTransformationFrame = function (options) {
-	        if (options.scrollYVal != void 0 || options.zoomX || options.zoomY)
-	            this.updateMarksPositions();
+	        this.updateMarksPositions();
 	    };
 	    AxisMarksWidget.prototype.updateMarksPositions = function () {
 	        for (var _i = 0, _a = this.axisMarksWidgets; _i < _a.length; _i++) {
@@ -14590,18 +14585,17 @@ var simpleDemo =
 	    ctx.clearRect(0, 0, axisMarkWidget.indicatorWidth, axisMarkWidget.indicatorHeight);
 	    ctx.fillStyle = axisMark.options.lineColor;
 	    ctx.fillText(axisMark.options.title, 15, 20);
+	    if (!axisMark.options.showValue)
+	        return;
 	    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
 	    ctx.fillText(axisMark.getDisplayedVal(), 16, 34);
 	};
+	var INDICATOR_POS_Z = 0.1;
 	var AxisMarkWidget = (function () {
 	    function AxisMarkWidget(chartState, axisMark) {
-	        this.indicatorWidth = 64;
+	        this.indicatorWidth = 128;
 	        this.indicatorHeight = 64;
 	        this.indicatorRenderFunction = DEFAULT_INDICATOR_RENDER_FUNCTION;
-	        if (axisMark.axisType == interfaces_1.AXIS_TYPE.Y) {
-	            Utils_1.Utils.error('axis mark on Y axis not supported yet');
-	            return;
-	        }
 	        this.chartState = chartState;
 	        this.axisMark = axisMark;
 	        this.axisType = axisMark.axisType;
@@ -14667,15 +14661,39 @@ var simpleDemo =
 	    };
 	    AxisMarkWidget.prototype.updatePosition = function () {
 	        var chartState = this.chartState;
+	        var screen = chartState.screen;
 	        var isXAxis = this.axisType == interfaces_1.AXIS_TYPE.X;
-	        if (!isXAxis)
-	            return; // TODO: support for yAxis
-	        this.object3D.position.x = chartState.screen.getPointOnXAxis(this.frameValue);
-	        this.object3D.position.y = chartState.screen.getBottom();
 	        var lineGeometry = this.line.geometry;
-	        lineGeometry.vertices[1].setY(chartState.data.height);
+	        var hasStickMode = this.axisMark.options.stickToEdges;
+	        if (isXAxis) {
+	            // TODO: make stickToEdges mode for AXIS_TYPE.X 
+	            this.object3D.position.x = screen.getPointOnXAxis(this.frameValue);
+	            this.object3D.position.y = screen.getBottom();
+	            lineGeometry.vertices[1].setY(chartState.data.height);
+	            this.indicator.position.set(this.indicatorWidth / 2, chartState.data.height - this.indicatorHeight / 2, INDICATOR_POS_Z);
+	        }
+	        else {
+	            var val = this.frameValue;
+	            var bottomVal = screen.getBottomVal();
+	            var topVal = screen.getTopVal();
+	            var needToStickOnTop = hasStickMode && val > topVal;
+	            var needToStickOnBottom = hasStickMode && val < bottomVal;
+	            var centerYVal = screen.getCenterYVal();
+	            this.object3D.position.x = screen.getLeft();
+	            if (needToStickOnTop) {
+	                this.object3D.position.y = screen.getTop();
+	            }
+	            else if (needToStickOnBottom) {
+	                this.object3D.position.y = screen.getBottom();
+	            }
+	            else {
+	                this.object3D.position.y = screen.getPointOnYAxis(this.frameValue);
+	            }
+	            lineGeometry.vertices[1].setX(chartState.data.width);
+	            var indicatorPosY = val > centerYVal ? -35 : 10;
+	            this.indicator.position.set(15 + this.indicatorWidth / 2, indicatorPosY, INDICATOR_POS_Z);
+	        }
 	        lineGeometry.verticesNeedUpdate = true;
-	        this.indicator.position.set(this.indicatorWidth / 2, chartState.data.height - this.indicatorHeight / 2, 0);
 	    };
 	    AxisMarkWidget.typeName = 'simple';
 	    return AxisMarkWidget;

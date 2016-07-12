@@ -33,6 +33,7 @@ export interface ITrendOptions {
     hasBeacon?: boolean;
     maxSegmentLength?: number;
     marks?: ITrendMarkOptions[];
+    canRequestPrepend?: boolean;
     onPrependRequest?: IPrependPromiseExecutor;
     settingsForTypes?: {
         CANDLE?: ITrendTypeSettings;

@@ -155,21 +155,16 @@ export class Chart {
 		this.state.screen.onTransformationFrame((options) => this.onScreenTransform(options))
 	}
 
-	private onCameraChangeHandler(x: number, y: number) {
-		if (x != void 0) {
-			this.camera.position.setX(this.cameraInitialPosition.x + x);
-		}
-		if (y != void 0) {
-			this.camera.position.setY(this.cameraInitialPosition.y + y);
-		}
-	}
-
 	private onScreenTransform(options: IScreenTransformOptions) {
 		if (options.scrollX != void 0) {
-			this.camera.position.setX(this.cameraInitialPosition.x + options.scrollX);
+			let scrollX = this.cameraInitialPosition.x + options.scrollX;
+			// scrollX =  Math.round(scrollX); // prevent to set camera beetween pixels
+			this.camera.position.setX(scrollX);
 		}
 		if (options.scrollY != void 0) {
-			this.camera.position.setY(this.cameraInitialPosition.y + options.scrollY);
+			let scrollY = this.cameraInitialPosition.y + options.scrollY;
+			// scrollY = Math.round(scrollY); // prevent to set camera beetween pixels
+			this.camera.position.setY(scrollY);
 		}
 	}
 	

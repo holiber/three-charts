@@ -16,8 +16,6 @@ import {AXIS_TYPE} from "../interfaces";
 import {IScreenTransformOptions} from "../Screen";
 
 
-// TODO: support for yAxis
-
 /**
  * widget for shows marks on axis
  */
@@ -25,15 +23,18 @@ export class AxisMarksWidget extends ChartWidget {
 	static widgetName = 'AxisMarks';
 
 	private object3D: Object3D;
-	private xAxisMarks: AxisMarks;
 	private axisMarksWidgets: AxisMarkWidget[] = [];
 
 	constructor(chartState: ChartState) {
 		super(chartState);
 		this.object3D = new Object3D();
-		this.xAxisMarks = chartState.xAxisMarks;
+		let {xAxisMarks, yAxisMarks} = chartState;
 
-		var items = this.xAxisMarks.getItems();
+		let items = xAxisMarks.getItems();
+		for (var markName in items) {
+			this.createAxisMark(items[markName]);
+		}
+		items = yAxisMarks.getItems();
 		for (var markName in items) {
 			this.createAxisMark(items[markName]);
 		}
@@ -50,7 +51,7 @@ export class AxisMarksWidget extends ChartWidget {
 	}
 
 	private onTransformationFrame(options: IScreenTransformOptions) {
-		if (options.scrollYVal != void 0 || options.zoomX || options.zoomY) this.updateMarksPositions();
+		this.updateMarksPositions();
 	}
 
 	private updateMarksPositions() {
@@ -70,14 +71,18 @@ const DEFAULT_INDICATOR_RENDER_FUNCTION = (axisMarkWidget: AxisMarkWidget, ctx: 
 	ctx.clearRect(0, 0, axisMarkWidget.indicatorWidth, axisMarkWidget.indicatorHeight);
 	ctx.fillStyle = axisMark.options.lineColor;
 	ctx.fillText(axisMark.options.title, 15, 20);
+	if (!axisMark.options.showValue) return;
+
 	ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
 	ctx.fillText(axisMark.getDisplayedVal(), 16, 34);
 };
 
+let INDICATOR_POS_Z = 0.1;
+
 class AxisMarkWidget {
 	static typeName = 'simple';
 	axisMark: AxisMark;
-	indicatorWidth = 64;
+	indicatorWidth = 128;
 	indicatorHeight = 64;
 	protected indicatorRenderFunction = DEFAULT_INDICATOR_RENDER_FUNCTION;
 	protected chartState: ChartState;
@@ -90,12 +95,6 @@ class AxisMarkWidget {
 	
 
 	constructor(chartState: ChartState, axisMark: AxisMark) {
-
-		if (axisMark.axisType == AXIS_TYPE.Y) {
-			Utils.error('axis mark on Y axis not supported yet');
-			return;
-		}
-
 		this.chartState = chartState;
 		this.axisMark = axisMark;
 		this.axisType = axisMark.axisType;
@@ -175,16 +174,44 @@ class AxisMarkWidget {
 		}
 	}
 
-	updatePosition() {
-		var chartState = this.chartState;
-		var isXAxis = this.axisType == AXIS_TYPE.X;
-		if (!isXAxis) return; // TODO: support for yAxis
-		this.object3D.position.x = chartState.screen.getPointOnXAxis(this.frameValue);
-		this.object3D.position.y = chartState.screen.getBottom();
-		var lineGeometry = (this.line.geometry as Geometry);
-		lineGeometry.vertices[1].setY(chartState.data.height);
+	updatePosition()  {
+		let chartState = this.chartState;
+		let screen = chartState.screen;
+		let isXAxis = this.axisType == AXIS_TYPE.X;
+		let lineGeometry = (this.line.geometry as Geometry);
+		let hasStickMode = this.axisMark.options.stickToEdges;
+
+		if (isXAxis) {
+			// TODO: make stickToEdges mode for AXIS_TYPE.X 
+			this.object3D.position.x = screen.getPointOnXAxis(this.frameValue);
+			this.object3D.position.y = screen.getBottom();
+			lineGeometry.vertices[1].setY(chartState.data.height);
+			this.indicator.position.set(
+				this.indicatorWidth / 2,
+				chartState.data.height - this.indicatorHeight / 2,
+				INDICATOR_POS_Z
+			);
+		} else {
+			let val = this.frameValue;
+			let bottomVal = screen.getBottomVal();
+			let topVal = screen.getTopVal();
+			let needToStickOnTop = hasStickMode && val > topVal;
+			let needToStickOnBottom = hasStickMode && val < bottomVal;
+			let centerYVal = screen.getCenterYVal();
+			this.object3D.position.x = screen.getLeft();
+			if (needToStickOnTop) {
+				this.object3D.position.y = screen.getTop();
+			} else if (needToStickOnBottom) {
+				this.object3D.position.y = screen.getBottom();
+			} else {
+				this.object3D.position.y = screen.getPointOnYAxis(this.frameValue);
+			}
+			lineGeometry.vertices[1].setX(chartState.data.width);
+
+			let indicatorPosY = val > centerYVal ? -35 : 10;
+			this.indicator.position.set(15 + this.indicatorWidth / 2, indicatorPosY, INDICATOR_POS_Z);
+		}
 		lineGeometry.verticesNeedUpdate = true;
-		this.indicator.position.set(this.indicatorWidth / 2, chartState.data.height - this.indicatorHeight / 2, 0);
 	}
 
 }

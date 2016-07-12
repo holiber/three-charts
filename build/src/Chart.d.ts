@@ -34,7 +34,6 @@ export declare class Chart {
      */
     setState(state: IChartState): void;
     private bindEvents();
-    private onCameraChangeHandler(x, y);
     private onScreenTransform(options);
     private autoscroll();
     private onScrollStop();

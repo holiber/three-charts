@@ -50,7 +50,7 @@ export class GridWidget extends ChartWidget{
 
 	private initGrid() {
 		var geometry = new THREE.Geometry();
-		var material = new THREE.LineBasicMaterial( { linewidth: 1, opacity: 0.09, transparent: true});
+		var material = new THREE.LineBasicMaterial( { linewidth: 2.5, opacity: 0.05, transparent: true});
 		var xLinesCount = this.gridSizeH;
 		var yLinesCount = this.gridSizeV;
 		while (xLinesCount--) geometry.vertices.push(new Vector3(), new Vector3());
@@ -124,6 +124,8 @@ export class GridWidget extends ChartWidget{
 		if (options.zoomY) this.lineSegments.scale.setY(yAxis.range.scaleFactor * options.zoomY);
 	}
 
+
+	// TODO: move this code to core
 	static getGridParamsForAxis(axisOptions: IAxisOptions, axisWidth: number, scroll: number, zoom: number): IGridParamsForAxis {
 		var axisRange = axisOptions.range;
 		var from = axisOptions.range.zeroVal + scroll;

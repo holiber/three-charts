@@ -7,7 +7,6 @@ import Object3D = THREE.Object3D;
 export declare class AxisMarksWidget extends ChartWidget {
     static widgetName: string;
     private object3D;
-    private xAxisMarks;
     private axisMarksWidgets;
     constructor(chartState: ChartState);
     private createAxisMark(axisMark);

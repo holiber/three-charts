@@ -48,7 +48,7 @@ export declare enum AXIS_DATA_TYPE {
     DATE = 1,
 }
 export interface IAxisOptions {
-    range: IAxisRange;
+    range?: IAxisRange;
     dataType?: AXIS_DATA_TYPE;
     gridMinSize?: number;
     autoScroll?: boolean;

@@ -11,6 +11,8 @@ export interface IAxisMarkOptions extends IAxisMarkUpdateOptions {
     type?: string;
     lineColor?: string;
     lineWidth?: number;
+    showValue?: boolean;
+    stickToEdges?: boolean;
 }
 export declare class AxisMarks {
     private chartState;
@@ -18,8 +20,8 @@ export declare class AxisMarks {
     private ee;
     private items;
     constructor(chartState: ChartState, axisType: AXIS_TYPE);
-    private onTrendChange(trendName, newData);
     protected bindEvents(): void;
+    private onTrendChange(trendName, newData);
     getItems(): {
         [name: string]: AxisMark;
     };

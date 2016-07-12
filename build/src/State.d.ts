@@ -59,6 +59,7 @@ export declare class ChartState {
     trends: Trends;
     screen: Screen;
     xAxisMarks: AxisMarks;
+    yAxisMarks: AxisMarks;
     private ee;
     constructor(initialState: IChartState);
     onInitialStateApplied(cb: (initialState: IChartState) => void): Function;

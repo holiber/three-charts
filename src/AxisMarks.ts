@@ -11,17 +11,21 @@ export interface IAxisMarkUpdateOptions {
 }
 
 export interface IAxisMarkOptions extends IAxisMarkUpdateOptions {
-	name?: string,
-	title?: string,
-	type?: string
-	lineColor?: string
-	lineWidth?: number
+	name?: string;
+	title?: string;
+	type?: string;
+	lineColor?: string;
+	lineWidth?: number;
+	showValue?: boolean;
+	stickToEdges?: boolean;
 }
 
 const AXIS_MARK_DEFAULT_OPTIONS: IAxisMarkOptions = {
 	type: 'simple',
-	lineWidth: 2,
-	value: 0
+	lineWidth: 1,
+	value: 0,
+	showValue: false,
+	stickToEdges: false
 };
 
 export class AxisMarks {
@@ -31,17 +35,11 @@ export class AxisMarks {
 	private items: {[name: string]: AxisMark} = {};
 
 	constructor(chartState: ChartState, axisType: AXIS_TYPE) {
-		if (axisType == AXIS_TYPE.Y) {
-			// TODO: axis mark on Y axis
-			Utils.error('axis mark on Y axis not supported yet');
-			return;
-		}
-
 		this.chartState = chartState;
 		this.ee = new EventEmitter();
 		this.axisType = axisType;
 		var marks = this.items;
-		var axisMarksOptions = chartState.data.xAxis.marks;
+		var axisMarksOptions = axisType == AXIS_TYPE.X ? chartState.data.xAxis.marks : chartState.data.yAxis.marks;
 		
 		for (let options of axisMarksOptions) {
 			let axisMark: AxisMark;
@@ -53,13 +51,19 @@ export class AxisMarks {
 			
 			// create mark instance based on type option
 			if (options.type == 'timeleft') {
-				axisMark = new AxisTimeleftMark(chartState, AXIS_TYPE.X, options);
+				axisMark = new AxisTimeleftMark(chartState, axisType, options);
 			} else {
-				axisMark = new AxisMark(chartState, AXIS_TYPE.X, options);
+				axisMark = new AxisMark(chartState, axisType, options);
 			}
 			marks[options.name] = axisMark;
 		}
 		this.bindEvents();
+	}
+
+	protected bindEvents() {
+		this.chartState.onTrendChange((trendName: string, changedOptions: ITrendOptions, newData: ITrendData) => {
+			this.onTrendChange(trendName, newData)
+		});
 	}
 
 	private onTrendChange(trendName: string, newData: ITrendData) {
@@ -76,9 +80,6 @@ export class AxisMarks {
 		}
 	}
 
-	protected bindEvents() {
-		this.chartState.onTrendChange((trendName: string, changedOptions: ITrendOptions, newData: ITrendData) => this.onTrendChange(trendName, newData));
-	}
 
 	getItems() {
 		return this.items;
@@ -99,12 +100,6 @@ export class AxisMark {
 	protected ee: EventEmitter2;
 
 	constructor(chartState: ChartState, axisType: AXIS_TYPE, options: IAxisMarkOptions) {
-
-		if (axisType == AXIS_TYPE.Y) {
-			// TODO: axis mark on Y axis
-			Utils.error('axis mark on Y axis not supported yet');
-		}
-
 		this.ee = new EventEmitter();
 		this.options = options;
 		this.axisType = axisType;
