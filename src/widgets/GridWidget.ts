@@ -56,6 +56,7 @@ export class GridWidget extends ChartWidget{
 		while (xLinesCount--) geometry.vertices.push(new Vector3(), new Vector3());
 		while (yLinesCount--) geometry.vertices.push(new Vector3(), new Vector3());
 		this.lineSegments = new LineSegments(geometry, material);
+		this.lineSegments.position.setZ(-1);
 		this.lineSegments.frustumCulled = false;
 	}
 
