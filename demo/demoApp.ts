@@ -153,7 +153,7 @@ window.onload = function () {
 	mainTrend.onDataChange(() => {
 		var closeValue = closeMark.options.value;
 		if (mainTrend.getLastItem().xVal >= closeValue) {
-			deadlineMark.setOptions({value: closeValue + 10000})
+			deadlineMark.setOptions({value: closeValue + 10000});
 			closeMark.setOptions({value: closeValue + 20000})
 		}
 		var markOptions = MarksSource.getNext(mainTrend.getLastItem().xVal);

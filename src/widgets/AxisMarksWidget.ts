@@ -68,9 +68,16 @@ export class AxisMarksWidget extends ChartWidget {
 
 const DEFAULT_INDICATOR_RENDER_FUNCTION = (axisMarkWidget: AxisMarkWidget, ctx: CanvasRenderingContext2D) => {
 	var axisMark = axisMarkWidget.axisMark;
-	ctx.clearRect(0, 0, axisMarkWidget.indicatorWidth, axisMarkWidget.indicatorHeight);
 	ctx.fillStyle = axisMark.options.lineColor;
-	ctx.fillText(axisMark.options.title, 15, 20);
+	ctx.clearRect(0, 0, axisMarkWidget.indicatorWidth, axisMarkWidget.indicatorHeight);
+	let xCoord = 15;
+
+	if (axisMark.axisType == AXIS_TYPE.Y) {
+		ctx.textAlign = 'end';
+		xCoord = axisMarkWidget.indicatorWidth;
+	}
+
+	ctx.fillText(axisMark.options.title, xCoord, 20);
 	if (!axisMark.options.showValue) return;
 
 	ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
@@ -180,12 +187,13 @@ class AxisMarkWidget {
 		let isXAxis = this.axisType == AXIS_TYPE.X;
 		let lineGeometry = (this.line.geometry as Geometry);
 		let hasStickMode = this.axisMark.options.stickToEdges;
+		let {width, height} = this.chartState.data;
 
 		if (isXAxis) {
 			// TODO: make stickToEdges mode for AXIS_TYPE.X 
 			this.object3D.position.x = screen.getPointOnXAxis(this.frameValue);
 			this.object3D.position.y = screen.getBottom();
-			lineGeometry.vertices[1].setY(chartState.data.height);
+			lineGeometry.vertices[1].setY(height);
 			this.indicator.position.set(
 				this.indicatorWidth / 2,
 				chartState.data.height - this.indicatorHeight / 2,
@@ -206,10 +214,10 @@ class AxisMarkWidget {
 			} else {
 				this.object3D.position.y = screen.getPointOnYAxis(this.frameValue);
 			}
-			lineGeometry.vertices[1].setX(chartState.data.width);
+			lineGeometry.vertices[1].setX(width);
 
 			let indicatorPosY = val > centerYVal ? -35 : 10;
-			this.indicator.position.set(15 + this.indicatorWidth / 2, indicatorPosY, INDICATOR_POS_Z);
+			this.indicator.position.set(width - this.indicatorWidth / 2 - 35, indicatorPosY, INDICATOR_POS_Z);
 		}
 		lineGeometry.verticesNeedUpdate = true;
 	}
