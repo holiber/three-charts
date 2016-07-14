@@ -11968,6 +11968,8 @@ var ThreeChart =
 	        }
 	    };
 	    TrendMarks.prototype.createMarkRect = function (mark) {
+	        if (!mark.segment)
+	            return;
 	        var state = this.chartState;
 	        var options = mark.options;
 	        var width = options.width, height = options.height, offset = options.offset, name = options.name;

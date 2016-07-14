@@ -139,6 +139,8 @@ export class TrendMarks {
 	}
 
 	private createMarkRect(mark: TrendMark) {
+		if (!mark.segment) return;
+
 		let state = this.chartState;
 		let options = mark.options;
 		let {width, height, offset, name} = options;
