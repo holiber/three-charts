@@ -14873,7 +14873,7 @@ var demoApp =
 	            }
 	            lineGeometry.vertices[1].setX(width);
 	            var indicatorPosY = val > centerYVal ? -35 : 10;
-	            this.indicator.position.set(width - this.indicatorWidth / 2 - 35, indicatorPosY, INDICATOR_POS_Z);
+	            this.indicator.position.set(width - this.indicatorWidth / 2 - 50, indicatorPosY, INDICATOR_POS_Z);
 	        }
 	        lineGeometry.verticesNeedUpdate = true;
 	    };
