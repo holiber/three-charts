@@ -61,6 +61,7 @@ export class TrendMarksWidget extends TrendWidget {
 	}
 	
 	private createMarkWidget(mark: TrendMark) {
+		if (!mark.segment) return;
 		let markWidget = new TrendMarkWidget(this.chartState, mark);
 		this.marksWidgets[mark.options.name] = markWidget;
 		this.object3D.add(markWidget.getObject3D());

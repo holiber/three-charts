@@ -14942,6 +14942,8 @@ var demoApp =
 	        }
 	    };
 	    TrendMarksWidget.prototype.createMarkWidget = function (mark) {
+	        if (!mark.segment)
+	            return;
 	        var markWidget = new TrendMarkWidget(this.chartState, mark);
 	        this.marksWidgets[mark.options.name] = markWidget;
 	        this.object3D.add(markWidget.getObject3D());
