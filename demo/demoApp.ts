@@ -271,6 +271,16 @@ function initListeners() {
 	$switchBarsBtn.addEventListener('click', () => {
 		chart.getTrend('main').setOptions({type: TREND_TYPE.CANDLE});
 	});
+
+	document.querySelector('[name="move-left"]').addEventListener('click', () => {
+		let currentRange = chart.state.data.xAxis.range;
+		chart.setState({xAxis: {range: {from: currentRange.from - 2000}}});
+	});
+
+	document.querySelector('[name="move-right"]').addEventListener('click', () => {
+		let currentRange = chart.state.data.xAxis.range;
+		chart.setState({xAxis: {range: {to: currentRange.to + 2000}}});
+	});
 	
 	var timeframeButtons = document.querySelectorAll(".timeframe");
 	for (var i = 0; i < timeframeButtons.length; i++) {
@@ -284,13 +294,6 @@ function initListeners() {
 			chart.state.scrollToEnd().then(() => {
 				chart.state.setState({autoScroll: true});
 			});
-			// chart.state.setState({autoScroll: true});
-			// setTimeout(() => {
-			//
-			// 	let origin = (chart.state.data.width - chart.state.data.xAxis.range.padding.end) / chart.state.data.width;
-			// 	chart.state.zoomToRange(range, origin);
-			// 	// chart.getTrend('main').setOptions({maxSegmentLength: segmentLength});
-			// }, 1000);
 		});
 	}
 }

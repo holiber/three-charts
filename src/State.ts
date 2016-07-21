@@ -64,7 +64,7 @@ export interface IChartState {
 }
 
 /**
- * main class for manage chart state
+ *  class for manage chart state, all state changes caused only by State.setState method
  */
 export class ChartState {
 
@@ -270,7 +270,7 @@ export class ChartState {
 			this.data.xAxis.range.zeroVal == void 0
 		);
 		if (needToRecalculateXAxis) {
-			let xAxisPatch = this.recalculateXAxis(actualData);
+			let xAxisPatch = this.recalculateXAxis(actualData, changedProps);
 			if (xAxisPatch) {
 				scrollXChanged = true;
 				patch = Utils.deepMerge(patch, {xAxis: xAxisPatch});
@@ -373,7 +373,7 @@ export class ChartState {
 		}
 	}
 
-	private recalculateXAxis(actualData: IChartState): IAxisOptions {
+	private recalculateXAxis(actualData: IChartState, changedProps: IChartState): IAxisOptions {
 		var axisRange = actualData.xAxis.range;
 		var patch: IAxisOptions = {range: {}};
 		var isInitialize = axisRange.zeroVal == void 0;
@@ -387,8 +387,24 @@ export class ChartState {
 		} else {
 			zeroVal = axisRange.zeroVal;
 			scaleFactor = axisRange.scaleFactor;
+
+			// recalculate range.zoom and range.scroll then range.from or range.to was changed
+			if (
+				changedProps.xAxis &&
+				(changedProps.xAxis.range.from != void 0 || changedProps.xAxis.range.to)
+			) {
+				if (changedProps.xAxis.range.zoom) {
+					Utils.error('Impossible to change "range.zoom" then "range.from" or "range.to" present');
+				}
+				let currentScaleFactor = actualData.width / (axisRange.to - axisRange.from);
+				patch.range.scroll = axisRange.from - zeroVal;
+				patch.range.zoom = currentScaleFactor / scaleFactor;
+				return patch;
+			}
 		}
 
+
+		// recalculate range.from and range.to then range.zoom or range.scroll was changed
 		do {
 			var from = zeroVal + axisRange.scroll;
 			var to = from + actualData.width / (scaleFactor * zoom);

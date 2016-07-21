@@ -52,7 +52,7 @@ export interface IChartState {
     [key: string]: any;
 }
 /**
- * main class for manage chart state
+ *  class for manage chart state, all state changes caused only by State.setState method
  */
 export declare class ChartState {
     data: IChartState;
@@ -81,7 +81,7 @@ export declare class ChartState {
     private emitChangedStateEvents(changedProps, eventData);
     private initListeners();
     private handleTrendsChange(changedTrends, newData);
-    private recalculateXAxis(actualData);
+    private recalculateXAxis(actualData, changedProps);
     private recalculateYAxis(actualData);
     zoom(zoomValue: number, origin?: number): Promise<void>;
     zoomToRange(range: number, origin?: number): Promise<void>;

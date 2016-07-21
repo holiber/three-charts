@@ -12755,7 +12755,7 @@ var ThreeChart =
 	var Chart_1 = __webpack_require__(2);
 	var deps_2 = __webpack_require__(3);
 	/**
-	 * main class for manage chart state
+	 *  class for manage chart state, all state changes caused only by State.setState method
 	 */
 	var ChartState = (function () {
 	    function ChartState(initialState) {
@@ -12930,7 +12930,7 @@ var ThreeChart =
 	            (changedProps.xAxis && (changedProps.xAxis.range)) ||
 	            this.data.xAxis.range.zeroVal == void 0);
 	        if (needToRecalculateXAxis) {
-	            var xAxisPatch = this.recalculateXAxis(actualData);
+	            var xAxisPatch = this.recalculateXAxis(actualData, changedProps);
 	            if (xAxisPatch) {
 	                scrollXChanged = true;
 	                patch = Utils_1.Utils.deepMerge(patch, { xAxis: xAxisPatch });
@@ -13007,7 +13007,7 @@ var ThreeChart =
 	            this.ee.emit('trendChange', trendName, changedTrends[trendName], newData);
 	        }
 	    };
-	    ChartState.prototype.recalculateXAxis = function (actualData) {
+	    ChartState.prototype.recalculateXAxis = function (actualData, changedProps) {
 	        var axisRange = actualData.xAxis.range;
 	        var patch = { range: {} };
 	        var isInitialize = axisRange.zeroVal == void 0;
@@ -13021,7 +13021,19 @@ var ThreeChart =
 	        else {
 	            zeroVal = axisRange.zeroVal;
 	            scaleFactor = axisRange.scaleFactor;
+	            // recalculate range.zoom and range.scroll then range.from or range.to was changed
+	            if (changedProps.xAxis &&
+	                (changedProps.xAxis.range.from != void 0 || changedProps.xAxis.range.to)) {
+	                if (changedProps.xAxis.range.zoom) {
+	                    Utils_1.Utils.error('Impossible to change "range.zoom" then "range.from" or "range.to" present');
+	                }
+	                var currentScaleFactor = actualData.width / (axisRange.to - axisRange.from);
+	                patch.range.scroll = axisRange.from - zeroVal;
+	                patch.range.zoom = currentScaleFactor / scaleFactor;
+	                return patch;
+	            }
 	        }
+	        // recalculate range.from and range.to then range.zoom or range.scroll was changed
 	        do {
 	            var from = zeroVal + axisRange.scroll;
 	            var to = from + actualData.width / (scaleFactor * zoom);
