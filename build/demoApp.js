@@ -14246,6 +14246,7 @@ var demoApp =
 	    TrendBeacon.prototype.stopAnimation = function () {
 	        this.animated = false;
 	        this.animation && this.animation.kill();
+	        this.animation = null;
 	    };
 	    TrendBeacon.createTexture = function () {
 	        var h = 32, w = 32;

@@ -106,6 +106,7 @@ export class TrendBeacon extends TrendWidget {
 	private stopAnimation() {
 		this.animated = false;
 		this.animation && this.animation.kill();
+		this.animation = null;
 	}
 
 	private static createTexture() {
