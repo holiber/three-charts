@@ -141,6 +141,23 @@ export class ChartState {
 		this.ee.emit('ready', initialState);
 	}
 
+	/**
+	 * destroy state, use Chart.destroy to completely destroy chart
+	 */
+	destroy() {
+		this.ee.emit('destroy');
+		this.ee.removeAllListeners();
+		this.data = {};
+	}
+
+	onDestroy(cb: Function) {
+		let eventName = 'destroy';
+		this.ee.on(eventName, cb);
+		return () => {
+			this.ee.off(eventName, cb);
+		}
+	}
+
 	onInitialStateApplied(cb: (initialState: IChartState) => void ): Function {
 		this.ee.on('initialStateApplied', cb);
 		return () => {

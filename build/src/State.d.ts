@@ -62,6 +62,11 @@ export declare class ChartState {
     yAxisMarks: AxisMarks;
     private ee;
     constructor(initialState: IChartState);
+    /**
+     * destroy state, use Chart.destroy to completely destroy chart
+     */
+    destroy(): void;
+    onDestroy(cb: Function): () => void;
     onInitialStateApplied(cb: (initialState: IChartState) => void): Function;
     onReady(cb: (initialState: IChartState) => void): Function;
     onChange(cb: (changedProps: IChartState) => void): () => void;

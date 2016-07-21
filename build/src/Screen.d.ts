@@ -41,6 +41,7 @@ export declare class Screen {
     cameraIsMoving(): boolean;
     private transform(options);
     private bindEvents();
+    private onDestroyHandler();
     private onScrollXHandler(changedProps);
     private onScrollYHandler();
     private onZoomXHandler();

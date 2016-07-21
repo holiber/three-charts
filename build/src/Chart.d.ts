@@ -5,6 +5,7 @@ export declare const MAX_DATA_LENGTH: number;
 export declare class Chart {
     state: ChartState;
     isStopped: boolean;
+    isDestroyed: boolean;
     private $el;
     private renderer;
     private scene;
@@ -24,6 +25,10 @@ export declare class Chart {
     render(): void;
     stop(): void;
     run(): void;
+    /**
+     * call to destroy chart an init garbage collection
+     */
+    destroy(): void;
     getState(): IChartState;
     /**
      * shortcut for Chart.state.getTrend
@@ -34,6 +39,7 @@ export declare class Chart {
      */
     setState(state: IChartState): void;
     private bindEvents();
+    private unbindEvents();
     private onScreenTransform(options);
     private autoscroll();
     private onScrollStop();

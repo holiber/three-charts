@@ -147,6 +147,15 @@ export class Screen {
 				if (changedProps.yAxis.range.zoom) this.onZoomYHandler();
 			}
 		});
+		state.onDestroy(() => this.onDestroyHandler());
+	}
+
+	private onDestroyHandler() {
+		this.ee.removeAllListeners();
+		this.scrollXAnimation && this.scrollXAnimation.kill();
+		this.scrollYAnimation && this.scrollYAnimation.kill();
+		this.zoomXAnimation && this.zoomXAnimation.kill();
+		this.zoomYAnimation && this.zoomYAnimation.kill();
 	}
 
 	private onScrollXHandler(changedProps: IChartState) {

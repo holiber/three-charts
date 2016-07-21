@@ -96,7 +96,8 @@ export class Trend {
 		chartState.onInitialStateApplied(() => this.onInitialStateApplied());
 		chartState.onScrollStop(() => this.checkForPrependRequest());
 		chartState.onZoom(() => this.checkForPrependRequest());
-		chartState.onTrendChange((trendName, changedOptions, newData) => this.ee.emit('change', changedOptions, newData))
+		chartState.onTrendChange((trendName, changedOptions, newData) => this.ee.emit('change', changedOptions, newData));
+		chartState.onDestroy(() => this.ee.removeAllListeners());
 	}
 
 	getCalculatedOptions() {

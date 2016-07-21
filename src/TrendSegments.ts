@@ -52,6 +52,13 @@ export class TrendSegments {
 		this.trend.onChange((changedOptions, newData) => this.onTrendChangeHandler(changedOptions, newData));
 		this.chartState.onZoom(() => this.onZoomHandler());
 		this.chartState.onScroll(() => this.recalculateDisplayedRange());
+		this.chartState.onDestroy(() => this.onDestroyHandler());
+	}
+
+	private onDestroyHandler() {
+		this.ee.removeAllListeners();
+		this.appendAnimation && this.appendAnimation.kill();
+		this.prependAnimation && this.prependAnimation.kill();
 	}
 
 	private onZoomHandler() {

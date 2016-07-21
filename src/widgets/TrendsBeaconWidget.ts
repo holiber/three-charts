@@ -34,10 +34,9 @@ export class TrendBeacon extends TrendWidget {
 
 	constructor(state: ChartState, trendName: string) {
 		super(state, trendName);
-		this.animated = state.data.animations.enabled;
 
 		this.initObject();
-		if (this.animated) {
+		if (state.data.animations.enabled) {
 			this.animate();
 		}
 	}
@@ -54,6 +53,7 @@ export class TrendBeacon extends TrendWidget {
 		super.bindEvents();
 		this.bindEvent(this.chartState.onScroll(() => this.updatePosition()));
 		this.bindEvent(this.chartState.onChange(changedProps => this.onStateChange(changedProps)));
+		this.bindEvent(this.chartState.onDestroy(() => this.stopAnimation()));
 	}
 
 	private initObject() {
@@ -77,6 +77,7 @@ export class TrendBeacon extends TrendWidget {
 	}
 
 	private animate() {
+		this.animated = true;
 		var object = this.mesh;
 		var animationObject = {
 			scale: object.scale.x,
@@ -121,15 +122,18 @@ export class TrendBeacon extends TrendWidget {
 		this.updatePosition();
 	}
 
+	private stopAnimation() {
+		clearInterval(this.animationIntervalId);
+		this.animated = false;
+	}
+
 	private onStateChange(changedProps: IChartState) {
 		if (!changedProps.animations) return;
 		if (changedProps.animations.enabled == void 0 || changedProps.animations.enabled == this.animated) return;
 		if (changedProps.animations.enabled) {
-			this.animated = true;
 			this.animate();
 		} else {
-			clearInterval(this.animationIntervalId);
-			this.animated = false;
+			this.stopAnimation();
 		}
 	}
 

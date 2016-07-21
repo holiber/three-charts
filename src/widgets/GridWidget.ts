@@ -28,6 +28,7 @@ export class GridWidget extends ChartWidget{
 	private lineSegments: LineSegments;
 	private gridSizeH: number;
 	private gridSizeV: number;
+	private isDestroyed = false;
 
 	constructor (chartState: ChartState) {
 		super(chartState);
@@ -46,6 +47,9 @@ export class GridWidget extends ChartWidget{
 			updateGridThrettled();
 			this.onZoomFrame(options);
 		});
+		this.chartState.onDestroy(() => {
+			this.isDestroyed = true;
+		})
 	}
 
 	private initGrid() {
@@ -61,6 +65,7 @@ export class GridWidget extends ChartWidget{
 	}
 
 	private updateGrid() {
+		if (this.isDestroyed) return;
 		var {yAxis, xAxis, width, height} = this.chartState.data;
 		var axisXGrid = GridWidget.getGridParamsForAxis(xAxis, width, xAxis.range.scroll, xAxis.range.zoom);
 		var axisYGrid = GridWidget.getGridParamsForAxis(yAxis, height, yAxis.range.scroll, yAxis.range.zoom);

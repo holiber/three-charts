@@ -18,6 +18,7 @@ export declare class GridWidget extends ChartWidget {
     private lineSegments;
     private gridSizeH;
     private gridSizeV;
+    private isDestroyed;
     constructor(chartState: ChartState);
     bindEvents(): void;
     private initGrid();

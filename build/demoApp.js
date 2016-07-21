@@ -400,6 +400,8 @@ var demoApp =
 	    };
 	    Chart.prototype.renderLoop = function () {
 	        var _this = this;
+	        if (this.isDestroyed)
+	            return;
 	        this.stats && this.stats.begin();
 	        this.render();
 	        if (this.isStopped)
@@ -423,6 +425,20 @@ var demoApp =
 	    Chart.prototype.run = function () {
 	        this.isStopped = false;
 	        this.renderLoop();
+	    };
+	    /**
+	     * call to destroy chart an init garbage collection
+	     */
+	    Chart.prototype.destroy = function () {
+	        this.isDestroyed = true;
+	        this.stop();
+	        this.state.destroy();
+	        this.unbindEvents();
+	        // WARNING! undocumented method for free webgl context
+	        this.renderer.forceContextLoss();
+	        this.renderer.context = null;
+	        this.renderer.domElement = null;
+	        this.renderer = null;
 	    };
 	    Chart.prototype.getState = function () {
 	        return this.state.data;
@@ -449,8 +465,10 @@ var demoApp =
 	        $el.addEventListener('touchmove', function (ev) { _this.onTouchMove(ev); });
 	        $el.addEventListener('touchend', function (ev) { _this.onTouchEnd(ev); });
 	        this.state.onTrendsChange(function () { return _this.autoscroll(); });
-	        //this.state.screen.onCameraChange((scrollX, scrollY) => this.onCameraChangeHandler(scrollX, scrollY))
 	        this.state.screen.onTransformationFrame(function (options) { return _this.onScreenTransform(options); });
+	    };
+	    Chart.prototype.unbindEvents = function () {
+	        this.$el.remove();
 	    };
 	    Chart.prototype.onScreenTransform = function (options) {
 	        if (options.scrollX != void 0) {
@@ -11962,6 +11980,7 @@ var demoApp =
 	        chartState.onScrollStop(function () { return _this.checkForPrependRequest(); });
 	        chartState.onZoom(function () { return _this.checkForPrependRequest(); });
 	        chartState.onTrendChange(function (trendName, changedOptions, newData) { return _this.ee.emit('change', changedOptions, newData); });
+	        chartState.onDestroy(function () { return _this.ee.removeAllListeners(); });
 	    };
 	    Trend.prototype.getCalculatedOptions = function () {
 	        return this.calculatedOptions;
@@ -12151,6 +12170,7 @@ var demoApp =
 	        this.trend.segments.onRebuild(function () { return _this.updateMarksSegments(); });
 	        this.trend.onChange(function (changedOptions) { return _this.onTrendChange(changedOptions); });
 	        this.chartState.screen.onZoomFrame(function () { return _this.calclulateMarksPositions(); });
+	        this.chartState.onDestroy(function () { return _this.ee.removeAllListeners(); });
 	    };
 	    TrendMarks.prototype.onTrendChange = function (changedOptions) {
 	        if (!changedOptions.marks)
@@ -12343,6 +12363,12 @@ var demoApp =
 	        this.trend.onChange(function (changedOptions, newData) { return _this.onTrendChangeHandler(changedOptions, newData); });
 	        this.chartState.onZoom(function () { return _this.onZoomHandler(); });
 	        this.chartState.onScroll(function () { return _this.recalculateDisplayedRange(); });
+	        this.chartState.onDestroy(function () { return _this.onDestroyHandler(); });
+	    };
+	    TrendSegments.prototype.onDestroyHandler = function () {
+	        this.ee.removeAllListeners();
+	        this.appendAnimation && this.appendAnimation.kill();
+	        this.prependAnimation && this.prependAnimation.kill();
 	    };
 	    TrendSegments.prototype.onZoomHandler = function () {
 	        var segmentsRebuilded = this.tryToRebuildSegments();
@@ -13073,6 +13099,22 @@ var demoApp =
 	        // message to other modules that ChartState is ready for use 
 	        this.ee.emit('ready', initialState);
 	    }
+	    /**
+	     * destroy state, use Chart.destroy to completely destroy chart
+	     */
+	    ChartState.prototype.destroy = function () {
+	        this.ee.emit('destroy');
+	        this.ee.removeAllListeners();
+	        this.data = {};
+	    };
+	    ChartState.prototype.onDestroy = function (cb) {
+	        var _this = this;
+	        var eventName = 'destroy';
+	        this.ee.on(eventName, cb);
+	        return function () {
+	            _this.ee.off(eventName, cb);
+	        };
+	    };
 	    ChartState.prototype.onInitialStateApplied = function (cb) {
 	        var _this = this;
 	        this.ee.on('initialStateApplied', cb);
@@ -13708,6 +13750,14 @@ var demoApp =
 	                    _this.onZoomYHandler();
 	            }
 	        });
+	        state.onDestroy(function () { return _this.onDestroyHandler(); });
+	    };
+	    Screen.prototype.onDestroyHandler = function () {
+	        this.ee.removeAllListeners();
+	        this.scrollXAnimation && this.scrollXAnimation.kill();
+	        this.scrollYAnimation && this.scrollYAnimation.kill();
+	        this.zoomXAnimation && this.zoomXAnimation.kill();
+	        this.zoomYAnimation && this.zoomYAnimation.kill();
 	    };
 	    Screen.prototype.onScrollXHandler = function (changedProps) {
 	        var _this = this;
@@ -13985,6 +14035,7 @@ var demoApp =
 	        this.chartState.onTrendChange(function (trendName, changedOptions, newData) {
 	            _this.onTrendChange(trendName, newData);
 	        });
+	        this.chartState.onDestroy(function () { return _this.ee.removeAllListeners(); });
 	    };
 	    AxisMarks.prototype.onTrendChange = function (trendName, newData) {
 	        if (!newData)
@@ -14143,9 +14194,8 @@ var demoApp =
 	    __extends(TrendBeacon, _super);
 	    function TrendBeacon(state, trendName) {
 	        _super.call(this, state, trendName);
-	        this.animated = state.data.animations.enabled;
 	        this.initObject();
-	        if (this.animated) {
+	        if (state.data.animations.enabled) {
 	            this.animate();
 	        }
 	    }
@@ -14163,6 +14213,7 @@ var demoApp =
 	        _super.prototype.bindEvents.call(this);
 	        this.bindEvent(this.chartState.onScroll(function () { return _this.updatePosition(); }));
 	        this.bindEvent(this.chartState.onChange(function (changedProps) { return _this.onStateChange(changedProps); }));
+	        this.bindEvent(this.chartState.onDestroy(function () { return _this.stopAnimation(); }));
 	    };
 	    TrendBeacon.prototype.initObject = function () {
 	        // add beacon
@@ -14173,6 +14224,7 @@ var demoApp =
 	        this.segment = this.trend.segments.getEndSegment();
 	    };
 	    TrendBeacon.prototype.animate = function () {
+	        this.animated = true;
 	        var object = this.mesh;
 	        var animationObject = {
 	            scale: object.scale.x,
@@ -14205,18 +14257,20 @@ var demoApp =
 	        this.segment = trendsSegments.getEndSegment();
 	        this.updatePosition();
 	    };
+	    TrendBeacon.prototype.stopAnimation = function () {
+	        clearInterval(this.animationIntervalId);
+	        this.animated = false;
+	    };
 	    TrendBeacon.prototype.onStateChange = function (changedProps) {
 	        if (!changedProps.animations)
 	            return;
 	        if (changedProps.animations.enabled == void 0 || changedProps.animations.enabled == this.animated)
 	            return;
 	        if (changedProps.animations.enabled) {
-	            this.animated = true;
 	            this.animate();
 	        }
 	        else {
-	            clearInterval(this.animationIntervalId);
-	            this.animated = false;
+	            this.stopAnimation();
 	        }
 	    };
 	    TrendBeacon.prototype.updatePosition = function () {
@@ -14468,6 +14522,7 @@ var demoApp =
 	    __extends(GridWidget, _super);
 	    function GridWidget(chartState) {
 	        _super.call(this, chartState);
+	        this.isDestroyed = false;
 	        var _a = chartState.data, width = _a.width, height = _a.height, xAxis = _a.xAxis, yAxis = _a.yAxis;
 	        this.gridSizeH = Math.floor(width / xAxis.gridMinSize) * 3;
 	        this.gridSizeV = Math.floor(height / yAxis.gridMinSize) * 3;
@@ -14482,6 +14537,9 @@ var demoApp =
 	        this.chartState.screen.onZoomFrame(function (options) {
 	            updateGridThrettled();
 	            _this.onZoomFrame(options);
+	        });
+	        this.chartState.onDestroy(function () {
+	            _this.isDestroyed = true;
 	        });
 	    };
 	    GridWidget.prototype.initGrid = function () {
@@ -14498,6 +14556,8 @@ var demoApp =
 	        this.lineSegments.frustumCulled = false;
 	    };
 	    GridWidget.prototype.updateGrid = function () {
+	        if (this.isDestroyed)
+	            return;
 	        var _a = this.chartState.data, yAxis = _a.yAxis, xAxis = _a.xAxis, width = _a.width, height = _a.height;
 	        var axisXGrid = GridWidget.getGridParamsForAxis(xAxis, width, xAxis.range.scroll, xAxis.range.zoom);
 	        var axisYGrid = GridWidget.getGridParamsForAxis(yAxis, height, yAxis.range.scroll, yAxis.range.zoom);

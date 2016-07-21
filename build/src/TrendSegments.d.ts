@@ -31,6 +31,7 @@ export declare class TrendSegments {
     private ee;
     constructor(chartState: ChartState, trend: Trend);
     protected bindEvents(): void;
+    private onDestroyHandler();
     private onZoomHandler();
     private onTrendChangeHandler(changedOptions, newData);
     getEndSegment(): TrendSegment;

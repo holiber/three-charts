@@ -62,6 +62,7 @@ export class TrendMarks {
 		this.trend.segments.onRebuild(() => this.updateMarksSegments());
 		this.trend.onChange((changedOptions) => this.onTrendChange(changedOptions));
 		this.chartState.screen.onZoomFrame(() => this.calclulateMarksPositions());
+		this.chartState.onDestroy(() => this.ee.removeAllListeners());
 	}
 
 	private onTrendChange(changedOptions: ITrendOptions) {

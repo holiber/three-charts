@@ -29,6 +29,7 @@ export const MAX_DATA_LENGTH = 2692000;//1000;
 export class Chart {
 	state: ChartState;
 	isStopped: boolean;
+	isDestroyed: boolean;
 	private $el: HTMLElement;
 	private renderer: Renderer;
 	private scene: Scene;
@@ -94,6 +95,7 @@ export class Chart {
 	}
 	
 	private renderLoop() {
+		if (this.isDestroyed) return;
 		this.stats && this.stats.begin();
 		this.render();
 		if (this.isStopped) return;
@@ -119,6 +121,21 @@ export class Chart {
 	run() {
 		this.isStopped = false;
 		this.renderLoop();
+	}
+
+	/**
+	 * call to destroy chart an init garbage collection
+	 */
+	destroy() {
+		this.isDestroyed = true;
+		this.stop();
+		this.state.destroy();
+		this.unbindEvents();
+		// WARNING! undocumented method for free webgl context
+		(this.renderer as any).forceContextLoss();
+		(this.renderer as any).context  = null;
+		this.renderer.domElement = null;
+		this.renderer = null;
 	}
 	
 	getState(): IChartState {
@@ -148,11 +165,13 @@ export class Chart {
 		$el.addEventListener('mouseup', (ev: MouseEvent) => this.onMouseUp(ev));
 		$el.addEventListener('touchmove', (ev: TouchEvent) => {this.onTouchMove(ev)});
 		$el.addEventListener('touchend', (ev: TouchEvent) => {this.onTouchEnd(ev)});
-
 		this.state.onTrendsChange(() => this.autoscroll());
-		//this.state.screen.onCameraChange((scrollX, scrollY) => this.onCameraChangeHandler(scrollX, scrollY))
-
 		this.state.screen.onTransformationFrame((options) => this.onScreenTransform(options))
+	}
+
+	private unbindEvents() {
+		// TODO: unbind events correctly
+		this.$el.remove()
 	}
 
 	private onScreenTransform(options: IScreenTransformOptions) {

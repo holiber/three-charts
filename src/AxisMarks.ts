@@ -64,6 +64,7 @@ export class AxisMarks {
 		this.chartState.onTrendChange((trendName: string, changedOptions: ITrendOptions, newData: ITrendData) => {
 			this.onTrendChange(trendName, newData)
 		});
+		this.chartState.onDestroy(() => this.ee.removeAllListeners());
 	}
 
 	private onTrendChange(trendName: string, newData: ITrendData) {
