@@ -64,7 +64,7 @@ export declare class ChartState {
     constructor(initialState: IChartState);
     onInitialStateApplied(cb: (initialState: IChartState) => void): Function;
     onReady(cb: (initialState: IChartState) => void): Function;
-    onChange(cb: (changedProps: IChartState) => void): void;
+    onChange(cb: (changedProps: IChartState) => void): () => void;
     onTrendChange(cb: (trendName: string, changedOptions: ITrendOptions, newData: ITrendData) => void): void;
     onTrendsChange(cb: (trendsOptions: ITrendsOptions) => void): void;
     onXAxisChange(cb: (changedOptions: IAxisOptions) => void): void;

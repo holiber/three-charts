@@ -156,7 +156,11 @@ export class ChartState {
 	}
 
 	onChange(cb: (changedProps: IChartState) => void ) {
-		this.ee.on('change', cb);
+		let eventName = 'change';
+		this.ee.on(eventName, cb);
+		return () => {
+			this.ee.off(eventName, cb);
+		}
 	}
 
 	onTrendChange(cb: (trendName: string, changedOptions: ITrendOptions, newData: ITrendData) => void) {

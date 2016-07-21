@@ -1,6 +1,6 @@
 
 import Object3D = THREE.Object3D;
-import {ChartState} from "../State";
+import { ChartState, IChartState } from "../State";
 import {Utils} from "../Utils";
 import Mesh = THREE.Mesh;
 import PlaneBufferGeometry = THREE.PlaneBufferGeometry;
@@ -26,6 +26,7 @@ export class TrendBeacon extends TrendWidget {
 	private mesh: Mesh;
 	private animated: boolean;
 	private segment: TrendSegment;
+	private animationIntervalId: number;
 
 	static widgetIsEnabled(trendOptions: ITrendOptions) {
 		return trendOptions.enabled && trendOptions.hasBeacon && trendOptions.type == TREND_TYPE.LINE;
@@ -52,6 +53,7 @@ export class TrendBeacon extends TrendWidget {
 	protected bindEvents() {
 		super.bindEvents();
 		this.bindEvent(this.chartState.onScroll(() => this.updatePosition()));
+		this.bindEvent(this.chartState.onChange(changedProps => this.onStateChange(changedProps)));
 	}
 
 	private initObject() {
@@ -61,12 +63,9 @@ export class TrendBeacon extends TrendWidget {
 			new PlaneBufferGeometry(32, 32),
 			new MeshBasicMaterial({map: TrendBeacon.createTexture(), transparent: true})
 		);
-		
-		if (this.animated) {
-			light.scale.set(0.1, 0.1, 1);
-		} else {
-			light.scale.set(0.2, 0.2, 1);
-		}
+
+
+		light.scale.set(0.2, 0.2, 1);
 
 		// add dot
 		light.add(new Mesh(
@@ -84,7 +83,10 @@ export class TrendBeacon extends TrendWidget {
 			opacity: object.material.opacity
 		};
 
-		setTimeout(() => {
+
+		this.mesh.scale.set(0.1, 0.1, 1);
+
+		this.animationIntervalId = setTimeout(() => {
 			var animation = TweenLite.to(
 				animationObject,
 				1,
@@ -117,6 +119,18 @@ export class TrendBeacon extends TrendWidget {
 	protected onSegmentsAnimate(trendsSegments: TrendSegments) {
 		this.segment = trendsSegments.getEndSegment();
 		this.updatePosition();
+	}
+
+	private onStateChange(changedProps: IChartState) {
+		if (!changedProps.animations) return;
+		if (changedProps.animations.enabled == void 0 || changedProps.animations.enabled == this.animated) return;
+		if (changedProps.animations.enabled) {
+			this.animated = true;
+			this.animate();
+		} else {
+			clearInterval(this.animationIntervalId);
+			this.animated = false;
+		}
 	}
 
 	private updatePosition() {

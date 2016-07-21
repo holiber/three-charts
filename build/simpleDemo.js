@@ -12912,7 +12912,12 @@ var simpleDemo =
 	        };
 	    };
 	    ChartState.prototype.onChange = function (cb) {
-	        this.ee.on('change', cb);
+	        var _this = this;
+	        var eventName = 'change';
+	        this.ee.on(eventName, cb);
+	        return function () {
+	            _this.ee.off(eventName, cb);
+	        };
 	    };
 	    ChartState.prototype.onTrendChange = function (cb) {
 	        this.ee.on('trendChange', cb);
@@ -13981,16 +13986,12 @@ var simpleDemo =
 	        var _this = this;
 	        _super.prototype.bindEvents.call(this);
 	        this.bindEvent(this.chartState.onScroll(function () { return _this.updatePosition(); }));
+	        this.bindEvent(this.chartState.onChange(function (changedProps) { return _this.onStateChange(changedProps); }));
 	    };
 	    TrendBeacon.prototype.initObject = function () {
 	        // add beacon
 	        var light = this.mesh = new Mesh(new PlaneBufferGeometry(32, 32), new MeshBasicMaterial({ map: TrendBeacon.createTexture(), transparent: true }));
-	        if (this.animated) {
-	            light.scale.set(0.1, 0.1, 1);
-	        }
-	        else {
-	            light.scale.set(0.2, 0.2, 1);
-	        }
+	        light.scale.set(0.2, 0.2, 1);
 	        // add dot
 	        light.add(new Mesh(new PlaneBufferGeometry(5, 5), new MeshBasicMaterial({ map: TrendBeacon.createTexture() })));
 	        this.segment = this.trend.segments.getEndSegment();
@@ -14001,7 +14002,8 @@ var simpleDemo =
 	            scale: object.scale.x,
 	            opacity: object.material.opacity
 	        };
-	        setTimeout(function () {
+	        this.mesh.scale.set(0.1, 0.1, 1);
+	        this.animationIntervalId = setTimeout(function () {
 	            var animation = TweenLite.to(animationObject, 1, { scale: 1, opacity: 0 }).eventCallback('onUpdate', function () {
 	                object.scale.set(animationObject.scale, animationObject.scale, 1);
 	                object.material.opacity = animationObject.opacity;
@@ -14026,6 +14028,20 @@ var simpleDemo =
 	    TrendBeacon.prototype.onSegmentsAnimate = function (trendsSegments) {
 	        this.segment = trendsSegments.getEndSegment();
 	        this.updatePosition();
+	    };
+	    TrendBeacon.prototype.onStateChange = function (changedProps) {
+	        if (!changedProps.animations)
+	            return;
+	        if (changedProps.animations.enabled == void 0 || changedProps.animations.enabled == this.animated)
+	            return;
+	        if (changedProps.animations.enabled) {
+	            this.animated = true;
+	            this.animate();
+	        }
+	        else {
+	            clearInterval(this.animationIntervalId);
+	            this.animated = false;
+	        }
 	    };
 	    TrendBeacon.prototype.updatePosition = function () {
 	        var state = this.chartState;
