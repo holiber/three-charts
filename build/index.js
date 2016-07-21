@@ -13985,7 +13985,7 @@ var ThreeChart =
 	                object.scale.set(animationObject.scale, animationObject.scale, 1);
 	                object.material.opacity = animationObject.opacity;
 	            }).eventCallback('onComplete', function () {
-	                animation.restart();
+	                _this.animation && animation.restart();
 	            });
 	        }, 500);
 	    };
@@ -14964,5 +14964,4 @@ var ThreeChart =
 /***/ }
 /******/ ]);
 //# sourceMappingURL=ThreeChart.js.map
- if (typeof module !== "undefined" && module.exports) module.exports = ThreeChart;
  if (typeof module !== "undefined" && module.exports) module.exports = ThreeChart;

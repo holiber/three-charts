@@ -14239,7 +14239,7 @@ var demoApp =
 	                object.scale.set(animationObject.scale, animationObject.scale, 1);
 	                object.material.opacity = animationObject.opacity;
 	            }).eventCallback('onComplete', function () {
-	                animation.restart();
+	                _this.animation && animation.restart();
 	            });
 	        }, 500);
 	    };
