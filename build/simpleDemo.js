@@ -292,6 +292,7 @@ var simpleDemo =
 	        this.state.screen.onTransformationFrame(function (options) { return _this.onScreenTransform(options); });
 	    };
 	    Chart.prototype.unbindEvents = function () {
+	        // TODO: unbind events correctly
 	        this.$el.remove();
 	    };
 	    Chart.prototype.onScreenTransform = function (options) {
@@ -14048,6 +14049,7 @@ var simpleDemo =
 	        this.segment = this.trend.segments.getEndSegment();
 	    };
 	    TrendBeacon.prototype.animate = function () {
+	        var _this = this;
 	        this.animated = true;
 	        var object = this.mesh;
 	        var animationObject = {
@@ -14055,14 +14057,19 @@ var simpleDemo =
 	            opacity: object.material.opacity
 	        };
 	        this.mesh.scale.set(0.1, 0.1, 1);
-	        this.animationIntervalId = setTimeout(function () {
-	            var animation = TweenLite.to(animationObject, 1, { scale: 1, opacity: 0 }).eventCallback('onUpdate', function () {
+	        setTimeout(function () {
+	            var animation = _this.animation = TweenLite.to(animationObject, 1, { scale: 1, opacity: 0 });
+	            animation.eventCallback('onUpdate', function () {
 	                object.scale.set(animationObject.scale, animationObject.scale, 1);
 	                object.material.opacity = animationObject.opacity;
 	            }).eventCallback('onComplete', function () {
 	                animation.restart();
 	            });
 	        }, 500);
+	    };
+	    TrendBeacon.prototype.stopAnimation = function () {
+	        this.animated = false;
+	        this.animation && this.animation.kill();
 	    };
 	    TrendBeacon.createTexture = function () {
 	        var h = 32, w = 32;
@@ -14080,10 +14087,6 @@ var simpleDemo =
 	    TrendBeacon.prototype.onSegmentsAnimate = function (trendsSegments) {
 	        this.segment = trendsSegments.getEndSegment();
 	        this.updatePosition();
-	    };
-	    TrendBeacon.prototype.stopAnimation = function () {
-	        clearInterval(this.animationIntervalId);
-	        this.animated = false;
 	    };
 	    TrendBeacon.prototype.onStateChange = function (changedProps) {
 	        if (!changedProps.animations)

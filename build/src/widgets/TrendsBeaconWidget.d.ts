@@ -15,7 +15,7 @@ export declare class TrendBeacon extends TrendWidget {
     private mesh;
     private animated;
     private segment;
-    private animationIntervalId;
+    private animation;
     static widgetIsEnabled(trendOptions: ITrendOptions): boolean;
     constructor(state: ChartState, trendName: string);
     getObject3D(): Mesh;
@@ -23,10 +23,10 @@ export declare class TrendBeacon extends TrendWidget {
     protected bindEvents(): void;
     private initObject();
     private animate();
+    private stopAnimation();
     private static createTexture();
     protected onTransformationFrame(): void;
     protected onSegmentsAnimate(trendsSegments: TrendSegments): void;
-    private stopAnimation();
     private onStateChange(changedProps);
     private updatePosition();
 }

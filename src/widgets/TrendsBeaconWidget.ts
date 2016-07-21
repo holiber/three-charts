@@ -26,7 +26,7 @@ export class TrendBeacon extends TrendWidget {
 	private mesh: Mesh;
 	private animated: boolean;
 	private segment: TrendSegment;
-	private animationIntervalId: number;
+	private animation: TweenLite;
 
 	static widgetIsEnabled(trendOptions: ITrendOptions) {
 		return trendOptions.enabled && trendOptions.hasBeacon && trendOptions.type == TREND_TYPE.LINE;
@@ -87,19 +87,25 @@ export class TrendBeacon extends TrendWidget {
 
 		this.mesh.scale.set(0.1, 0.1, 1);
 
-		this.animationIntervalId = setTimeout(() => {
-			var animation = TweenLite.to(
+		setTimeout(() => {
+			var animation = this.animation = TweenLite.to(
 				animationObject,
 				1,
 				{scale: 1, opacity: 0}
-			).eventCallback('onUpdate', () => {
+			);
+			animation.eventCallback('onUpdate', () => {
 				object.scale.set(animationObject.scale, animationObject.scale, 1);
 				object.material.opacity = animationObject.opacity
 			}).eventCallback('onComplete', () => {
-				animation.restart();
+				this.animation && animation.restart();
 			});
 		}, 500);
 	
+	}
+
+	private stopAnimation() {
+		this.animated = false;
+		this.animation && this.animation.kill();
 	}
 
 	private static createTexture() {
@@ -120,11 +126,6 @@ export class TrendBeacon extends TrendWidget {
 	protected onSegmentsAnimate(trendsSegments: TrendSegments) {
 		this.segment = trendsSegments.getEndSegment();
 		this.updatePosition();
-	}
-
-	private stopAnimation() {
-		clearInterval(this.animationIntervalId);
-		this.animated = false;
 	}
 
 	private onStateChange(changedProps: IChartState) {
