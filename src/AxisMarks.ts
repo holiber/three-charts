@@ -1,7 +1,7 @@
 
 import {ChartState} from "./State";
 import {Utils} from "./Utils";
-import {AXIS_TYPE, TEase} from "./interfaces";
+import {AXIS_TYPE} from "./interfaces";
 import {ITrendData, ITrendOptions} from "./Trend";
 import {EventEmitter} from './deps';
 

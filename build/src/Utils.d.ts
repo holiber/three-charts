@@ -9,7 +9,7 @@ export declare class Utils {
     /**
      * deepMerge based on https://www.npmjs.com/package/deepmerge
      */
-    static deepMerge<T>(obj1: T, obj2: T): T;
+    static deepMerge<T>(obj1: T, obj2: T, mergeArrays?: boolean): T;
     /**
      * deepCopy based on JSON.stringify function
      * @deprecated

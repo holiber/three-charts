@@ -53,11 +53,18 @@ export class TrendMarksWidget extends TrendWidget {
 	}
 
 	private onMarksChange() {
-		var marksItems = this.trend.marks.getItems();
-		var widgets = this.marksWidgets;
+		let marksItems = this.trend.marks.getItems();
+		let widgets = this.marksWidgets;
+		let actualMarksNames: string[] = [];
 		for (let markName in marksItems) {
+			actualMarksNames.push(markName);
 			if (!widgets[markName]) this.createMarkWidget(marksItems[markName]);
 		}
+		for (let markName in this.marksWidgets) {
+			if (actualMarksNames.indexOf(markName) !== -1) continue;
+			this.destroyMarkWidget(markName);
+		}
+
 	}
 	
 	private createMarkWidget(mark: TrendMark) {
@@ -65,6 +72,11 @@ export class TrendMarksWidget extends TrendWidget {
 		let markWidget = new TrendMarkWidget(this.chartState, mark);
 		this.marksWidgets[mark.options.name] = markWidget;
 		this.object3D.add(markWidget.getObject3D());
+	}
+
+	private destroyMarkWidget(markName: string) {
+		this.object3D.remove(this.marksWidgets[markName].getObject3D());
+		delete this.marksWidgets[markName];
 	}
 
 	// protected onTransformationFrame() {

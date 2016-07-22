@@ -237,7 +237,7 @@ export class ChartState {
 		let newStateContainsData = Object.keys(trendsData).length > 0;
 		
 
-		this.data = Utils.deepMerge(this.data, newState);
+		this.data = Utils.deepMerge(this.data, newState, false);
 
 		// return data to state
 		if (newStateContainsData) for (let trendName in trendsData) {

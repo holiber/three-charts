@@ -5,7 +5,6 @@
   "main": "index.js",
   "dependencies": {
     "createjs-tweenjs": "^0.6.0",
-    "deepmerge": "^0.2.10",
     "es6-promise": "^3.2.1",
     "eventemitter2": "^0.4.11",
     "gsap": "^1.18.4",

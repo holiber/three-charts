@@ -19,6 +19,7 @@ export declare class TrendMarksWidget extends TrendWidget {
     protected bindEvents(): void;
     private onMarksChange();
     private createMarkWidget(mark);
+    private destroyMarkWidget(markName);
     protected onZoomFrame(): void;
     protected onSegmentsAnimate(): void;
 }

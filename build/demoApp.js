@@ -47,8 +47,8 @@ var demoApp =
 
 	"use strict";
 	var src_1 = __webpack_require__(1);
-	var Trend_1 = __webpack_require__(19);
-	var TrendMarks_1 = __webpack_require__(20);
+	var Trend_1 = __webpack_require__(18);
+	var TrendMarks_1 = __webpack_require__(19);
 	var chart;
 	var DataSourse = (function () {
 	    function DataSourse() {
@@ -315,16 +315,16 @@ var demoApp =
 	    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
 	}
 	__export(__webpack_require__(2));
-	__export(__webpack_require__(27));
 	__export(__webpack_require__(26));
 	__export(__webpack_require__(25));
-	__export(__webpack_require__(23));
+	__export(__webpack_require__(24));
+	__export(__webpack_require__(22));
+	__export(__webpack_require__(18));
 	__export(__webpack_require__(19));
 	__export(__webpack_require__(20));
-	__export(__webpack_require__(21));
-	__export(__webpack_require__(24));
-	__export(__webpack_require__(15));
-	__export(__webpack_require__(17));
+	__export(__webpack_require__(23));
+	__export(__webpack_require__(14));
+	__export(__webpack_require__(16));
 
 
 /***/ },
@@ -336,18 +336,18 @@ var demoApp =
 	__webpack_require__(3);
 	var PerspectiveCamera = THREE.PerspectiveCamera;
 	var WebGLRenderer = THREE.WebGLRenderer;
-	var TrendsIndicatorWidget_1 = __webpack_require__(14);
-	var TrendsLineWidget_1 = __webpack_require__(18);
-	var TrendsCandleWidget_1 = __webpack_require__(22);
-	var State_1 = __webpack_require__(23);
-	var Utils_1 = __webpack_require__(15);
-	var TrendsBeaconWidget_1 = __webpack_require__(28);
-	var AxisWidget_1 = __webpack_require__(29);
-	var GridWidget_1 = __webpack_require__(30);
-	var TrendsLoadingWidget_1 = __webpack_require__(31);
-	var AxisMarksWidget_1 = __webpack_require__(32);
-	var TrendsMarksWidget_1 = __webpack_require__(33);
-	var BorderWidget_1 = __webpack_require__(34);
+	var TrendsIndicatorWidget_1 = __webpack_require__(13);
+	var TrendsLineWidget_1 = __webpack_require__(17);
+	var TrendsCandleWidget_1 = __webpack_require__(21);
+	var State_1 = __webpack_require__(22);
+	var Utils_1 = __webpack_require__(14);
+	var TrendsBeaconWidget_1 = __webpack_require__(27);
+	var AxisWidget_1 = __webpack_require__(28);
+	var GridWidget_1 = __webpack_require__(29);
+	var TrendsLoadingWidget_1 = __webpack_require__(30);
+	var AxisMarksWidget_1 = __webpack_require__(31);
+	var TrendsMarksWidget_1 = __webpack_require__(32);
+	var BorderWidget_1 = __webpack_require__(33);
 	exports.MAX_DATA_LENGTH = 2692000; //1000;
 	var Chart = (function () {
 	    function Chart(state) {
@@ -592,9 +592,8 @@ var demoApp =
 	//require('three/examples/js/renderers/CanvasRenderer.js');
 	//require('three/examples/js/renderers/Projector.js');
 	exports.isPlainObject = __webpack_require__(9);
-	exports.deepmerge = __webpack_require__(11);
-	exports.EventEmitter = __webpack_require__(12);
-	var es6_promise_1 = __webpack_require__(13);
+	exports.EventEmitter = __webpack_require__(11);
+	var es6_promise_1 = __webpack_require__(12);
 	exports.Promise = es6_promise_1.Promise;
 
 
@@ -10655,64 +10654,6 @@ var demoApp =
 /* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
-	    if (true) {
-	        !(__WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.call(exports, __webpack_require__, exports, module)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-	    } else if (typeof exports === 'object') {
-	        module.exports = factory();
-	    } else {
-	        root.deepmerge = factory();
-	    }
-	}(this, function () {
-	
-	return function deepmerge(target, src) {
-	    var array = Array.isArray(src);
-	    var dst = array && [] || {};
-	
-	    if (array) {
-	        target = target || [];
-	        dst = dst.concat(target);
-	        src.forEach(function(e, i) {
-	            if (typeof dst[i] === 'undefined') {
-	                dst[i] = e;
-	            } else if (typeof e === 'object') {
-	                dst[i] = deepmerge(target[i], e);
-	            } else {
-	                if (target.indexOf(e) === -1) {
-	                    dst.push(e);
-	                }
-	            }
-	        });
-	    } else {
-	        if (target && typeof target === 'object') {
-	            Object.keys(target).forEach(function (key) {
-	                dst[key] = target[key];
-	            })
-	        }
-	        Object.keys(src).forEach(function (key) {
-	            if (typeof src[key] !== 'object' || !src[key]) {
-	                dst[key] = src[key];
-	            }
-	            else {
-	                if (!target[key]) {
-	                    dst[key] = src[key];
-	                } else {
-	                    dst[key] = deepmerge(target[key], src[key]);
-	                }
-	            }
-	        });
-	    }
-	
-	    return dst;
-	}
-	
-	}));
-
-
-/***/ },
-/* 12 */
-/***/ function(module, exports, __webpack_require__) {
-
 	var __WEBPACK_AMD_DEFINE_RESULT__;/*!
 	 * EventEmitter2
 	 * https://github.com/hij1nx/EventEmitter2
@@ -11289,13 +11230,13 @@ var demoApp =
 
 
 /***/ },
-/* 13 */
+/* 12 */
 /***/ function(module, exports) {
 
 	module.exports = {Promise: window['Promise']}
 
 /***/ },
-/* 14 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -11304,9 +11245,9 @@ var demoApp =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Utils_1 = __webpack_require__(15);
+	var Utils_1 = __webpack_require__(14);
 	var Mesh = THREE.Mesh;
-	var TrendsWidget_1 = __webpack_require__(16);
+	var TrendsWidget_1 = __webpack_require__(15);
 	var Color = THREE.Color;
 	var CANVAS_WIDTH = 128;
 	var CANVAS_HEIGHT = 64;
@@ -11395,11 +11336,56 @@ var demoApp =
 
 
 /***/ },
-/* 15 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 	var deps_1 = __webpack_require__(3);
+	function deepmerge(target, src, mergeArrays) {
+	    if (mergeArrays === void 0) { mergeArrays = true; }
+	    var array = Array.isArray(src);
+	    var dst = array && [] || {};
+	    if (array) {
+	        target = target || [];
+	        if (mergeArrays) {
+	            dst = dst.concat(target);
+	        }
+	        src.forEach(function (e, i) {
+	            if (typeof dst[i] === 'undefined') {
+	                dst[i] = e;
+	            }
+	            else if (typeof e === 'object') {
+	                dst[i] = deepmerge(target[i], e, mergeArrays);
+	            }
+	            else {
+	                if (target.indexOf(e) === -1) {
+	                    dst.push(e);
+	                }
+	            }
+	        });
+	    }
+	    else {
+	        if (target && typeof target === 'object') {
+	            Object.keys(target).forEach(function (key) {
+	                dst[key] = target[key];
+	            });
+	        }
+	        Object.keys(src).forEach(function (key) {
+	            if (typeof src[key] !== 'object' || !src[key]) {
+	                dst[key] = src[key];
+	            }
+	            else {
+	                if (!target[key]) {
+	                    dst[key] = src[key];
+	                }
+	                else {
+	                    dst[key] = deepmerge(target[key], src[key], mergeArrays);
+	                }
+	            }
+	        });
+	    }
+	    return dst;
+	}
 	/**
 	 * project utils static class
 	 */
@@ -11409,8 +11395,8 @@ var demoApp =
 	    /**
 	     * deepMerge based on https://www.npmjs.com/package/deepmerge
 	     */
-	    Utils.deepMerge = function (obj1, obj2) {
-	        return deps_1.deepmerge(obj1, obj2);
+	    Utils.deepMerge = function (obj1, obj2, mergeArrays) {
+	        return deepmerge(obj1, obj2, mergeArrays);
 	    };
 	    /**
 	     * deepCopy based on JSON.stringify function
@@ -11614,7 +11600,7 @@ var demoApp =
 
 
 /***/ },
-/* 16 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -11623,7 +11609,7 @@ var demoApp =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Widget_1 = __webpack_require__(17);
+	var Widget_1 = __webpack_require__(16);
 	var Object3D = THREE.Object3D;
 	/**
 	 * abstract manager class for all trends widgets
@@ -11740,7 +11726,7 @@ var demoApp =
 
 
 /***/ },
-/* 17 */
+/* 16 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -11764,7 +11750,7 @@ var demoApp =
 
 
 /***/ },
-/* 18 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -11776,10 +11762,10 @@ var demoApp =
 	var Geometry = THREE.Geometry;
 	var LineBasicMaterial = THREE.LineBasicMaterial;
 	var Vector3 = THREE.Vector3;
-	var TrendsWidget_1 = __webpack_require__(16);
+	var TrendsWidget_1 = __webpack_require__(15);
 	var LineSegments = THREE.LineSegments;
-	var Trend_1 = __webpack_require__(19);
-	var Utils_1 = __webpack_require__(15);
+	var Trend_1 = __webpack_require__(18);
+	var Utils_1 = __webpack_require__(14);
 	var MAX_DISPLAYED_SEGMENTS = 2000;
 	/**
 	 * widget for drawing trends lines
@@ -11918,13 +11904,13 @@ var demoApp =
 
 
 /***/ },
-/* 19 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var Utils_1 = __webpack_require__(15);
-	var TrendMarks_1 = __webpack_require__(20);
-	var TrendSegments_1 = __webpack_require__(21);
+	var Utils_1 = __webpack_require__(14);
+	var TrendMarks_1 = __webpack_require__(19);
+	var TrendSegments_1 = __webpack_require__(20);
 	var deps_1 = __webpack_require__(3);
 	(function (TREND_TYPE) {
 	    TREND_TYPE[TREND_TYPE["LINE"] = 0] = "LINE";
@@ -12128,12 +12114,12 @@ var demoApp =
 
 
 /***/ },
-/* 20 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var Utils_1 = __webpack_require__(15);
-	var Trend_1 = __webpack_require__(19);
+	var Utils_1 = __webpack_require__(14);
+	var Trend_1 = __webpack_require__(18);
 	var deps_1 = __webpack_require__(3);
 	(function (TREND_MARK_SIDE) {
 	    TREND_MARK_SIDE[TREND_MARK_SIDE["TOP"] = 0] = "TOP";
@@ -12206,21 +12192,30 @@ var demoApp =
 	    };
 	    TrendMarks.prototype.onMarksChange = function () {
 	        var trendsMarksOptions = this.trend.getOptions().marks;
+	        var actualMarksNames = [];
 	        for (var _i = 0, trendsMarksOptions_1 = trendsMarksOptions; _i < trendsMarksOptions_1.length; _i++) {
 	            var options = trendsMarksOptions_1[_i];
 	            var marks = this.items;
 	            // set mark name
 	            if (!options.name) {
 	                options.name = Utils_1.Utils.getUid().toString();
+	                actualMarksNames.push(options.name);
 	                if (marks[options.name])
 	                    Utils_1.Utils.error('duplicated mark name ' + options.name);
 	            }
 	            else if (marks[options.name]) {
+	                actualMarksNames.push(options.name);
 	                continue;
 	            }
 	            options = Utils_1.Utils.deepMerge(AXIS_MARK_DEFAULT_OPTIONS, options);
 	            var mark = new TrendMark(this.chartState, options, this.trend);
 	            marks[options.name] = mark;
+	        }
+	        // delete not relevant marks
+	        for (var markName in this.items) {
+	            if (actualMarksNames.indexOf(markName) != -1)
+	                continue;
+	            delete this.items[markName];
 	        }
 	        this.updateMarksSegments();
 	    };
@@ -12329,14 +12324,14 @@ var demoApp =
 
 
 /***/ },
-/* 21 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 	var deps_1 = __webpack_require__(3);
 	var Vector3 = THREE.Vector3;
-	var Trend_1 = __webpack_require__(19);
-	var Utils_1 = __webpack_require__(15);
+	var Trend_1 = __webpack_require__(18);
+	var Utils_1 = __webpack_require__(14);
 	var MAX_ANIMATED_SEGMENTS = 100;
 	/**
 	 *  Class helps to display and animate trends segments
@@ -12828,7 +12823,7 @@ var demoApp =
 
 
 /***/ },
-/* 22 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -12837,7 +12832,7 @@ var demoApp =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var TrendsWidget_1 = __webpack_require__(16);
+	var TrendsWidget_1 = __webpack_require__(15);
 	var Object3D = THREE.Object3D;
 	var Geometry = THREE.Geometry;
 	var Vector3 = THREE.Vector3;
@@ -12845,7 +12840,7 @@ var demoApp =
 	var Line = THREE.Line;
 	var MeshBasicMaterial = THREE.MeshBasicMaterial;
 	var PlaneGeometry = THREE.PlaneGeometry;
-	var Trend_1 = __webpack_require__(19);
+	var Trend_1 = __webpack_require__(18);
 	var LineBasicMaterial = THREE.LineBasicMaterial;
 	var RISE_COLOR = 0x2CAC40;
 	var FALL_COLOR = 0xEE5533;
@@ -13021,18 +13016,18 @@ var demoApp =
 
 
 /***/ },
-/* 23 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 	var deps_1 = __webpack_require__(3);
-	var Utils_1 = __webpack_require__(15);
+	var Utils_1 = __webpack_require__(14);
 	var Vector3 = THREE.Vector3;
-	var Widget_1 = __webpack_require__(17);
-	var Trends_1 = __webpack_require__(24);
-	var Screen_1 = __webpack_require__(25);
-	var AxisMarks_1 = __webpack_require__(26);
-	var interfaces_1 = __webpack_require__(27);
+	var Widget_1 = __webpack_require__(16);
+	var Trends_1 = __webpack_require__(23);
+	var Screen_1 = __webpack_require__(24);
+	var AxisMarks_1 = __webpack_require__(25);
+	var interfaces_1 = __webpack_require__(26);
 	var Chart_1 = __webpack_require__(2);
 	var deps_2 = __webpack_require__(3);
 	/**
@@ -13187,7 +13182,7 @@ var demoApp =
 	                delete trendOptions.data;
 	            }
 	        var newStateContainsData = Object.keys(trendsData).length > 0;
-	        this.data = Utils_1.Utils.deepMerge(this.data, newState);
+	        this.data = Utils_1.Utils.deepMerge(this.data, newState, false);
 	        // return data to state
 	        if (newStateContainsData)
 	            for (var trendName in trendsData) {
@@ -13556,11 +13551,11 @@ var demoApp =
 
 
 /***/ },
-/* 24 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var Trend_1 = __webpack_require__(19);
+	var Trend_1 = __webpack_require__(18);
 	/**
 	 * Trends collection
 	 */
@@ -13629,7 +13624,7 @@ var demoApp =
 
 
 /***/ },
-/* 25 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -13984,7 +13979,7 @@ var demoApp =
 
 
 /***/ },
-/* 26 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -13993,8 +13988,8 @@ var demoApp =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Utils_1 = __webpack_require__(15);
-	var interfaces_1 = __webpack_require__(27);
+	var Utils_1 = __webpack_require__(14);
+	var interfaces_1 = __webpack_require__(26);
 	var deps_1 = __webpack_require__(3);
 	var AXIS_MARK_DEFAULT_OPTIONS = {
 	    type: 'simple',
@@ -14135,7 +14130,7 @@ var demoApp =
 
 
 /***/ },
-/* 27 */
+/* 26 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -14160,7 +14155,7 @@ var demoApp =
 
 
 /***/ },
-/* 28 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14169,12 +14164,12 @@ var demoApp =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Utils_1 = __webpack_require__(15);
+	var Utils_1 = __webpack_require__(14);
 	var Mesh = THREE.Mesh;
 	var PlaneBufferGeometry = THREE.PlaneBufferGeometry;
 	var MeshBasicMaterial = THREE.MeshBasicMaterial;
-	var TrendsWidget_1 = __webpack_require__(16);
-	var Trend_1 = __webpack_require__(19);
+	var TrendsWidget_1 = __webpack_require__(15);
+	var Trend_1 = __webpack_require__(18);
 	/**
 	 * widget adds blinking beacon on trends end
 	 * activated when trend.hasBeacon = true
@@ -14305,7 +14300,7 @@ var demoApp =
 
 
 /***/ },
-/* 29 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14316,10 +14311,10 @@ var demoApp =
 	};
 	var Mesh = THREE.Mesh;
 	var Object3D = THREE.Object3D;
-	var Widget_1 = __webpack_require__(17);
-	var GridWidget_1 = __webpack_require__(30);
-	var Utils_1 = __webpack_require__(15);
-	var interfaces_1 = __webpack_require__(27);
+	var Widget_1 = __webpack_require__(16);
+	var GridWidget_1 = __webpack_require__(29);
+	var Utils_1 = __webpack_require__(14);
+	var interfaces_1 = __webpack_require__(26);
 	/**
 	 * widget for drawing axis
 	 */
@@ -14513,7 +14508,7 @@ var demoApp =
 
 
 /***/ },
-/* 30 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14523,9 +14518,9 @@ var demoApp =
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
 	var Vector3 = THREE.Vector3;
-	var Widget_1 = __webpack_require__(17);
+	var Widget_1 = __webpack_require__(16);
 	var LineSegments = THREE.LineSegments;
-	var Utils_1 = __webpack_require__(15);
+	var Utils_1 = __webpack_require__(14);
 	/**
 	 * widget for drawing chart grid
 	 */
@@ -14681,7 +14676,7 @@ var demoApp =
 
 
 /***/ },
-/* 31 */
+/* 30 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14690,12 +14685,12 @@ var demoApp =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Utils_1 = __webpack_require__(15);
+	var Utils_1 = __webpack_require__(14);
 	var Mesh = THREE.Mesh;
 	var PlaneBufferGeometry = THREE.PlaneBufferGeometry;
 	var MeshBasicMaterial = THREE.MeshBasicMaterial;
-	var TrendsWidget_1 = __webpack_require__(16);
-	var Trend_1 = __webpack_require__(19);
+	var TrendsWidget_1 = __webpack_require__(15);
+	var Trend_1 = __webpack_require__(18);
 	/**
 	 * widget adds loading indicator
 	 * activated when animations enabled
@@ -14796,7 +14791,7 @@ var demoApp =
 
 
 /***/ },
-/* 32 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14805,15 +14800,15 @@ var demoApp =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Widget_1 = __webpack_require__(17);
+	var Widget_1 = __webpack_require__(16);
 	var Object3D = THREE.Object3D;
 	var Geometry = THREE.Geometry;
 	var LineBasicMaterial = THREE.LineBasicMaterial;
 	var Vector3 = THREE.Vector3;
-	var Utils_1 = __webpack_require__(15);
+	var Utils_1 = __webpack_require__(14);
 	var Line = THREE.Line;
 	var Mesh = THREE.Mesh;
-	var interfaces_1 = __webpack_require__(27);
+	var interfaces_1 = __webpack_require__(26);
 	/**
 	 * widget for shows marks on axis
 	 */
@@ -14985,7 +14980,7 @@ var demoApp =
 
 
 /***/ },
-/* 33 */
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14997,9 +14992,9 @@ var demoApp =
 	var Geometry = THREE.Geometry;
 	var Mesh = THREE.Mesh;
 	var Object3D = THREE.Object3D;
-	var TrendsWidget_1 = __webpack_require__(16);
-	var TrendMarks_1 = __webpack_require__(20);
-	var Utils_1 = __webpack_require__(15);
+	var TrendsWidget_1 = __webpack_require__(15);
+	var TrendMarks_1 = __webpack_require__(19);
+	var Utils_1 = __webpack_require__(14);
 	var MAX_MARKS_IN_ROW = 3;
 	/**
 	 * widget for drawing trends marks for all trends
@@ -15038,9 +15033,16 @@ var demoApp =
 	    TrendMarksWidget.prototype.onMarksChange = function () {
 	        var marksItems = this.trend.marks.getItems();
 	        var widgets = this.marksWidgets;
+	        var actualMarksNames = [];
 	        for (var markName in marksItems) {
+	            actualMarksNames.push(markName);
 	            if (!widgets[markName])
 	                this.createMarkWidget(marksItems[markName]);
+	        }
+	        for (var markName in this.marksWidgets) {
+	            if (actualMarksNames.indexOf(markName) !== -1)
+	                continue;
+	            this.destroyMarkWidget(markName);
 	        }
 	    };
 	    TrendMarksWidget.prototype.createMarkWidget = function (mark) {
@@ -15049,6 +15051,10 @@ var demoApp =
 	        var markWidget = new TrendMarkWidget(this.chartState, mark);
 	        this.marksWidgets[mark.options.name] = markWidget;
 	        this.object3D.add(markWidget.getObject3D());
+	    };
+	    TrendMarksWidget.prototype.destroyMarkWidget = function (markName) {
+	        this.object3D.remove(this.marksWidgets[markName].getObject3D());
+	        delete this.marksWidgets[markName];
 	    };
 	    // protected onTransformationFrame() {
 	    // 	var widgets = this.marksWidgets;
@@ -15189,7 +15195,7 @@ var demoApp =
 
 
 /***/ },
-/* 34 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -15198,7 +15204,7 @@ var demoApp =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Widget_1 = __webpack_require__(17);
+	var Widget_1 = __webpack_require__(16);
 	var LineSegments = THREE.LineSegments;
 	var Vector3 = THREE.Vector3;
 	/**

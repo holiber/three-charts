@@ -99,14 +99,17 @@ export class TrendMarks {
 
 	private onMarksChange() {
 		var trendsMarksOptions = this.trend.getOptions().marks;
+		let actualMarksNames: string[] = [];
 		for (let options of trendsMarksOptions) {
 			var marks = this.items;
 
 			// set mark name
 			if (!options.name) {
 				options.name = Utils.getUid().toString();
+				actualMarksNames.push(options.name);
 				if (marks[options.name]) Utils.error('duplicated mark name ' + options.name);
 			} else if (marks[options.name]) {
+				actualMarksNames.push(options.name);
 				continue;
 			}
 
@@ -114,6 +117,12 @@ export class TrendMarks {
 			
 			let mark = new TrendMark(this.chartState, options, this.trend);
 			marks[options.name] = mark;
+		}
+
+		// delete not relevant marks
+		for (let markName in this.items) {
+			if (actualMarksNames.indexOf(markName) != -1) continue;
+			delete this.items[markName];
 		}
 		this.updateMarksSegments();
 	}
@@ -123,6 +132,7 @@ export class TrendMarks {
 		var newMarkOptions = marksOptions.concat([options]);
 		this.chartState.setState({trends: {[this.trend.name]: {marks: newMarkOptions}}});
 	}
+
 
 	getItems() {
 		return this.items;
