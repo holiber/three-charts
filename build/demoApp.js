@@ -14328,6 +14328,7 @@ var demoApp =
 	    function AxisWidget(state) {
 	        var _this = this;
 	        _super.call(this, state);
+	        this.isDestroyed = false;
 	        this.object3D = new Object3D();
 	        this.axisXObject = new Object3D();
 	        this.axisYObject = new Object3D();
@@ -14345,6 +14346,10 @@ var demoApp =
 	            _this.onScrollChange(options.scrollX, options.scrollY);
 	        });
 	        state.screen.onZoomFrame(function (options) { _this.onZoomFrame(options); });
+	        state.onDestroy(function () { return _this.onDestroy(); });
+	    };
+	    AxisWidget.prototype.onDestroy = function () {
+	        this.isDestroyed = true;
 	    };
 	    AxisWidget.prototype.onScrollChange = function (x, y) {
 	        if (y != void 0) {
@@ -14391,6 +14396,8 @@ var demoApp =
 	        return this.object3D;
 	    };
 	    AxisWidget.prototype.updateAxis = function (orientation) {
+	        if (this.isDestroyed)
+	            return;
 	        var isXAxis = orientation == interfaces_1.AXIS_TYPE.X;
 	        var _a = this.chartState.data, visibleWidth = _a.width, visibleHeight = _a.height;
 	        var _b = this.chartState.screen.options, scrollX = _b.scrollX, scrollXVal = _b.scrollXVal, scrollY = _b.scrollY, scrollYVal = _b.scrollYVal, zoomX = _b.zoomX, zoomY = _b.zoomY;

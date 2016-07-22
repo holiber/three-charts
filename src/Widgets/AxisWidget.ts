@@ -22,11 +22,12 @@ import {AXIS_TYPE, AXIS_DATA_TYPE, IAxisOptions} from "../interfaces";
  */
 export class AxisWidget extends ChartWidget {
 	static widgetName = 'Axis';
+	private isDestroyed = false;
 	private object3D: Object3D;
 	private axisXObject: Object3D;
 	private axisYObject: Object3D;
 	private updateAxisXRequest: () => void;
-	
+
 	constructor (state: ChartState) {
 		super(state);
 		this.object3D = new Object3D();
@@ -47,6 +48,11 @@ export class AxisWidget extends ChartWidget {
 			this.onScrollChange(options.scrollX, options.scrollY);
 		});
 		state.screen.onZoomFrame((options) => {this.onZoomFrame(options)});
+		state.onDestroy(() => this.onDestroy())
+	}
+
+	private onDestroy() {
+		this.isDestroyed = true;
 	}
 
 	private onScrollChange(x: number, y: number) {
@@ -110,6 +116,7 @@ export class AxisWidget extends ChartWidget {
 	}
 
 	private updateAxis(orientation: AXIS_TYPE) {
+		if (this.isDestroyed) return;
 		var isXAxis = orientation == AXIS_TYPE.X;
 		var {width: visibleWidth, height: visibleHeight} = this.chartState.data;
 		var {scrollX, scrollXVal, scrollY, scrollYVal, zoomX, zoomY} = this.chartState.screen.options;
