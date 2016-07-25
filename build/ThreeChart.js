@@ -61,16 +61,16 @@ var ThreeChart =
 	    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
 	}
 	__export(__webpack_require__(2));
-	__export(__webpack_require__(26));
-	__export(__webpack_require__(25));
 	__export(__webpack_require__(24));
-	__export(__webpack_require__(22));
-	__export(__webpack_require__(18));
-	__export(__webpack_require__(19));
-	__export(__webpack_require__(20));
 	__export(__webpack_require__(23));
-	__export(__webpack_require__(14));
+	__export(__webpack_require__(22));
+	__export(__webpack_require__(20));
 	__export(__webpack_require__(16));
+	__export(__webpack_require__(17));
+	__export(__webpack_require__(18));
+	__export(__webpack_require__(21));
+	__export(__webpack_require__(12));
+	__export(__webpack_require__(14));
 
 
 /***/ },
@@ -82,18 +82,18 @@ var ThreeChart =
 	__webpack_require__(3);
 	var PerspectiveCamera = THREE.PerspectiveCamera;
 	var WebGLRenderer = THREE.WebGLRenderer;
-	var TrendsIndicatorWidget_1 = __webpack_require__(13);
-	var TrendsLineWidget_1 = __webpack_require__(17);
-	var TrendsCandleWidget_1 = __webpack_require__(21);
-	var State_1 = __webpack_require__(22);
-	var Utils_1 = __webpack_require__(14);
-	var TrendsBeaconWidget_1 = __webpack_require__(27);
-	var AxisWidget_1 = __webpack_require__(28);
-	var GridWidget_1 = __webpack_require__(29);
-	var TrendsLoadingWidget_1 = __webpack_require__(30);
-	var AxisMarksWidget_1 = __webpack_require__(31);
-	var TrendsMarksWidget_1 = __webpack_require__(32);
-	var BorderWidget_1 = __webpack_require__(33);
+	var TrendsIndicatorWidget_1 = __webpack_require__(11);
+	var TrendsLineWidget_1 = __webpack_require__(15);
+	var TrendsCandleWidget_1 = __webpack_require__(19);
+	var State_1 = __webpack_require__(20);
+	var Utils_1 = __webpack_require__(12);
+	var TrendsBeaconWidget_1 = __webpack_require__(25);
+	var AxisWidget_1 = __webpack_require__(26);
+	var GridWidget_1 = __webpack_require__(27);
+	var TrendsLoadingWidget_1 = __webpack_require__(28);
+	var AxisMarksWidget_1 = __webpack_require__(29);
+	var TrendsMarksWidget_1 = __webpack_require__(30);
+	var BorderWidget_1 = __webpack_require__(31);
 	exports.MAX_DATA_LENGTH = 2692000; //1000;
 	var Chart = (function () {
 	    function Chart(state) {
@@ -334,12 +334,12 @@ var ThreeChart =
 	// (<any>window).THREE = require('three/three');
 	window.Stats = __webpack_require__(4);
 	window.TweenLite = __webpack_require__(5);
-	__webpack_require__(7);
+	//require('gsap/src/uncompressed/easing/EasePack.js');
 	//require('three/examples/js/renderers/CanvasRenderer.js');
 	//require('three/examples/js/renderers/Projector.js');
-	exports.isPlainObject = __webpack_require__(9);
-	exports.EventEmitter = __webpack_require__(11);
-	var es6_promise_1 = __webpack_require__(12);
+	exports.isPlainObject = __webpack_require__(7);
+	exports.EventEmitter = __webpack_require__(9);
+	var es6_promise_1 = __webpack_require__(10);
 	exports.Promise = es6_promise_1.Promise;
 
 
@@ -359,8 +359,8 @@ var ThreeChart =
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(global) {/*!
-	 * VERSION: 1.18.5
-	 * DATE: 2016-05-24
+	 * VERSION: 1.19.0
+	 * DATE: 2016-07-14
 	 * UPDATES AND DOCS AT: http://greensock.com
 	 * 
 	 * Includes all of the following: TweenLite, TweenMax, TimelineLite, TimelineMax, EasePack, CSSPlugin, RoundPropsPlugin, BezierPlugin, AttrPlugin, DirectionalRotationPlugin
@@ -390,7 +390,7 @@ var ThreeChart =
 						p, val;
 					for (p in alt) {
 						val = alt[p];
-						vars[p] = (typeof(val) === "function") ? val.call(targets[i], i) : val[i % val.length];
+						vars[p] = (typeof(val) === "function") ? val(i, targets[i]) : val[i % val.length];
 					}
 					delete vars.cycle;
 				},
@@ -410,7 +410,7 @@ var ThreeChart =
 				p = TweenMax.prototype = TweenLite.to({}, 0.1, {}),
 				_blankArray = [];
 	
-			TweenMax.version = "1.18.5";
+			TweenMax.version = "1.19.0";
 			p.constructor = TweenMax;
 			p.kill()._gc = false;
 			TweenMax.killTweensOf = TweenMax.killDelayedCallsTo = TweenLite.killTweensOf;
@@ -1047,7 +1047,7 @@ var ThreeChart =
 				},
 				p = TimelineLite.prototype = new SimpleTimeline();
 	
-			TimelineLite.version = "1.18.5";
+			TimelineLite.version = "1.19.0";
 			p.constructor = TimelineLite;
 			p.kill()._gc = p._forcingPlayhead = p._hasPause = false;
 	
@@ -1772,12 +1772,13 @@ var ThreeChart =
 				TweenLiteInternals = TweenLite._internals,
 				_lazyTweens = TweenLiteInternals.lazyTweens,
 				_lazyRender = TweenLiteInternals.lazyRender,
+				_globals = _gsScope._gsDefine.globals,
 				_easeNone = new Ease(null, null, 1, 0),
 				p = TimelineMax.prototype = new TimelineLite();
 	
 			p.constructor = TimelineMax;
 			p.kill()._gc = false;
-			TimelineMax.version = "1.18.5";
+			TimelineMax.version = "1.19.0";
 	
 			p.invalidate = function() {
 				this._yoyo = (this.vars.yoyo === true);
@@ -1816,13 +1817,14 @@ var ThreeChart =
 			p.tweenTo = function(position, vars) {
 				vars = vars || {};
 				var copy = {ease:_easeNone, useFrames:this.usesFrames(), immediateRender:false},
+					Engine = (vars.repeat && _globals.TweenMax) || TweenLite,
 					duration, p, t;
 				for (p in vars) {
 					copy[p] = vars[p];
 				}
 				copy.time = this._parseTimeOrLabel(position);
 				duration = (Math.abs(Number(copy.time) - this._time) / this._timeScale) || 0.001;
-				t = new TweenLite(this, duration, copy);
+				t = new Engine(this, duration, copy);
 				copy.onStart = function() {
 					t.target.paused(true);
 					if (t.vars.time !== t.target.time() && duration === t.duration()) { //don't make the duration zero - if it's supposed to be zero, don't worry because it's already initting the tween and will complete immediately, effectively making the duration zero anyway. If we make duration zero, the tween won't run at all.
@@ -2568,7 +2570,7 @@ var ThreeChart =
 				BezierPlugin = _gsScope._gsDefine.plugin({
 						propName: "bezier",
 						priority: -1,
-						version: "1.3.6",
+						version: "1.3.7",
 						API: 2,
 						global:true,
 	
@@ -2579,7 +2581,7 @@ var ThreeChart =
 								vars = {values:vars};
 							}
 							this._func = {};
-							this._round = {};
+							this._mod = {};
 							this._props = [];
 							this._timeRes = (vars.timeResolution == null) ? 6 : parseInt(vars.timeResolution, 10);
 							var values = vars.values || [],
@@ -2632,6 +2634,7 @@ var ThreeChart =
 									}
 									p = autoRotate[i][2];
 									this._initialRotations[i] = (this._func[p] ? this._func[p].call(this._target) : this._target[p]) || 0;
+									this._overwriteProps.push(p);
 								}
 							}
 							this._startRatio = tween.vars.runBackwards ? 1 : 0; //we determine the starting ratio when the tween inits which is always 0 unless the tween has runBackwards:true (indicating it's a from() tween) in which case it's 1.
@@ -2702,8 +2705,8 @@ var ThreeChart =
 								p = this._props[i];
 								b = this._beziers[p][curIndex];
 								val = (t * t * b.da + 3 * inv * (t * b.ca + inv * b.ba)) * t + b.a;
-								if (this._round[p]) {
-									val = Math.round(val);
+								if (this._mod[p]) {
+									val = this._mod[p](val, target);
 								}
 								if (func[p]) {
 									target[p](val);
@@ -2738,6 +2741,10 @@ var ThreeChart =
 										y2 += ((b2.c + (b2.d - b2.c) * t) - y2) * t;
 	
 										val = notStart ? Math.atan2(y2 - y1, x2 - x1) * conv + add : this._initialRotations[i];
+	
+										if (this._mod[p]) {
+											val = this._mod[p](val, target); //for modProps
+										}
 	
 										if (func[p]) {
 											target[p](val);
@@ -2806,18 +2813,21 @@ var ThreeChart =
 						}
 						data.autoRotate = cssp._target._gsTransform;
 						data.proxy.rotation = data.autoRotate.rotation || 0;
+						cssp._overwriteProps.push("rotation");
 					}
 					plugin._onInitTween(data.proxy, v, cssp._tween);
 					return pt;
 				}});
 			};
 	
-			p._roundProps = function(lookup, value) {
+			p._mod = function(lookup) {
 				var op = this._overwriteProps,
-					i = op.length;
+					i = op.length,
+					val;
 				while (--i > -1) {
-					if (lookup[op[i]] || lookup.bezier || lookup.bezierThrough) {
-						this._round[op[i]] = value;
+					val = lookup[op[i]];
+					if (val && typeof(val) === "function") {
+						this._mod[op[i]] = val;
 					}
 				}
 			};
@@ -2834,6 +2844,15 @@ var ThreeChart =
 							if (a[i] === p) {
 								a.splice(i, 1);
 							}
+						}
+					}
+				}
+				a = this._autoRotate;
+				if (a) {
+					i = a.length;
+					while (--i > -1) {
+						if (lookup[a[i][2]]) {
+							a.splice(i, 1);
 						}
 					}
 				}
@@ -2877,7 +2896,7 @@ var ThreeChart =
 				p = CSSPlugin.prototype = new TweenPlugin("css");
 	
 			p.constructor = CSSPlugin;
-			CSSPlugin.version = "1.18.5";
+			CSSPlugin.version = "1.19.0";
 			CSSPlugin.API = 2;
 			CSSPlugin.defaultTransformPerspective = 0;
 			CSSPlugin.defaultSkewType = "compensated";
@@ -2945,6 +2964,8 @@ var ThreeChart =
 						console.log(s);
 					}
 				},
+				_target, //when initting a CSSPlugin, we set this variable so that we can access it from within many other functions without having to pass it around as params
+				_index, //when initting a CSSPlugin, we set this variable so that we can access it from within many other functions without having to pass it around as params
 	
 				_prefixCSS = "", //the non-camelCase vendor prefix like "-o-", "-moz-", "-ms-", or "-webkit-"
 				_prefix = "", //camelCase vendor prefix like "O", "ms", "Webkit", or "Moz".
@@ -3159,10 +3180,10 @@ var ThreeChart =
 	
 				// @private Parses position-related complex strings like "top left" or "50px 10px" or "70% 20%", etc. which are used for things like transformOrigin or backgroundPosition. Optionally decorates a supplied object (recObj) with the following properties: "ox" (offsetX), "oy" (offsetY), "oxp" (if true, "ox" is a percentage not a pixel value), and "oxy" (if true, "oy" is a percentage not a pixel value)
 				_parsePosition = function(v, recObj) {
-					if (v === "contain" || v === "auto" || v === "auto auto") {
+					if (v === "contain" || v === "auto" || v === "auto auto") { //note: Firefox uses "auto auto" as default whereas Chrome uses "auto".
 						return v + " ";
 					}
-					if (v == null || v === "") { //note: Firefox uses "auto auto" as default whereas Chrome uses "auto".
+					if (v == null || v === "") {
 						v = "0 0";
 					}
 					var a = v.split(" "),
@@ -3205,6 +3226,9 @@ var ThreeChart =
 				 * @return {number} Amount of change between the beginning and ending values (relative values that have a "+=" or "-=" are recognized)
 				 */
 				_parseChange = function(e, b) {
+					if (typeof(e) === "function") {
+						e = e(_index, _target);
+					}
 					return (typeof(e) === "string" && e.charAt(1) === "=") ? parseInt(e.charAt(0) + "1", 10) * parseFloat(e.substr(2)) : (parseFloat(e) - parseFloat(b)) || 0;
 				},
 	
@@ -3215,6 +3239,9 @@ var ThreeChart =
 				 * @return {number} Parsed value
 				 */
 				_parseVal = function(v, d) {
+					if (typeof(v) === "function") {
+						v = v(_index, _target);
+					}
 					return (v == null) ? d : (typeof(v) === "string" && v.charAt(1) === "=") ? parseInt(v.charAt(0) + "1", 10) * parseFloat(v.substr(2)) + d : parseFloat(v) || 0;
 				},
 	
@@ -3229,6 +3256,9 @@ var ThreeChart =
 				_parseAngle = function(v, d, p, directionalEnd) {
 					var min = 0.000001,
 						cap, split, dif, result, isRelative;
+					if (typeof(v) === "function") {
+						v = v(_index, _target);
+					}
 					if (v == null) {
 						result = d;
 					} else if (typeof(v) === "number") {
@@ -3490,7 +3520,7 @@ var ThreeChart =
 					};
 				},
 	
-				// @private used when other plugins must tween values first, like BezierPlugin or ThrowPropsPlugin, etc. That plugin's setRatio() gets called first so that the values are updated, and then we loop through the MiniPropTweens  which handle copying the values into their appropriate slots so that they can then be applied correctly in the main CSSPlugin setRatio() method. Remember, we typically create a proxy object that has a bunch of uniquely-named properties that we feed to the sub-plugin and it does its magic normally, and then we must interpret those values and apply them to the css because often numbers must get combined/concatenated, suffixes added, etc. to work with css, like boxShadow could have 4 values plus a color.
+				// @private used when other plugins must tween values first, like BezierPlugin or ThrowPropsPlugin, etc. That plugin's setRatio() gets called first so that the values are updated, and then we loop through the MiniPropTweens which handle copying the values into their appropriate slots so that they can then be applied correctly in the main CSSPlugin setRatio() method. Remember, we typically create a proxy object that has a bunch of uniquely-named properties that we feed to the sub-plugin and it does its magic normally, and then we must interpret those values and apply them to the css because often numbers must get combined/concatenated, suffixes added, etc. to work with css, like boxShadow could have 4 values plus a color.
 				_setPluginRatio = _internals._setPluginRatio = function(v) {
 					this.plugin.setRatio(v);
 					var d = this.data,
@@ -3509,7 +3539,7 @@ var ThreeChart =
 						mpt = mpt._next;
 					}
 					if (d.autoRotate) {
-						d.autoRotate.rotation = proxy.rotation;
+						d.autoRotate.rotation = d.mod ? d.mod(proxy.rotation, this.t) : proxy.rotation; //special case for ModifyPlugin to hook into an auto-rotating bezier
 					}
 					//at the end, we must set the CSSPropTween's "e" (end) value dynamically here because that's what is used in the final setRatio() method. Same for "b" at the beginning.
 					if (v === 1 || v === 0) {
@@ -3686,6 +3716,9 @@ var ThreeChart =
 				_parseComplex = CSSPlugin.parseComplex = function(t, p, b, e, clrs, dflt, pt, pr, plugin, setRatio) {
 					//DEBUG: _log("parseComplex: "+p+", b: "+b+", e: "+e);
 					b = b || dflt || "";
+					if (typeof(e) === "function") {
+						e = e(_index, _target);
+					}
 					pt = new CSSPropTween(t, p, 0, 0, pt, (setRatio ? 2 : 1), null, false, pr, b, e);
 					e += ""; //ensures it's a string
 					if (clrs && _colorExp.test(e + b)) { //if colors are found, normalize the formatting to rgba() or hsla().
@@ -3891,7 +3924,7 @@ var ThreeChart =
 				},
 	
 				//creates a placeholder special prop for a plugin so that the property gets caught the first time a tween of it is attempted, and at that time it makes the plugin register itself, thus taking over for all future tweens of that property. This allows us to not mandate that things load in a particular order and it also allows us to log() an error that informs the user when they attempt to tween an external plugin-related property without loading its .js file.
-				_registerPluginProp = function(p) {
+				_registerPluginProp = _internals._registerPluginProp = function(p) {
 					if (!_specialProps[p]) {
 						var pluginName = p.charAt(0).toUpperCase() + p.substr(1) + "Plugin";
 						_registerComplexSpecialProp(p, {parser:function(t, e, p, cssp, pt, plugin, vars) {
@@ -4474,11 +4507,13 @@ var ThreeChart =
 							a12 = Math.sin(angle - skew) * -sy;
 							a22 = Math.cos(angle - skew) * sy;
 							if (skew && t.skewType === "simple") { //by default, we compensate skewing on the other axis to make it look more natural, but you can set the skewType to "simple" to use the uncompensated skewing that CSS does
-								t1 = Math.tan(skew);
+								t1 = Math.tan(skew - t.skewY * _DEG2RAD);
 								t1 = Math.sqrt(1 + t1 * t1);
 								a12 *= t1;
 								a22 *= t1;
 								if (t.skewY) {
+									t1 = Math.tan(t.skewY * _DEG2RAD);
+									t1 = Math.sqrt(1 + t1 * t1);
 									a11 *= t1;
 									a21 *= t1;
 								}
@@ -4533,11 +4568,13 @@ var ThreeChart =
 							cos = Math.cos(angle);
 							sin = Math.sin(angle);
 							if (t.skewType === "simple") { //by default, we compensate skewing on the other axis to make it look more natural, but you can set the skewType to "simple" to use the uncompensated skewing that CSS does
-								t1 = Math.tan(t.skewX * _DEG2RAD);
+								t1 = Math.tan((t.skewX - t.skewY) * _DEG2RAD);
 								t1 = Math.sqrt(1 + t1 * t1);
 								cos *= t1;
 								sin *= t1;
 								if (t.skewY) {
+									t1 = Math.tan(t.skewY * _DEG2RAD);
+									t1 = Math.sqrt(1 + t1 * t1);
 									a11 *= t1;
 									a21 *= t1;
 								}
@@ -4667,9 +4704,14 @@ var ThreeChart =
 			p.x = p.y = p.z = p.skewX = p.skewY = p.rotation = p.rotationX = p.rotationY = p.zOrigin = p.xPercent = p.yPercent = p.xOffset = p.yOffset = 0;
 			p.scaleX = p.scaleY = p.scaleZ = 1;
 	
-			_registerComplexSpecialProp("transform,scale,scaleX,scaleY,scaleZ,x,y,z,rotation,rotationX,rotationY,rotationZ,skewX,skewY,shortRotation,shortRotationX,shortRotationY,shortRotationZ,transformOrigin,svgOrigin,transformPerspective,directionalRotation,parseTransform,force3D,skewType,xPercent,yPercent,smoothOrigin", {parser:function(t, e, p, cssp, pt, plugin, vars) {
+			_registerComplexSpecialProp("transform,scale,scaleX,scaleY,scaleZ,x,y,z,rotation,rotationX,rotationY,rotationZ,skewX,skewY,shortRotation,shortRotationX,shortRotationY,shortRotationZ,transformOrigin,svgOrigin,transformPerspective,directionalRotation,parseTransform,force3D,skewType,xPercent,yPercent,smoothOrigin", {parser:function(t, e, parsingProp, cssp, pt, plugin, vars) {
 				if (cssp._lastParsedTransform === vars) { return pt; } //only need to parse the transform once, and only if the browser supports it.
 				cssp._lastParsedTransform = vars;
+				var swapFunc;
+				if (typeof(vars[parsingProp]) === "function") { //whatever property triggers the initial parsing might be a function-based value in which case it already got called in parse(), thus we don't want to call it again in here. The most efficient way to avoid this is to temporarily swap the value directly into the vars object, and then after we do all our parsing in this function, we'll swap it back again.
+					swapFunc = vars[parsingProp];
+					vars[parsingProp] = e;
+				}
 				var originalGSTransform = t._gsTransform,
 					style = t.style,
 					min = 0.000001,
@@ -4677,12 +4719,13 @@ var ThreeChart =
 					v = vars,
 					endRotations = {},
 					transformOriginString = "transformOrigin",
-					m1 = _getTransform(t, _cs, true, vars.parseTransform),
-					m2, copy, orig, has3D, hasChange, dr, x, y, matrix;
+					m1 = _getTransform(t, _cs, true, v.parseTransform),
+					orig = v.transform && ((typeof(v.transform) === "function") ? v.transform(_index, _target) : v.transform),
+					m2, copy, has3D, hasChange, dr, x, y, matrix, p;
 				cssp._transform = m1;
-				if (typeof(v.transform) === "string" && _transformProp) { //for values like transform:"rotate(60deg) scale(0.5, 0.8)"
+				if (orig && typeof(orig) === "string" && _transformProp) { //for values like transform:"rotate(60deg) scale(0.5, 0.8)"
 					copy = _tempDiv.style; //don't use the original target because it might be SVG in which case some browsers don't report computed style correctly.
-					copy[_transformProp] = v.transform;
+					copy[_transformProp] = orig;
 					copy.display = "block"; //if display is "none", the browser often refuses to report the transform properties correctly.
 					copy.position = "absolute";
 					_doc.body.appendChild(_tempDiv);
@@ -4826,6 +4869,9 @@ var ThreeChart =
 				if (hasChange) {
 					cssp._transformType = (!(m1.svg && _useSVGTransformAttr) && (has3D || this._transformType === 3)) ? 3 : 2; //quicker than calling cssp._enableTransforms();
 				}
+				if (swapFunc) {
+					vars[parsingProp] = swapFunc;
+				}
 				return pt;
 			}, prefix:true});
 	
@@ -4917,7 +4963,10 @@ var ThreeChart =
 				}
 				return this.parseComplex(t.style, bs, es, pt, plugin);
 			}, formatter:_parsePosition});
-			_registerComplexSpecialProp("backgroundSize", {defaultValue:"0 0", formatter:_parsePosition});
+			_registerComplexSpecialProp("backgroundSize", {defaultValue:"0 0", formatter:function(v) {
+				v += ""; //ensure it's a string
+				return _parsePosition(v.indexOf(" ") === -1 ? v + " " + v : v); //if set to something like "100% 100%", Safari typically reports the computed style as just "100%" (no 2nd value), but we should ensure that there are two values, so copy the first one. Otherwise, it'd be interpreted as "100% 0" (wrong).
+			}});
 			_registerComplexSpecialProp("perspective", {defaultValue:"0px", prefix:true});
 			_registerComplexSpecialProp("perspectiveOrigin", {defaultValue:"50% 50%", prefix:true});
 			_registerComplexSpecialProp("transformStyle", {prefix:true});
@@ -5150,13 +5199,14 @@ var ThreeChart =
 			p._firstPT = p._lastParsedTransform = p._transform = null;
 	
 			//gets called when the tween renders for the first time. This kicks everything off, recording start/end values, etc.
-			p._onInitTween = function(target, vars, tween) {
+			p._onInitTween = function(target, vars, tween, index) {
 				if (!target.nodeType) { //css is only for dom elements
 					return false;
 				}
-				this._target = target;
+				this._target = _target = target;
 				this._tween = tween;
 				this._vars = vars;
+				_index = index;
 				_autoRound = vars.autoRound;
 				_hasPriority = false;
 				_suffixMap = vars.suffixMap || CSSPlugin.suffixMap;
@@ -5256,6 +5306,9 @@ var ThreeChart =
 					p, sp, bn, en, bs, es, bsfx, esfx, isStr, rel;
 				for (p in vars) {
 					es = vars[p]; //ending value string
+					if (typeof(es) === "function") {
+						es = es(_index, _target);
+					}
 					sp = _specialProps[p]; //SpecialProp lookup.
 					if (sp) {
 						pt = sp.parse(target, es, p, this, pt, plugin, vars);
@@ -5488,6 +5541,16 @@ var ThreeChart =
 				return pt;
 			};
 	
+			p._mod = function(lookup) {
+				var pt = this._firstPT;
+				while (pt) {
+					if (typeof(lookup[pt.p]) === "function" && lookup[pt.p] === Math.round) { //only gets called by RoundPropsPlugin (ModifyPlugin manages all the rendering internally for CSSPlugin properties that need modification). Remember, we handle rounding a bit differently in this plugin for performance reasons, leveraging "r" as an indicator that the value should be rounded internally..
+						pt.r = 1;
+					}
+					pt = pt._next;
+				}
+			};
+	
 			//we need to make sure that if alpha or autoAlpha is killed, opacity is too. And autoAlpha affects the "visibility" property.
 			p._kill = function(lookup) {
 				var copy = lookup,
@@ -5513,6 +5576,14 @@ var ThreeChart =
 						this._linkCSSP(pt._next, pt._next._next, xfirst._prev);
 					}
 					this._classNamePT = null;
+				}
+				pt = this._firstPT;
+				while (pt) {
+					if (pt.plugin && pt.plugin !== p && pt.plugin._kill) { //for plugins that are registered with CSSPlugin, we should notify them of the kill.
+						pt.plugin._kill(lookup);
+						p = pt.plugin;
+					}
+					pt = pt._next;
 				}
 				return TweenPlugin.prototype._kill.call(this, copy);
 			};
@@ -5622,7 +5693,7 @@ var ThreeChart =
 	
 			var RoundPropsPlugin = _gsScope._gsDefine.plugin({
 					propName: "roundProps",
-					version: "1.5",
+					version: "1.6.0",
 					priority: -1,
 					API: 2,
 	
@@ -5636,7 +5707,7 @@ var ThreeChart =
 				_roundLinkedList = function(node) {
 					while (node) {
 						if (!node.f && !node.blob) {
-							node.r = 1;
+							node.m = Math.round;
 						}
 						node = node._next;
 					}
@@ -5651,7 +5722,7 @@ var ThreeChart =
 					rpt = tween._propLookup.roundProps,
 					prop, pt, next;
 				while (--i > -1) {
-					lookup[rp[i]] = 1;
+					lookup[rp[i]] = Math.round;
 				}
 				i = rp.length;
 				while (--i > -1) {
@@ -5660,7 +5731,7 @@ var ThreeChart =
 					while (pt) {
 						next = pt._next; //record here, because it may get removed
 						if (pt.pg) {
-							pt.t._roundProps(lookup, true);
+							pt.t._mod(lookup);
 						} else if (pt.n === prop) {
 							if (pt.f === 2 && pt.t) { //a blob (text containing multiple numeric values)
 								_roundLinkedList(pt.t._firstPT);
@@ -5686,7 +5757,7 @@ var ThreeChart =
 			};
 	
 			p._add = function(target, p, s, c) {
-				this._addTween(target, p, s, s + c, p, true);
+				this._addTween(target, p, s, s + c, p, Math.round);
 				this._overwriteProps.push(p);
 			};
 	
@@ -5712,16 +5783,20 @@ var ThreeChart =
 			_gsScope._gsDefine.plugin({
 				propName: "attr",
 				API: 2,
-				version: "0.5.0",
+				version: "0.6.0",
 	
 				//called when the tween renders for the first time. This is where initial values should be recorded and any setup routines should run.
-				init: function(target, value, tween) {
-					var p;
+				init: function(target, value, tween, index) {
+					var p, end;
 					if (typeof(target.setAttribute) !== "function") {
 						return false;
 					}
 					for (p in value) {
-						this._addTween(target, "setAttribute", target.getAttribute(p) + "", value[p] + "", p, false, p);
+						end = value[p];
+						if (typeof(end) === "function") {
+							end = end(index, target);
+						}
+						this._addTween(target, "setAttribute", target.getAttribute(p) + "", end + "", p, false, p);
 						this._overwriteProps.push(p);
 					}
 					return true;
@@ -5747,11 +5822,11 @@ var ThreeChart =
 	 */
 		_gsScope._gsDefine.plugin({
 			propName: "directionalRotation",
-			version: "0.2.1",
+			version: "0.3.0",
 			API: 2,
 	
 			//called when the tween renders for the first time. This is where initial values should be recorded and any setup routines should run.
-			init: function(target, value, tween) {
+			init: function(target, value, tween, index) {
 				if (typeof(value) !== "object") {
 					value = {rotation:value};
 				}
@@ -5761,7 +5836,11 @@ var ThreeChart =
 					p, v, start, end, dif, split;
 				for (p in value) {
 					if (p !== "useRadians") {
-						split = (value[p] + "").split("_");
+						end = value[p];
+						if (typeof(end) === "function") {
+							end = end(index, target);
+						}
+						split = (end + "").split("_");
 						v = split[0];
 						start = parseFloat( (typeof(target[p]) !== "function") ? target[p] : target[ ((p.indexOf("set") || typeof(target["get" + p.substr(3)]) !== "function") ? p : "get" + p.substr(3)) ]() );
 						end = this.finals[p] = (typeof(v) === "string" && v.charAt(1) === "=") ? start + parseInt(v.charAt(0) + "1", 10) * Number(v.substr(2)) : Number(v) || 0;
@@ -6266,7 +6345,7 @@ var ThreeChart =
 	
 							//exports to multiple environments
 							if (global) {
-								_globals[n] = cl; //provides a way to avoid global namespace pollution. By default, the main classes like TweenLite, Power1, Strong, etc. are added to window unless a GreenSockGlobals is defined. So if you want to have things added to a custom object instead, just do something like window.GreenSockGlobals = {} before loading any GreenSock files. You can even set up an alias like window.GreenSockGlobals = windows.gs = {} so that you can access everything like gs.TweenLite. Also remember that ALL classes are added to the window.com.greensock object (in their respective packages, like com.greensock.easing.Power1, com.greensock.TweenLite, etc.)
+								_globals[n] = _exports[n] = cl; //provides a way to avoid global namespace pollution. By default, the main classes like TweenLite, Power1, Strong, etc. are added to window unless a GreenSockGlobals is defined. So if you want to have things added to a custom object instead, just do something like window.GreenSockGlobals = {} before loading any GreenSock files. You can even set up an alias like window.GreenSockGlobals = windows.gs = {} so that you can access everything like gs.TweenLite. Also remember that ALL classes are added to the window.com.greensock object (in their respective packages, like com.greensock.easing.Power1, com.greensock.TweenLite, etc.)
 								hasModule = (typeof(module) !== "undefined" && module.exports);
 								if (!hasModule && "function" === "function" && __webpack_require__(6)){ //AMD
 									!(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = function() { return cl; }.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
@@ -6422,6 +6501,9 @@ var ThreeChart =
 					i, t, listener;
 				if (list) {
 					i = list.length;
+					if (i > 1) {
+						list = list.slice(0); //in case addEventListener() is called from within a listener/callback (otherwise the index could change, resulting in a skip)
+					}
 					t = this._eventTarget;
 					while (--i > -1) {
 						listener = list[i];
@@ -6711,8 +6793,17 @@ var ThreeChart =
 			};
 	
 			p._callback = function(type) {
-				var v = this.vars;
-				v[type].apply(v[type + "Scope"] || v.callbackScope || this, v[type + "Params"] || _blankArray);
+				var v = this.vars,
+					callback = v[type],
+					params = v[type + "Params"],
+					scope = v[type + "Scope"] || v.callbackScope || this,
+					l = params ? params.length : 0;
+				switch (l) { //speed optimization; call() is faster than apply() so use it when there are only a few parameters (which is by far most common). Previously we simply did var v = this.vars; v[type].apply(v[type + "Scope"] || v.callbackScope || this, v[type + "Params"] || _blankArray);
+					case 0: callback.call(scope); break;
+					case 1: callback.call(scope, params[0]); break;
+					case 2: callback.call(scope, params[0], params[1]); break;
+					default: callback.apply(scope, params);
+				}
 			};
 	
 	//----Animation getters/setters --------------------------------------------------------
@@ -7096,7 +7187,7 @@ var ThreeChart =
 			p._firstPT = p._targets = p._overwrittenProps = p._startAt = null;
 			p._notifyPluginsOfEnabled = p._lazy = false;
 	
-			TweenLite.version = "1.18.5";
+			TweenLite.version = "1.19.0";
 			TweenLite.defaultEase = p._ease = new Ease(null, null, 1, 1);
 			TweenLite.defaultOverwrite = "auto";
 			TweenLite.ticker = _ticker;
@@ -7124,8 +7215,8 @@ var ThreeChart =
 						val;
 					while (pt) {
 						val = !pt.blob ? pt.c * v + pt.s : v ? this.join("") : this.start;
-						if (pt.r) {
-							val = Math.round(val);
+						if (pt.m) {
+							val = pt.m(val, this._target || pt.t);
 						} else if (val < min) if (val > -min) { //prevents issues with converting very small numbers to strings in the browser
 							val = 0;
 						}
@@ -7158,7 +7249,7 @@ var ThreeChart =
 					if (pt) {
 						pt._next = null;
 						pt.blob = 1;
-						a._firstPT = pt; //apply last in the linked list (which means inserting it first)
+						a._firstPT = a._applyPT = pt; //apply last in the linked list (which means inserting it first)
 					}
 					l = endNums.length;
 					for (i = 0; i < l; i++) {
@@ -7180,7 +7271,7 @@ var ThreeChart =
 							}
 							num = parseFloat(startNums[i]);
 							a.push(num);
-							a._firstPT = {_next: a._firstPT, t:a, p: a.length-1, s:num, c:((currentNum.charAt(1) === "=") ? parseInt(currentNum.charAt(0) + "1", 10) * parseFloat(currentNum.substr(2)) : (parseFloat(currentNum) - num)) || 0, f:0, r:(color && color < 4)};
+							a._firstPT = {_next: a._firstPT, t:a, p: a.length-1, s:num, c:((currentNum.charAt(1) === "=") ? parseInt(currentNum.charAt(0) + "1", 10) * parseFloat(currentNum.substr(2)) : (parseFloat(currentNum) - num)) || 0, f:0, m:(color && color < 4) ? Math.round : 0};
 							//note: we don't set _prev because we'll never need to remove individual PropTweens from this list.
 						}
 						charIndex += currentNum.length;
@@ -7193,11 +7284,14 @@ var ThreeChart =
 					return a;
 				},
 				//note: "funcParam" is only necessary for function-based getters/setters that require an extra parameter like getAttribute("width") and setAttribute("width", value). In this example, funcParam would be "width". Used by AttrPlugin for example.
-				_addPropTween = function(target, prop, start, end, overwriteProp, round, funcParam, stringFilter) {
+				_addPropTween = function(target, prop, start, end, overwriteProp, mod, funcParam, stringFilter, index) {
+					if (typeof(end) === "function") {
+						end = end(index || 0, target);
+					}
 					var s = (start === "get") ? target[prop] : start,
 						type = typeof(target[prop]),
 						isRelative = (typeof(end) === "string" && end.charAt(1) === "="),
-						pt = {t:target, p:prop, s:s, f:(type === "function"), pg:0, n:overwriteProp || prop, r:round, pr:0, c:isRelative ? parseInt(end.charAt(0) + "1", 10) * parseFloat(end.substr(2)) : (parseFloat(end) - s) || 0},
+						pt = {t:target, p:prop, s:s, f:(type === "function"), pg:0, n:overwriteProp || prop, m:(!mod ? 0 : (typeof(mod) === "function") ? mod : Math.round), pr:0, c:isRelative ? parseInt(end.charAt(0) + "1", 10) * parseFloat(end.substr(2)) : (parseFloat(end) - s) || 0},
 						blob, getterName;
 					if (type !== "number") {
 						if (type === "function" && start === "get") {
@@ -7208,7 +7302,7 @@ var ThreeChart =
 							//a blob (string that has multiple numbers in it)
 							pt.fp = funcParam;
 							blob = _blobDif(s, end, stringFilter || TweenLite.defaultStringFilter, pt);
-							pt = {t:blob, p:"setRatio", s:0, c:1, f:2, pg:0, n:overwriteProp || prop, pr:0}; //"2" indicates it's a Blob property tween. Needed for RoundPropsPlugin for example.
+							pt = {t:blob, p:"setRatio", s:0, c:1, f:2, pg:0, n:overwriteProp || prop, pr:0, m:0}; //"2" indicates it's a Blob property tween. Needed for RoundPropsPlugin for example.
 						} else if (!isRelative) {
 							pt.s = parseFloat(s);
 							pt.c = (parseFloat(end) - pt.s) || 0;
@@ -7397,7 +7491,7 @@ var ThreeChart =
 					dur = this._duration,
 					immediate = !!v.immediateRender,
 					ease = v.ease,
-					i, initPlugins, pt, p, startVars;
+					i, initPlugins, pt, p, startVars, l;
 				if (v.startAt) {
 					if (this._startAt) {
 						this._startAt.render(-1, true); //if we've run a startAt previously (when the tween instantiated), we should revert it so that the values re-instantiate correctly particularly for relative tweens. Without this, a TweenLite.fromTo(obj, 1, {x:"+=100"}, {x:"-=100"}), for example, would actually jump to +=200 because the startAt would run twice, doubling the relative change.
@@ -7460,14 +7554,14 @@ var ThreeChart =
 				this._firstPT = null;
 	
 				if (this._targets) {
-					i = this._targets.length;
-					while (--i > -1) {
-						if ( this._initProps( this._targets[i], (this._propLookup[i] = {}), this._siblings[i], (op ? op[i] : null)) ) {
+					l = this._targets.length;
+					for (i = 0; i < l; i++) {
+						if ( this._initProps( this._targets[i], (this._propLookup[i] = {}), this._siblings[i], (op ? op[i] : null), i) ) {
 							initPlugins = true;
 						}
 					}
 				} else {
-					initPlugins = this._initProps(this.target, this._propLookup, this._siblings, op);
+					initPlugins = this._initProps(this.target, this._propLookup, this._siblings, op, 0);
 				}
 	
 				if (initPlugins) {
@@ -7488,7 +7582,7 @@ var ThreeChart =
 				this._initted = true;
 			};
 	
-			p._initProps = function(target, propLookup, siblings, overwrittenProps) {
+			p._initProps = function(target, propLookup, siblings, overwrittenProps, index) {
 				var p, i, initPlugins, plugin, pt, v;
 				if (target == null) {
 					return false;
@@ -7508,7 +7602,7 @@ var ThreeChart =
 							this.vars[p] = v = this._swapSelfInParams(v, this);
 						}
 	
-					} else if (_plugins[p] && (plugin = new _plugins[p]())._onInitTween(target, this.vars[p], this)) {
+					} else if (_plugins[p] && (plugin = new _plugins[p]())._onInitTween(target, this.vars[p], this, index)) {
 	
 						//t - target 		[object]
 						//p - property 		[string]
@@ -7518,7 +7612,8 @@ var ThreeChart =
 						//n - name			[string]
 						//pg - isPlugin 	[boolean]
 						//pr - priority		[number]
-						this._firstPT = pt = {_next:this._firstPT, t:plugin, p:"setRatio", s:0, c:1, f:1, n:p, pg:1, pr:plugin._priority};
+						//m - mod           [function | 0]
+						this._firstPT = pt = {_next:this._firstPT, t:plugin, p:"setRatio", s:0, c:1, f:1, n:p, pg:1, pr:plugin._priority, m:0};
 						i = plugin._overwriteProps.length;
 						while (--i > -1) {
 							propLookup[plugin._overwriteProps[i]] = this._firstPT;
@@ -7534,16 +7629,16 @@ var ThreeChart =
 						}
 	
 					} else {
-						propLookup[p] = _addPropTween.call(this, target, p, "get", v, p, 0, null, this.vars.stringFilter);
+						propLookup[p] = _addPropTween.call(this, target, p, "get", v, p, 0, null, this.vars.stringFilter, index);
 					}
 				}
 	
 				if (overwrittenProps) if (this._kill(overwrittenProps, target)) { //another tween may have tried to overwrite properties of this tween before init() was called (like if two tweens start at the same time, the one created second will run first)
-					return this._initProps(target, propLookup, siblings, overwrittenProps);
+					return this._initProps(target, propLookup, siblings, overwrittenProps, index);
 				}
 				if (this._overwrite > 1) if (this._firstPT) if (siblings.length > 1) if (_applyOverwrite(target, this, propLookup, this._overwrite, siblings)) {
 					this._kill(propLookup, target);
-					return this._initProps(target, propLookup, siblings, overwrittenProps);
+					return this._initProps(target, propLookup, siblings, overwrittenProps, index);
 				}
 				if (this._firstPT) if ((this.vars.lazy !== false && this._duration) || (this.vars.lazy && !this._duration)) { //zero duration tweens don't lazy render by default; everything else does.
 					_lazyLookup[target._gsTweenID] = true;
@@ -7923,7 +8018,7 @@ var ThreeChart =
 					}, true);
 	
 			p = TweenPlugin.prototype;
-			TweenPlugin.version = "1.18.0";
+			TweenPlugin.version = "1.19.0";
 			TweenPlugin.API = 2;
 			p._firstPT = null;
 			p._addTween = _addPropTween;
@@ -7960,11 +8055,17 @@ var ThreeChart =
 				return false;
 			};
 	
-			p._roundProps = function(lookup, value) {
-				var pt = this._firstPT;
+			p._mod = p._roundProps = function(lookup) {
+				var pt = this._firstPT,
+					val;
 				while (pt) {
-					if (lookup[this._propName] || (pt.n != null && lookup[ pt.n.split(this._propName + "_").join("") ])) { //some properties that are very plugin-specific add a prefix named after the _propName plus an underscore, so we need to ignore that extra stuff here.
-						pt.r = value;
+					val = lookup[this._propName] || (pt.n != null && lookup[ pt.n.split(this._propName + "_").join("") ]);
+					if (val && typeof(val) === "function") { //some properties that are very plugin-specific add a prefix named after the _propName plus an underscore, so we need to ignore that extra stuff here.
+						if (pt.f === 2) {
+							pt.t._applyPT.m = val;
+						} else {
+							pt.m = val;
+						}
 					}
 					pt = pt._next;
 				}
@@ -8020,7 +8121,7 @@ var ThreeChart =
 				var propName = config.propName,
 					priority = config.priority || 0,
 					overwriteProps = config.overwriteProps,
-					map = {init:"_onInitTween", set:"setRatio", kill:"_kill", round:"_roundProps", initAll:"_onInitAllProps"},
+					map = {init:"_onInitTween", set:"setRatio", kill:"_kill", round:"_mod", mod:"_mod", initAll:"_onInitAllProps"},
 					Plugin = _class("plugins." + propName.charAt(0).toUpperCase() + propName.substr(1) + "Plugin",
 						function() {
 							TweenPlugin.call(this, propName, priority);
@@ -8049,7 +8150,7 @@ var ThreeChart =
 				}
 				for (p in _defLookup) {
 					if (!_defLookup[p].func) {
-						window.console.log("GSAP encountered missing dependency: com.greensock." + p);
+						window.console.log("GSAP encountered missing dependency: " + p);
 					}
 				}
 			}
@@ -8071,2273 +8172,6 @@ var ThreeChart =
 /* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(global) {/*!
-	 * VERSION: 1.15.4
-	 * DATE: 2016-05-24
-	 * UPDATES AND DOCS AT: http://greensock.com
-	 *
-	 * @license Copyright (c) 2008-2016, GreenSock. All rights reserved.
-	 * This work is subject to the terms at http://greensock.com/standard-license or for
-	 * Club GreenSock members, the software agreement that was issued with your membership.
-	 * 
-	 * @author: Jack Doyle, jack@greensock.com
-	 **/
-	var _gsScope = (typeof(module) !== "undefined" && module.exports && typeof(global) !== "undefined") ? global : this || window; //helps ensure compatibility with AMD/RequireJS and CommonJS/Node
-	(_gsScope._gsQueue || (_gsScope._gsQueue = [])).push( function() {
-	
-		"use strict";
-	
-		_gsScope._gsDefine("easing.Back", ["easing.Ease"], function(Ease) {
-			
-			var w = (_gsScope.GreenSockGlobals || _gsScope),
-				gs = w.com.greensock,
-				_2PI = Math.PI * 2,
-				_HALF_PI = Math.PI / 2,
-				_class = gs._class,
-				_create = function(n, f) {
-					var C = _class("easing." + n, function(){}, true),
-						p = C.prototype = new Ease();
-					p.constructor = C;
-					p.getRatio = f;
-					return C;
-				},
-				_easeReg = Ease.register || function(){}, //put an empty function in place just as a safety measure in case someone loads an OLD version of TweenLite.js where Ease.register doesn't exist.
-				_wrap = function(name, EaseOut, EaseIn, EaseInOut, aliases) {
-					var C = _class("easing."+name, {
-						easeOut:new EaseOut(),
-						easeIn:new EaseIn(),
-						easeInOut:new EaseInOut()
-					}, true);
-					_easeReg(C, name);
-					return C;
-				},
-				EasePoint = function(time, value, next) {
-					this.t = time;
-					this.v = value;
-					if (next) {
-						this.next = next;
-						next.prev = this;
-						this.c = next.v - value;
-						this.gap = next.t - time;
-					}
-				},
-	
-				//Back
-				_createBack = function(n, f) {
-					var C = _class("easing." + n, function(overshoot) {
-							this._p1 = (overshoot || overshoot === 0) ? overshoot : 1.70158;
-							this._p2 = this._p1 * 1.525;
-						}, true), 
-						p = C.prototype = new Ease();
-					p.constructor = C;
-					p.getRatio = f;
-					p.config = function(overshoot) {
-						return new C(overshoot);
-					};
-					return C;
-				},
-	
-				Back = _wrap("Back",
-					_createBack("BackOut", function(p) {
-						return ((p = p - 1) * p * ((this._p1 + 1) * p + this._p1) + 1);
-					}),
-					_createBack("BackIn", function(p) {
-						return p * p * ((this._p1 + 1) * p - this._p1);
-					}),
-					_createBack("BackInOut", function(p) {
-						return ((p *= 2) < 1) ? 0.5 * p * p * ((this._p2 + 1) * p - this._p2) : 0.5 * ((p -= 2) * p * ((this._p2 + 1) * p + this._p2) + 2);
-					})
-				),
-	
-	
-				//SlowMo
-				SlowMo = _class("easing.SlowMo", function(linearRatio, power, yoyoMode) {
-					power = (power || power === 0) ? power : 0.7;
-					if (linearRatio == null) {
-						linearRatio = 0.7;
-					} else if (linearRatio > 1) {
-						linearRatio = 1;
-					}
-					this._p = (linearRatio !== 1) ? power : 0;
-					this._p1 = (1 - linearRatio) / 2;
-					this._p2 = linearRatio;
-					this._p3 = this._p1 + this._p2;
-					this._calcEnd = (yoyoMode === true);
-				}, true),
-				p = SlowMo.prototype = new Ease(),
-				SteppedEase, RoughEase, _createElastic;
-				
-			p.constructor = SlowMo;
-			p.getRatio = function(p) {
-				var r = p + (0.5 - p) * this._p;
-				if (p < this._p1) {
-					return this._calcEnd ? 1 - ((p = 1 - (p / this._p1)) * p) : r - ((p = 1 - (p / this._p1)) * p * p * p * r);
-				} else if (p > this._p3) {
-					return this._calcEnd ? 1 - (p = (p - this._p3) / this._p1) * p : r + ((p - r) * (p = (p - this._p3) / this._p1) * p * p * p);
-				}
-				return this._calcEnd ? 1 : r;
-			};
-			SlowMo.ease = new SlowMo(0.7, 0.7);
-			
-			p.config = SlowMo.config = function(linearRatio, power, yoyoMode) {
-				return new SlowMo(linearRatio, power, yoyoMode);
-			};
-	
-	
-			//SteppedEase
-			SteppedEase = _class("easing.SteppedEase", function(steps) {
-					steps = steps || 1;
-					this._p1 = 1 / steps;
-					this._p2 = steps + 1;
-				}, true);
-			p = SteppedEase.prototype = new Ease();	
-			p.constructor = SteppedEase;
-			p.getRatio = function(p) {
-				if (p < 0) {
-					p = 0;
-				} else if (p >= 1) {
-					p = 0.999999999;
-				}
-				return ((this._p2 * p) >> 0) * this._p1;
-			};
-			p.config = SteppedEase.config = function(steps) {
-				return new SteppedEase(steps);
-			};
-	
-	
-			//RoughEase
-			RoughEase = _class("easing.RoughEase", function(vars) {
-				vars = vars || {};
-				var taper = vars.taper || "none",
-					a = [],
-					cnt = 0,
-					points = (vars.points || 20) | 0,
-					i = points,
-					randomize = (vars.randomize !== false),
-					clamp = (vars.clamp === true),
-					template = (vars.template instanceof Ease) ? vars.template : null,
-					strength = (typeof(vars.strength) === "number") ? vars.strength * 0.4 : 0.4,
-					x, y, bump, invX, obj, pnt;
-				while (--i > -1) {
-					x = randomize ? Math.random() : (1 / points) * i;
-					y = template ? template.getRatio(x) : x;
-					if (taper === "none") {
-						bump = strength;
-					} else if (taper === "out") {
-						invX = 1 - x;
-						bump = invX * invX * strength;
-					} else if (taper === "in") {
-						bump = x * x * strength;
-					} else if (x < 0.5) {  //"both" (start)
-						invX = x * 2;
-						bump = invX * invX * 0.5 * strength;
-					} else {				//"both" (end)
-						invX = (1 - x) * 2;
-						bump = invX * invX * 0.5 * strength;
-					}
-					if (randomize) {
-						y += (Math.random() * bump) - (bump * 0.5);
-					} else if (i % 2) {
-						y += bump * 0.5;
-					} else {
-						y -= bump * 0.5;
-					}
-					if (clamp) {
-						if (y > 1) {
-							y = 1;
-						} else if (y < 0) {
-							y = 0;
-						}
-					}
-					a[cnt++] = {x:x, y:y};
-				}
-				a.sort(function(a, b) {
-					return a.x - b.x;
-				});
-	
-				pnt = new EasePoint(1, 1, null);
-				i = points;
-				while (--i > -1) {
-					obj = a[i];
-					pnt = new EasePoint(obj.x, obj.y, pnt);
-				}
-	
-				this._prev = new EasePoint(0, 0, (pnt.t !== 0) ? pnt : pnt.next);
-			}, true);
-			p = RoughEase.prototype = new Ease();
-			p.constructor = RoughEase;
-			p.getRatio = function(p) {
-				var pnt = this._prev;
-				if (p > pnt.t) {
-					while (pnt.next && p >= pnt.t) {
-						pnt = pnt.next;
-					}
-					pnt = pnt.prev;
-				} else {
-					while (pnt.prev && p <= pnt.t) {
-						pnt = pnt.prev;
-					}
-				}
-				this._prev = pnt;
-				return (pnt.v + ((p - pnt.t) / pnt.gap) * pnt.c);
-			};
-			p.config = function(vars) {
-				return new RoughEase(vars);
-			};
-			RoughEase.ease = new RoughEase();
-	
-	
-			//Bounce
-			_wrap("Bounce",
-				_create("BounceOut", function(p) {
-					if (p < 1 / 2.75) {
-						return 7.5625 * p * p;
-					} else if (p < 2 / 2.75) {
-						return 7.5625 * (p -= 1.5 / 2.75) * p + 0.75;
-					} else if (p < 2.5 / 2.75) {
-						return 7.5625 * (p -= 2.25 / 2.75) * p + 0.9375;
-					}
-					return 7.5625 * (p -= 2.625 / 2.75) * p + 0.984375;
-				}),
-				_create("BounceIn", function(p) {
-					if ((p = 1 - p) < 1 / 2.75) {
-						return 1 - (7.5625 * p * p);
-					} else if (p < 2 / 2.75) {
-						return 1 - (7.5625 * (p -= 1.5 / 2.75) * p + 0.75);
-					} else if (p < 2.5 / 2.75) {
-						return 1 - (7.5625 * (p -= 2.25 / 2.75) * p + 0.9375);
-					}
-					return 1 - (7.5625 * (p -= 2.625 / 2.75) * p + 0.984375);
-				}),
-				_create("BounceInOut", function(p) {
-					var invert = (p < 0.5);
-					if (invert) {
-						p = 1 - (p * 2);
-					} else {
-						p = (p * 2) - 1;
-					}
-					if (p < 1 / 2.75) {
-						p = 7.5625 * p * p;
-					} else if (p < 2 / 2.75) {
-						p = 7.5625 * (p -= 1.5 / 2.75) * p + 0.75;
-					} else if (p < 2.5 / 2.75) {
-						p = 7.5625 * (p -= 2.25 / 2.75) * p + 0.9375;
-					} else {
-						p = 7.5625 * (p -= 2.625 / 2.75) * p + 0.984375;
-					}
-					return invert ? (1 - p) * 0.5 : p * 0.5 + 0.5;
-				})
-			);
-	
-	
-			//CIRC
-			_wrap("Circ",
-				_create("CircOut", function(p) {
-					return Math.sqrt(1 - (p = p - 1) * p);
-				}),
-				_create("CircIn", function(p) {
-					return -(Math.sqrt(1 - (p * p)) - 1);
-				}),
-				_create("CircInOut", function(p) {
-					return ((p*=2) < 1) ? -0.5 * (Math.sqrt(1 - p * p) - 1) : 0.5 * (Math.sqrt(1 - (p -= 2) * p) + 1);
-				})
-			);
-	
-	
-			//Elastic
-			_createElastic = function(n, f, def) {
-				var C = _class("easing." + n, function(amplitude, period) {
-						this._p1 = (amplitude >= 1) ? amplitude : 1; //note: if amplitude is < 1, we simply adjust the period for a more natural feel. Otherwise the math doesn't work right and the curve starts at 1.
-						this._p2 = (period || def) / (amplitude < 1 ? amplitude : 1);
-						this._p3 = this._p2 / _2PI * (Math.asin(1 / this._p1) || 0);
-						this._p2 = _2PI / this._p2; //precalculate to optimize
-					}, true),
-					p = C.prototype = new Ease();
-				p.constructor = C;
-				p.getRatio = f;
-				p.config = function(amplitude, period) {
-					return new C(amplitude, period);
-				};
-				return C;
-			};
-			_wrap("Elastic",
-				_createElastic("ElasticOut", function(p) {
-					return this._p1 * Math.pow(2, -10 * p) * Math.sin( (p - this._p3) * this._p2 ) + 1;
-				}, 0.3),
-				_createElastic("ElasticIn", function(p) {
-					return -(this._p1 * Math.pow(2, 10 * (p -= 1)) * Math.sin( (p - this._p3) * this._p2 ));
-				}, 0.3),
-				_createElastic("ElasticInOut", function(p) {
-					return ((p *= 2) < 1) ? -0.5 * (this._p1 * Math.pow(2, 10 * (p -= 1)) * Math.sin( (p - this._p3) * this._p2)) : this._p1 * Math.pow(2, -10 *(p -= 1)) * Math.sin( (p - this._p3) * this._p2 ) * 0.5 + 1;
-				}, 0.45)
-			);
-	
-	
-			//Expo
-			_wrap("Expo",
-				_create("ExpoOut", function(p) {
-					return 1 - Math.pow(2, -10 * p);
-				}),
-				_create("ExpoIn", function(p) {
-					return Math.pow(2, 10 * (p - 1)) - 0.001;
-				}),
-				_create("ExpoInOut", function(p) {
-					return ((p *= 2) < 1) ? 0.5 * Math.pow(2, 10 * (p - 1)) : 0.5 * (2 - Math.pow(2, -10 * (p - 1)));
-				})
-			);
-	
-	
-			//Sine
-			_wrap("Sine",
-				_create("SineOut", function(p) {
-					return Math.sin(p * _HALF_PI);
-				}),
-				_create("SineIn", function(p) {
-					return -Math.cos(p * _HALF_PI) + 1;
-				}),
-				_create("SineInOut", function(p) {
-					return -0.5 * (Math.cos(Math.PI * p) - 1);
-				})
-			);
-	
-			_class("easing.EaseLookup", {
-					find:function(s) {
-						return Ease.map[s];
-					}
-				}, true);
-	
-			//register the non-standard eases
-			_easeReg(w.SlowMo, "SlowMo", "ease,");
-			_easeReg(RoughEase, "RoughEase", "ease,");
-			_easeReg(SteppedEase, "SteppedEase", "ease,");
-			
-			return Back;
-			
-		}, true);
-	
-	}); if (_gsScope._gsDefine) { _gsScope._gsQueue.pop()(); }
-	
-	//export to AMD/RequireJS and CommonJS/Node (precursor to full modular build system coming at a later date)
-	(function() {
-		"use strict";
-		var getGlobal = function() {
-			return (_gsScope.GreenSockGlobals || _gsScope);
-		};
-		if (true) { //AMD
-			!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(8)], __WEBPACK_AMD_DEFINE_FACTORY__ = (getGlobal), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-		} else if (typeof(module) !== "undefined" && module.exports) { //node
-			require("../TweenLite.js");
-			module.exports = getGlobal();
-		}
-	}());
-	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
-
-/***/ },
-/* 8 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(global) {/*!
-	 * VERSION: 1.18.5
-	 * DATE: 2016-05-24
-	 * UPDATES AND DOCS AT: http://greensock.com
-	 *
-	 * @license Copyright (c) 2008-2016, GreenSock. All rights reserved.
-	 * This work is subject to the terms at http://greensock.com/standard-license or for
-	 * Club GreenSock members, the software agreement that was issued with your membership.
-	 * 
-	 * @author: Jack Doyle, jack@greensock.com
-	 */
-	(function(window, moduleName) {
-	
-			"use strict";
-			var _exports = {},
-				_globals = window.GreenSockGlobals = window.GreenSockGlobals || window;
-			if (_globals.TweenLite) {
-				return; //in case the core set of classes is already loaded, don't instantiate twice.
-			}
-			var _namespace = function(ns) {
-					var a = ns.split("."),
-						p = _globals, i;
-					for (i = 0; i < a.length; i++) {
-						p[a[i]] = p = p[a[i]] || {};
-					}
-					return p;
-				},
-				gs = _namespace("com.greensock"),
-				_tinyNum = 0.0000000001,
-				_slice = function(a) { //don't use Array.prototype.slice.call(target, 0) because that doesn't work in IE8 with a NodeList that's returned by querySelectorAll()
-					var b = [],
-						l = a.length,
-						i;
-					for (i = 0; i !== l; b.push(a[i++])) {}
-					return b;
-				},
-				_emptyFunc = function() {},
-				_isArray = (function() { //works around issues in iframe environments where the Array global isn't shared, thus if the object originates in a different window/iframe, "(obj instanceof Array)" will evaluate false. We added some speed optimizations to avoid Object.prototype.toString.call() unless it's absolutely necessary because it's VERY slow (like 20x slower)
-					var toString = Object.prototype.toString,
-						array = toString.call([]);
-					return function(obj) {
-						return obj != null && (obj instanceof Array || (typeof(obj) === "object" && !!obj.push && toString.call(obj) === array));
-					};
-				}()),
-				a, i, p, _ticker, _tickerActive,
-				_defLookup = {},
-	
-				/**
-				 * @constructor
-				 * Defines a GreenSock class, optionally with an array of dependencies that must be instantiated first and passed into the definition.
-				 * This allows users to load GreenSock JS files in any order even if they have interdependencies (like CSSPlugin extends TweenPlugin which is
-				 * inside TweenLite.js, but if CSSPlugin is loaded first, it should wait to run its code until TweenLite.js loads and instantiates TweenPlugin
-				 * and then pass TweenPlugin to CSSPlugin's definition). This is all done automatically and internally.
-				 *
-				 * Every definition will be added to a "com.greensock" global object (typically window, but if a window.GreenSockGlobals object is found,
-				 * it will go there as of v1.7). For example, TweenLite will be found at window.com.greensock.TweenLite and since it's a global class that should be available anywhere,
-				 * it is ALSO referenced at window.TweenLite. However some classes aren't considered global, like the base com.greensock.core.Animation class, so
-				 * those will only be at the package like window.com.greensock.core.Animation. Again, if you define a GreenSockGlobals object on the window, everything
-				 * gets tucked neatly inside there instead of on the window directly. This allows you to do advanced things like load multiple versions of GreenSock
-				 * files and put them into distinct objects (imagine a banner ad uses a newer version but the main site uses an older one). In that case, you could
-				 * sandbox the banner one like:
-				 *
-				 * <script>
-				 *     var gs = window.GreenSockGlobals = {}; //the newer version we're about to load could now be referenced in a "gs" object, like gs.TweenLite.to(...). Use whatever alias you want as long as it's unique, "gs" or "banner" or whatever.
-				 * </script>
-				 * <script src="js/greensock/v1.7/TweenMax.js"></script>
-				 * <script>
-				 *     window.GreenSockGlobals = window._gsQueue = window._gsDefine = null; //reset it back to null (along with the special _gsQueue variable) so that the next load of TweenMax affects the window and we can reference things directly like TweenLite.to(...)
-				 * </script>
-				 * <script src="js/greensock/v1.6/TweenMax.js"></script>
-				 * <script>
-				 *     gs.TweenLite.to(...); //would use v1.7
-				 *     TweenLite.to(...); //would use v1.6
-				 * </script>
-				 *
-				 * @param {!string} ns The namespace of the class definition, leaving off "com.greensock." as that's assumed. For example, "TweenLite" or "plugins.CSSPlugin" or "easing.Back".
-				 * @param {!Array.<string>} dependencies An array of dependencies (described as their namespaces minus "com.greensock." prefix). For example ["TweenLite","plugins.TweenPlugin","core.Animation"]
-				 * @param {!function():Object} func The function that should be called and passed the resolved dependencies which will return the actual class for this definition.
-				 * @param {boolean=} global If true, the class will be added to the global scope (typically window unless you define a window.GreenSockGlobals object)
-				 */
-				Definition = function(ns, dependencies, func, global) {
-					this.sc = (_defLookup[ns]) ? _defLookup[ns].sc : []; //subclasses
-					_defLookup[ns] = this;
-					this.gsClass = null;
-					this.func = func;
-					var _classes = [];
-					this.check = function(init) {
-						var i = dependencies.length,
-							missing = i,
-							cur, a, n, cl, hasModule;
-						while (--i > -1) {
-							if ((cur = _defLookup[dependencies[i]] || new Definition(dependencies[i], [])).gsClass) {
-								_classes[i] = cur.gsClass;
-								missing--;
-							} else if (init) {
-								cur.sc.push(this);
-							}
-						}
-						if (missing === 0 && func) {
-							a = ("com.greensock." + ns).split(".");
-							n = a.pop();
-							cl = _namespace(a.join("."))[n] = this.gsClass = func.apply(func, _classes);
-	
-							//exports to multiple environments
-							if (global) {
-								_globals[n] = cl; //provides a way to avoid global namespace pollution. By default, the main classes like TweenLite, Power1, Strong, etc. are added to window unless a GreenSockGlobals is defined. So if you want to have things added to a custom object instead, just do something like window.GreenSockGlobals = {} before loading any GreenSock files. You can even set up an alias like window.GreenSockGlobals = windows.gs = {} so that you can access everything like gs.TweenLite. Also remember that ALL classes are added to the window.com.greensock object (in their respective packages, like com.greensock.easing.Power1, com.greensock.TweenLite, etc.)
-								hasModule = (typeof(module) !== "undefined" && module.exports);
-								if (!hasModule && "function" === "function" && __webpack_require__(6)){ //AMD
-									!(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = function() { return cl; }.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-								} else if (hasModule){ //node
-									if (ns === moduleName) {
-										module.exports = _exports[moduleName] = cl;
-										for (i in _exports) {
-											cl[i] = _exports[i];
-										}
-									} else if (_exports[moduleName]) {
-										_exports[moduleName][n] = cl;
-									}
-								}
-							}
-							for (i = 0; i < this.sc.length; i++) {
-								this.sc[i].check();
-							}
-						}
-					};
-					this.check(true);
-				},
-	
-				//used to create Definition instances (which basically registers a class that has dependencies).
-				_gsDefine = window._gsDefine = function(ns, dependencies, func, global) {
-					return new Definition(ns, dependencies, func, global);
-				},
-	
-				//a quick way to create a class that doesn't have any dependencies. Returns the class, but first registers it in the GreenSock namespace so that other classes can grab it (other classes might be dependent on the class).
-				_class = gs._class = function(ns, func, global) {
-					func = func || function() {};
-					_gsDefine(ns, [], function(){ return func; }, global);
-					return func;
-				};
-	
-			_gsDefine.globals = _globals;
-	
-	
-	
-	/*
-	 * ----------------------------------------------------------------
-	 * Ease
-	 * ----------------------------------------------------------------
-	 */
-			var _baseParams = [0, 0, 1, 1],
-				_blankArray = [],
-				Ease = _class("easing.Ease", function(func, extraParams, type, power) {
-					this._func = func;
-					this._type = type || 0;
-					this._power = power || 0;
-					this._params = extraParams ? _baseParams.concat(extraParams) : _baseParams;
-				}, true),
-				_easeMap = Ease.map = {},
-				_easeReg = Ease.register = function(ease, names, types, create) {
-					var na = names.split(","),
-						i = na.length,
-						ta = (types || "easeIn,easeOut,easeInOut").split(","),
-						e, name, j, type;
-					while (--i > -1) {
-						name = na[i];
-						e = create ? _class("easing."+name, null, true) : gs.easing[name] || {};
-						j = ta.length;
-						while (--j > -1) {
-							type = ta[j];
-							_easeMap[name + "." + type] = _easeMap[type + name] = e[type] = ease.getRatio ? ease : ease[type] || new ease();
-						}
-					}
-				};
-	
-			p = Ease.prototype;
-			p._calcEnd = false;
-			p.getRatio = function(p) {
-				if (this._func) {
-					this._params[0] = p;
-					return this._func.apply(null, this._params);
-				}
-				var t = this._type,
-					pw = this._power,
-					r = (t === 1) ? 1 - p : (t === 2) ? p : (p < 0.5) ? p * 2 : (1 - p) * 2;
-				if (pw === 1) {
-					r *= r;
-				} else if (pw === 2) {
-					r *= r * r;
-				} else if (pw === 3) {
-					r *= r * r * r;
-				} else if (pw === 4) {
-					r *= r * r * r * r;
-				}
-				return (t === 1) ? 1 - r : (t === 2) ? r : (p < 0.5) ? r / 2 : 1 - (r / 2);
-			};
-	
-			//create all the standard eases like Linear, Quad, Cubic, Quart, Quint, Strong, Power0, Power1, Power2, Power3, and Power4 (each with easeIn, easeOut, and easeInOut)
-			a = ["Linear","Quad","Cubic","Quart","Quint,Strong"];
-			i = a.length;
-			while (--i > -1) {
-				p = a[i]+",Power"+i;
-				_easeReg(new Ease(null,null,1,i), p, "easeOut", true);
-				_easeReg(new Ease(null,null,2,i), p, "easeIn" + ((i === 0) ? ",easeNone" : ""));
-				_easeReg(new Ease(null,null,3,i), p, "easeInOut");
-			}
-			_easeMap.linear = gs.easing.Linear.easeIn;
-			_easeMap.swing = gs.easing.Quad.easeInOut; //for jQuery folks
-	
-	
-	/*
-	 * ----------------------------------------------------------------
-	 * EventDispatcher
-	 * ----------------------------------------------------------------
-	 */
-			var EventDispatcher = _class("events.EventDispatcher", function(target) {
-				this._listeners = {};
-				this._eventTarget = target || this;
-			});
-			p = EventDispatcher.prototype;
-	
-			p.addEventListener = function(type, callback, scope, useParam, priority) {
-				priority = priority || 0;
-				var list = this._listeners[type],
-					index = 0,
-					listener, i;
-				if (this === _ticker && !_tickerActive) {
-					_ticker.wake();
-				}
-				if (list == null) {
-					this._listeners[type] = list = [];
-				}
-				i = list.length;
-				while (--i > -1) {
-					listener = list[i];
-					if (listener.c === callback && listener.s === scope) {
-						list.splice(i, 1);
-					} else if (index === 0 && listener.pr < priority) {
-						index = i + 1;
-					}
-				}
-				list.splice(index, 0, {c:callback, s:scope, up:useParam, pr:priority});
-			};
-	
-			p.removeEventListener = function(type, callback) {
-				var list = this._listeners[type], i;
-				if (list) {
-					i = list.length;
-					while (--i > -1) {
-						if (list[i].c === callback) {
-							list.splice(i, 1);
-							return;
-						}
-					}
-				}
-			};
-	
-			p.dispatchEvent = function(type) {
-				var list = this._listeners[type],
-					i, t, listener;
-				if (list) {
-					i = list.length;
-					t = this._eventTarget;
-					while (--i > -1) {
-						listener = list[i];
-						if (listener) {
-							if (listener.up) {
-								listener.c.call(listener.s || t, {type:type, target:t});
-							} else {
-								listener.c.call(listener.s || t);
-							}
-						}
-					}
-				}
-			};
-	
-	
-	/*
-	 * ----------------------------------------------------------------
-	 * Ticker
-	 * ----------------------------------------------------------------
-	 */
-	 		var _reqAnimFrame = window.requestAnimationFrame,
-				_cancelAnimFrame = window.cancelAnimationFrame,
-				_getTime = Date.now || function() {return new Date().getTime();},
-				_lastUpdate = _getTime();
-	
-			//now try to determine the requestAnimationFrame and cancelAnimationFrame functions and if none are found, we'll use a setTimeout()/clearTimeout() polyfill.
-			a = ["ms","moz","webkit","o"];
-			i = a.length;
-			while (--i > -1 && !_reqAnimFrame) {
-				_reqAnimFrame = window[a[i] + "RequestAnimationFrame"];
-				_cancelAnimFrame = window[a[i] + "CancelAnimationFrame"] || window[a[i] + "CancelRequestAnimationFrame"];
-			}
-	
-			_class("Ticker", function(fps, useRAF) {
-				var _self = this,
-					_startTime = _getTime(),
-					_useRAF = (useRAF !== false && _reqAnimFrame) ? "auto" : false,
-					_lagThreshold = 500,
-					_adjustedLag = 33,
-					_tickWord = "tick", //helps reduce gc burden
-					_fps, _req, _id, _gap, _nextTime,
-					_tick = function(manual) {
-						var elapsed = _getTime() - _lastUpdate,
-							overlap, dispatch;
-						if (elapsed > _lagThreshold) {
-							_startTime += elapsed - _adjustedLag;
-						}
-						_lastUpdate += elapsed;
-						_self.time = (_lastUpdate - _startTime) / 1000;
-						overlap = _self.time - _nextTime;
-						if (!_fps || overlap > 0 || manual === true) {
-							_self.frame++;
-							_nextTime += overlap + (overlap >= _gap ? 0.004 : _gap - overlap);
-							dispatch = true;
-						}
-						if (manual !== true) { //make sure the request is made before we dispatch the "tick" event so that timing is maintained. Otherwise, if processing the "tick" requires a bunch of time (like 15ms) and we're using a setTimeout() that's based on 16.7ms, it'd technically take 31.7ms between frames otherwise.
-							_id = _req(_tick);
-						}
-						if (dispatch) {
-							_self.dispatchEvent(_tickWord);
-						}
-					};
-	
-				EventDispatcher.call(_self);
-				_self.time = _self.frame = 0;
-				_self.tick = function() {
-					_tick(true);
-				};
-	
-				_self.lagSmoothing = function(threshold, adjustedLag) {
-					_lagThreshold = threshold || (1 / _tinyNum); //zero should be interpreted as basically unlimited
-					_adjustedLag = Math.min(adjustedLag, _lagThreshold, 0);
-				};
-	
-				_self.sleep = function() {
-					if (_id == null) {
-						return;
-					}
-					if (!_useRAF || !_cancelAnimFrame) {
-						clearTimeout(_id);
-					} else {
-						_cancelAnimFrame(_id);
-					}
-					_req = _emptyFunc;
-					_id = null;
-					if (_self === _ticker) {
-						_tickerActive = false;
-					}
-				};
-	
-				_self.wake = function(seamless) {
-					if (_id !== null) {
-						_self.sleep();
-					} else if (seamless) {
-						_startTime += -_lastUpdate + (_lastUpdate = _getTime());
-					} else if (_self.frame > 10) { //don't trigger lagSmoothing if we're just waking up, and make sure that at least 10 frames have elapsed because of the iOS bug that we work around below with the 1.5-second setTimout().
-						_lastUpdate = _getTime() - _lagThreshold + 5;
-					}
-					_req = (_fps === 0) ? _emptyFunc : (!_useRAF || !_reqAnimFrame) ? function(f) { return setTimeout(f, ((_nextTime - _self.time) * 1000 + 1) | 0); } : _reqAnimFrame;
-					if (_self === _ticker) {
-						_tickerActive = true;
-					}
-					_tick(2);
-				};
-	
-				_self.fps = function(value) {
-					if (!arguments.length) {
-						return _fps;
-					}
-					_fps = value;
-					_gap = 1 / (_fps || 60);
-					_nextTime = this.time + _gap;
-					_self.wake();
-				};
-	
-				_self.useRAF = function(value) {
-					if (!arguments.length) {
-						return _useRAF;
-					}
-					_self.sleep();
-					_useRAF = value;
-					_self.fps(_fps);
-				};
-				_self.fps(fps);
-	
-				//a bug in iOS 6 Safari occasionally prevents the requestAnimationFrame from working initially, so we use a 1.5-second timeout that automatically falls back to setTimeout() if it senses this condition.
-				setTimeout(function() {
-					if (_useRAF === "auto" && _self.frame < 5 && document.visibilityState !== "hidden") {
-						_self.useRAF(false);
-					}
-				}, 1500);
-			});
-	
-			p = gs.Ticker.prototype = new gs.events.EventDispatcher();
-			p.constructor = gs.Ticker;
-	
-	
-	/*
-	 * ----------------------------------------------------------------
-	 * Animation
-	 * ----------------------------------------------------------------
-	 */
-			var Animation = _class("core.Animation", function(duration, vars) {
-					this.vars = vars = vars || {};
-					this._duration = this._totalDuration = duration || 0;
-					this._delay = Number(vars.delay) || 0;
-					this._timeScale = 1;
-					this._active = (vars.immediateRender === true);
-					this.data = vars.data;
-					this._reversed = (vars.reversed === true);
-	
-					if (!_rootTimeline) {
-						return;
-					}
-					if (!_tickerActive) { //some browsers (like iOS 6 Safari) shut down JavaScript execution when the tab is disabled and they [occasionally] neglect to start up requestAnimationFrame again when returning - this code ensures that the engine starts up again properly.
-						_ticker.wake();
-					}
-	
-					var tl = this.vars.useFrames ? _rootFramesTimeline : _rootTimeline;
-					tl.add(this, tl._time);
-	
-					if (this.vars.paused) {
-						this.paused(true);
-					}
-				});
-	
-			_ticker = Animation.ticker = new gs.Ticker();
-			p = Animation.prototype;
-			p._dirty = p._gc = p._initted = p._paused = false;
-			p._totalTime = p._time = 0;
-			p._rawPrevTime = -1;
-			p._next = p._last = p._onUpdate = p._timeline = p.timeline = null;
-			p._paused = false;
-	
-	
-			//some browsers (like iOS) occasionally drop the requestAnimationFrame event when the user switches to a different tab and then comes back again, so we use a 2-second setTimeout() to sense if/when that condition occurs and then wake() the ticker.
-			var _checkTimeout = function() {
-					if (_tickerActive && _getTime() - _lastUpdate > 2000) {
-						_ticker.wake();
-					}
-					setTimeout(_checkTimeout, 2000);
-				};
-			_checkTimeout();
-	
-	
-			p.play = function(from, suppressEvents) {
-				if (from != null) {
-					this.seek(from, suppressEvents);
-				}
-				return this.reversed(false).paused(false);
-			};
-	
-			p.pause = function(atTime, suppressEvents) {
-				if (atTime != null) {
-					this.seek(atTime, suppressEvents);
-				}
-				return this.paused(true);
-			};
-	
-			p.resume = function(from, suppressEvents) {
-				if (from != null) {
-					this.seek(from, suppressEvents);
-				}
-				return this.paused(false);
-			};
-	
-			p.seek = function(time, suppressEvents) {
-				return this.totalTime(Number(time), suppressEvents !== false);
-			};
-	
-			p.restart = function(includeDelay, suppressEvents) {
-				return this.reversed(false).paused(false).totalTime(includeDelay ? -this._delay : 0, (suppressEvents !== false), true);
-			};
-	
-			p.reverse = function(from, suppressEvents) {
-				if (from != null) {
-					this.seek((from || this.totalDuration()), suppressEvents);
-				}
-				return this.reversed(true).paused(false);
-			};
-	
-			p.render = function(time, suppressEvents, force) {
-				//stub - we override this method in subclasses.
-			};
-	
-			p.invalidate = function() {
-				this._time = this._totalTime = 0;
-				this._initted = this._gc = false;
-				this._rawPrevTime = -1;
-				if (this._gc || !this.timeline) {
-					this._enabled(true);
-				}
-				return this;
-			};
-	
-			p.isActive = function() {
-				var tl = this._timeline, //the 2 root timelines won't have a _timeline; they're always active.
-					startTime = this._startTime,
-					rawTime;
-				return (!tl || (!this._gc && !this._paused && tl.isActive() && (rawTime = tl.rawTime()) >= startTime && rawTime < startTime + this.totalDuration() / this._timeScale));
-			};
-	
-			p._enabled = function (enabled, ignoreTimeline) {
-				if (!_tickerActive) {
-					_ticker.wake();
-				}
-				this._gc = !enabled;
-				this._active = this.isActive();
-				if (ignoreTimeline !== true) {
-					if (enabled && !this.timeline) {
-						this._timeline.add(this, this._startTime - this._delay);
-					} else if (!enabled && this.timeline) {
-						this._timeline._remove(this, true);
-					}
-				}
-				return false;
-			};
-	
-	
-			p._kill = function(vars, target) {
-				return this._enabled(false, false);
-			};
-	
-			p.kill = function(vars, target) {
-				this._kill(vars, target);
-				return this;
-			};
-	
-			p._uncache = function(includeSelf) {
-				var tween = includeSelf ? this : this.timeline;
-				while (tween) {
-					tween._dirty = true;
-					tween = tween.timeline;
-				}
-				return this;
-			};
-	
-			p._swapSelfInParams = function(params) {
-				var i = params.length,
-					copy = params.concat();
-				while (--i > -1) {
-					if (params[i] === "{self}") {
-						copy[i] = this;
-					}
-				}
-				return copy;
-			};
-	
-			p._callback = function(type) {
-				var v = this.vars;
-				v[type].apply(v[type + "Scope"] || v.callbackScope || this, v[type + "Params"] || _blankArray);
-			};
-	
-	//----Animation getters/setters --------------------------------------------------------
-	
-			p.eventCallback = function(type, callback, params, scope) {
-				if ((type || "").substr(0,2) === "on") {
-					var v = this.vars;
-					if (arguments.length === 1) {
-						return v[type];
-					}
-					if (callback == null) {
-						delete v[type];
-					} else {
-						v[type] = callback;
-						v[type + "Params"] = (_isArray(params) && params.join("").indexOf("{self}") !== -1) ? this._swapSelfInParams(params) : params;
-						v[type + "Scope"] = scope;
-					}
-					if (type === "onUpdate") {
-						this._onUpdate = callback;
-					}
-				}
-				return this;
-			};
-	
-			p.delay = function(value) {
-				if (!arguments.length) {
-					return this._delay;
-				}
-				if (this._timeline.smoothChildTiming) {
-					this.startTime( this._startTime + value - this._delay );
-				}
-				this._delay = value;
-				return this;
-			};
-	
-			p.duration = function(value) {
-				if (!arguments.length) {
-					this._dirty = false;
-					return this._duration;
-				}
-				this._duration = this._totalDuration = value;
-				this._uncache(true); //true in case it's a TweenMax or TimelineMax that has a repeat - we'll need to refresh the totalDuration.
-				if (this._timeline.smoothChildTiming) if (this._time > 0) if (this._time < this._duration) if (value !== 0) {
-					this.totalTime(this._totalTime * (value / this._duration), true);
-				}
-				return this;
-			};
-	
-			p.totalDuration = function(value) {
-				this._dirty = false;
-				return (!arguments.length) ? this._totalDuration : this.duration(value);
-			};
-	
-			p.time = function(value, suppressEvents) {
-				if (!arguments.length) {
-					return this._time;
-				}
-				if (this._dirty) {
-					this.totalDuration();
-				}
-				return this.totalTime((value > this._duration) ? this._duration : value, suppressEvents);
-			};
-	
-			p.totalTime = function(time, suppressEvents, uncapped) {
-				if (!_tickerActive) {
-					_ticker.wake();
-				}
-				if (!arguments.length) {
-					return this._totalTime;
-				}
-				if (this._timeline) {
-					if (time < 0 && !uncapped) {
-						time += this.totalDuration();
-					}
-					if (this._timeline.smoothChildTiming) {
-						if (this._dirty) {
-							this.totalDuration();
-						}
-						var totalDuration = this._totalDuration,
-							tl = this._timeline;
-						if (time > totalDuration && !uncapped) {
-							time = totalDuration;
-						}
-						this._startTime = (this._paused ? this._pauseTime : tl._time) - ((!this._reversed ? time : totalDuration - time) / this._timeScale);
-						if (!tl._dirty) { //for performance improvement. If the parent's cache is already dirty, it already took care of marking the ancestors as dirty too, so skip the function call here.
-							this._uncache(false);
-						}
-						//in case any of the ancestor timelines had completed but should now be enabled, we should reset their totalTime() which will also ensure that they're lined up properly and enabled. Skip for animations that are on the root (wasteful). Example: a TimelineLite.exportRoot() is performed when there's a paused tween on the root, the export will not complete until that tween is unpaused, but imagine a child gets restarted later, after all [unpaused] tweens have completed. The startTime of that child would get pushed out, but one of the ancestors may have completed.
-						if (tl._timeline) {
-							while (tl._timeline) {
-								if (tl._timeline._time !== (tl._startTime + tl._totalTime) / tl._timeScale) {
-									tl.totalTime(tl._totalTime, true);
-								}
-								tl = tl._timeline;
-							}
-						}
-					}
-					if (this._gc) {
-						this._enabled(true, false);
-					}
-					if (this._totalTime !== time || this._duration === 0) {
-						if (_lazyTweens.length) {
-							_lazyRender();
-						}
-						this.render(time, suppressEvents, false);
-						if (_lazyTweens.length) { //in case rendering caused any tweens to lazy-init, we should render them because typically when someone calls seek() or time() or progress(), they expect an immediate render.
-							_lazyRender();
-						}
-					}
-				}
-				return this;
-			};
-	
-			p.progress = p.totalProgress = function(value, suppressEvents) {
-				var duration = this.duration();
-				return (!arguments.length) ? (duration ? this._time / duration : this.ratio) : this.totalTime(duration * value, suppressEvents);
-			};
-	
-			p.startTime = function(value) {
-				if (!arguments.length) {
-					return this._startTime;
-				}
-				if (value !== this._startTime) {
-					this._startTime = value;
-					if (this.timeline) if (this.timeline._sortChildren) {
-						this.timeline.add(this, value - this._delay); //ensures that any necessary re-sequencing of Animations in the timeline occurs to make sure the rendering order is correct.
-					}
-				}
-				return this;
-			};
-	
-			p.endTime = function(includeRepeats) {
-				return this._startTime + ((includeRepeats != false) ? this.totalDuration() : this.duration()) / this._timeScale;
-			};
-	
-			p.timeScale = function(value) {
-				if (!arguments.length) {
-					return this._timeScale;
-				}
-				value = value || _tinyNum; //can't allow zero because it'll throw the math off
-				if (this._timeline && this._timeline.smoothChildTiming) {
-					var pauseTime = this._pauseTime,
-						t = (pauseTime || pauseTime === 0) ? pauseTime : this._timeline.totalTime();
-					this._startTime = t - ((t - this._startTime) * this._timeScale / value);
-				}
-				this._timeScale = value;
-				return this._uncache(false);
-			};
-	
-			p.reversed = function(value) {
-				if (!arguments.length) {
-					return this._reversed;
-				}
-				if (value != this._reversed) {
-					this._reversed = value;
-					this.totalTime(((this._timeline && !this._timeline.smoothChildTiming) ? this.totalDuration() - this._totalTime : this._totalTime), true);
-				}
-				return this;
-			};
-	
-			p.paused = function(value) {
-				if (!arguments.length) {
-					return this._paused;
-				}
-				var tl = this._timeline,
-					raw, elapsed;
-				if (value != this._paused) if (tl) {
-					if (!_tickerActive && !value) {
-						_ticker.wake();
-					}
-					raw = tl.rawTime();
-					elapsed = raw - this._pauseTime;
-					if (!value && tl.smoothChildTiming) {
-						this._startTime += elapsed;
-						this._uncache(false);
-					}
-					this._pauseTime = value ? raw : null;
-					this._paused = value;
-					this._active = this.isActive();
-					if (!value && elapsed !== 0 && this._initted && this.duration()) {
-						raw = tl.smoothChildTiming ? this._totalTime : (raw - this._startTime) / this._timeScale;
-						this.render(raw, (raw === this._totalTime), true); //in case the target's properties changed via some other tween or manual update by the user, we should force a render.
-					}
-				}
-				if (this._gc && !value) {
-					this._enabled(true, false);
-				}
-				return this;
-			};
-	
-	
-	/*
-	 * ----------------------------------------------------------------
-	 * SimpleTimeline
-	 * ----------------------------------------------------------------
-	 */
-			var SimpleTimeline = _class("core.SimpleTimeline", function(vars) {
-				Animation.call(this, 0, vars);
-				this.autoRemoveChildren = this.smoothChildTiming = true;
-			});
-	
-			p = SimpleTimeline.prototype = new Animation();
-			p.constructor = SimpleTimeline;
-			p.kill()._gc = false;
-			p._first = p._last = p._recent = null;
-			p._sortChildren = false;
-	
-			p.add = p.insert = function(child, position, align, stagger) {
-				var prevTween, st;
-				child._startTime = Number(position || 0) + child._delay;
-				if (child._paused) if (this !== child._timeline) { //we only adjust the _pauseTime if it wasn't in this timeline already. Remember, sometimes a tween will be inserted again into the same timeline when its startTime is changed so that the tweens in the TimelineLite/Max are re-ordered properly in the linked list (so everything renders in the proper order).
-					child._pauseTime = child._startTime + ((this.rawTime() - child._startTime) / child._timeScale);
-				}
-				if (child.timeline) {
-					child.timeline._remove(child, true); //removes from existing timeline so that it can be properly added to this one.
-				}
-				child.timeline = child._timeline = this;
-				if (child._gc) {
-					child._enabled(true, true);
-				}
-				prevTween = this._last;
-				if (this._sortChildren) {
-					st = child._startTime;
-					while (prevTween && prevTween._startTime > st) {
-						prevTween = prevTween._prev;
-					}
-				}
-				if (prevTween) {
-					child._next = prevTween._next;
-					prevTween._next = child;
-				} else {
-					child._next = this._first;
-					this._first = child;
-				}
-				if (child._next) {
-					child._next._prev = child;
-				} else {
-					this._last = child;
-				}
-				child._prev = prevTween;
-				this._recent = child;
-				if (this._timeline) {
-					this._uncache(true);
-				}
-				return this;
-			};
-	
-			p._remove = function(tween, skipDisable) {
-				if (tween.timeline === this) {
-					if (!skipDisable) {
-						tween._enabled(false, true);
-					}
-	
-					if (tween._prev) {
-						tween._prev._next = tween._next;
-					} else if (this._first === tween) {
-						this._first = tween._next;
-					}
-					if (tween._next) {
-						tween._next._prev = tween._prev;
-					} else if (this._last === tween) {
-						this._last = tween._prev;
-					}
-					tween._next = tween._prev = tween.timeline = null;
-					if (tween === this._recent) {
-						this._recent = this._last;
-					}
-	
-					if (this._timeline) {
-						this._uncache(true);
-					}
-				}
-				return this;
-			};
-	
-			p.render = function(time, suppressEvents, force) {
-				var tween = this._first,
-					next;
-				this._totalTime = this._time = this._rawPrevTime = time;
-				while (tween) {
-					next = tween._next; //record it here because the value could change after rendering...
-					if (tween._active || (time >= tween._startTime && !tween._paused)) {
-						if (!tween._reversed) {
-							tween.render((time - tween._startTime) * tween._timeScale, suppressEvents, force);
-						} else {
-							tween.render(((!tween._dirty) ? tween._totalDuration : tween.totalDuration()) - ((time - tween._startTime) * tween._timeScale), suppressEvents, force);
-						}
-					}
-					tween = next;
-				}
-			};
-	
-			p.rawTime = function() {
-				if (!_tickerActive) {
-					_ticker.wake();
-				}
-				return this._totalTime;
-			};
-	
-	/*
-	 * ----------------------------------------------------------------
-	 * TweenLite
-	 * ----------------------------------------------------------------
-	 */
-			var TweenLite = _class("TweenLite", function(target, duration, vars) {
-					Animation.call(this, duration, vars);
-					this.render = TweenLite.prototype.render; //speed optimization (avoid prototype lookup on this "hot" method)
-	
-					if (target == null) {
-						throw "Cannot tween a null target.";
-					}
-	
-					this.target = target = (typeof(target) !== "string") ? target : TweenLite.selector(target) || target;
-	
-					var isSelector = (target.jquery || (target.length && target !== window && target[0] && (target[0] === window || (target[0].nodeType && target[0].style && !target.nodeType)))),
-						overwrite = this.vars.overwrite,
-						i, targ, targets;
-	
-					this._overwrite = overwrite = (overwrite == null) ? _overwriteLookup[TweenLite.defaultOverwrite] : (typeof(overwrite) === "number") ? overwrite >> 0 : _overwriteLookup[overwrite];
-	
-					if ((isSelector || target instanceof Array || (target.push && _isArray(target))) && typeof(target[0]) !== "number") {
-						this._targets = targets = _slice(target);  //don't use Array.prototype.slice.call(target, 0) because that doesn't work in IE8 with a NodeList that's returned by querySelectorAll()
-						this._propLookup = [];
-						this._siblings = [];
-						for (i = 0; i < targets.length; i++) {
-							targ = targets[i];
-							if (!targ) {
-								targets.splice(i--, 1);
-								continue;
-							} else if (typeof(targ) === "string") {
-								targ = targets[i--] = TweenLite.selector(targ); //in case it's an array of strings
-								if (typeof(targ) === "string") {
-									targets.splice(i+1, 1); //to avoid an endless loop (can't imagine why the selector would return a string, but just in case)
-								}
-								continue;
-							} else if (targ.length && targ !== window && targ[0] && (targ[0] === window || (targ[0].nodeType && targ[0].style && !targ.nodeType))) { //in case the user is passing in an array of selector objects (like jQuery objects), we need to check one more level and pull things out if necessary. Also note that <select> elements pass all the criteria regarding length and the first child having style, so we must also check to ensure the target isn't an HTML node itself.
-								targets.splice(i--, 1);
-								this._targets = targets = targets.concat(_slice(targ));
-								continue;
-							}
-							this._siblings[i] = _register(targ, this, false);
-							if (overwrite === 1) if (this._siblings[i].length > 1) {
-								_applyOverwrite(targ, this, null, 1, this._siblings[i]);
-							}
-						}
-	
-					} else {
-						this._propLookup = {};
-						this._siblings = _register(target, this, false);
-						if (overwrite === 1) if (this._siblings.length > 1) {
-							_applyOverwrite(target, this, null, 1, this._siblings);
-						}
-					}
-					if (this.vars.immediateRender || (duration === 0 && this._delay === 0 && this.vars.immediateRender !== false)) {
-						this._time = -_tinyNum; //forces a render without having to set the render() "force" parameter to true because we want to allow lazying by default (using the "force" parameter always forces an immediate full render)
-						this.render(Math.min(0, -this._delay)); //in case delay is negative
-					}
-				}, true),
-				_isSelector = function(v) {
-					return (v && v.length && v !== window && v[0] && (v[0] === window || (v[0].nodeType && v[0].style && !v.nodeType))); //we cannot check "nodeType" if the target is window from within an iframe, otherwise it will trigger a security error in some browsers like Firefox.
-				},
-				_autoCSS = function(vars, target) {
-					var css = {},
-						p;
-					for (p in vars) {
-						if (!_reservedProps[p] && (!(p in target) || p === "transform" || p === "x" || p === "y" || p === "width" || p === "height" || p === "className" || p === "border") && (!_plugins[p] || (_plugins[p] && _plugins[p]._autoCSS))) { //note: <img> elements contain read-only "x" and "y" properties. We should also prioritize editing css width/height rather than the element's properties.
-							css[p] = vars[p];
-							delete vars[p];
-						}
-					}
-					vars.css = css;
-				};
-	
-			p = TweenLite.prototype = new Animation();
-			p.constructor = TweenLite;
-			p.kill()._gc = false;
-	
-	//----TweenLite defaults, overwrite management, and root updates ----------------------------------------------------
-	
-			p.ratio = 0;
-			p._firstPT = p._targets = p._overwrittenProps = p._startAt = null;
-			p._notifyPluginsOfEnabled = p._lazy = false;
-	
-			TweenLite.version = "1.18.5";
-			TweenLite.defaultEase = p._ease = new Ease(null, null, 1, 1);
-			TweenLite.defaultOverwrite = "auto";
-			TweenLite.ticker = _ticker;
-			TweenLite.autoSleep = 120;
-			TweenLite.lagSmoothing = function(threshold, adjustedLag) {
-				_ticker.lagSmoothing(threshold, adjustedLag);
-			};
-	
-			TweenLite.selector = window.$ || window.jQuery || function(e) {
-				var selector = window.$ || window.jQuery;
-				if (selector) {
-					TweenLite.selector = selector;
-					return selector(e);
-				}
-				return (typeof(document) === "undefined") ? e : (document.querySelectorAll ? document.querySelectorAll(e) : document.getElementById((e.charAt(0) === "#") ? e.substr(1) : e));
-			};
-	
-			var _lazyTweens = [],
-				_lazyLookup = {},
-				_numbersExp = /(?:(-|-=|\+=)?\d*\.?\d*(?:e[\-+]?\d+)?)[0-9]/ig,
-				//_nonNumbersExp = /(?:([\-+](?!(\d|=)))|[^\d\-+=e]|(e(?![\-+][\d])))+/ig,
-				_setRatio = function(v) {
-					var pt = this._firstPT,
-						min = 0.000001,
-						val;
-					while (pt) {
-						val = !pt.blob ? pt.c * v + pt.s : v ? this.join("") : this.start;
-						if (pt.r) {
-							val = Math.round(val);
-						} else if (val < min) if (val > -min) { //prevents issues with converting very small numbers to strings in the browser
-							val = 0;
-						}
-						if (!pt.f) {
-							pt.t[pt.p] = val;
-						} else if (pt.fp) {
-							pt.t[pt.p](pt.fp, val);
-						} else {
-							pt.t[pt.p](val);
-						}
-						pt = pt._next;
-					}
-				},
-				//compares two strings (start/end), finds the numbers that are different and spits back an array representing the whole value but with the changing values isolated as elements. For example, "rgb(0,0,0)" and "rgb(100,50,0)" would become ["rgb(", 0, ",", 50, ",0)"]. Notice it merges the parts that are identical (performance optimization). The array also has a linked list of PropTweens attached starting with _firstPT that contain the tweening data (t, p, s, c, f, etc.). It also stores the starting value as a "start" property so that we can revert to it if/when necessary, like when a tween rewinds fully. If the quantity of numbers differs between the start and end, it will always prioritize the end value(s). The pt parameter is optional - it's for a PropTween that will be appended to the end of the linked list and is typically for actually setting the value after all of the elements have been updated (with array.join("")).
-				_blobDif = function(start, end, filter, pt) {
-					var a = [start, end],
-						charIndex = 0,
-						s = "",
-						color = 0,
-						startNums, endNums, num, i, l, nonNumbers, currentNum;
-					a.start = start;
-					if (filter) {
-						filter(a); //pass an array with the starting and ending values and let the filter do whatever it needs to the values.
-						start = a[0];
-						end = a[1];
-					}
-					a.length = 0;
-					startNums = start.match(_numbersExp) || [];
-					endNums = end.match(_numbersExp) || [];
-					if (pt) {
-						pt._next = null;
-						pt.blob = 1;
-						a._firstPT = pt; //apply last in the linked list (which means inserting it first)
-					}
-					l = endNums.length;
-					for (i = 0; i < l; i++) {
-						currentNum = endNums[i];
-						nonNumbers = end.substr(charIndex, end.indexOf(currentNum, charIndex)-charIndex);
-						s += (nonNumbers || !i) ? nonNumbers : ","; //note: SVG spec allows omission of comma/space when a negative sign is wedged between two numbers, like 2.5-5.3 instead of 2.5,-5.3 but when tweening, the negative value may switch to positive, so we insert the comma just in case.
-						charIndex += nonNumbers.length;
-						if (color) { //sense rgba() values and round them.
-							color = (color + 1) % 5;
-						} else if (nonNumbers.substr(-5) === "rgba(") {
-							color = 1;
-						}
-						if (currentNum === startNums[i] || startNums.length <= i) {
-							s += currentNum;
-						} else {
-							if (s) {
-								a.push(s);
-								s = "";
-							}
-							num = parseFloat(startNums[i]);
-							a.push(num);
-							a._firstPT = {_next: a._firstPT, t:a, p: a.length-1, s:num, c:((currentNum.charAt(1) === "=") ? parseInt(currentNum.charAt(0) + "1", 10) * parseFloat(currentNum.substr(2)) : (parseFloat(currentNum) - num)) || 0, f:0, r:(color && color < 4)};
-							//note: we don't set _prev because we'll never need to remove individual PropTweens from this list.
-						}
-						charIndex += currentNum.length;
-					}
-					s += end.substr(charIndex);
-					if (s) {
-						a.push(s);
-					}
-					a.setRatio = _setRatio;
-					return a;
-				},
-				//note: "funcParam" is only necessary for function-based getters/setters that require an extra parameter like getAttribute("width") and setAttribute("width", value). In this example, funcParam would be "width". Used by AttrPlugin for example.
-				_addPropTween = function(target, prop, start, end, overwriteProp, round, funcParam, stringFilter) {
-					var s = (start === "get") ? target[prop] : start,
-						type = typeof(target[prop]),
-						isRelative = (typeof(end) === "string" && end.charAt(1) === "="),
-						pt = {t:target, p:prop, s:s, f:(type === "function"), pg:0, n:overwriteProp || prop, r:round, pr:0, c:isRelative ? parseInt(end.charAt(0) + "1", 10) * parseFloat(end.substr(2)) : (parseFloat(end) - s) || 0},
-						blob, getterName;
-					if (type !== "number") {
-						if (type === "function" && start === "get") {
-							getterName = ((prop.indexOf("set") || typeof(target["get" + prop.substr(3)]) !== "function") ? prop : "get" + prop.substr(3));
-							pt.s = s = funcParam ? target[getterName](funcParam) : target[getterName]();
-						}
-						if (typeof(s) === "string" && (funcParam || isNaN(s))) {
-							//a blob (string that has multiple numbers in it)
-							pt.fp = funcParam;
-							blob = _blobDif(s, end, stringFilter || TweenLite.defaultStringFilter, pt);
-							pt = {t:blob, p:"setRatio", s:0, c:1, f:2, pg:0, n:overwriteProp || prop, pr:0}; //"2" indicates it's a Blob property tween. Needed for RoundPropsPlugin for example.
-						} else if (!isRelative) {
-							pt.s = parseFloat(s);
-							pt.c = (parseFloat(end) - pt.s) || 0;
-						}
-					}
-					if (pt.c) { //only add it to the linked list if there's a change.
-						if ((pt._next = this._firstPT)) {
-							pt._next._prev = pt;
-						}
-						this._firstPT = pt;
-						return pt;
-					}
-				},
-				_internals = TweenLite._internals = {isArray:_isArray, isSelector:_isSelector, lazyTweens:_lazyTweens, blobDif:_blobDif}, //gives us a way to expose certain private values to other GreenSock classes without contaminating tha main TweenLite object.
-				_plugins = TweenLite._plugins = {},
-				_tweenLookup = _internals.tweenLookup = {},
-				_tweenLookupNum = 0,
-				_reservedProps = _internals.reservedProps = {ease:1, delay:1, overwrite:1, onComplete:1, onCompleteParams:1, onCompleteScope:1, useFrames:1, runBackwards:1, startAt:1, onUpdate:1, onUpdateParams:1, onUpdateScope:1, onStart:1, onStartParams:1, onStartScope:1, onReverseComplete:1, onReverseCompleteParams:1, onReverseCompleteScope:1, onRepeat:1, onRepeatParams:1, onRepeatScope:1, easeParams:1, yoyo:1, immediateRender:1, repeat:1, repeatDelay:1, data:1, paused:1, reversed:1, autoCSS:1, lazy:1, onOverwrite:1, callbackScope:1, stringFilter:1, id:1},
-				_overwriteLookup = {none:0, all:1, auto:2, concurrent:3, allOnStart:4, preexisting:5, "true":1, "false":0},
-				_rootFramesTimeline = Animation._rootFramesTimeline = new SimpleTimeline(),
-				_rootTimeline = Animation._rootTimeline = new SimpleTimeline(),
-				_nextGCFrame = 30,
-				_lazyRender = _internals.lazyRender = function() {
-					var i = _lazyTweens.length,
-						tween;
-					_lazyLookup = {};
-					while (--i > -1) {
-						tween = _lazyTweens[i];
-						if (tween && tween._lazy !== false) {
-							tween.render(tween._lazy[0], tween._lazy[1], true);
-							tween._lazy = false;
-						}
-					}
-					_lazyTweens.length = 0;
-				};
-	
-			_rootTimeline._startTime = _ticker.time;
-			_rootFramesTimeline._startTime = _ticker.frame;
-			_rootTimeline._active = _rootFramesTimeline._active = true;
-			setTimeout(_lazyRender, 1); //on some mobile devices, there isn't a "tick" before code runs which means any lazy renders wouldn't run before the next official "tick".
-	
-			Animation._updateRoot = TweenLite.render = function() {
-					var i, a, p;
-					if (_lazyTweens.length) { //if code is run outside of the requestAnimationFrame loop, there may be tweens queued AFTER the engine refreshed, so we need to ensure any pending renders occur before we refresh again.
-						_lazyRender();
-					}
-					_rootTimeline.render((_ticker.time - _rootTimeline._startTime) * _rootTimeline._timeScale, false, false);
-					_rootFramesTimeline.render((_ticker.frame - _rootFramesTimeline._startTime) * _rootFramesTimeline._timeScale, false, false);
-					if (_lazyTweens.length) {
-						_lazyRender();
-					}
-					if (_ticker.frame >= _nextGCFrame) { //dump garbage every 120 frames or whatever the user sets TweenLite.autoSleep to
-						_nextGCFrame = _ticker.frame + (parseInt(TweenLite.autoSleep, 10) || 120);
-						for (p in _tweenLookup) {
-							a = _tweenLookup[p].tweens;
-							i = a.length;
-							while (--i > -1) {
-								if (a[i]._gc) {
-									a.splice(i, 1);
-								}
-							}
-							if (a.length === 0) {
-								delete _tweenLookup[p];
-							}
-						}
-						//if there are no more tweens in the root timelines, or if they're all paused, make the _timer sleep to reduce load on the CPU slightly
-						p = _rootTimeline._first;
-						if (!p || p._paused) if (TweenLite.autoSleep && !_rootFramesTimeline._first && _ticker._listeners.tick.length === 1) {
-							while (p && p._paused) {
-								p = p._next;
-							}
-							if (!p) {
-								_ticker.sleep();
-							}
-						}
-					}
-				};
-	
-			_ticker.addEventListener("tick", Animation._updateRoot);
-	
-			var _register = function(target, tween, scrub) {
-					var id = target._gsTweenID, a, i;
-					if (!_tweenLookup[id || (target._gsTweenID = id = "t" + (_tweenLookupNum++))]) {
-						_tweenLookup[id] = {target:target, tweens:[]};
-					}
-					if (tween) {
-						a = _tweenLookup[id].tweens;
-						a[(i = a.length)] = tween;
-						if (scrub) {
-							while (--i > -1) {
-								if (a[i] === tween) {
-									a.splice(i, 1);
-								}
-							}
-						}
-					}
-					return _tweenLookup[id].tweens;
-				},
-				_onOverwrite = function(overwrittenTween, overwritingTween, target, killedProps) {
-					var func = overwrittenTween.vars.onOverwrite, r1, r2;
-					if (func) {
-						r1 = func(overwrittenTween, overwritingTween, target, killedProps);
-					}
-					func = TweenLite.onOverwrite;
-					if (func) {
-						r2 = func(overwrittenTween, overwritingTween, target, killedProps);
-					}
-					return (r1 !== false && r2 !== false);
-				},
-				_applyOverwrite = function(target, tween, props, mode, siblings) {
-					var i, changed, curTween, l;
-					if (mode === 1 || mode >= 4) {
-						l = siblings.length;
-						for (i = 0; i < l; i++) {
-							if ((curTween = siblings[i]) !== tween) {
-								if (!curTween._gc) {
-									if (curTween._kill(null, target, tween)) {
-										changed = true;
-									}
-								}
-							} else if (mode === 5) {
-								break;
-							}
-						}
-						return changed;
-					}
-					//NOTE: Add 0.0000000001 to overcome floating point errors that can cause the startTime to be VERY slightly off (when a tween's time() is set for example)
-					var startTime = tween._startTime + _tinyNum,
-						overlaps = [],
-						oCount = 0,
-						zeroDur = (tween._duration === 0),
-						globalStart;
-					i = siblings.length;
-					while (--i > -1) {
-						if ((curTween = siblings[i]) === tween || curTween._gc || curTween._paused) {
-							//ignore
-						} else if (curTween._timeline !== tween._timeline) {
-							globalStart = globalStart || _checkOverlap(tween, 0, zeroDur);
-							if (_checkOverlap(curTween, globalStart, zeroDur) === 0) {
-								overlaps[oCount++] = curTween;
-							}
-						} else if (curTween._startTime <= startTime) if (curTween._startTime + curTween.totalDuration() / curTween._timeScale > startTime) if (!((zeroDur || !curTween._initted) && startTime - curTween._startTime <= 0.0000000002)) {
-							overlaps[oCount++] = curTween;
-						}
-					}
-	
-					i = oCount;
-					while (--i > -1) {
-						curTween = overlaps[i];
-						if (mode === 2) if (curTween._kill(props, target, tween)) {
-							changed = true;
-						}
-						if (mode !== 2 || (!curTween._firstPT && curTween._initted)) {
-							if (mode !== 2 && !_onOverwrite(curTween, tween)) {
-								continue;
-							}
-							if (curTween._enabled(false, false)) { //if all property tweens have been overwritten, kill the tween.
-								changed = true;
-							}
-						}
-					}
-					return changed;
-				},
-				_checkOverlap = function(tween, reference, zeroDur) {
-					var tl = tween._timeline,
-						ts = tl._timeScale,
-						t = tween._startTime;
-					while (tl._timeline) {
-						t += tl._startTime;
-						ts *= tl._timeScale;
-						if (tl._paused) {
-							return -100;
-						}
-						tl = tl._timeline;
-					}
-					t /= ts;
-					return (t > reference) ? t - reference : ((zeroDur && t === reference) || (!tween._initted && t - reference < 2 * _tinyNum)) ? _tinyNum : ((t += tween.totalDuration() / tween._timeScale / ts) > reference + _tinyNum) ? 0 : t - reference - _tinyNum;
-				};
-	
-	
-	//---- TweenLite instance methods -----------------------------------------------------------------------------
-	
-			p._init = function() {
-				var v = this.vars,
-					op = this._overwrittenProps,
-					dur = this._duration,
-					immediate = !!v.immediateRender,
-					ease = v.ease,
-					i, initPlugins, pt, p, startVars;
-				if (v.startAt) {
-					if (this._startAt) {
-						this._startAt.render(-1, true); //if we've run a startAt previously (when the tween instantiated), we should revert it so that the values re-instantiate correctly particularly for relative tweens. Without this, a TweenLite.fromTo(obj, 1, {x:"+=100"}, {x:"-=100"}), for example, would actually jump to +=200 because the startAt would run twice, doubling the relative change.
-						this._startAt.kill();
-					}
-					startVars = {};
-					for (p in v.startAt) { //copy the properties/values into a new object to avoid collisions, like var to = {x:0}, from = {x:500}; timeline.fromTo(e, 1, from, to).fromTo(e, 1, to, from);
-						startVars[p] = v.startAt[p];
-					}
-					startVars.overwrite = false;
-					startVars.immediateRender = true;
-					startVars.lazy = (immediate && v.lazy !== false);
-					startVars.startAt = startVars.delay = null; //no nesting of startAt objects allowed (otherwise it could cause an infinite loop).
-					this._startAt = TweenLite.to(this.target, 0, startVars);
-					if (immediate) {
-						if (this._time > 0) {
-							this._startAt = null; //tweens that render immediately (like most from() and fromTo() tweens) shouldn't revert when their parent timeline's playhead goes backward past the startTime because the initial render could have happened anytime and it shouldn't be directly correlated to this tween's startTime. Imagine setting up a complex animation where the beginning states of various objects are rendered immediately but the tween doesn't happen for quite some time - if we revert to the starting values as soon as the playhead goes backward past the tween's startTime, it will throw things off visually. Reversion should only happen in TimelineLite/Max instances where immediateRender was false (which is the default in the convenience methods like from()).
-						} else if (dur !== 0) {
-							return; //we skip initialization here so that overwriting doesn't occur until the tween actually begins. Otherwise, if you create several immediateRender:true tweens of the same target/properties to drop into a TimelineLite or TimelineMax, the last one created would overwrite the first ones because they didn't get placed into the timeline yet before the first render occurs and kicks in overwriting.
-						}
-					}
-				} else if (v.runBackwards && dur !== 0) {
-					//from() tweens must be handled uniquely: their beginning values must be rendered but we don't want overwriting to occur yet (when time is still 0). Wait until the tween actually begins before doing all the routines like overwriting. At that time, we should render at the END of the tween to ensure that things initialize correctly (remember, from() tweens go backwards)
-					if (this._startAt) {
-						this._startAt.render(-1, true);
-						this._startAt.kill();
-						this._startAt = null;
-					} else {
-						if (this._time !== 0) { //in rare cases (like if a from() tween runs and then is invalidate()-ed), immediateRender could be true but the initial forced-render gets skipped, so there's no need to force the render in this context when the _time is greater than 0
-							immediate = false;
-						}
-						pt = {};
-						for (p in v) { //copy props into a new object and skip any reserved props, otherwise onComplete or onUpdate or onStart could fire. We should, however, permit autoCSS to go through.
-							if (!_reservedProps[p] || p === "autoCSS") {
-								pt[p] = v[p];
-							}
-						}
-						pt.overwrite = 0;
-						pt.data = "isFromStart"; //we tag the tween with as "isFromStart" so that if [inside a plugin] we need to only do something at the very END of a tween, we have a way of identifying this tween as merely the one that's setting the beginning values for a "from()" tween. For example, clearProps in CSSPlugin should only get applied at the very END of a tween and without this tag, from(...{height:100, clearProps:"height", delay:1}) would wipe the height at the beginning of the tween and after 1 second, it'd kick back in.
-						pt.lazy = (immediate && v.lazy !== false);
-						pt.immediateRender = immediate; //zero-duration tweens render immediately by default, but if we're not specifically instructed to render this tween immediately, we should skip this and merely _init() to record the starting values (rendering them immediately would push them to completion which is wasteful in that case - we'd have to render(-1) immediately after)
-						this._startAt = TweenLite.to(this.target, 0, pt);
-						if (!immediate) {
-							this._startAt._init(); //ensures that the initial values are recorded
-							this._startAt._enabled(false); //no need to have the tween render on the next cycle. Disable it because we'll always manually control the renders of the _startAt tween.
-							if (this.vars.immediateRender) {
-								this._startAt = null;
-							}
-						} else if (this._time === 0) {
-							return;
-						}
-					}
-				}
-				this._ease = ease = (!ease) ? TweenLite.defaultEase : (ease instanceof Ease) ? ease : (typeof(ease) === "function") ? new Ease(ease, v.easeParams) : _easeMap[ease] || TweenLite.defaultEase;
-				if (v.easeParams instanceof Array && ease.config) {
-					this._ease = ease.config.apply(ease, v.easeParams);
-				}
-				this._easeType = this._ease._type;
-				this._easePower = this._ease._power;
-				this._firstPT = null;
-	
-				if (this._targets) {
-					i = this._targets.length;
-					while (--i > -1) {
-						if ( this._initProps( this._targets[i], (this._propLookup[i] = {}), this._siblings[i], (op ? op[i] : null)) ) {
-							initPlugins = true;
-						}
-					}
-				} else {
-					initPlugins = this._initProps(this.target, this._propLookup, this._siblings, op);
-				}
-	
-				if (initPlugins) {
-					TweenLite._onPluginEvent("_onInitAllProps", this); //reorders the array in order of priority. Uses a static TweenPlugin method in order to minimize file size in TweenLite
-				}
-				if (op) if (!this._firstPT) if (typeof(this.target) !== "function") { //if all tweening properties have been overwritten, kill the tween. If the target is a function, it's probably a delayedCall so let it live.
-					this._enabled(false, false);
-				}
-				if (v.runBackwards) {
-					pt = this._firstPT;
-					while (pt) {
-						pt.s += pt.c;
-						pt.c = -pt.c;
-						pt = pt._next;
-					}
-				}
-				this._onUpdate = v.onUpdate;
-				this._initted = true;
-			};
-	
-			p._initProps = function(target, propLookup, siblings, overwrittenProps) {
-				var p, i, initPlugins, plugin, pt, v;
-				if (target == null) {
-					return false;
-				}
-	
-				if (_lazyLookup[target._gsTweenID]) {
-					_lazyRender(); //if other tweens of the same target have recently initted but haven't rendered yet, we've got to force the render so that the starting values are correct (imagine populating a timeline with a bunch of sequential tweens and then jumping to the end)
-				}
-	
-				if (!this.vars.css) if (target.style) if (target !== window && target.nodeType) if (_plugins.css) if (this.vars.autoCSS !== false) { //it's so common to use TweenLite/Max to animate the css of DOM elements, we assume that if the target is a DOM element, that's what is intended (a convenience so that users don't have to wrap things in css:{}, although we still recommend it for a slight performance boost and better specificity). Note: we cannot check "nodeType" on the window inside an iframe.
-					_autoCSS(this.vars, target);
-				}
-				for (p in this.vars) {
-					v = this.vars[p];
-					if (_reservedProps[p]) {
-						if (v) if ((v instanceof Array) || (v.push && _isArray(v))) if (v.join("").indexOf("{self}") !== -1) {
-							this.vars[p] = v = this._swapSelfInParams(v, this);
-						}
-	
-					} else if (_plugins[p] && (plugin = new _plugins[p]())._onInitTween(target, this.vars[p], this)) {
-	
-						//t - target 		[object]
-						//p - property 		[string]
-						//s - start			[number]
-						//c - change		[number]
-						//f - isFunction	[boolean]
-						//n - name			[string]
-						//pg - isPlugin 	[boolean]
-						//pr - priority		[number]
-						this._firstPT = pt = {_next:this._firstPT, t:plugin, p:"setRatio", s:0, c:1, f:1, n:p, pg:1, pr:plugin._priority};
-						i = plugin._overwriteProps.length;
-						while (--i > -1) {
-							propLookup[plugin._overwriteProps[i]] = this._firstPT;
-						}
-						if (plugin._priority || plugin._onInitAllProps) {
-							initPlugins = true;
-						}
-						if (plugin._onDisable || plugin._onEnable) {
-							this._notifyPluginsOfEnabled = true;
-						}
-						if (pt._next) {
-							pt._next._prev = pt;
-						}
-	
-					} else {
-						propLookup[p] = _addPropTween.call(this, target, p, "get", v, p, 0, null, this.vars.stringFilter);
-					}
-				}
-	
-				if (overwrittenProps) if (this._kill(overwrittenProps, target)) { //another tween may have tried to overwrite properties of this tween before init() was called (like if two tweens start at the same time, the one created second will run first)
-					return this._initProps(target, propLookup, siblings, overwrittenProps);
-				}
-				if (this._overwrite > 1) if (this._firstPT) if (siblings.length > 1) if (_applyOverwrite(target, this, propLookup, this._overwrite, siblings)) {
-					this._kill(propLookup, target);
-					return this._initProps(target, propLookup, siblings, overwrittenProps);
-				}
-				if (this._firstPT) if ((this.vars.lazy !== false && this._duration) || (this.vars.lazy && !this._duration)) { //zero duration tweens don't lazy render by default; everything else does.
-					_lazyLookup[target._gsTweenID] = true;
-				}
-				return initPlugins;
-			};
-	
-			p.render = function(time, suppressEvents, force) {
-				var prevTime = this._time,
-					duration = this._duration,
-					prevRawPrevTime = this._rawPrevTime,
-					isComplete, callback, pt, rawPrevTime;
-				if (time >= duration - 0.0000001) { //to work around occasional floating point math artifacts.
-					this._totalTime = this._time = duration;
-					this.ratio = this._ease._calcEnd ? this._ease.getRatio(1) : 1;
-					if (!this._reversed ) {
-						isComplete = true;
-						callback = "onComplete";
-						force = (force || this._timeline.autoRemoveChildren); //otherwise, if the animation is unpaused/activated after it's already finished, it doesn't get removed from the parent timeline.
-					}
-					if (duration === 0) if (this._initted || !this.vars.lazy || force) { //zero-duration tweens are tricky because we must discern the momentum/direction of time in order to determine whether the starting values should be rendered or the ending values. If the "playhead" of its timeline goes past the zero-duration tween in the forward direction or lands directly on it, the end values should be rendered, but if the timeline's "playhead" moves past it in the backward direction (from a postitive time to a negative time), the starting values must be rendered.
-						if (this._startTime === this._timeline._duration) { //if a zero-duration tween is at the VERY end of a timeline and that timeline renders at its end, it will typically add a tiny bit of cushion to the render time to prevent rounding errors from getting in the way of tweens rendering their VERY end. If we then reverse() that timeline, the zero-duration tween will trigger its onReverseComplete even though technically the playhead didn't pass over it again. It's a very specific edge case we must accommodate.
-							time = 0;
-						}
-						if (prevRawPrevTime < 0 || (time <= 0 && time >= -0.0000001) || (prevRawPrevTime === _tinyNum && this.data !== "isPause")) if (prevRawPrevTime !== time) { //note: when this.data is "isPause", it's a callback added by addPause() on a timeline that we should not be triggered when LEAVING its exact start time. In other words, tl.addPause(1).play(1) shouldn't pause.
-							force = true;
-							if (prevRawPrevTime > _tinyNum) {
-								callback = "onReverseComplete";
-							}
-						}
-						this._rawPrevTime = rawPrevTime = (!suppressEvents || time || prevRawPrevTime === time) ? time : _tinyNum; //when the playhead arrives at EXACTLY time 0 (right on top) of a zero-duration tween, we need to discern if events are suppressed so that when the playhead moves again (next time), it'll trigger the callback. If events are NOT suppressed, obviously the callback would be triggered in this render. Basically, the callback should fire either when the playhead ARRIVES or LEAVES this exact spot, not both. Imagine doing a timeline.seek(0) and there's a callback that sits at 0. Since events are suppressed on that seek() by default, nothing will fire, but when the playhead moves off of that position, the callback should fire. This behavior is what people intuitively expect. We set the _rawPrevTime to be a precise tiny number to indicate this scenario rather than using another property/variable which would increase memory usage. This technique is less readable, but more efficient.
-					}
-	
-				} else if (time < 0.0000001) { //to work around occasional floating point math artifacts, round super small values to 0.
-					this._totalTime = this._time = 0;
-					this.ratio = this._ease._calcEnd ? this._ease.getRatio(0) : 0;
-					if (prevTime !== 0 || (duration === 0 && prevRawPrevTime > 0)) {
-						callback = "onReverseComplete";
-						isComplete = this._reversed;
-					}
-					if (time < 0) {
-						this._active = false;
-						if (duration === 0) if (this._initted || !this.vars.lazy || force) { //zero-duration tweens are tricky because we must discern the momentum/direction of time in order to determine whether the starting values should be rendered or the ending values. If the "playhead" of its timeline goes past the zero-duration tween in the forward direction or lands directly on it, the end values should be rendered, but if the timeline's "playhead" moves past it in the backward direction (from a postitive time to a negative time), the starting values must be rendered.
-							if (prevRawPrevTime >= 0 && !(prevRawPrevTime === _tinyNum && this.data === "isPause")) {
-								force = true;
-							}
-							this._rawPrevTime = rawPrevTime = (!suppressEvents || time || prevRawPrevTime === time) ? time : _tinyNum; //when the playhead arrives at EXACTLY time 0 (right on top) of a zero-duration tween, we need to discern if events are suppressed so that when the playhead moves again (next time), it'll trigger the callback. If events are NOT suppressed, obviously the callback would be triggered in this render. Basically, the callback should fire either when the playhead ARRIVES or LEAVES this exact spot, not both. Imagine doing a timeline.seek(0) and there's a callback that sits at 0. Since events are suppressed on that seek() by default, nothing will fire, but when the playhead moves off of that position, the callback should fire. This behavior is what people intuitively expect. We set the _rawPrevTime to be a precise tiny number to indicate this scenario rather than using another property/variable which would increase memory usage. This technique is less readable, but more efficient.
-						}
-					}
-					if (!this._initted) { //if we render the very beginning (time == 0) of a fromTo(), we must force the render (normal tweens wouldn't need to render at a time of 0 when the prevTime was also 0). This is also mandatory to make sure overwriting kicks in immediately.
-						force = true;
-					}
-				} else {
-					this._totalTime = this._time = time;
-	
-					if (this._easeType) {
-						var r = time / duration, type = this._easeType, pow = this._easePower;
-						if (type === 1 || (type === 3 && r >= 0.5)) {
-							r = 1 - r;
-						}
-						if (type === 3) {
-							r *= 2;
-						}
-						if (pow === 1) {
-							r *= r;
-						} else if (pow === 2) {
-							r *= r * r;
-						} else if (pow === 3) {
-							r *= r * r * r;
-						} else if (pow === 4) {
-							r *= r * r * r * r;
-						}
-	
-						if (type === 1) {
-							this.ratio = 1 - r;
-						} else if (type === 2) {
-							this.ratio = r;
-						} else if (time / duration < 0.5) {
-							this.ratio = r / 2;
-						} else {
-							this.ratio = 1 - (r / 2);
-						}
-	
-					} else {
-						this.ratio = this._ease.getRatio(time / duration);
-					}
-				}
-	
-				if (this._time === prevTime && !force) {
-					return;
-				} else if (!this._initted) {
-					this._init();
-					if (!this._initted || this._gc) { //immediateRender tweens typically won't initialize until the playhead advances (_time is greater than 0) in order to ensure that overwriting occurs properly. Also, if all of the tweening properties have been overwritten (which would cause _gc to be true, as set in _init()), we shouldn't continue otherwise an onStart callback could be called for example.
-						return;
-					} else if (!force && this._firstPT && ((this.vars.lazy !== false && this._duration) || (this.vars.lazy && !this._duration))) {
-						this._time = this._totalTime = prevTime;
-						this._rawPrevTime = prevRawPrevTime;
-						_lazyTweens.push(this);
-						this._lazy = [time, suppressEvents];
-						return;
-					}
-					//_ease is initially set to defaultEase, so now that init() has run, _ease is set properly and we need to recalculate the ratio. Overall this is faster than using conditional logic earlier in the method to avoid having to set ratio twice because we only init() once but renderTime() gets called VERY frequently.
-					if (this._time && !isComplete) {
-						this.ratio = this._ease.getRatio(this._time / duration);
-					} else if (isComplete && this._ease._calcEnd) {
-						this.ratio = this._ease.getRatio((this._time === 0) ? 0 : 1);
-					}
-				}
-				if (this._lazy !== false) { //in case a lazy render is pending, we should flush it because the new render is occurring now (imagine a lazy tween instantiating and then immediately the user calls tween.seek(tween.duration()), skipping to the end - the end render would be forced, and then if we didn't flush the lazy render, it'd fire AFTER the seek(), rendering it at the wrong time.
-					this._lazy = false;
-				}
-				if (!this._active) if (!this._paused && this._time !== prevTime && time >= 0) {
-					this._active = true;  //so that if the user renders a tween (as opposed to the timeline rendering it), the timeline is forced to re-render and align it with the proper time/frame on the next rendering cycle. Maybe the tween already finished but the user manually re-renders it as halfway done.
-				}
-				if (prevTime === 0) {
-					if (this._startAt) {
-						if (time >= 0) {
-							this._startAt.render(time, suppressEvents, force);
-						} else if (!callback) {
-							callback = "_dummyGS"; //if no callback is defined, use a dummy value just so that the condition at the end evaluates as true because _startAt should render AFTER the normal render loop when the time is negative. We could handle this in a more intuitive way, of course, but the render loop is the MOST important thing to optimize, so this technique allows us to avoid adding extra conditional logic in a high-frequency area.
-						}
-					}
-					if (this.vars.onStart) if (this._time !== 0 || duration === 0) if (!suppressEvents) {
-						this._callback("onStart");
-					}
-				}
-				pt = this._firstPT;
-				while (pt) {
-					if (pt.f) {
-						pt.t[pt.p](pt.c * this.ratio + pt.s);
-					} else {
-						pt.t[pt.p] = pt.c * this.ratio + pt.s;
-					}
-					pt = pt._next;
-				}
-	
-				if (this._onUpdate) {
-					if (time < 0) if (this._startAt && time !== -0.0001) { //if the tween is positioned at the VERY beginning (_startTime 0) of its parent timeline, it's illegal for the playhead to go back further, so we should not render the recorded startAt values.
-						this._startAt.render(time, suppressEvents, force); //note: for performance reasons, we tuck this conditional logic inside less traveled areas (most tweens don't have an onUpdate). We'd just have it at the end before the onComplete, but the values should be updated before any onUpdate is called, so we ALSO put it here and then if it's not called, we do so later near the onComplete.
-					}
-					if (!suppressEvents) if (this._time !== prevTime || isComplete || force) {
-						this._callback("onUpdate");
-					}
-				}
-				if (callback) if (!this._gc || force) { //check _gc because there's a chance that kill() could be called in an onUpdate
-					if (time < 0 && this._startAt && !this._onUpdate && time !== -0.0001) { //-0.0001 is a special value that we use when looping back to the beginning of a repeated TimelineMax, in which case we shouldn't render the _startAt values.
-						this._startAt.render(time, suppressEvents, force);
-					}
-					if (isComplete) {
-						if (this._timeline.autoRemoveChildren) {
-							this._enabled(false, false);
-						}
-						this._active = false;
-					}
-					if (!suppressEvents && this.vars[callback]) {
-						this._callback(callback);
-					}
-					if (duration === 0 && this._rawPrevTime === _tinyNum && rawPrevTime !== _tinyNum) { //the onComplete or onReverseComplete could trigger movement of the playhead and for zero-duration tweens (which must discern direction) that land directly back on their start time, we don't want to fire again on the next render. Think of several addPause()'s in a timeline that forces the playhead to a certain spot, but what if it's already paused and another tween is tweening the "time" of the timeline? Each time it moves [forward] past that spot, it would move back, and since suppressEvents is true, it'd reset _rawPrevTime to _tinyNum so that when it begins again, the callback would fire (so ultimately it could bounce back and forth during that tween). Again, this is a very uncommon scenario, but possible nonetheless.
-						this._rawPrevTime = 0;
-					}
-				}
-			};
-	
-			p._kill = function(vars, target, overwritingTween) {
-				if (vars === "all") {
-					vars = null;
-				}
-				if (vars == null) if (target == null || target === this.target) {
-					this._lazy = false;
-					return this._enabled(false, false);
-				}
-				target = (typeof(target) !== "string") ? (target || this._targets || this.target) : TweenLite.selector(target) || target;
-				var simultaneousOverwrite = (overwritingTween && this._time && overwritingTween._startTime === this._startTime && this._timeline === overwritingTween._timeline),
-					i, overwrittenProps, p, pt, propLookup, changed, killProps, record, killed;
-				if ((_isArray(target) || _isSelector(target)) && typeof(target[0]) !== "number") {
-					i = target.length;
-					while (--i > -1) {
-						if (this._kill(vars, target[i], overwritingTween)) {
-							changed = true;
-						}
-					}
-				} else {
-					if (this._targets) {
-						i = this._targets.length;
-						while (--i > -1) {
-							if (target === this._targets[i]) {
-								propLookup = this._propLookup[i] || {};
-								this._overwrittenProps = this._overwrittenProps || [];
-								overwrittenProps = this._overwrittenProps[i] = vars ? this._overwrittenProps[i] || {} : "all";
-								break;
-							}
-						}
-					} else if (target !== this.target) {
-						return false;
-					} else {
-						propLookup = this._propLookup;
-						overwrittenProps = this._overwrittenProps = vars ? this._overwrittenProps || {} : "all";
-					}
-	
-					if (propLookup) {
-						killProps = vars || propLookup;
-						record = (vars !== overwrittenProps && overwrittenProps !== "all" && vars !== propLookup && (typeof(vars) !== "object" || !vars._tempKill)); //_tempKill is a super-secret way to delete a particular tweening property but NOT have it remembered as an official overwritten property (like in BezierPlugin)
-						if (overwritingTween && (TweenLite.onOverwrite || this.vars.onOverwrite)) {
-							for (p in killProps) {
-								if (propLookup[p]) {
-									if (!killed) {
-										killed = [];
-									}
-									killed.push(p);
-								}
-							}
-							if ((killed || !vars) && !_onOverwrite(this, overwritingTween, target, killed)) { //if the onOverwrite returned false, that means the user wants to override the overwriting (cancel it).
-								return false;
-							}
-						}
-	
-						for (p in killProps) {
-							if ((pt = propLookup[p])) {
-								if (simultaneousOverwrite) { //if another tween overwrites this one and they both start at exactly the same time, yet this tween has already rendered once (for example, at 0.001) because it's first in the queue, we should revert the values to where they were at 0 so that the starting values aren't contaminated on the overwriting tween.
-									if (pt.f) {
-										pt.t[pt.p](pt.s);
-									} else {
-										pt.t[pt.p] = pt.s;
-									}
-									changed = true;
-								}
-								if (pt.pg && pt.t._kill(killProps)) {
-									changed = true; //some plugins need to be notified so they can perform cleanup tasks first
-								}
-								if (!pt.pg || pt.t._overwriteProps.length === 0) {
-									if (pt._prev) {
-										pt._prev._next = pt._next;
-									} else if (pt === this._firstPT) {
-										this._firstPT = pt._next;
-									}
-									if (pt._next) {
-										pt._next._prev = pt._prev;
-									}
-									pt._next = pt._prev = null;
-								}
-								delete propLookup[p];
-							}
-							if (record) {
-								overwrittenProps[p] = 1;
-							}
-						}
-						if (!this._firstPT && this._initted) { //if all tweening properties are killed, kill the tween. Without this line, if there's a tween with multiple targets and then you killTweensOf() each target individually, the tween would technically still remain active and fire its onComplete even though there aren't any more properties tweening.
-							this._enabled(false, false);
-						}
-					}
-				}
-				return changed;
-			};
-	
-			p.invalidate = function() {
-				if (this._notifyPluginsOfEnabled) {
-					TweenLite._onPluginEvent("_onDisable", this);
-				}
-				this._firstPT = this._overwrittenProps = this._startAt = this._onUpdate = null;
-				this._notifyPluginsOfEnabled = this._active = this._lazy = false;
-				this._propLookup = (this._targets) ? {} : [];
-				Animation.prototype.invalidate.call(this);
-				if (this.vars.immediateRender) {
-					this._time = -_tinyNum; //forces a render without having to set the render() "force" parameter to true because we want to allow lazying by default (using the "force" parameter always forces an immediate full render)
-					this.render(Math.min(0, -this._delay)); //in case delay is negative.
-				}
-				return this;
-			};
-	
-			p._enabled = function(enabled, ignoreTimeline) {
-				if (!_tickerActive) {
-					_ticker.wake();
-				}
-				if (enabled && this._gc) {
-					var targets = this._targets,
-						i;
-					if (targets) {
-						i = targets.length;
-						while (--i > -1) {
-							this._siblings[i] = _register(targets[i], this, true);
-						}
-					} else {
-						this._siblings = _register(this.target, this, true);
-					}
-				}
-				Animation.prototype._enabled.call(this, enabled, ignoreTimeline);
-				if (this._notifyPluginsOfEnabled) if (this._firstPT) {
-					return TweenLite._onPluginEvent((enabled ? "_onEnable" : "_onDisable"), this);
-				}
-				return false;
-			};
-	
-	
-	//----TweenLite static methods -----------------------------------------------------
-	
-			TweenLite.to = function(target, duration, vars) {
-				return new TweenLite(target, duration, vars);
-			};
-	
-			TweenLite.from = function(target, duration, vars) {
-				vars.runBackwards = true;
-				vars.immediateRender = (vars.immediateRender != false);
-				return new TweenLite(target, duration, vars);
-			};
-	
-			TweenLite.fromTo = function(target, duration, fromVars, toVars) {
-				toVars.startAt = fromVars;
-				toVars.immediateRender = (toVars.immediateRender != false && fromVars.immediateRender != false);
-				return new TweenLite(target, duration, toVars);
-			};
-	
-			TweenLite.delayedCall = function(delay, callback, params, scope, useFrames) {
-				return new TweenLite(callback, 0, {delay:delay, onComplete:callback, onCompleteParams:params, callbackScope:scope, onReverseComplete:callback, onReverseCompleteParams:params, immediateRender:false, lazy:false, useFrames:useFrames, overwrite:0});
-			};
-	
-			TweenLite.set = function(target, vars) {
-				return new TweenLite(target, 0, vars);
-			};
-	
-			TweenLite.getTweensOf = function(target, onlyActive) {
-				if (target == null) { return []; }
-				target = (typeof(target) !== "string") ? target : TweenLite.selector(target) || target;
-				var i, a, j, t;
-				if ((_isArray(target) || _isSelector(target)) && typeof(target[0]) !== "number") {
-					i = target.length;
-					a = [];
-					while (--i > -1) {
-						a = a.concat(TweenLite.getTweensOf(target[i], onlyActive));
-					}
-					i = a.length;
-					//now get rid of any duplicates (tweens of arrays of objects could cause duplicates)
-					while (--i > -1) {
-						t = a[i];
-						j = i;
-						while (--j > -1) {
-							if (t === a[j]) {
-								a.splice(i, 1);
-							}
-						}
-					}
-				} else {
-					a = _register(target).concat();
-					i = a.length;
-					while (--i > -1) {
-						if (a[i]._gc || (onlyActive && !a[i].isActive())) {
-							a.splice(i, 1);
-						}
-					}
-				}
-				return a;
-			};
-	
-			TweenLite.killTweensOf = TweenLite.killDelayedCallsTo = function(target, onlyActive, vars) {
-				if (typeof(onlyActive) === "object") {
-					vars = onlyActive; //for backwards compatibility (before "onlyActive" parameter was inserted)
-					onlyActive = false;
-				}
-				var a = TweenLite.getTweensOf(target, onlyActive),
-					i = a.length;
-				while (--i > -1) {
-					a[i]._kill(vars, target);
-				}
-			};
-	
-	
-	
-	/*
-	 * ----------------------------------------------------------------
-	 * TweenPlugin   (could easily be split out as a separate file/class, but included for ease of use (so that people don't need to include another script call before loading plugins which is easy to forget)
-	 * ----------------------------------------------------------------
-	 */
-			var TweenPlugin = _class("plugins.TweenPlugin", function(props, priority) {
-						this._overwriteProps = (props || "").split(",");
-						this._propName = this._overwriteProps[0];
-						this._priority = priority || 0;
-						this._super = TweenPlugin.prototype;
-					}, true);
-	
-			p = TweenPlugin.prototype;
-			TweenPlugin.version = "1.18.0";
-			TweenPlugin.API = 2;
-			p._firstPT = null;
-			p._addTween = _addPropTween;
-			p.setRatio = _setRatio;
-	
-			p._kill = function(lookup) {
-				var a = this._overwriteProps,
-					pt = this._firstPT,
-					i;
-				if (lookup[this._propName] != null) {
-					this._overwriteProps = [];
-				} else {
-					i = a.length;
-					while (--i > -1) {
-						if (lookup[a[i]] != null) {
-							a.splice(i, 1);
-						}
-					}
-				}
-				while (pt) {
-					if (lookup[pt.n] != null) {
-						if (pt._next) {
-							pt._next._prev = pt._prev;
-						}
-						if (pt._prev) {
-							pt._prev._next = pt._next;
-							pt._prev = null;
-						} else if (this._firstPT === pt) {
-							this._firstPT = pt._next;
-						}
-					}
-					pt = pt._next;
-				}
-				return false;
-			};
-	
-			p._roundProps = function(lookup, value) {
-				var pt = this._firstPT;
-				while (pt) {
-					if (lookup[this._propName] || (pt.n != null && lookup[ pt.n.split(this._propName + "_").join("") ])) { //some properties that are very plugin-specific add a prefix named after the _propName plus an underscore, so we need to ignore that extra stuff here.
-						pt.r = value;
-					}
-					pt = pt._next;
-				}
-			};
-	
-			TweenLite._onPluginEvent = function(type, tween) {
-				var pt = tween._firstPT,
-					changed, pt2, first, last, next;
-				if (type === "_onInitAllProps") {
-					//sorts the PropTween linked list in order of priority because some plugins need to render earlier/later than others, like MotionBlurPlugin applies its effects after all x/y/alpha tweens have rendered on each frame.
-					while (pt) {
-						next = pt._next;
-						pt2 = first;
-						while (pt2 && pt2.pr > pt.pr) {
-							pt2 = pt2._next;
-						}
-						if ((pt._prev = pt2 ? pt2._prev : last)) {
-							pt._prev._next = pt;
-						} else {
-							first = pt;
-						}
-						if ((pt._next = pt2)) {
-							pt2._prev = pt;
-						} else {
-							last = pt;
-						}
-						pt = next;
-					}
-					pt = tween._firstPT = first;
-				}
-				while (pt) {
-					if (pt.pg) if (typeof(pt.t[type]) === "function") if (pt.t[type]()) {
-						changed = true;
-					}
-					pt = pt._next;
-				}
-				return changed;
-			};
-	
-			TweenPlugin.activate = function(plugins) {
-				var i = plugins.length;
-				while (--i > -1) {
-					if (plugins[i].API === TweenPlugin.API) {
-						_plugins[(new plugins[i]())._propName] = plugins[i];
-					}
-				}
-				return true;
-			};
-	
-			//provides a more concise way to define plugins that have no dependencies besides TweenPlugin and TweenLite, wrapping common boilerplate stuff into one function (added in 1.9.0). You don't NEED to use this to define a plugin - the old way still works and can be useful in certain (rare) situations.
-			_gsDefine.plugin = function(config) {
-				if (!config || !config.propName || !config.init || !config.API) { throw "illegal plugin definition."; }
-				var propName = config.propName,
-					priority = config.priority || 0,
-					overwriteProps = config.overwriteProps,
-					map = {init:"_onInitTween", set:"setRatio", kill:"_kill", round:"_roundProps", initAll:"_onInitAllProps"},
-					Plugin = _class("plugins." + propName.charAt(0).toUpperCase() + propName.substr(1) + "Plugin",
-						function() {
-							TweenPlugin.call(this, propName, priority);
-							this._overwriteProps = overwriteProps || [];
-						}, (config.global === true)),
-					p = Plugin.prototype = new TweenPlugin(propName),
-					prop;
-				p.constructor = Plugin;
-				Plugin.API = config.API;
-				for (prop in map) {
-					if (typeof(config[prop]) === "function") {
-						p[map[prop]] = config[prop];
-					}
-				}
-				Plugin.version = config.version;
-				TweenPlugin.activate([Plugin]);
-				return Plugin;
-			};
-	
-	
-			//now run through all the dependencies discovered and if any are missing, log that to the console as a warning. This is why it's best to have TweenLite load last - it can check all the dependencies for you.
-			a = window._gsQueue;
-			if (a) {
-				for (i = 0; i < a.length; i++) {
-					a[i]();
-				}
-				for (p in _defLookup) {
-					if (!_defLookup[p].func) {
-						window.console.log("GSAP encountered missing dependency: com.greensock." + p);
-					}
-				}
-			}
-	
-			_tickerActive = false; //ensures that the first official animation forces a ticker.tick() to update the time when it is instantiated
-	
-	})((typeof(module) !== "undefined" && module.exports && typeof(global) !== "undefined") ? global : this || window, "TweenLite");
-	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
-
-/***/ },
-/* 9 */
-/***/ function(module, exports, __webpack_require__) {
-
 	/*!
 	 * is-plain-object <https://github.com/jonschlinkert/is-plain-object>
 	 *
@@ -10347,7 +8181,7 @@ var ThreeChart =
 	
 	'use strict';
 	
-	var isObject = __webpack_require__(10);
+	var isObject = __webpack_require__(8);
 	
 	function isObjectObject(o) {
 	  return isObject(o) === true
@@ -10378,7 +8212,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 10 */
+/* 8 */
 /***/ function(module, exports) {
 
 	/*!
@@ -10397,7 +8231,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 11 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_RESULT__;/*!
@@ -10976,13 +8810,13 @@ var ThreeChart =
 
 
 /***/ },
-/* 12 */
+/* 10 */
 /***/ function(module, exports) {
 
 	module.exports = {Promise: window['Promise']}
 
 /***/ },
-/* 13 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -10991,9 +8825,9 @@ var ThreeChart =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Utils_1 = __webpack_require__(14);
+	var Utils_1 = __webpack_require__(12);
 	var Mesh = THREE.Mesh;
-	var TrendsWidget_1 = __webpack_require__(15);
+	var TrendsWidget_1 = __webpack_require__(13);
 	var Color = THREE.Color;
 	var CANVAS_WIDTH = 128;
 	var CANVAS_HEIGHT = 64;
@@ -11082,7 +8916,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 14 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -11346,7 +9180,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 15 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -11355,7 +9189,7 @@ var ThreeChart =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Widget_1 = __webpack_require__(16);
+	var Widget_1 = __webpack_require__(14);
 	var Object3D = THREE.Object3D;
 	/**
 	 * abstract manager class for all trends widgets
@@ -11472,7 +9306,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 16 */
+/* 14 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -11496,7 +9330,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 17 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -11508,10 +9342,10 @@ var ThreeChart =
 	var Geometry = THREE.Geometry;
 	var LineBasicMaterial = THREE.LineBasicMaterial;
 	var Vector3 = THREE.Vector3;
-	var TrendsWidget_1 = __webpack_require__(15);
+	var TrendsWidget_1 = __webpack_require__(13);
 	var LineSegments = THREE.LineSegments;
-	var Trend_1 = __webpack_require__(18);
-	var Utils_1 = __webpack_require__(14);
+	var Trend_1 = __webpack_require__(16);
+	var Utils_1 = __webpack_require__(12);
 	var MAX_DISPLAYED_SEGMENTS = 2000;
 	/**
 	 * widget for drawing trends lines
@@ -11524,7 +9358,7 @@ var ThreeChart =
 	    TrendsLineWidget.prototype.getTrendWidgetClass = function () {
 	        return TrendLine;
 	    };
-	    TrendsLineWidget.widgetName = "trendsLine";
+	    TrendsLineWidget.widgetName = "TrendsLine";
 	    return TrendsLineWidget;
 	}(TrendsWidget_1.TrendsWidget));
 	exports.TrendsLineWidget = TrendsLineWidget;
@@ -11650,13 +9484,13 @@ var ThreeChart =
 
 
 /***/ },
-/* 18 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var Utils_1 = __webpack_require__(14);
-	var TrendMarks_1 = __webpack_require__(19);
-	var TrendSegments_1 = __webpack_require__(20);
+	var Utils_1 = __webpack_require__(12);
+	var TrendMarks_1 = __webpack_require__(17);
+	var TrendSegments_1 = __webpack_require__(18);
 	var deps_1 = __webpack_require__(3);
 	(function (TREND_TYPE) {
 	    TREND_TYPE[TREND_TYPE["LINE"] = 0] = "LINE";
@@ -11860,12 +9694,12 @@ var ThreeChart =
 
 
 /***/ },
-/* 19 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var Utils_1 = __webpack_require__(14);
-	var Trend_1 = __webpack_require__(18);
+	var Utils_1 = __webpack_require__(12);
+	var Trend_1 = __webpack_require__(16);
 	var deps_1 = __webpack_require__(3);
 	(function (TREND_MARK_SIDE) {
 	    TREND_MARK_SIDE[TREND_MARK_SIDE["TOP"] = 0] = "TOP";
@@ -12070,14 +9904,14 @@ var ThreeChart =
 
 
 /***/ },
-/* 20 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 	var deps_1 = __webpack_require__(3);
 	var Vector3 = THREE.Vector3;
-	var Trend_1 = __webpack_require__(18);
-	var Utils_1 = __webpack_require__(14);
+	var Trend_1 = __webpack_require__(16);
+	var Utils_1 = __webpack_require__(12);
 	var MAX_ANIMATED_SEGMENTS = 100;
 	/**
 	 *  Class helps to display and animate trends segments
@@ -12569,7 +10403,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 21 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -12578,7 +10412,7 @@ var ThreeChart =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var TrendsWidget_1 = __webpack_require__(15);
+	var TrendsWidget_1 = __webpack_require__(13);
 	var Object3D = THREE.Object3D;
 	var Geometry = THREE.Geometry;
 	var Vector3 = THREE.Vector3;
@@ -12586,7 +10420,7 @@ var ThreeChart =
 	var Line = THREE.Line;
 	var MeshBasicMaterial = THREE.MeshBasicMaterial;
 	var PlaneGeometry = THREE.PlaneGeometry;
-	var Trend_1 = __webpack_require__(18);
+	var Trend_1 = __webpack_require__(16);
 	var LineBasicMaterial = THREE.LineBasicMaterial;
 	var RISE_COLOR = 0x2CAC40;
 	var FALL_COLOR = 0xEE5533;
@@ -12603,7 +10437,7 @@ var ThreeChart =
 	    TrendsCandlesWidget.prototype.getTrendWidgetClass = function () {
 	        return TrendCandlesWidget;
 	    };
-	    TrendsCandlesWidget.widgetName = "trendsCandles";
+	    TrendsCandlesWidget.widgetName = "TrendsCandles";
 	    return TrendsCandlesWidget;
 	}(TrendsWidget_1.TrendsWidget));
 	exports.TrendsCandlesWidget = TrendsCandlesWidget;
@@ -12762,18 +10596,18 @@ var ThreeChart =
 
 
 /***/ },
-/* 22 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 	var deps_1 = __webpack_require__(3);
-	var Utils_1 = __webpack_require__(14);
+	var Utils_1 = __webpack_require__(12);
 	var Vector3 = THREE.Vector3;
-	var Widget_1 = __webpack_require__(16);
-	var Trends_1 = __webpack_require__(23);
-	var Screen_1 = __webpack_require__(24);
-	var AxisMarks_1 = __webpack_require__(25);
-	var interfaces_1 = __webpack_require__(26);
+	var Widget_1 = __webpack_require__(14);
+	var Trends_1 = __webpack_require__(21);
+	var Screen_1 = __webpack_require__(22);
+	var AxisMarks_1 = __webpack_require__(23);
+	var interfaces_1 = __webpack_require__(24);
 	var Chart_1 = __webpack_require__(2);
 	var deps_2 = __webpack_require__(3);
 	/**
@@ -13297,11 +11131,11 @@ var ThreeChart =
 
 
 /***/ },
-/* 23 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var Trend_1 = __webpack_require__(18);
+	var Trend_1 = __webpack_require__(16);
 	/**
 	 * Trends collection
 	 */
@@ -13370,7 +11204,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 24 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -13725,7 +11559,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 25 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -13734,8 +11568,8 @@ var ThreeChart =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Utils_1 = __webpack_require__(14);
-	var interfaces_1 = __webpack_require__(26);
+	var Utils_1 = __webpack_require__(12);
+	var interfaces_1 = __webpack_require__(24);
 	var deps_1 = __webpack_require__(3);
 	var AXIS_MARK_DEFAULT_OPTIONS = {
 	    type: 'simple',
@@ -13876,7 +11710,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 26 */
+/* 24 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -13901,7 +11735,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 27 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -13910,12 +11744,12 @@ var ThreeChart =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Utils_1 = __webpack_require__(14);
+	var Utils_1 = __webpack_require__(12);
 	var Mesh = THREE.Mesh;
 	var PlaneBufferGeometry = THREE.PlaneBufferGeometry;
 	var MeshBasicMaterial = THREE.MeshBasicMaterial;
-	var TrendsWidget_1 = __webpack_require__(15);
-	var Trend_1 = __webpack_require__(18);
+	var TrendsWidget_1 = __webpack_require__(13);
+	var Trend_1 = __webpack_require__(16);
 	/**
 	 * widget adds blinking beacon on trends end
 	 * activated when trend.hasBeacon = true
@@ -14046,7 +11880,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 28 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14057,10 +11891,10 @@ var ThreeChart =
 	};
 	var Mesh = THREE.Mesh;
 	var Object3D = THREE.Object3D;
-	var Widget_1 = __webpack_require__(16);
-	var GridWidget_1 = __webpack_require__(29);
-	var Utils_1 = __webpack_require__(14);
-	var interfaces_1 = __webpack_require__(26);
+	var Widget_1 = __webpack_require__(14);
+	var GridWidget_1 = __webpack_require__(27);
+	var Utils_1 = __webpack_require__(12);
+	var interfaces_1 = __webpack_require__(24);
 	/**
 	 * widget for drawing axis
 	 */
@@ -14254,7 +12088,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 29 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14264,9 +12098,9 @@ var ThreeChart =
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
 	var Vector3 = THREE.Vector3;
-	var Widget_1 = __webpack_require__(16);
+	var Widget_1 = __webpack_require__(14);
 	var LineSegments = THREE.LineSegments;
-	var Utils_1 = __webpack_require__(14);
+	var Utils_1 = __webpack_require__(12);
 	/**
 	 * widget for drawing chart grid
 	 */
@@ -14422,7 +12256,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 30 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14431,12 +12265,12 @@ var ThreeChart =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Utils_1 = __webpack_require__(14);
+	var Utils_1 = __webpack_require__(12);
 	var Mesh = THREE.Mesh;
 	var PlaneBufferGeometry = THREE.PlaneBufferGeometry;
 	var MeshBasicMaterial = THREE.MeshBasicMaterial;
-	var TrendsWidget_1 = __webpack_require__(15);
-	var Trend_1 = __webpack_require__(18);
+	var TrendsWidget_1 = __webpack_require__(13);
+	var Trend_1 = __webpack_require__(16);
 	/**
 	 * widget adds loading indicator
 	 * activated when animations enabled
@@ -14537,7 +12371,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 31 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14546,15 +12380,15 @@ var ThreeChart =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Widget_1 = __webpack_require__(16);
+	var Widget_1 = __webpack_require__(14);
 	var Object3D = THREE.Object3D;
 	var Geometry = THREE.Geometry;
 	var LineBasicMaterial = THREE.LineBasicMaterial;
 	var Vector3 = THREE.Vector3;
-	var Utils_1 = __webpack_require__(14);
+	var Utils_1 = __webpack_require__(12);
 	var Line = THREE.Line;
 	var Mesh = THREE.Mesh;
-	var interfaces_1 = __webpack_require__(26);
+	var interfaces_1 = __webpack_require__(24);
 	/**
 	 * widget for shows marks on axis
 	 */
@@ -14726,7 +12560,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 32 */
+/* 30 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14738,9 +12572,9 @@ var ThreeChart =
 	var Geometry = THREE.Geometry;
 	var Mesh = THREE.Mesh;
 	var Object3D = THREE.Object3D;
-	var TrendsWidget_1 = __webpack_require__(15);
-	var TrendMarks_1 = __webpack_require__(19);
-	var Utils_1 = __webpack_require__(14);
+	var TrendsWidget_1 = __webpack_require__(13);
+	var TrendMarks_1 = __webpack_require__(17);
+	var Utils_1 = __webpack_require__(12);
 	var MAX_MARKS_IN_ROW = 3;
 	/**
 	 * widget for drawing trends marks for all trends
@@ -14941,7 +12775,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 33 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14950,7 +12784,7 @@ var ThreeChart =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Widget_1 = __webpack_require__(16);
+	var Widget_1 = __webpack_require__(14);
 	var LineSegments = THREE.LineSegments;
 	var Vector3 = THREE.Vector3;
 	/**
