@@ -55,6 +55,8 @@ export interface IChartState {
 	autoRender?: {enabled?: boolean, fps?: number}
 	autoScroll?: boolean;
 	showStats?: boolean;
+	backgroundColor?: number;
+	backgroundOpacity?: number;
 	computedData?: IChartStateComputedData,
 	/**
 	 * overridden settings for single setState operation
@@ -103,6 +105,8 @@ export class ChartState {
 			x: 0,
 			y: 0
 		},
+		backgroundColor: 0x000000,
+		backgroundOpacity: 1,
 		showStats: false
 	};
 	trends: Trends;

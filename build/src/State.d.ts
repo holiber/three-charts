@@ -44,6 +44,8 @@ export interface IChartState {
     };
     autoScroll?: boolean;
     showStats?: boolean;
+    backgroundColor?: number;
+    backgroundOpacity?: number;
     computedData?: IChartStateComputedData;
     /**
      * overridden settings for single setState operation

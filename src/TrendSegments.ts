@@ -6,15 +6,6 @@ import { ITrendData, ITrendOptions, ITrendItem, Trend, TREND_TYPE, ITrendTypeSet
 import { Utils } from "./Utils";
 import convertArray = THREE.AnimationUtils.convertArray;
 
-export interface ITargets {
-	ease?: Linear | Ease
-	[key: string]: number | Linear | Ease
-}
-
-interface ICurrent {
-	[key: string]: number
-}
-
 const MAX_ANIMATED_SEGMENTS = 100;
 
 /**

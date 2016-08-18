@@ -61,8 +61,9 @@ export class Chart {
 		this.scene = new THREE.Scene();
 		this.isStopped = !autoRender.enabled;
 
-		var renderer = this.renderer = new WebGLRenderer({antialias: true}); //new THREE.CanvasRenderer();
+		var renderer = this.renderer = new WebGLRenderer({antialias: true, alpha: true}); //new THREE.CanvasRenderer();
 		renderer.setPixelRatio(Chart.devicePixelRatio);
+		renderer.setClearColor(state.data.backgroundColor, state.data.backgroundOpacity);
 		renderer.setSize(w, h);
 		$el.appendChild(renderer.domElement);
 		this.$el = renderer.domElement;

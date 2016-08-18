@@ -369,8 +369,9 @@ var demoApp =
 	        var _a = state.data, w = _a.width, h = _a.height, $el = _a.$el, showStats = _a.showStats, autoRender = _a.autoRender;
 	        this.scene = new THREE.Scene();
 	        this.isStopped = !autoRender.enabled;
-	        var renderer = this.renderer = new WebGLRenderer({ antialias: true }); //new THREE.CanvasRenderer();
+	        var renderer = this.renderer = new WebGLRenderer({ antialias: true, alpha: true }); //new THREE.CanvasRenderer();
 	        renderer.setPixelRatio(Chart.devicePixelRatio);
+	        renderer.setClearColor(state.data.backgroundColor, state.data.backgroundOpacity);
 	        renderer.setSize(w, h);
 	        $el.appendChild(renderer.domElement);
 	        this.$el = renderer.domElement;
@@ -13070,6 +13071,8 @@ var demoApp =
 	                x: 0,
 	                y: 0
 	            },
+	            backgroundColor: 0x000000,
+	            backgroundOpacity: 1,
 	            showStats: false
 	        };
 	        this.ee = new deps_1.EventEmitter();

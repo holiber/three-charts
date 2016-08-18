@@ -2,10 +2,6 @@ import { IIteralable } from "./interfaces";
 import { ChartState } from "./State";
 import Vector3 = THREE.Vector3;
 import { ITrendItem, Trend } from "./Trend";
-export interface ITargets {
-    ease?: Linear | Ease;
-    [key: string]: number | Linear | Ease;
-}
 /**
  *  Class helps to display and animate trends segments
  */
