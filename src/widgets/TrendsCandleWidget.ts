@@ -26,7 +26,7 @@ const MAX_CANDLES = 100;
  * widget for drawing trends candles
  */
 export class TrendsCandlesWidget extends TrendsWidget<TrendCandlesWidget> {
-	static widgetName = "trendsCandles";
+	static widgetName = "TrendsCandles";
 	protected getTrendWidgetClass() {
 		return TrendCandlesWidget;
 	}

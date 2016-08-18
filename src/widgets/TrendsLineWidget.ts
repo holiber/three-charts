@@ -22,7 +22,7 @@ const MAX_DISPLAYED_SEGMENTS = 2000;
  * widget for drawing trends lines
  */
 export class TrendsLineWidget extends TrendsWidget<TrendLine> {
-	static widgetName = "trendsLine";
+	static widgetName = "TrendsLine";
 	protected getTrendWidgetClass() {
 		return TrendLine;
 	}
