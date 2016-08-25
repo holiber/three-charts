@@ -39,7 +39,7 @@ export declare class Screen {
     onScrollFrame(cb: (options: IScreenTransformOptions) => void): Function;
     onTransformationFrame(cb: (options: IScreenTransformOptions) => void): Function;
     cameraIsMoving(): boolean;
-    private transform(options);
+    private transform(options, silent?);
     private bindEvents();
     private onDestroyHandler();
     private onScrollXHandler(changedProps);

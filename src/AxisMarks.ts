@@ -25,7 +25,9 @@ const AXIS_MARK_DEFAULT_OPTIONS: IAxisMarkOptions = {
 	lineWidth: 1,
 	value: 0,
 	showValue: false,
-	stickToEdges: false
+	stickToEdges: false,
+	lineColor: '#FFFFFF',
+	title: ''
 };
 
 export class AxisMarks {

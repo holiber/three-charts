@@ -4,8 +4,9 @@
  * defines how axis range will be calculated
  * FIXED - directly use range.from and range.to value
  * AUTO - automatically sets range.from and range.to by visible part of opposite axis
- * RELATIVE_END - same as AUTO but trend end always present in range
+ * RELATIVE_END - same as AUTO, but trend end always present in range
  * ALL - automatically sets range.from and range.to by all values of opposite axis
+ *
  */
 import {IAxisMarkOptions} from "./AxisMarks";
 export enum AXIS_RANGE_TYPE {
@@ -31,6 +32,12 @@ export interface IAxisRange {
 	to?: number,
 	zoom?: number,
 	scroll?: number,
+
+	/**
+	 * Mode only for Y axis. When true displayed center of Y axis never changed. To use set range.zeroVal as center value.
+	 */
+	isMirrorMode?: boolean,
+
 	padding?: {
 		start?: number,
 		end?: number
@@ -38,8 +45,6 @@ export interface IAxisRange {
 
 	maxLength?: number;
 	minLength?: number;
-
-	/** only for internal usage **/
 	zeroVal?: number,
 
 	/** only for internal usage **/

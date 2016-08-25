@@ -67,8 +67,8 @@ export class GridWidget extends ChartWidget{
 	private updateGrid() {
 		if (this.isDestroyed) return;
 		var {yAxis, xAxis, width, height} = this.chartState.data;
-		var axisXGrid = GridWidget.getGridParamsForAxis(xAxis, width, xAxis.range.scroll, xAxis.range.zoom);
-		var axisYGrid = GridWidget.getGridParamsForAxis(yAxis, height, yAxis.range.scroll, yAxis.range.zoom);
+		var axisXGrid = GridWidget.getGridParamsForAxis(xAxis, width, xAxis.range.zoom);
+		var axisYGrid = GridWidget.getGridParamsForAxis(yAxis, height, yAxis.range.zoom);
 		var scrollXInSegments = Math.ceil(xAxis.range.scroll / axisXGrid.step);
 		var scrollYInSegments = Math.ceil(yAxis.range.scroll / axisYGrid.step);
 		var gridScrollXVal = scrollXInSegments * axisXGrid.step;
@@ -132,10 +132,10 @@ export class GridWidget extends ChartWidget{
 
 
 	// TODO: move this code to core
-	static getGridParamsForAxis(axisOptions: IAxisOptions, axisWidth: number, scroll: number, zoom: number): IGridParamsForAxis {
+	static getGridParamsForAxis(axisOptions: IAxisOptions, axisWidth: number, zoom: number): IGridParamsForAxis {
 		var axisRange = axisOptions.range;
-		var from = axisOptions.range.zeroVal + scroll;
-		var to = from + axisWidth / (axisRange.scaleFactor * zoom);
+		var from = axisRange.from; //var from = axisOptions.range.zeroVal + scroll;
+		var to = axisRange.to;  //var to = from + axisWidth / (axisRange.scaleFactor * zoom);
 		var axisLength = to - from;
 		var gridStep = 0;
 		var gridStepInPixels = 0;

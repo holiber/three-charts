@@ -96,7 +96,11 @@ window.onload = function () {
 		yAxis: {
 			marks: [
 				{value: dsMain.data[0].yVal, name: 'openprice', title: 'OPEN PRICE', lineColor: '#29874b', stickToEdges: true},
-			]
+			],
+			// range: {
+			// 	isMirrorMode: true,
+			// 	zeroVal: 70
+			// }
 		},
 		xAxis: {
 			//range: {type: AXIS_RANGE_TYPE.FIXED, from: 10, to: 30},

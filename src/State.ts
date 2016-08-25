@@ -118,7 +118,6 @@ export class ChartState {
 	constructor(initialState: IChartState) {
 		this.ee = new EventEmitter();
 		this.ee.setMaxListeners(15);
-		this.screen = new Screen(this);
 
 		if (!initialState.$el) {
 			Utils.error('$el must be set');
@@ -134,6 +133,8 @@ export class ChartState {
 		this.setState(initialState);
 		this.setState({computedData: this.getComputedData()});
 		this.savePrevState();
+
+		this.screen = new Screen(this);
 		this.xAxisMarks = new AxisMarks(this, AXIS_TYPE.X);
 		this.yAxisMarks = new AxisMarks(this, AXIS_TYPE.Y);
 		this.initListeners();
@@ -307,7 +308,11 @@ export class ChartState {
 
 		// recalculate axis "from" and "to" for dynamics AXIS_RANGE_TYPE
 		var needToRecalculateYAxis = (
-			(data.yAxis.range.type === AXIS_RANGE_TYPE.RELATIVE_END || data.yAxis.range.type === AXIS_RANGE_TYPE.AUTO) &&
+			(
+				data.yAxis.range.type === AXIS_RANGE_TYPE.RELATIVE_END ||
+				data.yAxis.range.type === AXIS_RANGE_TYPE.AUTO ||
+				data.yAxis.range.isMirrorMode
+			) &&
 			(scrollXChanged || changedProps.trends || changedProps.yAxis) ||
 			this.data.yAxis.range.zeroVal == void 0
 		);
@@ -456,7 +461,7 @@ export class ChartState {
 	private recalculateYAxis(actualData: IChartState): IAxisOptions {
 		var patch: IAxisOptions = {range: {}};
 		var yAxisRange = actualData.yAxis.range;
-		var isInitialize = yAxisRange.zeroVal == void 0;
+		var isInitialize = yAxisRange.scaleFactor == void 0;
 		var trends = this.trends;
 		var trendsEndXVal = trends.getEndXVal();
 		var trendsStartXVal = trends.getStartXVal();
@@ -484,6 +489,15 @@ export class ChartState {
 			if (trendLastY < minY) minY = trendLastY;
 		}
 
+		if (yAxisRange.isMirrorMode) {
+			if (yAxisRange.zeroVal == void 0) Utils.error('range.zeroVal must be set when range.isMirrorMode');
+			let distanceFromZeroValForMaxY = Math.abs(yAxisRange.zeroVal - maxY);
+			let distanceFromZeroValForMinY = Math.abs(yAxisRange.zeroVal - minY);
+			let maxDistanceFromZeroVal = Math.max(distanceFromZeroValForMaxY, distanceFromZeroValForMinY);
+			maxY = yAxisRange.zeroVal + maxDistanceFromZeroVal;
+			minY = yAxisRange.zeroVal - maxDistanceFromZeroVal;
+		}
+
 		var padding = yAxisRange.padding;
 		var rangeLength = maxY - minY;
 		var paddingTopInPercents = padding.end / actualData.height;
@@ -494,7 +508,7 @@ export class ChartState {
 		var toVal = maxY + visibleRangeLength * paddingTopInPercents;
 		
 		if (isInitialize) {
-			zeroVal = fromVal;
+			zeroVal = yAxisRange.zeroVal != void 0 ? yAxisRange.zeroVal : fromVal;
 			scaleFactor = actualData.height / (toVal - fromVal);
 			patch = { range: {zeroVal: zeroVal, scaleFactor: scaleFactor}};
 			needToZoom = true;

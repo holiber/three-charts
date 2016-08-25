@@ -40,6 +40,9 @@ export class AxisWidget extends ChartWidget {
 
 		// canvas drawing is expensive operation, so when we scroll, redraw must be called only once per second
 		this.updateAxisXRequest = Utils.throttle(() => this.updateAxis(AXIS_TYPE.X), 1000);
+
+
+		this.onScrollChange(state.screen.options.scrollX, state.screen.options.scrollY);
 	}
 
 	bindEvents() {
@@ -119,7 +122,7 @@ export class AxisWidget extends ChartWidget {
 		if (this.isDestroyed) return;
 		var isXAxis = orientation == AXIS_TYPE.X;
 		var {width: visibleWidth, height: visibleHeight} = this.chartState.data;
-		var {scrollX, scrollXVal, scrollY, scrollYVal, zoomX, zoomY} = this.chartState.screen.options;
+		var {scrollX, scrollY, zoomX, zoomY} = this.chartState.screen.options;
 		var axisOptions: IAxisOptions;
 		var axisMesh: Mesh;
 		var axisGridParams: IGridParamsForAxis;
@@ -127,11 +130,11 @@ export class AxisWidget extends ChartWidget {
 		if (isXAxis) {
 			axisMesh = this.axisXObject.children[0] as Mesh;
 			axisOptions = this.chartState.data.xAxis;
-			axisGridParams = GridWidget.getGridParamsForAxis(axisOptions, visibleWidth, scrollXVal, zoomX);
+			axisGridParams = GridWidget.getGridParamsForAxis(axisOptions, visibleWidth, zoomX);
 		} else {
 			axisMesh = this.axisYObject.children[0] as Mesh;
 			axisOptions = this.chartState.data.yAxis;
-			axisGridParams = GridWidget.getGridParamsForAxis(axisOptions, visibleHeight, scrollYVal, zoomY);
+			axisGridParams = GridWidget.getGridParamsForAxis(axisOptions, visibleHeight, zoomY);
 		}
 
 		var geometry = axisMesh.geometry as PlaneGeometry;

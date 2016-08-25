@@ -8,14 +8,10 @@ import Renderer = THREE.Renderer;
 import Scene = THREE.Scene;
 import WebGLRenderer = THREE.WebGLRenderer;
 import Object3D = THREE.Object3D;
-import {TrendsIndicatorWidget} from "./widgets/TrendsIndicatorWidget";
-import {TrendsLineWidget} from "./widgets/TrendsLineWidget";
-import {TrendsCandlesWidget} from './widgets/TrendsCandleWidget';
 import {ChartState, IChartState} from "./State";
 import {ChartWidget, IChartWidgetConstructor} from "./Widget";
 import {Utils} from "./Utils";
-import {Screen, IScreenTransformOptions} from "./Screen";
-import {TrendsBeaconWidget} from "./widgets/TrendsBeaconWidget";
+import {IScreenTransformOptions} from "./Screen";
 import {AxisWidget} from "./widgets/AxisWidget";
 import {GridWidget} from "./widgets/GridWidget";
 import {TrendsGradientWidget} from "./widgets/TrendsGradientWidget";
@@ -23,6 +19,10 @@ import {TrendsLoadingWidget} from "./widgets/TrendsLoadingWidget";
 import {AxisMarksWidget} from "./widgets/AxisMarksWidget";
 import {TrendsMarksWidget} from "./widgets/TrendsMarksWidget";
 import {BorderWidget} from "./widgets/BorderWidget";
+import {TrendsIndicatorWidget} from "./widgets/TrendsIndicatorWidget";
+import {TrendsLineWidget} from "./widgets/TrendsLineWidget";
+import {TrendsCandlesWidget} from './widgets/TrendsCandleWidget';
+import {TrendsBeaconWidget} from "./widgets/TrendsBeaconWidget";
 
 export const MAX_DATA_LENGTH = 2692000;//1000;
 
@@ -62,6 +62,7 @@ export class Chart {
 		this.isStopped = !autoRender.enabled;
 
 		var renderer = this.renderer = new WebGLRenderer({antialias: true, alpha: true}); //new THREE.CanvasRenderer();
+		// var renderer = this.renderer = new CanvasRenderer();
 		renderer.setPixelRatio(Chart.devicePixelRatio);
 		renderer.setClearColor(state.data.backgroundColor, state.data.backgroundOpacity);
 		renderer.setSize(w, h);
@@ -79,6 +80,7 @@ export class Chart {
 		this.camera.position.set(camSettings.x, camSettings.y, camSettings.z);
 		this.cameraInitialPosition = this.camera.position.clone();
 		this.scene.add(this.camera);
+		this.onScreenTransform(this.state.screen.options);
 		//this.camera.position.z = 2000;
 
 		// init widgets

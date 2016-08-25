@@ -26,6 +26,6 @@ export declare class GridWidget extends ChartWidget {
     private getHorizontalLineSegment(yVal, scrollXVal, scrollYVal);
     private getVerticalLineSegment(xVal, scrollXVal, scrollYVal);
     private onZoomFrame(options);
-    static getGridParamsForAxis(axisOptions: IAxisOptions, axisWidth: number, scroll: number, zoom: number): IGridParamsForAxis;
+    static getGridParamsForAxis(axisOptions: IAxisOptions, axisWidth: number, zoom: number): IGridParamsForAxis;
     getObject3D(): LineSegments;
 }

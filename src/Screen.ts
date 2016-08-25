@@ -34,6 +34,12 @@ export class Screen {
 		this.chartState = chartState;
 		var {width: w, height: h} = chartState.data;
 		this.ee = new EventEmitter();
+		this.transform({
+			scrollY: this.valueToPxByYAxis(this.chartState.data.yAxis.range.scroll),
+			zoomY: 1
+		});
+		// this.options.scrollY = this.chartState.data.yAxis.range.scroll;
+		// this.options.scrollYVal = this.chartState.valueToPxByYAxis(this.options.scrollY);
 		this.bindEvents();
 
 		//camera.position.z = 1500;
@@ -93,7 +99,7 @@ export class Screen {
 		);
 	}
 
-	private transform (options: IScreenTransformOptions) {
+	private transform (options: IScreenTransformOptions, silent = false) {
 		var {scrollX, scrollY, zoomX, zoomY} = options;
 		
 		if (scrollX != void 0) this.options.scrollX = scrollX;
@@ -111,15 +117,7 @@ export class Screen {
 			this.options.scrollYVal = options.scrollYVal;
 		}
 
-		// if (scrollXVal != void 0 || zoomX) {
-		// 	options.scrollX = this.chartState.valueToPxByXAxis(scrollXVal != void 0 ? scrollXVal : this.options.scrollXVal);
-		// 	this.options.scrollX = options.scrollX;
-		// }
-		//
-		// if (scrollYVal != void 0 || zoomY) {
-		// 	options.scrollY = this.chartState.valueToPxByYAxis(scrollYVal != void 0 ? scrollYVal : this.options.scrollYVal);
-		// 	this.options.scrollY = options.scrollY;
-		// }
+		if (silent) return;
 
 		this.ee.emit('transformationFrame', options);
 		
@@ -171,6 +169,7 @@ export class Screen {
 
 		var range = state.data.xAxis.range;
 		var targetX = range.scroll * range.scaleFactor * range.zoom;
+		this.currentScrollX.x = this.options.scrollX;
 
 		var cb = () => {
 			this.transform({scrollX: this.currentScrollX.x});
@@ -196,6 +195,8 @@ export class Screen {
 		if (this.scrollYAnimation) this.scrollYAnimation.pause();
 		var range = state.data.yAxis.range;
 		var targetY = range.scroll * range.scaleFactor * range.zoom;
+
+		this.currentScrollY.y = this.options.scrollY;
 
 		var cb = () => {
 			this.transform({scrollY: this.currentScrollY.y});
