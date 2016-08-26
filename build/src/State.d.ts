@@ -47,6 +47,9 @@ export interface IChartState {
      * also available 'CanvasRenderer'
      */
     renderer?: string;
+    controls?: {
+        enabled: boolean;
+    };
     autoScroll?: boolean;
     showStats?: boolean;
     backgroundColor?: number;

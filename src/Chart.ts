@@ -165,12 +165,14 @@ export class Chart {
 
 	private bindEvents() {
 		var $el = this.$el;
-		$el.addEventListener('mousewheel', (ev: MouseWheelEvent) => {this.onMouseWheel(ev)});
-		$el.addEventListener('mousemove', (ev: MouseEvent) => {this.onMouseMove(ev)});
-		$el.addEventListener('mousedown', (ev: MouseEvent) => this.onMouseDown(ev));
-		$el.addEventListener('mouseup', (ev: MouseEvent) => this.onMouseUp(ev));
-		$el.addEventListener('touchmove', (ev: TouchEvent) => {this.onTouchMove(ev)});
-		$el.addEventListener('touchend', (ev: TouchEvent) => {this.onTouchEnd(ev)});
+		if (this.state.data.controls.enabled) {
+			$el.addEventListener('mousewheel', (ev: MouseWheelEvent) => {this.onMouseWheel(ev)});
+			$el.addEventListener('mousemove', (ev: MouseEvent) => {this.onMouseMove(ev)});
+			$el.addEventListener('mousedown', (ev: MouseEvent) => this.onMouseDown(ev));
+			$el.addEventListener('mouseup', (ev: MouseEvent) => this.onMouseUp(ev));
+			$el.addEventListener('touchmove', (ev: TouchEvent) => {this.onTouchMove(ev)});
+			$el.addEventListener('touchend', (ev: TouchEvent) => {this.onTouchEnd(ev)});
+		}
 		this.state.onTrendsChange(() => this.autoscroll());
 		this.state.screen.onTransformationFrame((options) => this.onScreenTransform(options))
 	}

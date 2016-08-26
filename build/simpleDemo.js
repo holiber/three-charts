@@ -283,12 +283,14 @@ var simpleDemo =
 	    Chart.prototype.bindEvents = function () {
 	        var _this = this;
 	        var $el = this.$el;
-	        $el.addEventListener('mousewheel', function (ev) { _this.onMouseWheel(ev); });
-	        $el.addEventListener('mousemove', function (ev) { _this.onMouseMove(ev); });
-	        $el.addEventListener('mousedown', function (ev) { return _this.onMouseDown(ev); });
-	        $el.addEventListener('mouseup', function (ev) { return _this.onMouseUp(ev); });
-	        $el.addEventListener('touchmove', function (ev) { _this.onTouchMove(ev); });
-	        $el.addEventListener('touchend', function (ev) { _this.onTouchEnd(ev); });
+	        if (this.state.data.controls.enabled) {
+	            $el.addEventListener('mousewheel', function (ev) { _this.onMouseWheel(ev); });
+	            $el.addEventListener('mousemove', function (ev) { _this.onMouseMove(ev); });
+	            $el.addEventListener('mousedown', function (ev) { return _this.onMouseDown(ev); });
+	            $el.addEventListener('mouseup', function (ev) { return _this.onMouseUp(ev); });
+	            $el.addEventListener('touchmove', function (ev) { _this.onTouchMove(ev); });
+	            $el.addEventListener('touchend', function (ev) { _this.onTouchEnd(ev); });
+	        }
 	        this.state.onTrendsChange(function () { return _this.autoscroll(); });
 	        this.state.screen.onTransformationFrame(function (options) { return _this.onScreenTransform(options); });
 	    };
@@ -10895,6 +10897,7 @@ var simpleDemo =
 	            autoRender: { enabled: true, fps: 0 },
 	            renderer: 'WebGLRenderer',
 	            autoScroll: true,
+	            controls: { enabled: true },
 	            cursor: {
 	                dragMode: false,
 	                x: 0,

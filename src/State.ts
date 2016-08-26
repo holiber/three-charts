@@ -61,6 +61,7 @@ export interface IChartState {
 	 */
 	renderer?: string;
 
+	controls?: {enabled: boolean};
 	autoScroll?: boolean;
 	showStats?: boolean;
 	backgroundColor?: number;
@@ -109,6 +110,7 @@ export class ChartState {
 		autoRender: {enabled: true, fps: 0},
 		renderer: 'WebGLRenderer',
 		autoScroll: true,
+		controls: {enabled: true},
 		cursor: {
 			dragMode: false,
 			x: 0,
