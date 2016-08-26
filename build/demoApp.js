@@ -133,6 +133,9 @@ var demoApp =
 	            marks: [
 	                { value: dsMain.data[0].yVal, name: 'openprice', title: 'OPEN PRICE', lineColor: '#29874b', stickToEdges: true },
 	            ],
+	            range: {
+	                padding: { end: 100, start: 100 }
+	            }
 	        },
 	        xAxis: {
 	            //range: {type: AXIS_RANGE_TYPE.FIXED, from: 10, to: 30},
@@ -141,6 +144,7 @@ var demoApp =
 	                type: src_1.AXIS_RANGE_TYPE.FIXED,
 	                from: Date.now(),
 	                to: Date.now() + 20000,
+	                padding: { end: 200, start: 0 },
 	                maxLength: 5000000,
 	                minLength: 5000
 	            },
@@ -11047,14 +11051,14 @@ var demoApp =
 	            $el: null,
 	            zoom: 0,
 	            xAxis: {
-	                range: { type: interfaces_1.AXIS_RANGE_TYPE.ALL, from: 0, to: 0, scroll: 0, padding: { start: 0, end: 200 }, zoom: 1 },
+	                range: { type: interfaces_1.AXIS_RANGE_TYPE.ALL, from: 0, to: 0, scroll: 0, padding: { start: 0, end: 5 }, zoom: 1 },
 	                dataType: interfaces_1.AXIS_DATA_TYPE.NUMBER,
 	                gridMinSize: 100,
 	                autoScroll: true,
 	                marks: [],
 	            },
 	            yAxis: {
-	                range: { type: interfaces_1.AXIS_RANGE_TYPE.RELATIVE_END, from: 0, to: 0, padding: { start: 100, end: 100 }, zoom: 1 },
+	                range: { type: interfaces_1.AXIS_RANGE_TYPE.RELATIVE_END, from: 0, to: 0, padding: { start: 5, end: 5 }, zoom: 1 },
 	                dataType: interfaces_1.AXIS_DATA_TYPE.NUMBER,
 	                gridMinSize: 50,
 	                marks: []

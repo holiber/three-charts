@@ -97,10 +97,12 @@ window.onload = function () {
 			marks: [
 				{value: dsMain.data[0].yVal, name: 'openprice', title: 'OPEN PRICE', lineColor: '#29874b', stickToEdges: true},
 			],
-			// range: {
-			// 	isMirrorMode: true,
-			// 	zeroVal: 70
-			// }
+			range: {
+
+				padding: {end: 100, start: 100}
+				// isMirrorMode: true,
+				// zeroVal: 70
+			}
 		},
 		xAxis: {
 			//range: {type: AXIS_RANGE_TYPE.FIXED, from: 10, to: 30},
@@ -109,6 +111,7 @@ window.onload = function () {
 				type: AXIS_RANGE_TYPE.FIXED,
 				from: Date.now(),
 				to: Date.now() + 20000,
+				padding: {end: 200, start: 0},
 				maxLength: 5000000,
 				minLength: 5000
 			},
