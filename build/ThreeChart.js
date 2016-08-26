@@ -71,6 +71,7 @@ var ThreeChart =
 	__export(__webpack_require__(16));
 	__export(__webpack_require__(14));
 	__export(__webpack_require__(15));
+	__export(__webpack_require__(26));
 
 
 /***/ },

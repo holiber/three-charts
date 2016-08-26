@@ -9,3 +9,4 @@ export * from './TrendSegments';
 export * from './Trends';
 export * from './Utils';
 export * from './Widget';
+export * from './widgets/TrendsWidget';
