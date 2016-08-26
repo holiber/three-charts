@@ -42,6 +42,11 @@ export interface IChartState {
         enabled?: boolean;
         fps?: number;
     };
+    /**
+     * by default 'WebGLRenderer'
+     * also available 'CanvasRenderer'
+     */
+    renderer?: string;
     autoScroll?: boolean;
     showStats?: boolean;
     backgroundColor?: number;

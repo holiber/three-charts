@@ -1,4 +1,5 @@
 import { Trend } from "./Trend";
+import Renderer = THREE.Renderer;
 import { ChartState, IChartState } from "./State";
 import { ChartWidget } from "./Widget";
 export declare const MAX_DATA_LENGTH: number;
@@ -17,6 +18,9 @@ export declare class Chart {
     static devicePixelRatio: number;
     static installedWidgets: {
         [name: string]: typeof ChartWidget;
+    };
+    static renderers: {
+        [rendererName: string]: Renderer;
     };
     constructor(state: IChartState);
     static installWidget<WidgetClass extends typeof ChartWidget>(Widget: WidgetClass): void;

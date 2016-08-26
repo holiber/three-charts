@@ -49,10 +49,18 @@ export interface IChartState {
 		x?: number,
 		y?: number
 	},
+
 	/**
 	 * use fps = 0 for no limits
 	 */
-	autoRender?: {enabled?: boolean, fps?: number}
+	autoRender?: {enabled?: boolean, fps?: number};
+
+	/**
+	 * by default 'WebGLRenderer'
+	 * also available 'CanvasRenderer'
+	 */
+	renderer?: string;
+
 	autoScroll?: boolean;
 	showStats?: boolean;
 	backgroundColor?: number;
@@ -99,6 +107,7 @@ export class ChartState {
 			autoScrollEase: Linear.easeNone,
 		},
 		autoRender: {enabled: true, fps: 0},
+		renderer: 'WebGLRenderer',
 		autoScroll: true,
 		cursor: {
 			dragMode: false,

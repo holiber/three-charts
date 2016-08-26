@@ -41,6 +41,10 @@ export class Chart {
 
 	static devicePixelRatio = window.devicePixelRatio;
 	static installedWidgets: {[name: string]: typeof ChartWidget} = {};
+	static renderers: {[rendererName: string]: Renderer} = {
+		CanvasRenderer: (THREE as any).CanvasRenderer,
+		WebGLRenderer: THREE.WebGLRenderer
+	};
 
 	constructor(state: IChartState) {
 		this.state = new ChartState(state);
@@ -61,8 +65,7 @@ export class Chart {
 		this.scene = new THREE.Scene();
 		this.isStopped = !autoRender.enabled;
 
-		var renderer = this.renderer = new WebGLRenderer({antialias: true, alpha: true}); //new THREE.CanvasRenderer();
-		// var renderer = this.renderer = new CanvasRenderer();
+		var renderer = this.renderer = new (Chart.renderers[this.state.data.renderer] as any)({antialias: true, alpha: true});
 		renderer.setPixelRatio(Chart.devicePixelRatio);
 		renderer.setClearColor(state.data.backgroundColor, state.data.backgroundOpacity);
 		renderer.setSize(w, h);
@@ -272,6 +275,7 @@ export class Chart {
 		var options = Utils.deepMerge(userOptions, previewChartOptions);
 		return new Chart(options);
 	}
+
 
 }
 
