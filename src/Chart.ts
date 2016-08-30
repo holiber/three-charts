@@ -138,7 +138,11 @@ export class Chart {
 		this.state.destroy();
 		this.unbindEvents();
 		// WARNING! undocumented method for free webgl context
-		(this.renderer as any).forceContextLoss();
+		try {
+			(this.renderer as any).forceContextLoss();
+		} catch (wtf) {
+			// sometimes with many chart instances forceContextLoss not working
+		}
 		(this.renderer as any).context  = null;
 		this.renderer.domElement = null;
 		this.renderer = null;

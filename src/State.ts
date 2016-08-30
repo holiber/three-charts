@@ -421,6 +421,10 @@ export class ChartState {
 		var zeroVal: number, scaleFactor: number;
 		var zoom = axisRange.zoom;
 
+		if (axisRange.isMirrorMode) {
+			Utils.error('range.isMirrorMode available only for yAxis.range');
+		}
+
 		if (isInitialize) {
 			zeroVal = axisRange.from;
 			scaleFactor = actualData.width / (axisRange.to - axisRange.from);

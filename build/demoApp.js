@@ -134,7 +134,9 @@ var demoApp =
 	                { value: dsMain.data[0].yVal, name: 'openprice', title: 'OPEN PRICE', lineColor: '#29874b', stickToEdges: true },
 	            ],
 	            range: {
-	                padding: { end: 100, start: 100 }
+	                padding: { end: 100, start: 100 },
+	                isMirrorMode: true,
+	                zeroVal: 70
 	            }
 	        },
 	        xAxis: {
@@ -441,7 +443,11 @@ var demoApp =
 	        this.state.destroy();
 	        this.unbindEvents();
 	        // WARNING! undocumented method for free webgl context
-	        this.renderer.forceContextLoss();
+	        try {
+	            this.renderer.forceContextLoss();
+	        }
+	        catch (wtf) {
+	        }
 	        this.renderer.context = null;
 	        this.renderer.domElement = null;
 	        this.renderer = null;
@@ -11328,6 +11334,9 @@ var demoApp =
 	        var isInitialize = axisRange.zeroVal == void 0;
 	        var zeroVal, scaleFactor;
 	        var zoom = axisRange.zoom;
+	        if (axisRange.isMirrorMode) {
+	            Utils_1.Utils.error('range.isMirrorMode available only for yAxis.range');
+	        }
 	        if (isInitialize) {
 	            zeroVal = axisRange.from;
 	            scaleFactor = actualData.width / (axisRange.to - axisRange.from);

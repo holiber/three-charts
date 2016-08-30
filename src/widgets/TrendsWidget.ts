@@ -5,7 +5,7 @@ import {ChartState} from "../State";
 import {ITrendOptions, ITrendData, Trend} from "../Trend";
 import Vector2 = THREE.Vector2;
 import Vector3 = THREE.Vector3;
-import {TrendSegments} from "../TrendSegments.ts";
+import {TrendSegments} from "../TrendSegments";
 import {IScreenTransformOptions} from "../Screen";
 
 

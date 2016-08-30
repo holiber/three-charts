@@ -99,9 +99,9 @@ window.onload = function () {
 			],
 			range: {
 
-				padding: {end: 100, start: 100}
-				// isMirrorMode: true,
-				// zeroVal: 70
+				padding: {end: 100, start: 100},
+				isMirrorMode: true,
+				zeroVal: 70
 			}
 		},
 		xAxis: {

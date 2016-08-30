@@ -183,7 +183,11 @@ var ThreeChart =
 	        this.state.destroy();
 	        this.unbindEvents();
 	        // WARNING! undocumented method for free webgl context
-	        this.renderer.forceContextLoss();
+	        try {
+	            this.renderer.forceContextLoss();
+	        }
+	        catch (wtf) {
+	        }
 	        this.renderer.context = null;
 	        this.renderer.domElement = null;
 	        this.renderer = null;
@@ -11070,6 +11074,9 @@ var ThreeChart =
 	        var isInitialize = axisRange.zeroVal == void 0;
 	        var zeroVal, scaleFactor;
 	        var zoom = axisRange.zoom;
+	        if (axisRange.isMirrorMode) {
+	            Utils_1.Utils.error('range.isMirrorMode available only for yAxis.range');
+	        }
 	        if (isInitialize) {
 	            zeroVal = axisRange.from;
 	            scaleFactor = actualData.width / (axisRange.to - axisRange.from);

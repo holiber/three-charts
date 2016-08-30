@@ -2,7 +2,7 @@ import { ChartWidget } from "../Widget";
 import Object3D = THREE.Object3D;
 import { ChartState } from "../State";
 import { ITrendOptions, ITrendData, Trend } from "../Trend";
-import { TrendSegments } from "../TrendSegments.ts";
+import { TrendSegments } from "../TrendSegments";
 import { IScreenTransformOptions } from "../Screen";
 export interface ITrendWidgetClass<TrendWidgetType> {
     new (chartState: ChartState, trendName: string): TrendWidgetType;
