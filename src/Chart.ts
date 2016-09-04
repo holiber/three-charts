@@ -2,9 +2,9 @@
 require('./deps');
 
 import {Trend} from "./Trend";
-import { IIteralable } from './interfaces';
 import Vector3 = THREE.Vector3;
 import PerspectiveCamera = THREE.PerspectiveCamera;
+import Renderer = THREE.Renderer;
 import Scene = THREE.Scene;
 import WebGLRenderer = THREE.WebGLRenderer;
 import Object3D = THREE.Object3D;
@@ -23,8 +23,6 @@ import {TrendsIndicatorWidget} from "./widgets/TrendsIndicatorWidget";
 import {TrendsLineWidget} from "./widgets/TrendsLineWidget";
 import {TrendsCandlesWidget} from './widgets/TrendsCandleWidget';
 import {TrendsBeaconWidget} from "./widgets/TrendsBeaconWidget";
-import WebGLBufferRenderer = THREE.WebGLBufferRenderer;
-import Renderer = THREE.Renderer;
 
 export const MAX_DATA_LENGTH = 2692000;//1000;
 
@@ -48,20 +46,6 @@ export class Chart {
 		WebGLRenderer: THREE.WebGLRenderer
 	};
 
-	// all charts uses one renderer instance
-	static renderersInstances: IIteralable = {};
-
-	/**
-	 * get renderer singleton
-	 */
-	static getRenderer(rendererName: string): THREE.WebGLRenderer {
-		if (!this.renderersInstances[rendererName]) {
-			let rendererOptions = {antialias: true, alpha: true};
-			this.renderersInstances[rendererName] =  new (Chart.renderers[rendererName] as any)(rendererOptions);
-		}
-		return this.renderersInstances[rendererName];
-	}
-
 	constructor(state: IChartState) {
 		this.state = new ChartState(state);
 		this.zoomThrottled = Utils.throttle((zoomValue: number, origin: number) => this.zoom(zoomValue, origin), 200);
@@ -81,7 +65,7 @@ export class Chart {
 		this.scene = new THREE.Scene();
 		this.isStopped = !autoRender.enabled;
 
-		var renderer = this.renderer = Chart.getRenderer(this.state.data.renderer);
+		var renderer = this.renderer = new (Chart.renderers[this.state.data.renderer] as any)({antialias: true, alpha: true});
 		renderer.setPixelRatio(Chart.devicePixelRatio);
 		renderer.setClearColor(state.data.backgroundColor, state.data.backgroundOpacity);
 		renderer.setSize(w, h);

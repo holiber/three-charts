@@ -1,8 +1,7 @@
 import { Trend } from "./Trend";
-import { IIteralable } from './interfaces';
+import Renderer = THREE.Renderer;
 import { ChartState, IChartState } from "./State";
 import { ChartWidget } from "./Widget";
-import Renderer = THREE.Renderer;
 export declare const MAX_DATA_LENGTH: number;
 export declare class Chart {
     state: ChartState;
@@ -23,11 +22,6 @@ export declare class Chart {
     static renderers: {
         [rendererName: string]: Renderer;
     };
-    static renderersInstances: IIteralable;
-    /**
-     * get renderer singleton
-     */
-    static getRenderer(rendererName: string): THREE.WebGLRenderer;
     constructor(state: IChartState);
     static installWidget<WidgetClass extends typeof ChartWidget>(Widget: WidgetClass): void;
     private init();
