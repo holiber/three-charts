@@ -181,6 +181,16 @@ var simpleDemo =
 	        this.zoomThrottled = Utils_1.Utils.throttle(function (zoomValue, origin) { return _this.zoom(zoomValue, origin); }, 200);
 	        this.init();
 	    }
+	    /**
+	     * get renderer singleton
+	     */
+	    Chart.getRenderer = function (rendererName) {
+	        if (!this.renderersInstances[rendererName]) {
+	            var rendererOptions = { antialias: true, alpha: true };
+	            this.renderersInstances[rendererName] = new Chart.renderers[rendererName](rendererOptions);
+	        }
+	        return this.renderersInstances[rendererName];
+	    };
 	    ;
 	    Chart.installWidget = function (Widget) {
 	        if (!Widget.widgetName) {
@@ -193,7 +203,7 @@ var simpleDemo =
 	        var _a = state.data, w = _a.width, h = _a.height, $el = _a.$el, showStats = _a.showStats, autoRender = _a.autoRender;
 	        this.scene = new THREE.Scene();
 	        this.isStopped = !autoRender.enabled;
-	        var renderer = this.renderer = new Chart.renderers[this.state.data.renderer]({ antialias: true, alpha: true });
+	        var renderer = this.renderer = Chart.getRenderer(this.state.data.renderer);
 	        renderer.setPixelRatio(Chart.devicePixelRatio);
 	        renderer.setClearColor(state.data.backgroundColor, state.data.backgroundOpacity);
 	        renderer.setSize(w, h);
@@ -398,6 +408,8 @@ var simpleDemo =
 	        CanvasRenderer: THREE.CanvasRenderer,
 	        WebGLRenderer: THREE.WebGLRenderer
 	    };
+	    // all charts uses one renderer instance
+	    Chart.renderersInstances = {};
 	    return Chart;
 	}());
 	exports.Chart = Chart;
