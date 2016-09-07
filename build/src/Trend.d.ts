@@ -33,8 +33,6 @@ export interface ITrendOptions {
     hasBeacon?: boolean;
     maxSegmentLength?: number;
     marks?: ITrendMarkOptions[];
-    canRequestPrepend?: boolean;
-    onPrependRequest?: IPrependPromiseExecutor;
     settingsForTypes?: {
         CANDLE?: ITrendTypeSettings;
         LINE?: ITrendTypeSettings;
@@ -52,7 +50,6 @@ export declare class Trend {
     private calculatedOptions;
     private prependRequest;
     private ee;
-    private canRequestPrepend;
     constructor(chartState: ChartState, trendName: string, initialState: IChartState);
     private onInitialStateApplied();
     private bindEvents();

@@ -11819,7 +11819,6 @@ var simpleDemo =
 	            this.calculatedOptions.data = Trend.prepareData(options.dataset);
 	        this.calculatedOptions.dataset = [];
 	        this.ee = new deps_1.EventEmitter();
-	        this.canRequestPrepend = options.canRequestPrepend != void 0 ? options.canRequestPrepend : !!options.onPrependRequest;
 	        this.bindEvents();
 	    }
 	    Trend.prototype.onInitialStateApplied = function () {
@@ -11834,9 +11833,6 @@ var simpleDemo =
 	        chartState.onZoom(function () { return _this.checkForPrependRequest(); });
 	        chartState.onTrendChange(function (trendName, changedOptions, newData) { return _this.ee.emit(EVENTS.CHANGE, changedOptions, newData); });
 	        chartState.onDestroy(function () { return _this.ee.removeAllListeners(); });
-	        var onPrependRequestHandler = this.getOptions().onPrependRequest;
-	        if (onPrependRequestHandler)
-	            this.onPrependRequest(onPrependRequestHandler);
 	    };
 	    Trend.prototype.getCalculatedOptions = function () {
 	        return this.calculatedOptions;
@@ -11934,7 +11930,7 @@ var simpleDemo =
 	        var chartState = this.chartState;
 	        var minXVal = chartState.data.computedData.trends.minXVal;
 	        var minScreenX = chartState.getScreenXByValue(minXVal);
-	        var needToRequest = this.canRequestPrepend && minScreenX > 0;
+	        var needToRequest = minScreenX > 0;
 	        var _a = chartState.data.xAxis.range, from = _a.from, to = _a.to;
 	        var requestedDataLength = to - from;
 	        if (!needToRequest)
@@ -14768,6 +14764,7 @@ var simpleDemo =
 	        if (state.data.animations.enabled) {
 	            this.animate();
 	        }
+	        this.updatePosition();
 	    }
 	    TrendBeacon.widgetIsEnabled = function (trendOptions) {
 	        return trendOptions.enabled && trendOptions.hasBeacon && trendOptions.type == Trend_1.TREND_TYPE.LINE;

@@ -33,8 +33,6 @@ export interface ITrendOptions {
 	hasBeacon?: boolean;
 	maxSegmentLength?: number;
 	marks?: ITrendMarkOptions[];
-	canRequestPrepend? :boolean;
-	onPrependRequest?: IPrependPromiseExecutor;
 	settingsForTypes?: {
 		CANDLE?: ITrendTypeSettings,
 		LINE?: ITrendTypeSettings
@@ -75,7 +73,6 @@ export class Trend {
 	private calculatedOptions: ITrendOptions;
 	private prependRequest: Promise<TTrendRawData>;
 	private ee: EventEmitter2;
-	private canRequestPrepend: boolean;
 	
 	constructor(chartState: ChartState, trendName: string, initialState: IChartState) {
 		var options = initialState.trends[trendName];
@@ -86,7 +83,6 @@ export class Trend {
 		if (options.dataset) this.calculatedOptions.data = Trend.prepareData(options.dataset);
 		this.calculatedOptions.dataset = [];
 		this.ee = new EventEmitter();
-		this.canRequestPrepend = options.canRequestPrepend != void 0 ? options.canRequestPrepend : !!options.onPrependRequest;
 		this.bindEvents();
 	}
 
@@ -102,8 +98,6 @@ export class Trend {
 		chartState.onZoom(() => this.checkForPrependRequest());
 		chartState.onTrendChange((trendName, changedOptions, newData) => this.ee.emit(EVENTS.CHANGE, changedOptions, newData));
 		chartState.onDestroy(() => this.ee.removeAllListeners());
-		let onPrependRequestHandler = this.getOptions().onPrependRequest;
-		if (onPrependRequestHandler) this.onPrependRequest(onPrependRequestHandler);
 	}
 
 	getCalculatedOptions() {
@@ -198,7 +192,7 @@ export class Trend {
 		var chartState = this.chartState;
 		var minXVal = chartState.data.computedData.trends.minXVal;
 		var minScreenX = chartState.getScreenXByValue(minXVal);
-		var needToRequest = this.canRequestPrepend && minScreenX > 0;
+		var needToRequest = minScreenX > 0;
 		var {from, to} = chartState.data.xAxis.range;
 		var requestedDataLength = to - from;
 		if (!needToRequest) return;

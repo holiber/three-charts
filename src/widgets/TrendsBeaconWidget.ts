@@ -39,6 +39,7 @@ export class TrendBeacon extends TrendWidget {
 		if (state.data.animations.enabled) {
 			this.animate();
 		}
+		this.updatePosition();
 	}
 
 	getObject3D() {
