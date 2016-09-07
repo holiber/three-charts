@@ -8,6 +8,10 @@ import {EventEmitter, Promise} from './deps';
 export interface IPrependPromiseExecutor {
 	(requestedDataLength: number, resolve: (data: TTrendRawData) => void, reject: () => void): void;
 }
+const EVENTS = {
+	CHANGE: 'Change',
+	PREPEND_REQUEST: 'prependRequest'
+};
 export enum TREND_TYPE {LINE, CANDLE}
 export type TTrendRawData = ITrendData | number[];
 export interface ITrendItem {xVal: number, yVal: number, id?: number}
@@ -96,7 +100,7 @@ export class Trend {
 		chartState.onInitialStateApplied(() => this.onInitialStateApplied());
 		chartState.onScrollStop(() => this.checkForPrependRequest());
 		chartState.onZoom(() => this.checkForPrependRequest());
-		chartState.onTrendChange((trendName, changedOptions, newData) => this.ee.emit('change', changedOptions, newData));
+		chartState.onTrendChange((trendName, changedOptions, newData) => this.ee.emit(EVENTS.CHANGE, changedOptions, newData));
 		chartState.onDestroy(() => this.ee.removeAllListeners());
 	}
 
@@ -163,9 +167,9 @@ export class Trend {
 	}
 
 	onPrependRequest(cb: IPrependPromiseExecutor): Function {
-		this.ee.on('prependRequest', cb);
+		this.ee.on(EVENTS.PREPEND_REQUEST, cb);
 		return () => {
-			this.ee.off('prependRequest', cb);
+			this.ee.off(EVENTS.PREPEND_REQUEST, cb);
 		}
 	}
 
@@ -173,19 +177,17 @@ export class Trend {
 	 * shortcut for ChartState.onTrendChange
 	 */
 	onChange(cb: (changedOptions: ITrendOptions, newData: ITrendData) => void): Function {
-		this.ee.on('change', cb);
-		return () => {
-			this.ee.off('change', cb);
-		}
+		this.ee.on(EVENTS.CHANGE, cb);
+		return () => { this.ee.off(EVENTS.CHANGE, cb);}
 	}
 
 	onDataChange(cb: (newData: ITrendData) => void): Function {
 		var onChangeCb = (changedOptions: ITrendOptions, newData: ITrendData) => {
 			if (newData) cb(newData);
 		};
-		this.ee.on('change', onChangeCb);
+		this.ee.on(EVENTS.CHANGE, onChangeCb);
 		return () => {
-			this.ee.off('change', onChangeCb);
+			this.ee.off(EVENTS.CHANGE, onChangeCb);
 		}
 	}
 
@@ -200,7 +202,7 @@ export class Trend {
 		if (!needToRequest) return;
 		
 		this.prependRequest = new Promise<TTrendRawData>((resolve: Function, reject: Function) => {
-			this.ee.emit('prependRequest', requestedDataLength, resolve, reject);
+			this.ee.emit(EVENTS.PREPEND_REQUEST, requestedDataLength, resolve, reject);
 		});
 
 		this.prependRequest.then((newData: TTrendRawData) => {

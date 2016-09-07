@@ -11696,6 +11696,10 @@ var ThreeChart =
 	var TrendMarks_1 = __webpack_require__(18);
 	var TrendSegments_1 = __webpack_require__(19);
 	var deps_1 = __webpack_require__(3);
+	var EVENTS = {
+	    CHANGE: 'Change',
+	    PREPEND_REQUEST: 'prependRequest'
+	};
 	(function (TREND_TYPE) {
 	    TREND_TYPE[TREND_TYPE["LINE"] = 0] = "LINE";
 	    TREND_TYPE[TREND_TYPE["CANDLE"] = 1] = "CANDLE";
@@ -11750,7 +11754,7 @@ var ThreeChart =
 	        chartState.onInitialStateApplied(function () { return _this.onInitialStateApplied(); });
 	        chartState.onScrollStop(function () { return _this.checkForPrependRequest(); });
 	        chartState.onZoom(function () { return _this.checkForPrependRequest(); });
-	        chartState.onTrendChange(function (trendName, changedOptions, newData) { return _this.ee.emit('change', changedOptions, newData); });
+	        chartState.onTrendChange(function (trendName, changedOptions, newData) { return _this.ee.emit(EVENTS.CHANGE, changedOptions, newData); });
 	        chartState.onDestroy(function () { return _this.ee.removeAllListeners(); });
 	    };
 	    Trend.prototype.getCalculatedOptions = function () {
@@ -11818,9 +11822,9 @@ var ThreeChart =
 	    };
 	    Trend.prototype.onPrependRequest = function (cb) {
 	        var _this = this;
-	        this.ee.on('prependRequest', cb);
+	        this.ee.on(EVENTS.PREPEND_REQUEST, cb);
 	        return function () {
-	            _this.ee.off('prependRequest', cb);
+	            _this.ee.off(EVENTS.PREPEND_REQUEST, cb);
 	        };
 	    };
 	    /**
@@ -11828,10 +11832,8 @@ var ThreeChart =
 	     */
 	    Trend.prototype.onChange = function (cb) {
 	        var _this = this;
-	        this.ee.on('change', cb);
-	        return function () {
-	            _this.ee.off('change', cb);
-	        };
+	        this.ee.on(EVENTS.CHANGE, cb);
+	        return function () { _this.ee.off(EVENTS.CHANGE, cb); };
 	    };
 	    Trend.prototype.onDataChange = function (cb) {
 	        var _this = this;
@@ -11839,9 +11841,9 @@ var ThreeChart =
 	            if (newData)
 	                cb(newData);
 	        };
-	        this.ee.on('change', onChangeCb);
+	        this.ee.on(EVENTS.CHANGE, onChangeCb);
 	        return function () {
-	            _this.ee.off('change', onChangeCb);
+	            _this.ee.off(EVENTS.CHANGE, onChangeCb);
 	        };
 	    };
 	    Trend.prototype.checkForPrependRequest = function () {
@@ -11857,7 +11859,7 @@ var ThreeChart =
 	        if (!needToRequest)
 	            return;
 	        this.prependRequest = new deps_1.Promise(function (resolve, reject) {
-	            _this.ee.emit('prependRequest', requestedDataLength, resolve, reject);
+	            _this.ee.emit(EVENTS.PREPEND_REQUEST, requestedDataLength, resolve, reject);
 	        });
 	        this.prependRequest.then(function (newData) {
 	            _this.prependData(newData);
