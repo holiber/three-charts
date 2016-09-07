@@ -12016,6 +12016,9 @@ var demoApp =
 	        chartState.onZoom(function () { return _this.checkForPrependRequest(); });
 	        chartState.onTrendChange(function (trendName, changedOptions, newData) { return _this.ee.emit(EVENTS.CHANGE, changedOptions, newData); });
 	        chartState.onDestroy(function () { return _this.ee.removeAllListeners(); });
+	        var onPrependRequestHandler = this.getOptions().onPrependRequest;
+	        if (onPrependRequestHandler)
+	            this.onPrependRequest(onPrependRequestHandler);
 	    };
 	    Trend.prototype.getCalculatedOptions = function () {
 	        return this.calculatedOptions;
