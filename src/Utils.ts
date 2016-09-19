@@ -98,6 +98,10 @@ export class Utils {
 		return result;
 	}
 
+	static bindEvent() {
+
+	}
+
 	/**
 	 * generate texture from canvas context
 	 * @example
@@ -142,18 +146,13 @@ export class Utils {
 	static getUid(): TUid {
 		return this.currentId++;
 	}
-	
-	// static eq(num1: number, num2: number) {
-	// 	return Math.abs(num1 - num2) < 0.01
-	// }
-	//
-	// static gte(num1: number, num2: number) {
-	// 	return this.eq(num1, num2) || num1 > num2;
-	// }
-	//
-	// static lte(num1: number, num2: number) {
-	// 	return this.eq(num1, num2) || num1 < num2;
-	// }
+
+	/**
+	 * @returns distance between numbers
+	 */
+	static getDistance(num1: number, num2: number) {
+		return Math.max(num1, num2) - Math.min(num1, num2);
+	}
 
 	static binarySearchClosestInd(arr: IIteralable[], num: number, key: string): number {
 		var mid: number;
@@ -205,7 +204,7 @@ export class Utils {
 
 		var cache: any
 			, p = parseInt // Use p as a byte saving reference to parseInt
-			, color = color.replace(/\s\s*/g,'') // Remove all spaces
+			, color = color.replace(/\s\s*/g, '') // Remove all spaces
 			;//var
 
 		// Checks for 6 digit hex and converts string to integer
@@ -237,7 +236,7 @@ export class Utils {
 		// it's not defined
 		//return cache.slice(0,3 + !!$.support.rgba);
 	}
-	
+
 	static getHexColor(str: string): number {
 		var rgb = this.parseColor(str);
 		return (rgb[0] << (8 * 2)) + (rgb[1] << 8) + rgb[2];
@@ -245,33 +244,33 @@ export class Utils {
 
 	static throttle(func: Function, ms: number) {
 
-	var isThrottled = false,
-		savedArgs: any,
-		savedThis: any;
+		var isThrottled = false,
+			savedArgs: any,
+			savedThis: any;
 
-	function wrapper() {
+		function wrapper() {
 
-		if (isThrottled) { // (2)
-			savedArgs = arguments;
-			savedThis = this;
-			return;
+			if (isThrottled) { // (2)
+				savedArgs = arguments;
+				savedThis = this;
+				return;
+			}
+
+			func.apply(this, arguments); // (1)
+
+			isThrottled = true;
+
+			setTimeout(function () {
+				isThrottled = false; // (3)
+				if (savedArgs) {
+					wrapper.apply(savedThis, savedArgs);
+					savedArgs = savedThis = null;
+				}
+			}, ms);
 		}
 
-		func.apply(this, arguments); // (1)
-
-		isThrottled = true;
-
-		setTimeout(function() {
-			isThrottled = false; // (3)
-			if (savedArgs) {
-				wrapper.apply(savedThis, savedArgs);
-				savedArgs = savedThis = null;
-			}
-		}, ms);
+		return wrapper;
 	}
-
-	return wrapper;
-}
 
 	static msToTimeString(timestamp: number) {
 		var h = Math.floor(timestamp / 360000);

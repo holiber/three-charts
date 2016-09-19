@@ -2,7 +2,7 @@ import PerspectiveCamera = THREE.PerspectiveCamera;
 import Vector3 = THREE.Vector3;
 import {ChartState, IChartState} from "./State";
 import forestgreen = THREE.ColorKeywords.forestgreen;
-import {EventEmitter} from './deps';
+import {EventEmitter} from './EventEmmiter';
 
 export interface IScreenTransformOptions {
 	scrollXVal?: number,
@@ -17,7 +17,6 @@ export interface IScreenTransformOptions {
  * manage camera, and contains methods for transforming pixels to values
  */
 export class Screen {
-	camera: PerspectiveCamera;
 	options: IScreenTransformOptions = {scrollXVal: 0, scrollX: 0, scrollYVal: 0, scrollY: 0, zoomX: 1, zoomY: 1};
 	private chartState: ChartState;
 	private scrollXAnimation: TweenLite;
@@ -28,7 +27,7 @@ export class Screen {
 	private currentScrollY = {y: 0};
 	private currentZoomX = {val: 1};
 	private currentZoomY = {val: 1};
-	private ee: EventEmitter2;
+	private ee: EventEmitter;
 
 	constructor(chartState: ChartState) {
 		this.chartState = chartState;
@@ -38,8 +37,6 @@ export class Screen {
 			scrollY: this.valueToPxByYAxis(this.chartState.data.yAxis.range.scroll),
 			zoomY: 1
 		});
-		// this.options.scrollY = this.chartState.data.yAxis.range.scroll;
-		// this.options.scrollYVal = this.chartState.valueToPxByYAxis(this.options.scrollY);
 		this.bindEvents();
 
 		//camera.position.z = 1500;
@@ -49,11 +46,9 @@ export class Screen {
 
 		var {width: w, height: h} = this.chartState.data;
 
-		// setup pixel-perfect camera
+		// settings for pixel-perfect camera
 		var FOV = 75;
 		var vFOV = FOV * (Math.PI / 180);
-		var camera = this.camera = new PerspectiveCamera(FOV, w / h, 0.1, 5000);
-		camera.position.z = h / (2 * Math.tan(vFOV / 2) );
 		
 		return {
 			FOV: FOV,
@@ -72,7 +67,7 @@ export class Screen {
 		var eventName = 'zoomFrame';
 		this.ee.on(eventName, cb);
 		return () => {
-			this.ee.removeListener(eventName, cb);
+			this.ee.off(eventName, cb);
 		}
 	}
 
@@ -80,7 +75,7 @@ export class Screen {
 		var eventName = 'scrollFrame';
 		this.ee.on(eventName, cb);
 		return () => {
-			this.ee.removeListener(eventName, cb);
+			this.ee.off(eventName, cb);
 		}
 	}
 
@@ -88,7 +83,7 @@ export class Screen {
 		var eventName = 'transformationFrame';
 		this.ee.on(eventName, cb);
 		return () => {
-			this.ee.removeListener(eventName, cb);
+			this.ee.off(eventName, cb);
 		}
 	}
 

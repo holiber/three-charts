@@ -15,6 +15,7 @@ import PlaneGeometry = THREE.PlaneGeometry;
 import { TREND_TYPE, ITrendOptions } from '../Trend';
 import LineBasicMaterial = THREE.LineBasicMaterial;
 import remove = THREE.Cache.remove;
+import { Utils } from '../Utils';
 
 
 const RISE_COLOR = 0x2CAC40;
@@ -162,7 +163,8 @@ export class TrendCandlesWidget extends TrendWidget {
 class CandleWidget {
 	segment: ITrendSegmentState;
 	private rect: Mesh;
-	private line: Line;
+	private vLine: Line;
+	private hLine: Line;
 	constructor () {
 		this.initObject();
 	}
@@ -186,18 +188,34 @@ class CandleWidget {
 		rightTop.set(width / 2, height / 2, 0);
 		leftBottom.set(-width / 2, -height / 2, 0);
 		rightBottom.set(width / 2, -height / 2, 0);
+
+		// prevent to draw bars with height < 1px
+		if (Utils.getDistance(leftTop.y, leftBottom.y) < 1) {
+			leftBottom.setY(leftBottom.y + 1);
+			rightBottom.setY(rightBottom.y + 1);
+		}
+
 		material.color.set(color);
 		geometry.verticesNeedUpdate = true;
 
-		// update line
-		let lineGeometry = this.line.geometry as Geometry;
-		let lineMaterial = this.line.material as LineBasicMaterial;
+		// update lines
+		let vLineGeometry = this.vLine.geometry as Geometry;
+		let vLineMaterial = this.vLine.material as LineBasicMaterial;
 		let lineTop = segment.maxYVal - segment.yVal;
 		let lineBottom = segment.minYVal - segment.yVal;
-		lineGeometry.vertices[0].set(0, lineTop, 0);
-		lineGeometry.vertices[1].set(0, lineBottom, 0);
-		lineMaterial.color.set(color);
-		lineGeometry.verticesNeedUpdate = true;
+		vLineGeometry.vertices[0].set(0, lineTop, 0);
+		vLineGeometry.vertices[1].set(0, lineBottom, 0);
+		vLineMaterial.color.set(color);
+		vLineGeometry.verticesNeedUpdate = true;
+
+		let hLineGeometry = this.hLine.geometry as Geometry;
+		let hLineMaterial = this.hLine.material as LineBasicMaterial;
+		let lineLeft = (-width) / 2;
+		let lineRight = width / 2;
+		hLineGeometry.vertices[0].set(lineLeft, 0, 0);
+		hLineGeometry.vertices[1].set(lineRight, 0, 0);
+		hLineMaterial.color.set(color);
+		hLineGeometry.verticesNeedUpdate = true;
 
 	}
 
@@ -206,9 +224,13 @@ class CandleWidget {
 			new PlaneGeometry(1, 1),
 			new MeshBasicMaterial()
 		);
-		let lineGeometry  = new Geometry();
-		lineGeometry.vertices.push(new Vector3(), new Vector3);
-		this.line = new Line(lineGeometry, new LineBasicMaterial({linewidth: 1}));
-		this.rect.add(this.line);
+		let vLineGeometry = new Geometry();
+		let hLineGeometry = new Geometry();
+		vLineGeometry.vertices.push(new Vector3(), new Vector3);
+		hLineGeometry.vertices.push(new Vector3(), new Vector3);
+		this.vLine = new Line(vLineGeometry, new LineBasicMaterial({linewidth: 1}));
+		this.hLine = new Line(hLineGeometry, new LineBasicMaterial({linewidth: 1}));
+		this.rect.add(this.vLine);
+		this.rect.add(this.hLine);
 	}
 }

@@ -12,9 +12,12 @@ export interface IChartWidgetConstructor {
 export declare abstract class ChartWidget {
     static widgetName: string;
     protected chartState: ChartState;
+    private unsubscribers;
     constructor(chartState: ChartState);
     abstract getObject3D(): Object3D;
     protected bindEvents(): void;
+    protected bindEvent(...args: Array<Function | Function[]>): void;
+    protected unbindEvents(): void;
     static getDefaultOptions(): IChartWidgetOptions;
 }
 export interface IChartWidgetOptions {

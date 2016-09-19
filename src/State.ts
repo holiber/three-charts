@@ -1,5 +1,5 @@
 import {ITrendOptions, Trend, ITrendData} from "./Trend";
-import {EventEmitter} from './deps';
+import {EventEmitter} from './EventEmmiter';
 import {Utils} from './Utils';
 import Vector3 = THREE.Vector3;
 import {IChartWidgetOptions, ChartWidget} from "./Widget";
@@ -8,8 +8,7 @@ import {Screen} from "./Screen";
 import {IChartEvent} from "./Events";
 import {AxisMarks} from "./AxisMarks";
 import {
-	AXIS_TYPE, AXIS_DATA_TYPE, IAxisOptions, IAnimationsOptions, AXIS_RANGE_TYPE,
-	IIteralable
+	AXIS_TYPE, AXIS_DATA_TYPE, IAxisOptions, IAnimationsOptions, AXIS_RANGE_TYPE
 } from "./interfaces";
 import {Chart} from "./Chart";
 import {Promise} from './deps';
@@ -20,6 +19,19 @@ interface IRecalculatedStateResult {
 	patch: IChartState,
 	eventsToEmit: IChartEvent[]
 }
+
+const CHART_STATE_EVENTS = {
+	INITIAL_STATE_APPLIED: 'initialStateApplied',
+	READY: 'ready',
+	DESTROY: 'destroy',
+	CHANGE: 'change',
+	TREND_CHANGE: 'trendChange',
+	TRENDS_CHANGE: 'trendsChange',
+	ZOOM: 'zoom',
+	RESIZE: 'resize',
+	SCROLL: 'scroll',
+	SCROLL_STOP: 'scrollStop'
+};
 
 /**
  * readonly computed state data
@@ -35,7 +47,6 @@ export interface IChartStateComputedData {
 
 export interface IChartState {
 	prevState?: IChartState,
-	$el?: Element;
 	width?: number;
 	height?: number;
 	zoom?: number;
@@ -59,8 +70,10 @@ export interface IChartState {
 	 * by default 'WebGLRenderer'
 	 * also available 'CanvasRenderer'
 	 */
-	renderer?: string;
+	renderer?: 'WebGLRenderer' | 'CanvasRenderer';
 
+
+	autoResize?: boolean;
 	controls?: {enabled: boolean};
 	autoScroll?: boolean;
 	showStats?: boolean;
@@ -108,6 +121,7 @@ export class ChartState {
 			autoScrollEase: Linear.easeNone,
 		},
 		autoRender: {enabled: true, fps: 0},
+		autoResize: true,
 		renderer: 'WebGLRenderer',
 		autoScroll: true,
 		controls: {enabled: true},
@@ -124,20 +138,18 @@ export class ChartState {
 	screen: Screen;
 	xAxisMarks: AxisMarks;
 	yAxisMarks: AxisMarks;
-	private ee: EventEmitter2;
+
+	/**
+	 * true then chartState was initialized and ready to use
+	 */
+	private isReady = false;
+
+	private ee: EventEmitter;
 
 	constructor(initialState: IChartState) {
 		this.ee = new EventEmitter();
 		this.ee.setMaxListeners(15);
 
-		if (!initialState.$el) {
-			Utils.error('$el must be set');
-		}
-
-		// calculate chart size
-		let style = getComputedStyle(initialState.$el);
-		initialState.width = parseInt(style.width);
-		initialState.height = parseInt(style.height);
 
 		this.trends = new Trends(this, initialState);
 		initialState.trends = this.trends.calculatedOptions;
@@ -151,79 +163,60 @@ export class ChartState {
 		this.initListeners();
 		
 		// message to other modules that ChartState.data is ready for use 
-		this.ee.emit('initialStateApplied', initialState);
+		this.ee.emit(CHART_STATE_EVENTS.INITIAL_STATE_APPLIED, initialState);
 		
-		// message to other modules that ChartState is ready for use 
-		this.ee.emit('ready', initialState);
+		// message to other modules that ChartState is ready for use
+		this.isReady = true;
+		this.ee.emit(CHART_STATE_EVENTS.READY, initialState);
 	}
 
 	/**
 	 * destroy state, use Chart.destroy to completely destroy chart
 	 */
 	destroy() {
-		this.ee.emit('destroy');
+		this.ee.emit(CHART_STATE_EVENTS.DESTROY);
 		this.ee.removeAllListeners();
 		this.data = {};
 	}
 
 	onDestroy(cb: Function) {
-		let eventName = 'destroy';
-		this.ee.on(eventName, cb);
-		return () => {
-			this.ee.off(eventName, cb);
-		}
+		return this.ee.subscribe(CHART_STATE_EVENTS.DESTROY, cb);
 	}
 
 	onInitialStateApplied(cb: (initialState: IChartState) => void ): Function {
-		this.ee.on('initialStateApplied', cb);
-		return () => {
-			this.ee.off('initialStateApplied', cb);
-		}
+		return this.ee.subscribe(CHART_STATE_EVENTS.INITIAL_STATE_APPLIED, cb);
 	}
 
 	onReady(cb: (initialState: IChartState) => void ): Function {
-		this.ee.on('ready', cb);
-		return () => {
-			this.ee.off('ready', cb);
-		}
+		return this.ee.subscribe(CHART_STATE_EVENTS.READY, cb);
 	}
 
 	onChange(cb: (changedProps: IChartState) => void ) {
-		let eventName = 'change';
-		this.ee.on(eventName, cb);
-		return () => {
-			this.ee.off(eventName, cb);
-		}
+		return this.ee.subscribe(CHART_STATE_EVENTS.CHANGE, cb);
 	}
 
 	onTrendChange(cb: (trendName: string, changedOptions: ITrendOptions, newData: ITrendData) => void) {
-		this.ee.on('trendChange', cb);
+		return this.ee.subscribe(CHART_STATE_EVENTS.TREND_CHANGE, cb);
 	}
 
 	onTrendsChange(cb: (trendsOptions: ITrendsOptions) => void) {
-		this.ee.on('trendsChange', cb);
-	}
-
-	onXAxisChange(cb: (changedOptions: IAxisOptions) => void) {
-		this.ee.on('xAxisChange', cb);
+		return this.ee.subscribe(CHART_STATE_EVENTS.TRENDS_CHANGE, cb);
 	}
 
 	onScrollStop(cb: () => void) {
-		this.ee.on('scrollStop', cb);
+		return this.ee.subscribe(CHART_STATE_EVENTS.SCROLL_STOP, cb);
 	}
 
 	onScroll(cb: (scrollOptions: {deltaX: number}) => void) {
-		this.ee.on('scroll', cb);
-		return () => {
-			this.ee.off('scroll', cb);
-		}
+		return this.ee.subscribe(CHART_STATE_EVENTS.SCROLL, cb);
 	}
 
 	onZoom(cb: (changedProps: IChartState) => void) {
-		this.ee.on('zoom', cb);
-		return () => {
-			this.ee.off('zoom', cb);
-		}
+		return this.ee.subscribe(CHART_STATE_EVENTS.ZOOM, cb);
+	}
+
+	onResize(cb: (changedProps: IChartState) => void) {
+		return this.ee.subscribe(CHART_STATE_EVENTS.RESIZE, cb);
 	}
 	
 	getTrend(trendName: string): Trend {
@@ -270,6 +263,9 @@ export class ChartState {
 
 	}
 
+	/**
+	 * recalculate all computed state props
+	 */
 	private recalculateState(changedProps?: IChartState): IRecalculatedStateResult {
 		var data = this.data;
 		var patch: IChartState = {};
@@ -300,9 +296,12 @@ export class ChartState {
 			actualData = Utils.deepMerge(actualData, {xAxis: patch.xAxis} as IChartState)
 		}
 
-		var scrollXChanged = false;
-		var needToRecalculateXAxis = (
+		let chartWasResized = changedProps.width != void 0 || changedProps.height != void 0;
+
+		let scrollXChanged = false;
+		let needToRecalculateXAxis = (
 			isMouseDrag ||
+			chartWasResized ||
 			(changedProps.xAxis && (changedProps.xAxis.range)) ||
 			this.data.xAxis.range.zeroVal == void 0
 		);
@@ -318,7 +317,8 @@ export class ChartState {
 
 
 		// recalculate axis "from" and "to" for dynamics AXIS_RANGE_TYPE
-		var needToRecalculateYAxis = (
+		let needToRecalculateYAxis = (
+			chartWasResized ||
 			(
 				data.yAxis.range.type === AXIS_RANGE_TYPE.RELATIVE_END ||
 				data.yAxis.range.type === AXIS_RANGE_TYPE.AUTO ||
@@ -334,10 +334,9 @@ export class ChartState {
 				actualData = Utils.deepMerge(actualData, {yAxis: yAxisPatch} as IChartState);
 			}
 		}
-		// TODO: recalculate xAxis
 
 		this.savePrevState(patch);
-		var allChangedProps = Utils.deepMerge(changedProps, patch);
+		let allChangedProps = Utils.deepMerge(changedProps, patch);
 		patch.computedData = this.getComputedData(allChangedProps);
 		this.savePrevState(patch);
 		this.data = Utils.deepMerge(this.data, patch);
@@ -371,46 +370,50 @@ export class ChartState {
 		var prevState = this.data.prevState;
 
 		// emit common change event
-		this.ee.emit('change', changedProps, eventData);
+		this.ee.emit(CHART_STATE_EVENTS.CHANGE, changedProps, eventData);
 
 		// emit event for each changed state property
 		for (let key in changedProps) {
 			this.ee.emit(key + 'Change', changedProps[key], eventData);
 		}
 
+		if (!this.isReady) return;
 
 		// emit special events based on changed state
-		var scrollStopEventNeeded = (
+		let scrollStopEventNeeded = (
 			changedProps.cursor &&
 			changedProps.cursor.dragMode === false &&
 			prevState.cursor.dragMode === true
 		);
-		scrollStopEventNeeded && this.ee.emit('scrollStop', changedProps);
+		scrollStopEventNeeded && this.ee.emit(CHART_STATE_EVENTS.SCROLL_STOP, changedProps);
 
-		var scrollChangeEventsNeeded = (
+		let scrollChangeEventsNeeded = (
 			changedProps.xAxis &&
 			changedProps.xAxis.range &&
 			changedProps.xAxis.range.scroll !== void 0
 		);
-		scrollChangeEventsNeeded && this.ee.emit('scroll', changedProps);
+		scrollChangeEventsNeeded && this.ee.emit(CHART_STATE_EVENTS.SCROLL, changedProps);
 
-		var zoomEventsNeeded = (
+		let zoomEventsNeeded = (
 			(changedProps.xAxis && changedProps.xAxis.range && changedProps.xAxis.range.zoom) ||
 			(changedProps.yAxis && changedProps.yAxis.range && changedProps.yAxis.range.zoom)
 		);
-		zoomEventsNeeded && this.ee.emit('zoom', changedProps);
+		zoomEventsNeeded && this.ee.emit(CHART_STATE_EVENTS.ZOOM, changedProps);
+
+		let resizeEventNeeded = (changedProps.width || changedProps.height);
+		resizeEventNeeded && this.ee.emit(CHART_STATE_EVENTS.RESIZE, changedProps);
 
 	}
 
 	private initListeners() {
-		this.ee.on('trendsChange', (changedTrends: ITrendsOptions, newData: ITrendData) => {
+		this.ee.on(CHART_STATE_EVENTS.TRENDS_CHANGE, (changedTrends: ITrendsOptions, newData: ITrendData) => {
 			this.handleTrendsChange(changedTrends, newData)
 		});
 	}
 
 	private handleTrendsChange(changedTrends: ITrendsOptions, newData: ITrendData) {
 		for (let trendName in changedTrends) {
-			this.ee.emit('trendChange', trendName, changedTrends[trendName], newData);
+			this.ee.emit(CHART_STATE_EVENTS.TREND_CHANGE, trendName, changedTrends[trendName], newData);
 		}
 	}
 
@@ -457,13 +460,13 @@ export class ChartState {
 			var needToRecalculateZoom = false;
 			var rangeMoreThenMaxValue = (axisRange.maxLength && rangeLength > axisRange.maxLength);
 			var rangeLessThenMinValue = (axisRange.minLength && rangeLength < axisRange.minLength);
-			if (rangeMoreThenMaxValue || rangeLessThenMinValue) {
+			needToRecalculateZoom = rangeMoreThenMaxValue || rangeLessThenMinValue;
+			if (needToRecalculateZoom) {
 				var fixScale = rangeLength > axisRange.maxLength ?
 					rangeLength / axisRange.maxLength :
 					rangeLength / axisRange.minLength;
 				var zoom = zoom * fixScale;
 				patch.range.zoom = zoom;
-				needToRecalculateZoom = true;
 			}
 		} while (needToRecalculateZoom);
 

@@ -92,7 +92,6 @@ window.onload = function () {
 	var now = Date.now();
 
 	chart = new Chart({
-		$el: document.querySelector('.chart'),
 		yAxis: {
 			marks: [
 				{value: dsMain.data[0].yVal, name: 'openprice', title: 'OPEN PRICE', lineColor: '#29874b', stickToEdges: true},
@@ -149,7 +148,7 @@ window.onload = function () {
 			// TrendsLoading: {enabled: false},
 			// AxisMarks: {enabled: false}
 		}
-	});
+	}, document.querySelector('.chart'));
 
 	chart.setState({animations: {enabled: false}});
 	chart.setState({animations: {enabled: true}});

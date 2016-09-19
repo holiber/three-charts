@@ -5,6 +5,6 @@
 //require('gsap/src/uncompressed/easing/EasePack.js');
 require('three/examples/js/renderers/CanvasRenderer.js');
 require('three/examples/js/renderers/Projector.js');
-export var isPlainObject = require('is-plain-object') as Function;
-export var EventEmitter = require('EventEmitter2') as typeof EventEmitter2;
+export const isPlainObject = require('is-plain-object') as Function;
+export const EE2 = require('EventEmitter2') as typeof EventEmitter2;
 export {Promise} from './polyfills/es6-promise';

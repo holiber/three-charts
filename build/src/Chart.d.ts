@@ -7,6 +7,7 @@ export declare class Chart {
     state: ChartState;
     isStopped: boolean;
     isDestroyed: boolean;
+    private $container;
     private $el;
     private renderer;
     private scene;
@@ -15,6 +16,8 @@ export declare class Chart {
     private widgets;
     private stats;
     private zoomThrottled;
+    private windowResizeSubscription;
+    private unsubscribers;
     static devicePixelRatio: number;
     static installedWidgets: {
         [name: string]: typeof ChartWidget;
@@ -22,9 +25,9 @@ export declare class Chart {
     static renderers: {
         [rendererName: string]: Renderer;
     };
-    constructor(state: IChartState);
+    constructor(state: IChartState, $container: Element);
     static installWidget<WidgetClass extends typeof ChartWidget>(Widget: WidgetClass): void;
-    private init();
+    private init($container);
     private renderLoop();
     render(): void;
     stop(): void;
@@ -44,7 +47,8 @@ export declare class Chart {
     setState(state: IChartState): void;
     private bindEvents();
     private unbindEvents();
-    private onScreenTransform(options);
+    private setupCamera();
+    private onScreenTransformHandler(options);
     private autoscroll();
     private onScrollStop();
     private onMouseDown(ev);
@@ -53,9 +57,11 @@ export declare class Chart {
     private onMouseWheel(ev);
     private onTouchMove(ev);
     private onTouchEnd(ev);
+    private onWindowResize(ev);
+    private onChartResize();
     private zoom(zoomValue, zoomOrigin);
     /**
      * creates simple chart without animations and minimal widgets set
      */
-    static createPreviewChart(userOptions: IChartState): Chart;
+    static createPreviewChart(userOptions: IChartState, $el: Element): Chart;
 }

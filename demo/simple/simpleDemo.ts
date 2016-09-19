@@ -64,7 +64,6 @@ window.onload = function () {
 	var dsMain = new DataSourse();
 
 	chart = new Chart({
-		$el: document.querySelector('.chart'),
 		xAxis: {
 			dataType: AXIS_DATA_TYPE.DATE,
 			range: {
@@ -88,7 +87,7 @@ window.onload = function () {
 			}
 		},
 		showStats: true
-	});
+	}, document.querySelector('.chart'));
 	
 	(<any>window)['chart'] = chart;
 

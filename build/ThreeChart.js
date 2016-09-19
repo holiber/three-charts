@@ -61,17 +61,17 @@ var ThreeChart =
 	    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
 	}
 	__export(__webpack_require__(2));
+	__export(__webpack_require__(23));
 	__export(__webpack_require__(22));
 	__export(__webpack_require__(21));
-	__export(__webpack_require__(20));
 	__export(__webpack_require__(13));
-	__export(__webpack_require__(17));
 	__export(__webpack_require__(18));
 	__export(__webpack_require__(19));
-	__export(__webpack_require__(16));
-	__export(__webpack_require__(14));
+	__export(__webpack_require__(20));
+	__export(__webpack_require__(17));
 	__export(__webpack_require__(15));
-	__export(__webpack_require__(26));
+	__export(__webpack_require__(16));
+	__export(__webpack_require__(27));
 
 
 /***/ },
@@ -83,25 +83,33 @@ var ThreeChart =
 	__webpack_require__(3);
 	var PerspectiveCamera = THREE.PerspectiveCamera;
 	var State_1 = __webpack_require__(13);
-	var Utils_1 = __webpack_require__(14);
-	var AxisWidget_1 = __webpack_require__(23);
-	var GridWidget_1 = __webpack_require__(24);
-	var TrendsLoadingWidget_1 = __webpack_require__(25);
-	var AxisMarksWidget_1 = __webpack_require__(27);
-	var TrendsMarksWidget_1 = __webpack_require__(28);
-	var BorderWidget_1 = __webpack_require__(29);
-	var TrendsIndicatorWidget_1 = __webpack_require__(30);
-	var TrendsLineWidget_1 = __webpack_require__(31);
-	var TrendsCandleWidget_1 = __webpack_require__(32);
-	var TrendsBeaconWidget_1 = __webpack_require__(33);
-	exports.MAX_DATA_LENGTH = 2692000; //1000;
+	var Utils_1 = __webpack_require__(15);
+	var AxisWidget_1 = __webpack_require__(24);
+	var GridWidget_1 = __webpack_require__(25);
+	var TrendsLoadingWidget_1 = __webpack_require__(26);
+	var AxisMarksWidget_1 = __webpack_require__(28);
+	var TrendsMarksWidget_1 = __webpack_require__(29);
+	var BorderWidget_1 = __webpack_require__(30);
+	var TrendsIndicatorWidget_1 = __webpack_require__(31);
+	var TrendsLineWidget_1 = __webpack_require__(32);
+	var TrendsCandleWidget_1 = __webpack_require__(33);
+	var TrendsBeaconWidget_1 = __webpack_require__(34);
+	exports.MAX_DATA_LENGTH = 2692000;
 	var Chart = (function () {
-	    function Chart(state) {
+	    function Chart(state, $container) {
 	        var _this = this;
 	        this.widgets = [];
+	        if (!$container) {
+	            Utils_1.Utils.error('$el must be set');
+	        }
+	        // calculate chart size
+	        var style = getComputedStyle($container);
+	        state.width = parseInt(style.width);
+	        state.height = parseInt(style.height);
 	        this.state = new State_1.ChartState(state);
 	        this.zoomThrottled = Utils_1.Utils.throttle(function (zoomValue, origin) { return _this.zoom(zoomValue, origin); }, 200);
-	        this.init();
+	        this.$container = $container;
+	        this.init($container);
 	    }
 	    ;
 	    Chart.installWidget = function (Widget) {
@@ -110,29 +118,23 @@ var ThreeChart =
 	        }
 	        this.installedWidgets[Widget.widgetName] = Widget;
 	    };
-	    Chart.prototype.init = function () {
+	    Chart.prototype.init = function ($container) {
 	        var state = this.state;
-	        var _a = state.data, w = _a.width, h = _a.height, $el = _a.$el, showStats = _a.showStats, autoRender = _a.autoRender;
+	        var _a = state.data, w = _a.width, h = _a.height, showStats = _a.showStats, autoRender = _a.autoRender;
 	        this.scene = new THREE.Scene();
 	        this.isStopped = !autoRender.enabled;
 	        var renderer = this.renderer = new Chart.renderers[this.state.data.renderer]({ antialias: true, alpha: true });
 	        renderer.setPixelRatio(Chart.devicePixelRatio);
 	        renderer.setClearColor(state.data.backgroundColor, state.data.backgroundOpacity);
 	        renderer.setSize(w, h);
-	        $el.appendChild(renderer.domElement);
+	        $container.appendChild(renderer.domElement);
 	        this.$el = renderer.domElement;
 	        this.$el.style.display = 'block';
 	        if (showStats) {
 	            this.stats = new Stats();
-	            $el.appendChild(this.stats.domElement);
+	            $container.appendChild(this.stats.domElement);
 	        }
-	        var camSettings = state.screen.getCameraSettings();
-	        this.camera = new PerspectiveCamera(camSettings.FOV, camSettings.aspect, camSettings.near, camSettings.far);
-	        this.camera.position.set(camSettings.x, camSettings.y, camSettings.z);
-	        this.cameraInitialPosition = this.camera.position.clone();
-	        this.scene.add(this.camera);
-	        this.onScreenTransform(this.state.screen.options);
-	        //this.camera.position.z = 2000;
+	        this.setupCamera();
 	        // init widgets
 	        for (var widgetName in Chart.installedWidgets) {
 	            var widgetOptions = this.state.data.widgets[widgetName];
@@ -218,14 +220,40 @@ var ThreeChart =
 	            $el.addEventListener('touchmove', function (ev) { _this.onTouchMove(ev); });
 	            $el.addEventListener('touchend', function (ev) { _this.onTouchEnd(ev); });
 	        }
-	        this.state.onTrendsChange(function () { return _this.autoscroll(); });
-	        this.state.screen.onTransformationFrame(function (options) { return _this.onScreenTransform(options); });
+	        if (this.state.data.autoResize) {
+	            this.windowResizeSubscription = function (ev) { _this.onWindowResize(ev); };
+	            window.addEventListener('resize', this.windowResizeSubscription);
+	        }
+	        this.unsubscribers = [
+	            this.state.onTrendsChange(function () { return _this.autoscroll(); }),
+	            this.state.screen.onTransformationFrame(function (options) { return _this.onScreenTransformHandler(options); }),
+	            this.state.onResize(function (options) { return _this.onChartResize(); })
+	        ];
 	    };
 	    Chart.prototype.unbindEvents = function () {
 	        // TODO: unbind events correctly
 	        this.$el.remove();
+	        window.removeEventListener('resize', this.windowResizeSubscription);
+	        this.unsubscribers.forEach(function (unsubscribe) { return unsubscribe(); });
 	    };
-	    Chart.prototype.onScreenTransform = function (options) {
+	    Chart.prototype.setupCamera = function () {
+	        var camSettings = this.state.screen.getCameraSettings();
+	        if (!this.camera) {
+	            this.camera = new PerspectiveCamera(camSettings.FOV, camSettings.aspect, camSettings.near, camSettings.far);
+	            this.scene.add(this.camera);
+	        }
+	        else {
+	            this.camera.fov = camSettings.FOV;
+	            this.camera.aspect = camSettings.aspect;
+	            this.camera.far = camSettings.far;
+	            this.camera.near = camSettings.near;
+	            this.camera.updateProjectionMatrix();
+	        }
+	        this.camera.position.set(camSettings.x, camSettings.y, camSettings.z);
+	        this.cameraInitialPosition = this.camera.position.clone();
+	        this.onScreenTransformHandler(this.state.screen.options);
+	    };
+	    Chart.prototype.onScreenTransformHandler = function (options) {
 	        if (options.scrollX != void 0) {
 	            var scrollX_1 = this.cameraInitialPosition.x + options.scrollX;
 	            // scrollX =  Math.round(scrollX); // prevent to set camera beetween pixels
@@ -285,6 +313,19 @@ var ThreeChart =
 	    Chart.prototype.onTouchEnd = function (ev) {
 	        this.setState({ cursor: { dragMode: false } });
 	    };
+	    Chart.prototype.onWindowResize = function (ev) {
+	        var style = getComputedStyle(this.$container);
+	        var statePatch = {
+	            width: parseInt(style.width),
+	            height: parseInt(style.height)
+	        };
+	        this.setState(statePatch);
+	    };
+	    Chart.prototype.onChartResize = function () {
+	        var _a = this.state.data, width = _a.width, height = _a.height;
+	        this.renderer.setSize(width, height);
+	        this.setupCamera();
+	    };
 	    Chart.prototype.zoom = function (zoomValue, zoomOrigin) {
 	        var _this = this;
 	        var MAX_ZOOM_VALUE = 1.5;
@@ -302,7 +343,7 @@ var ThreeChart =
 	    /**
 	     * creates simple chart without animations and minimal widgets set
 	     */
-	    Chart.createPreviewChart = function (userOptions) {
+	    Chart.createPreviewChart = function (userOptions, $el) {
 	        var previewChartOptions = {
 	            animations: { enabled: false },
 	            widgets: {
@@ -312,7 +353,7 @@ var ThreeChart =
 	            }
 	        };
 	        var options = Utils_1.Utils.deepMerge(userOptions, previewChartOptions);
-	        return new Chart(options);
+	        return new Chart(options, $el);
 	    };
 	    Chart.devicePixelRatio = window.devicePixelRatio;
 	    Chart.installedWidgets = {};
@@ -350,7 +391,7 @@ var ThreeChart =
 	__webpack_require__(7);
 	__webpack_require__(8);
 	exports.isPlainObject = __webpack_require__(9);
-	exports.EventEmitter = __webpack_require__(11);
+	exports.EE2 = __webpack_require__(11);
 	var es6_promise_1 = __webpack_require__(12);
 	exports.Promise = es6_promise_1.Promise;
 
@@ -10778,16 +10819,28 @@ var ThreeChart =
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var deps_1 = __webpack_require__(3);
-	var Utils_1 = __webpack_require__(14);
+	var EventEmmiter_1 = __webpack_require__(14);
+	var Utils_1 = __webpack_require__(15);
 	var Vector3 = THREE.Vector3;
-	var Widget_1 = __webpack_require__(15);
-	var Trends_1 = __webpack_require__(16);
-	var Screen_1 = __webpack_require__(20);
-	var AxisMarks_1 = __webpack_require__(21);
-	var interfaces_1 = __webpack_require__(22);
+	var Widget_1 = __webpack_require__(16);
+	var Trends_1 = __webpack_require__(17);
+	var Screen_1 = __webpack_require__(21);
+	var AxisMarks_1 = __webpack_require__(22);
+	var interfaces_1 = __webpack_require__(23);
 	var Chart_1 = __webpack_require__(2);
-	var deps_2 = __webpack_require__(3);
+	var deps_1 = __webpack_require__(3);
+	var CHART_STATE_EVENTS = {
+	    INITIAL_STATE_APPLIED: 'initialStateApplied',
+	    READY: 'ready',
+	    DESTROY: 'destroy',
+	    CHANGE: 'change',
+	    TREND_CHANGE: 'trendChange',
+	    TRENDS_CHANGE: 'trendsChange',
+	    ZOOM: 'zoom',
+	    RESIZE: 'resize',
+	    SCROLL: 'scroll',
+	    SCROLL_STOP: 'scrollStop'
+	};
 	/**
 	 *  class for manage chart state, all state changes caused only by State.setState method
 	 */
@@ -10822,6 +10875,7 @@ var ThreeChart =
 	                autoScrollEase: Linear.easeNone,
 	            },
 	            autoRender: { enabled: true, fps: 0 },
+	            autoResize: true,
 	            renderer: 'WebGLRenderer',
 	            autoScroll: true,
 	            controls: { enabled: true },
@@ -10834,15 +10888,12 @@ var ThreeChart =
 	            backgroundOpacity: 1,
 	            showStats: false
 	        };
-	        this.ee = new deps_1.EventEmitter();
+	        /**
+	         * true then chartState was initialized and ready to use
+	         */
+	        this.isReady = false;
+	        this.ee = new EventEmmiter_1.EventEmitter();
 	        this.ee.setMaxListeners(15);
-	        if (!initialState.$el) {
-	            Utils_1.Utils.error('$el must be set');
-	        }
-	        // calculate chart size
-	        var style = getComputedStyle(initialState.$el);
-	        initialState.width = parseInt(style.width);
-	        initialState.height = parseInt(style.height);
 	        this.trends = new Trends_1.Trends(this, initialState);
 	        initialState.trends = this.trends.calculatedOptions;
 	        this.setState(initialState);
@@ -10853,73 +10904,48 @@ var ThreeChart =
 	        this.yAxisMarks = new AxisMarks_1.AxisMarks(this, interfaces_1.AXIS_TYPE.Y);
 	        this.initListeners();
 	        // message to other modules that ChartState.data is ready for use 
-	        this.ee.emit('initialStateApplied', initialState);
-	        // message to other modules that ChartState is ready for use 
-	        this.ee.emit('ready', initialState);
+	        this.ee.emit(CHART_STATE_EVENTS.INITIAL_STATE_APPLIED, initialState);
+	        // message to other modules that ChartState is ready for use
+	        this.isReady = true;
+	        this.ee.emit(CHART_STATE_EVENTS.READY, initialState);
 	    }
 	    /**
 	     * destroy state, use Chart.destroy to completely destroy chart
 	     */
 	    ChartState.prototype.destroy = function () {
-	        this.ee.emit('destroy');
+	        this.ee.emit(CHART_STATE_EVENTS.DESTROY);
 	        this.ee.removeAllListeners();
 	        this.data = {};
 	    };
 	    ChartState.prototype.onDestroy = function (cb) {
-	        var _this = this;
-	        var eventName = 'destroy';
-	        this.ee.on(eventName, cb);
-	        return function () {
-	            _this.ee.off(eventName, cb);
-	        };
+	        return this.ee.subscribe(CHART_STATE_EVENTS.DESTROY, cb);
 	    };
 	    ChartState.prototype.onInitialStateApplied = function (cb) {
-	        var _this = this;
-	        this.ee.on('initialStateApplied', cb);
-	        return function () {
-	            _this.ee.off('initialStateApplied', cb);
-	        };
+	        return this.ee.subscribe(CHART_STATE_EVENTS.INITIAL_STATE_APPLIED, cb);
 	    };
 	    ChartState.prototype.onReady = function (cb) {
-	        var _this = this;
-	        this.ee.on('ready', cb);
-	        return function () {
-	            _this.ee.off('ready', cb);
-	        };
+	        return this.ee.subscribe(CHART_STATE_EVENTS.READY, cb);
 	    };
 	    ChartState.prototype.onChange = function (cb) {
-	        var _this = this;
-	        var eventName = 'change';
-	        this.ee.on(eventName, cb);
-	        return function () {
-	            _this.ee.off(eventName, cb);
-	        };
+	        return this.ee.subscribe(CHART_STATE_EVENTS.CHANGE, cb);
 	    };
 	    ChartState.prototype.onTrendChange = function (cb) {
-	        this.ee.on('trendChange', cb);
+	        return this.ee.subscribe(CHART_STATE_EVENTS.TREND_CHANGE, cb);
 	    };
 	    ChartState.prototype.onTrendsChange = function (cb) {
-	        this.ee.on('trendsChange', cb);
-	    };
-	    ChartState.prototype.onXAxisChange = function (cb) {
-	        this.ee.on('xAxisChange', cb);
+	        return this.ee.subscribe(CHART_STATE_EVENTS.TRENDS_CHANGE, cb);
 	    };
 	    ChartState.prototype.onScrollStop = function (cb) {
-	        this.ee.on('scrollStop', cb);
+	        return this.ee.subscribe(CHART_STATE_EVENTS.SCROLL_STOP, cb);
 	    };
 	    ChartState.prototype.onScroll = function (cb) {
-	        var _this = this;
-	        this.ee.on('scroll', cb);
-	        return function () {
-	            _this.ee.off('scroll', cb);
-	        };
+	        return this.ee.subscribe(CHART_STATE_EVENTS.SCROLL, cb);
 	    };
 	    ChartState.prototype.onZoom = function (cb) {
-	        var _this = this;
-	        this.ee.on('zoom', cb);
-	        return function () {
-	            _this.ee.off('zoom', cb);
-	        };
+	        return this.ee.subscribe(CHART_STATE_EVENTS.ZOOM, cb);
+	    };
+	    ChartState.prototype.onResize = function (cb) {
+	        return this.ee.subscribe(CHART_STATE_EVENTS.RESIZE, cb);
 	    };
 	    ChartState.prototype.getTrend = function (trendName) {
 	        return this.trends.getTrend(trendName);
@@ -10957,6 +10983,9 @@ var ThreeChart =
 	        changedProps = recalculateResult.changedProps;
 	        this.emitChangedStateEvents(changedProps, eventData);
 	    };
+	    /**
+	     * recalculate all computed state props
+	     */
 	    ChartState.prototype.recalculateState = function (changedProps) {
 	        var data = this.data;
 	        var patch = {};
@@ -10984,8 +11013,10 @@ var ThreeChart =
 	            patch.xAxis = { range: { scroll: currentScroll + deltaXVal } };
 	            actualData = Utils_1.Utils.deepMerge(actualData, { xAxis: patch.xAxis });
 	        }
+	        var chartWasResized = changedProps.width != void 0 || changedProps.height != void 0;
 	        var scrollXChanged = false;
 	        var needToRecalculateXAxis = (isMouseDrag ||
+	            chartWasResized ||
 	            (changedProps.xAxis && (changedProps.xAxis.range)) ||
 	            this.data.xAxis.range.zeroVal == void 0);
 	        if (needToRecalculateXAxis) {
@@ -10997,10 +11028,11 @@ var ThreeChart =
 	            }
 	        }
 	        // recalculate axis "from" and "to" for dynamics AXIS_RANGE_TYPE
-	        var needToRecalculateYAxis = ((data.yAxis.range.type === interfaces_1.AXIS_RANGE_TYPE.RELATIVE_END ||
-	            data.yAxis.range.type === interfaces_1.AXIS_RANGE_TYPE.AUTO ||
-	            data.yAxis.range.isMirrorMode) &&
-	            (scrollXChanged || changedProps.trends || changedProps.yAxis) ||
+	        var needToRecalculateYAxis = (chartWasResized ||
+	            (data.yAxis.range.type === interfaces_1.AXIS_RANGE_TYPE.RELATIVE_END ||
+	                data.yAxis.range.type === interfaces_1.AXIS_RANGE_TYPE.AUTO ||
+	                data.yAxis.range.isMirrorMode) &&
+	                (scrollXChanged || changedProps.trends || changedProps.yAxis) ||
 	            this.data.yAxis.range.zeroVal == void 0);
 	        if (needToRecalculateYAxis) {
 	            var yAxisPatch = this.recalculateYAxis(actualData);
@@ -11009,7 +11041,6 @@ var ThreeChart =
 	                actualData = Utils_1.Utils.deepMerge(actualData, { yAxis: yAxisPatch });
 	            }
 	        }
-	        // TODO: recalculate xAxis
 	        this.savePrevState(patch);
 	        var allChangedProps = Utils_1.Utils.deepMerge(changedProps, patch);
 	        patch.computedData = this.getComputedData(allChangedProps);
@@ -11039,33 +11070,37 @@ var ThreeChart =
 	    ChartState.prototype.emitChangedStateEvents = function (changedProps, eventData) {
 	        var prevState = this.data.prevState;
 	        // emit common change event
-	        this.ee.emit('change', changedProps, eventData);
+	        this.ee.emit(CHART_STATE_EVENTS.CHANGE, changedProps, eventData);
 	        // emit event for each changed state property
 	        for (var key in changedProps) {
 	            this.ee.emit(key + 'Change', changedProps[key], eventData);
 	        }
+	        if (!this.isReady)
+	            return;
 	        // emit special events based on changed state
 	        var scrollStopEventNeeded = (changedProps.cursor &&
 	            changedProps.cursor.dragMode === false &&
 	            prevState.cursor.dragMode === true);
-	        scrollStopEventNeeded && this.ee.emit('scrollStop', changedProps);
+	        scrollStopEventNeeded && this.ee.emit(CHART_STATE_EVENTS.SCROLL_STOP, changedProps);
 	        var scrollChangeEventsNeeded = (changedProps.xAxis &&
 	            changedProps.xAxis.range &&
 	            changedProps.xAxis.range.scroll !== void 0);
-	        scrollChangeEventsNeeded && this.ee.emit('scroll', changedProps);
+	        scrollChangeEventsNeeded && this.ee.emit(CHART_STATE_EVENTS.SCROLL, changedProps);
 	        var zoomEventsNeeded = ((changedProps.xAxis && changedProps.xAxis.range && changedProps.xAxis.range.zoom) ||
 	            (changedProps.yAxis && changedProps.yAxis.range && changedProps.yAxis.range.zoom));
-	        zoomEventsNeeded && this.ee.emit('zoom', changedProps);
+	        zoomEventsNeeded && this.ee.emit(CHART_STATE_EVENTS.ZOOM, changedProps);
+	        var resizeEventNeeded = (changedProps.width || changedProps.height);
+	        resizeEventNeeded && this.ee.emit(CHART_STATE_EVENTS.RESIZE, changedProps);
 	    };
 	    ChartState.prototype.initListeners = function () {
 	        var _this = this;
-	        this.ee.on('trendsChange', function (changedTrends, newData) {
+	        this.ee.on(CHART_STATE_EVENTS.TRENDS_CHANGE, function (changedTrends, newData) {
 	            _this.handleTrendsChange(changedTrends, newData);
 	        });
 	    };
 	    ChartState.prototype.handleTrendsChange = function (changedTrends, newData) {
 	        for (var trendName in changedTrends) {
-	            this.ee.emit('trendChange', trendName, changedTrends[trendName], newData);
+	            this.ee.emit(CHART_STATE_EVENTS.TREND_CHANGE, trendName, changedTrends[trendName], newData);
 	        }
 	    };
 	    ChartState.prototype.recalculateXAxis = function (actualData, changedProps) {
@@ -11105,13 +11140,13 @@ var ThreeChart =
 	            var needToRecalculateZoom = false;
 	            var rangeMoreThenMaxValue = (axisRange.maxLength && rangeLength > axisRange.maxLength);
 	            var rangeLessThenMinValue = (axisRange.minLength && rangeLength < axisRange.minLength);
-	            if (rangeMoreThenMaxValue || rangeLessThenMinValue) {
+	            needToRecalculateZoom = rangeMoreThenMaxValue || rangeLessThenMinValue;
+	            if (needToRecalculateZoom) {
 	                var fixScale = rangeLength > axisRange.maxLength ?
 	                    rangeLength / axisRange.maxLength :
 	                    rangeLength / axisRange.minLength;
 	                var zoom = zoom * fixScale;
 	                patch.range.zoom = zoom;
-	                needToRecalculateZoom = true;
 	            }
 	        } while (needToRecalculateZoom);
 	        patch.range.from = from;
@@ -11203,7 +11238,7 @@ var ThreeChart =
 	        var nextRange = this.data.width / (scaleFactor * newZoom);
 	        var newScroll = scroll + (currentRange - nextRange) * origin;
 	        this.setState({ xAxis: { range: { zoom: newZoom, scroll: newScroll } } });
-	        return new deps_2.Promise(function (resolve) {
+	        return new deps_1.Promise(function (resolve) {
 	            var animationTime = _this.data.animations.enabled ? _this.data.animations.zoomSpeed : 0;
 	            setTimeout(resolve, animationTime * 1000);
 	        });
@@ -11220,7 +11255,7 @@ var ThreeChart =
 	        var range = state.xAxis.range;
 	        var scroll = endXVal - this.pxToValueByXAxis(state.width) + this.pxToValueByXAxis(range.padding.end) - range.zeroVal;
 	        this.setState({ xAxis: { range: { scroll: scroll } } });
-	        return new deps_2.Promise(function (resolve) {
+	        return new deps_1.Promise(function (resolve) {
 	            var animationTime = _this.data.animations.enabled ? _this.data.animations.scrollSpeed : 0;
 	            setTimeout(resolve, animationTime * 1000);
 	        });
@@ -11332,6 +11367,49 @@ var ThreeChart =
 
 	"use strict";
 	var deps_1 = __webpack_require__(3);
+	/**
+	 * this class uses as proxy for EventEmitter2
+	 */
+	var EventEmitter = (function () {
+	    function EventEmitter() {
+	        this.ee = new deps_1.EE2();
+	    }
+	    EventEmitter.prototype.emit = function (eventName) {
+	        var args = [];
+	        for (var _i = 1; _i < arguments.length; _i++) {
+	            args[_i - 1] = arguments[_i];
+	        }
+	        (_a = this.ee).emit.apply(_a, [eventName].concat(args));
+	        var _a;
+	    };
+	    EventEmitter.prototype.on = function (eventName, callback) {
+	        return this.ee.on(eventName, callback);
+	    };
+	    EventEmitter.prototype.off = function (eventName, callback) {
+	        return this.ee.off(eventName, callback);
+	    };
+	    EventEmitter.prototype.subscribe = function (eventName, callback) {
+	        var _this = this;
+	        this.on(eventName, callback);
+	        return function () { return _this.off(eventName, callback); };
+	    };
+	    EventEmitter.prototype.setMaxListeners = function (listenersCount) {
+	        this.ee.setMaxListeners(listenersCount);
+	    };
+	    EventEmitter.prototype.removeAllListeners = function (eventName) {
+	        this.ee.removeAllListeners(eventName);
+	    };
+	    return EventEmitter;
+	}());
+	exports.EventEmitter = EventEmitter;
+
+
+/***/ },
+/* 15 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var deps_1 = __webpack_require__(3);
 	function deepmerge(target, src, mergeArrays) {
 	    if (mergeArrays === void 0) { mergeArrays = true; }
 	    var array = Array.isArray(src);
@@ -11422,6 +11500,8 @@ var ThreeChart =
 	        }
 	        return result;
 	    };
+	    Utils.bindEvent = function () {
+	    };
 	    /**
 	     * generate texture from canvas context
 	     * @example
@@ -11463,17 +11543,12 @@ var ThreeChart =
 	    Utils.getUid = function () {
 	        return this.currentId++;
 	    };
-	    // static eq(num1: number, num2: number) {
-	    // 	return Math.abs(num1 - num2) < 0.01
-	    // }
-	    //
-	    // static gte(num1: number, num2: number) {
-	    // 	return this.eq(num1, num2) || num1 > num2;
-	    // }
-	    //
-	    // static lte(num1: number, num2: number) {
-	    // 	return this.eq(num1, num2) || num1 < num2;
-	    // }
+	    /**
+	     * @returns distance between numbers
+	     */
+	    Utils.getDistance = function (num1, num2) {
+	        return Math.max(num1, num2) - Math.min(num1, num2);
+	    };
 	    Utils.binarySearchClosestInd = function (arr, num, key) {
 	        var mid;
 	        var lo = 0;
@@ -11591,7 +11666,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 15 */
+/* 16 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -11601,10 +11676,30 @@ var ThreeChart =
 	 */
 	var ChartWidget = (function () {
 	    function ChartWidget(chartState) {
+	        this.unsubscribers = [];
 	        this.chartState = chartState;
 	        this.bindEvents();
 	    }
 	    ChartWidget.prototype.bindEvents = function () { };
+	    ChartWidget.prototype.bindEvent = function () {
+	        var args = [];
+	        for (var _i = 0; _i < arguments.length; _i++) {
+	            args[_i - 0] = arguments[_i];
+	        }
+	        var unsubscribers = [];
+	        if (!Array.isArray(args[0])) {
+	            unsubscribers.push(args[0]);
+	        }
+	        else {
+	            unsubscribers.push.apply(unsubscribers, (args));
+	        }
+	        (_a = this.unsubscribers).push.apply(_a, unsubscribers);
+	        var _a;
+	    };
+	    ChartWidget.prototype.unbindEvents = function () {
+	        this.unsubscribers.forEach(function (unsubscriber) { return unsubscriber(); });
+	        this.unsubscribers.length = 0;
+	    };
 	    ChartWidget.getDefaultOptions = function () {
 	        return { enabled: true };
 	    };
@@ -11615,11 +11710,11 @@ var ThreeChart =
 
 
 /***/ },
-/* 16 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var Trend_1 = __webpack_require__(17);
+	var Trend_1 = __webpack_require__(18);
 	/**
 	 * Trends collection
 	 */
@@ -11688,13 +11783,14 @@ var ThreeChart =
 
 
 /***/ },
-/* 17 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var Utils_1 = __webpack_require__(14);
-	var TrendMarks_1 = __webpack_require__(18);
-	var TrendSegments_1 = __webpack_require__(19);
+	var Utils_1 = __webpack_require__(15);
+	var TrendMarks_1 = __webpack_require__(19);
+	var TrendSegments_1 = __webpack_require__(20);
+	var EventEmmiter_1 = __webpack_require__(14);
 	var deps_1 = __webpack_require__(3);
 	var EVENTS = {
 	    CHANGE: 'Change',
@@ -11740,7 +11836,7 @@ var ThreeChart =
 	        if (options.dataset)
 	            this.calculatedOptions.data = Trend.prepareData(options.dataset);
 	        this.calculatedOptions.dataset = [];
-	        this.ee = new deps_1.EventEmitter();
+	        this.ee = new EventEmmiter_1.EventEmitter();
 	        this.bindEvents();
 	    }
 	    Trend.prototype.onInitialStateApplied = function () {
@@ -11899,13 +11995,13 @@ var ThreeChart =
 
 
 /***/ },
-/* 18 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var Utils_1 = __webpack_require__(14);
-	var Trend_1 = __webpack_require__(17);
-	var deps_1 = __webpack_require__(3);
+	var Utils_1 = __webpack_require__(15);
+	var Trend_1 = __webpack_require__(18);
+	var EventEmmiter_1 = __webpack_require__(14);
 	(function (TREND_MARK_SIDE) {
 	    TREND_MARK_SIDE[TREND_MARK_SIDE["TOP"] = 0] = "TOP";
 	    TREND_MARK_SIDE[TREND_MARK_SIDE["BOTTOM"] = 1] = "BOTTOM";
@@ -11932,7 +12028,7 @@ var ThreeChart =
 	        this.items = {};
 	        this.rects = {};
 	        this.chartState = chartState;
-	        this.ee = new deps_1.EventEmitter();
+	        this.ee = new EventEmmiter_1.EventEmitter();
 	        this.trend = trend;
 	        this.onMarksChange();
 	        this.bindEvents();
@@ -12109,14 +12205,14 @@ var ThreeChart =
 
 
 /***/ },
-/* 19 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var deps_1 = __webpack_require__(3);
+	var EventEmmiter_1 = __webpack_require__(14);
 	var Vector3 = THREE.Vector3;
-	var Trend_1 = __webpack_require__(17);
-	var Utils_1 = __webpack_require__(14);
+	var Trend_1 = __webpack_require__(18);
+	var Utils_1 = __webpack_require__(15);
 	var MAX_ANIMATED_SEGMENTS = 100;
 	/**
 	 *  Class helps to display and animate trends segments
@@ -12133,7 +12229,7 @@ var ThreeChart =
 	        this.startSegmentId = 0;
 	        this.endSegmentId = 0;
 	        this.chartState = chartState;
-	        this.ee = new deps_1.EventEmitter();
+	        this.ee = new EventEmmiter_1.EventEmitter();
 	        this.trend = trend;
 	        this.maxSegmentLength = trend.getOptions().maxSegmentLength;
 	        this.tryToRebuildSegments();
@@ -12281,7 +12377,7 @@ var ThreeChart =
 	        var eventName = 'animationFrame';
 	        this.ee.on('animationFrame', cb);
 	        return function () {
-	            _this.ee.removeListener(eventName, cb);
+	            _this.ee.off(eventName, cb);
 	        };
 	    };
 	    TrendSegments.prototype.onRebuild = function (cb) {
@@ -12289,7 +12385,7 @@ var ThreeChart =
 	        var eventName = 'rebuild';
 	        this.ee.on(eventName, cb);
 	        return function () {
-	            _this.ee.removeListener(eventName, cb);
+	            _this.ee.off(eventName, cb);
 	        };
 	    };
 	    TrendSegments.prototype.onDisplayedRangeChanged = function (cb) {
@@ -12297,7 +12393,7 @@ var ThreeChart =
 	        var eventName = 'displayedRangeChanged';
 	        this.ee.on(eventName, cb);
 	        return function () {
-	            _this.ee.removeListener(eventName, cb);
+	            _this.ee.off(eventName, cb);
 	        };
 	    };
 	    TrendSegments.prototype.allocateNextSegment = function () {
@@ -12608,13 +12704,12 @@ var ThreeChart =
 
 
 /***/ },
-/* 20 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var PerspectiveCamera = THREE.PerspectiveCamera;
 	var Vector3 = THREE.Vector3;
-	var deps_1 = __webpack_require__(3);
+	var EventEmmiter_1 = __webpack_require__(14);
 	/**
 	 * manage camera, and contains methods for transforming pixels to values
 	 */
@@ -12627,23 +12722,19 @@ var ThreeChart =
 	        this.currentZoomY = { val: 1 };
 	        this.chartState = chartState;
 	        var _a = chartState.data, w = _a.width, h = _a.height;
-	        this.ee = new deps_1.EventEmitter();
+	        this.ee = new EventEmmiter_1.EventEmitter();
 	        this.transform({
 	            scrollY: this.valueToPxByYAxis(this.chartState.data.yAxis.range.scroll),
 	            zoomY: 1
 	        });
-	        // this.options.scrollY = this.chartState.data.yAxis.range.scroll;
-	        // this.options.scrollYVal = this.chartState.valueToPxByYAxis(this.options.scrollY);
 	        this.bindEvents();
 	        //camera.position.z = 1500;
 	    }
 	    Screen.prototype.getCameraSettings = function () {
 	        var _a = this.chartState.data, w = _a.width, h = _a.height;
-	        // setup pixel-perfect camera
+	        // settings for pixel-perfect camera
 	        var FOV = 75;
 	        var vFOV = FOV * (Math.PI / 180);
-	        var camera = this.camera = new PerspectiveCamera(FOV, w / h, 0.1, 5000);
-	        camera.position.z = h / (2 * Math.tan(vFOV / 2));
 	        return {
 	            FOV: FOV,
 	            aspect: w / h,
@@ -12660,7 +12751,7 @@ var ThreeChart =
 	        var eventName = 'zoomFrame';
 	        this.ee.on(eventName, cb);
 	        return function () {
-	            _this.ee.removeListener(eventName, cb);
+	            _this.ee.off(eventName, cb);
 	        };
 	    };
 	    Screen.prototype.onScrollFrame = function (cb) {
@@ -12668,7 +12759,7 @@ var ThreeChart =
 	        var eventName = 'scrollFrame';
 	        this.ee.on(eventName, cb);
 	        return function () {
-	            _this.ee.removeListener(eventName, cb);
+	            _this.ee.off(eventName, cb);
 	        };
 	    };
 	    Screen.prototype.onTransformationFrame = function (cb) {
@@ -12676,7 +12767,7 @@ var ThreeChart =
 	        var eventName = 'transformationFrame';
 	        this.ee.on(eventName, cb);
 	        return function () {
-	            _this.ee.removeListener(eventName, cb);
+	            _this.ee.off(eventName, cb);
 	        };
 	    };
 	    Screen.prototype.cameraIsMoving = function () {
@@ -12965,7 +13056,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 21 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -12974,9 +13065,9 @@ var ThreeChart =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Utils_1 = __webpack_require__(14);
-	var interfaces_1 = __webpack_require__(22);
-	var deps_1 = __webpack_require__(3);
+	var Utils_1 = __webpack_require__(15);
+	var interfaces_1 = __webpack_require__(23);
+	var EventEmmiter_1 = __webpack_require__(14);
 	var AXIS_MARK_DEFAULT_OPTIONS = {
 	    type: 'simple',
 	    lineWidth: 1,
@@ -12990,7 +13081,7 @@ var ThreeChart =
 	    function AxisMarks(chartState, axisType) {
 	        this.items = {};
 	        this.chartState = chartState;
-	        this.ee = new deps_1.EventEmitter();
+	        this.ee = new EventEmmiter_1.EventEmitter();
 	        this.axisType = axisType;
 	        var marks = this.items;
 	        var axisMarksOptions = axisType == interfaces_1.AXIS_TYPE.X ? chartState.data.xAxis.marks : chartState.data.yAxis.marks;
@@ -13047,7 +13138,7 @@ var ThreeChart =
 	var AxisMark = (function () {
 	    function AxisMark(chartState, axisType, options) {
 	        this.renderOnTrendsChange = false;
-	        this.ee = new deps_1.EventEmitter();
+	        this.ee = new EventEmmiter_1.EventEmitter();
 	        this.options = options;
 	        this.axisType = axisType;
 	        this.chartState = chartState;
@@ -13118,7 +13209,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 22 */
+/* 23 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -13143,7 +13234,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 23 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -13154,10 +13245,10 @@ var ThreeChart =
 	};
 	var Mesh = THREE.Mesh;
 	var Object3D = THREE.Object3D;
-	var Widget_1 = __webpack_require__(15);
-	var GridWidget_1 = __webpack_require__(24);
-	var Utils_1 = __webpack_require__(14);
-	var interfaces_1 = __webpack_require__(22);
+	var Widget_1 = __webpack_require__(16);
+	var GridWidget_1 = __webpack_require__(25);
+	var Utils_1 = __webpack_require__(15);
+	var interfaces_1 = __webpack_require__(23);
 	/**
 	 * widget for drawing axis
 	 */
@@ -13172,8 +13263,8 @@ var ThreeChart =
 	        this.axisYObject = new Object3D();
 	        this.object3D.add(this.axisXObject);
 	        this.object3D.add(this.axisYObject);
-	        this.initAxis(interfaces_1.AXIS_TYPE.X);
-	        this.initAxis(interfaces_1.AXIS_TYPE.Y);
+	        this.setupAxis(interfaces_1.AXIS_TYPE.X);
+	        this.setupAxis(interfaces_1.AXIS_TYPE.Y);
 	        // canvas drawing is expensive operation, so when we scroll, redraw must be called only once per second
 	        this.updateAxisXRequest = Utils_1.Utils.throttle(function () { return _this.updateAxis(interfaces_1.AXIS_TYPE.X); }, 1000);
 	        this.onScrollChange(state.screen.options.scrollX, state.screen.options.scrollY);
@@ -13181,14 +13272,13 @@ var ThreeChart =
 	    AxisWidget.prototype.bindEvents = function () {
 	        var _this = this;
 	        var state = this.chartState;
-	        state.screen.onTransformationFrame(function (options) {
+	        this.bindEvent(state.screen.onTransformationFrame(function (options) {
 	            _this.onScrollChange(options.scrollX, options.scrollY);
-	        });
-	        state.screen.onZoomFrame(function (options) { _this.onZoomFrame(options); });
-	        state.onDestroy(function () { return _this.onDestroy(); });
+	        }), state.screen.onZoomFrame(function (options) { _this.onZoomFrame(options); }), state.onDestroy(function () { return _this.onDestroy(); }), state.onResize(function () { return _this.onResize(); }));
 	    };
 	    AxisWidget.prototype.onDestroy = function () {
 	        this.isDestroyed = true;
+	        this.unbindEvents();
 	    };
 	    AxisWidget.prototype.onScrollChange = function (x, y) {
 	        if (y != void 0) {
@@ -13200,15 +13290,23 @@ var ThreeChart =
 	            this.updateAxisXRequest();
 	        }
 	    };
-	    AxisWidget.prototype.initAxis = function (orientation) {
+	    AxisWidget.prototype.onResize = function () {
+	        this.setupAxis(interfaces_1.AXIS_TYPE.X);
+	        this.setupAxis(interfaces_1.AXIS_TYPE.Y);
+	    };
+	    AxisWidget.prototype.setupAxis = function (orientation) {
+	        var _this = this;
 	        var isXAxis = orientation == interfaces_1.AXIS_TYPE.X;
 	        var _a = this.chartState.data, visibleWidth = _a.width, visibleHeight = _a.height;
 	        var canvasWidth = 0, canvasHeight = 0;
+	        // clean meshes
 	        if (isXAxis) {
+	            this.axisXObject.traverse(function (obj) { return _this.axisXObject.remove(obj); });
 	            canvasWidth = visibleWidth * 3;
 	            canvasHeight = 50;
 	        }
 	        else {
+	            this.axisYObject.traverse(function (obj) { return _this.axisYObject.remove(obj); });
 	            canvasWidth = 50;
 	            canvasHeight = visibleHeight * 3;
 	        }
@@ -13352,7 +13450,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 24 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -13362,9 +13460,9 @@ var ThreeChart =
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
 	var Vector3 = THREE.Vector3;
-	var Widget_1 = __webpack_require__(15);
+	var Widget_1 = __webpack_require__(16);
 	var LineSegments = THREE.LineSegments;
-	var Utils_1 = __webpack_require__(14);
+	var Utils_1 = __webpack_require__(15);
 	/**
 	 * widget for drawing chart grid
 	 */
@@ -13382,15 +13480,16 @@ var ThreeChart =
 	    GridWidget.prototype.bindEvents = function () {
 	        var _this = this;
 	        // grid is bigger then screen, so it's no need to update it on each scroll event
-	        var updateGridThrettled = Utils_1.Utils.throttle(function () { return _this.updateGrid(); }, 1000);
-	        this.chartState.onScroll(function () { return updateGridThrettled(); });
-	        this.chartState.screen.onZoomFrame(function (options) {
-	            updateGridThrettled();
+	        var updateGridThrottled = Utils_1.Utils.throttle(function () { return _this.updateGrid(); }, 1000);
+	        this.bindEvent(this.chartState.onScroll(function () { return updateGridThrottled(); }), this.chartState.screen.onZoomFrame(function (options) {
+	            updateGridThrottled();
 	            _this.onZoomFrame(options);
-	        });
-	        this.chartState.onDestroy(function () {
+	        }), this.chartState.onDestroy(function () {
 	            _this.isDestroyed = true;
-	        });
+	            _this.unbindEvents();
+	        }), this.chartState.onResize(function () {
+	            _this.updateGrid();
+	        }));
 	    };
 	    GridWidget.prototype.initGrid = function () {
 	        var geometry = new THREE.Geometry();
@@ -13520,7 +13619,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 25 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -13529,12 +13628,12 @@ var ThreeChart =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Utils_1 = __webpack_require__(14);
+	var Utils_1 = __webpack_require__(15);
 	var Mesh = THREE.Mesh;
 	var PlaneBufferGeometry = THREE.PlaneBufferGeometry;
 	var MeshBasicMaterial = THREE.MeshBasicMaterial;
-	var TrendsWidget_1 = __webpack_require__(26);
-	var Trend_1 = __webpack_require__(17);
+	var TrendsWidget_1 = __webpack_require__(27);
+	var Trend_1 = __webpack_require__(18);
 	/**
 	 * widget adds loading indicator
 	 * activated when animations enabled
@@ -13635,7 +13734,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 26 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -13644,7 +13743,7 @@ var ThreeChart =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Widget_1 = __webpack_require__(15);
+	var Widget_1 = __webpack_require__(16);
 	var Object3D = THREE.Object3D;
 	/**
 	 * abstract manager class for all trends widgets
@@ -13761,7 +13860,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 27 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -13770,15 +13869,15 @@ var ThreeChart =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Widget_1 = __webpack_require__(15);
+	var Widget_1 = __webpack_require__(16);
 	var Object3D = THREE.Object3D;
 	var Geometry = THREE.Geometry;
 	var LineBasicMaterial = THREE.LineBasicMaterial;
 	var Vector3 = THREE.Vector3;
-	var Utils_1 = __webpack_require__(14);
+	var Utils_1 = __webpack_require__(15);
 	var Line = THREE.Line;
 	var Mesh = THREE.Mesh;
-	var interfaces_1 = __webpack_require__(22);
+	var interfaces_1 = __webpack_require__(23);
 	/**
 	 * widget for shows marks on axis
 	 */
@@ -13805,10 +13904,7 @@ var ThreeChart =
 	    };
 	    AxisMarksWidget.prototype.bindEvents = function () {
 	        var _this = this;
-	        this.chartState.screen.onTransformationFrame(function (options) { return _this.onTransformationFrame(options); });
-	    };
-	    AxisMarksWidget.prototype.onTransformationFrame = function (options) {
-	        this.updateMarksPositions();
+	        this.bindEvent(this.chartState.screen.onTransformationFrame(function () { return _this.updateMarksPositions(); }), this.chartState.onResize(function () { return _this.updateMarksPositions(); }));
 	    };
 	    AxisMarksWidget.prototype.updateMarksPositions = function () {
 	        for (var _i = 0, _a = this.axisMarksWidgets; _i < _a.length; _i++) {
@@ -13950,7 +14046,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 28 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -13962,9 +14058,9 @@ var ThreeChart =
 	var Geometry = THREE.Geometry;
 	var Mesh = THREE.Mesh;
 	var Object3D = THREE.Object3D;
-	var TrendsWidget_1 = __webpack_require__(26);
-	var TrendMarks_1 = __webpack_require__(18);
-	var Utils_1 = __webpack_require__(14);
+	var TrendsWidget_1 = __webpack_require__(27);
+	var TrendMarks_1 = __webpack_require__(19);
+	var Utils_1 = __webpack_require__(15);
 	var MAX_MARKS_IN_ROW = 3;
 	/**
 	 * widget for drawing trends marks for all trends
@@ -14165,7 +14261,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 29 */
+/* 30 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14174,7 +14270,7 @@ var ThreeChart =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Widget_1 = __webpack_require__(15);
+	var Widget_1 = __webpack_require__(16);
 	var LineSegments = THREE.LineSegments;
 	var Vector3 = THREE.Vector3;
 	/**
@@ -14200,7 +14296,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 30 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14209,9 +14305,9 @@ var ThreeChart =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Utils_1 = __webpack_require__(14);
+	var Utils_1 = __webpack_require__(15);
 	var Mesh = THREE.Mesh;
-	var TrendsWidget_1 = __webpack_require__(26);
+	var TrendsWidget_1 = __webpack_require__(27);
 	var Color = THREE.Color;
 	var CANVAS_WIDTH = 128;
 	var CANVAS_HEIGHT = 64;
@@ -14300,7 +14396,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 31 */
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14312,10 +14408,10 @@ var ThreeChart =
 	var Geometry = THREE.Geometry;
 	var LineBasicMaterial = THREE.LineBasicMaterial;
 	var Vector3 = THREE.Vector3;
-	var TrendsWidget_1 = __webpack_require__(26);
+	var TrendsWidget_1 = __webpack_require__(27);
 	var LineSegments = THREE.LineSegments;
-	var Trend_1 = __webpack_require__(17);
-	var Utils_1 = __webpack_require__(14);
+	var Trend_1 = __webpack_require__(18);
+	var Utils_1 = __webpack_require__(15);
 	var MAX_DISPLAYED_SEGMENTS = 2000;
 	/**
 	 * widget for drawing trends lines
@@ -14454,7 +14550,7 @@ var ThreeChart =
 
 
 /***/ },
-/* 32 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14463,7 +14559,7 @@ var ThreeChart =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var TrendsWidget_1 = __webpack_require__(26);
+	var TrendsWidget_1 = __webpack_require__(27);
 	var Object3D = THREE.Object3D;
 	var Geometry = THREE.Geometry;
 	var Vector3 = THREE.Vector3;
@@ -14471,8 +14567,9 @@ var ThreeChart =
 	var Line = THREE.Line;
 	var MeshBasicMaterial = THREE.MeshBasicMaterial;
 	var PlaneGeometry = THREE.PlaneGeometry;
-	var Trend_1 = __webpack_require__(17);
+	var Trend_1 = __webpack_require__(18);
 	var LineBasicMaterial = THREE.LineBasicMaterial;
+	var Utils_1 = __webpack_require__(15);
 	var RISE_COLOR = 0x2CAC40;
 	var FALL_COLOR = 0xEE5533;
 	var MARGIN_PERCENT = 0.3;
@@ -14623,31 +14720,48 @@ var ThreeChart =
 	        rightTop.set(width / 2, height / 2, 0);
 	        leftBottom.set(-width / 2, -height / 2, 0);
 	        rightBottom.set(width / 2, -height / 2, 0);
+	        // prevent to draw bars with height < 1px
+	        if (Utils_1.Utils.getDistance(leftTop.y, leftBottom.y) < 1) {
+	            leftBottom.setY(leftBottom.y + 1);
+	            rightBottom.setY(rightBottom.y + 1);
+	        }
 	        material.color.set(color);
 	        geometry.verticesNeedUpdate = true;
-	        // update line
-	        var lineGeometry = this.line.geometry;
-	        var lineMaterial = this.line.material;
+	        // update lines
+	        var vLineGeometry = this.vLine.geometry;
+	        var vLineMaterial = this.vLine.material;
 	        var lineTop = segment.maxYVal - segment.yVal;
 	        var lineBottom = segment.minYVal - segment.yVal;
-	        lineGeometry.vertices[0].set(0, lineTop, 0);
-	        lineGeometry.vertices[1].set(0, lineBottom, 0);
-	        lineMaterial.color.set(color);
-	        lineGeometry.verticesNeedUpdate = true;
+	        vLineGeometry.vertices[0].set(0, lineTop, 0);
+	        vLineGeometry.vertices[1].set(0, lineBottom, 0);
+	        vLineMaterial.color.set(color);
+	        vLineGeometry.verticesNeedUpdate = true;
+	        var hLineGeometry = this.hLine.geometry;
+	        var hLineMaterial = this.hLine.material;
+	        var lineLeft = (-width) / 2;
+	        var lineRight = width / 2;
+	        hLineGeometry.vertices[0].set(lineLeft, 0, 0);
+	        hLineGeometry.vertices[1].set(lineRight, 0, 0);
+	        hLineMaterial.color.set(color);
+	        hLineGeometry.verticesNeedUpdate = true;
 	    };
 	    CandleWidget.prototype.initObject = function () {
 	        this.rect = new Mesh(new PlaneGeometry(1, 1), new MeshBasicMaterial());
-	        var lineGeometry = new Geometry();
-	        lineGeometry.vertices.push(new Vector3(), new Vector3);
-	        this.line = new Line(lineGeometry, new LineBasicMaterial({ linewidth: 1 }));
-	        this.rect.add(this.line);
+	        var vLineGeometry = new Geometry();
+	        var hLineGeometry = new Geometry();
+	        vLineGeometry.vertices.push(new Vector3(), new Vector3);
+	        hLineGeometry.vertices.push(new Vector3(), new Vector3);
+	        this.vLine = new Line(vLineGeometry, new LineBasicMaterial({ linewidth: 1 }));
+	        this.hLine = new Line(hLineGeometry, new LineBasicMaterial({ linewidth: 1 }));
+	        this.rect.add(this.vLine);
+	        this.rect.add(this.hLine);
 	    };
 	    return CandleWidget;
 	}());
 
 
 /***/ },
-/* 33 */
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14656,12 +14770,12 @@ var ThreeChart =
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Utils_1 = __webpack_require__(14);
+	var Utils_1 = __webpack_require__(15);
 	var Mesh = THREE.Mesh;
 	var PlaneBufferGeometry = THREE.PlaneBufferGeometry;
 	var MeshBasicMaterial = THREE.MeshBasicMaterial;
-	var TrendsWidget_1 = __webpack_require__(26);
-	var Trend_1 = __webpack_require__(17);
+	var TrendsWidget_1 = __webpack_require__(27);
+	var Trend_1 = __webpack_require__(18);
 	/**
 	 * widget adds blinking beacon on trends end
 	 * activated when trend.hasBeacon = true
@@ -14795,4 +14909,5 @@ var ThreeChart =
 /***/ }
 /******/ ]);
 //# sourceMappingURL=ThreeChart.js.map
+ if (typeof module !== "undefined" && module.exports) module.exports = ThreeChart;
  if (typeof module !== "undefined" && module.exports) module.exports = ThreeChart;

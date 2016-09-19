@@ -4,7 +4,7 @@ import {Utils} from "./Utils";
 import { Trend, ITrendOptions, TREND_TYPE } from "./Trend";
 import Vector3 = THREE.Vector3;
 import {TrendSegment} from "./TrendSegments";
-import {EventEmitter} from './deps';
+import {EventEmitter} from './EventEmmiter';
 
 export enum TREND_MARK_SIDE {TOP, BOTTOM}
 export enum EVENTS {CHANGE}
@@ -45,7 +45,7 @@ const AXIS_MARK_DEFAULT_OPTIONS: ITrendMarkOptions = {
 
 export class TrendMarks {
 	private chartState: ChartState;
-	private ee: EventEmitter2;
+	private ee: EventEmitter;
 	private trend: Trend;
 	private items: {[name: string]: TrendMark} = {};
 	private rects: {[name: string]: number[]} = {};

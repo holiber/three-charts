@@ -11,7 +11,6 @@ export declare class AxisMarksWidget extends ChartWidget {
     constructor(chartState: ChartState);
     private createAxisMark(axisMark);
     protected bindEvents(): void;
-    private onTransformationFrame(options);
     private updateMarksPositions();
     getObject3D(): Object3D;
 }

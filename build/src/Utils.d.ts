@@ -22,6 +22,7 @@ export declare class Utils {
      * Utils.toFixed(15, 6);
      */
     static toFixed(num: number, digitsCount: number): string;
+    static bindEvent(): void;
     /**
      * generate texture from canvas context
      * @example
@@ -44,6 +45,10 @@ export declare class Utils {
      * @returns new unique id
      */
     static getUid(): TUid;
+    /**
+     * @returns distance between numbers
+     */
+    static getDistance(num1: number, num2: number): number;
     static binarySearchClosestInd(arr: IIteralable[], num: number, key: string): number;
     static binarySearchClosest<ArrayItem>(arr: ArrayItem[], num: number, key: string): ArrayItem;
     static rectsIntersect(r1: number[], r2: number[]): boolean;

@@ -19,7 +19,6 @@ export interface IChartStateComputedData {
 }
 export interface IChartState {
     prevState?: IChartState;
-    $el?: Element;
     width?: number;
     height?: number;
     zoom?: number;
@@ -46,7 +45,8 @@ export interface IChartState {
      * by default 'WebGLRenderer'
      * also available 'CanvasRenderer'
      */
-    renderer?: string;
+    renderer?: 'WebGLRenderer' | 'CanvasRenderer';
+    autoResize?: boolean;
     controls?: {
         enabled: boolean;
     };
@@ -70,26 +70,33 @@ export declare class ChartState {
     screen: Screen;
     xAxisMarks: AxisMarks;
     yAxisMarks: AxisMarks;
+    /**
+     * true then chartState was initialized and ready to use
+     */
+    private isReady;
     private ee;
     constructor(initialState: IChartState);
     /**
      * destroy state, use Chart.destroy to completely destroy chart
      */
     destroy(): void;
-    onDestroy(cb: Function): () => void;
+    onDestroy(cb: Function): Function;
     onInitialStateApplied(cb: (initialState: IChartState) => void): Function;
     onReady(cb: (initialState: IChartState) => void): Function;
-    onChange(cb: (changedProps: IChartState) => void): () => void;
-    onTrendChange(cb: (trendName: string, changedOptions: ITrendOptions, newData: ITrendData) => void): void;
-    onTrendsChange(cb: (trendsOptions: ITrendsOptions) => void): void;
-    onXAxisChange(cb: (changedOptions: IAxisOptions) => void): void;
-    onScrollStop(cb: () => void): void;
+    onChange(cb: (changedProps: IChartState) => void): Function;
+    onTrendChange(cb: (trendName: string, changedOptions: ITrendOptions, newData: ITrendData) => void): Function;
+    onTrendsChange(cb: (trendsOptions: ITrendsOptions) => void): Function;
+    onScrollStop(cb: () => void): Function;
     onScroll(cb: (scrollOptions: {
         deltaX: number;
-    }) => void): () => void;
-    onZoom(cb: (changedProps: IChartState) => void): () => void;
+    }) => void): Function;
+    onZoom(cb: (changedProps: IChartState) => void): Function;
+    onResize(cb: (changedProps: IChartState) => void): Function;
     getTrend(trendName: string): Trend;
     setState(newState: IChartState, eventData?: any, silent?: boolean): void;
+    /**
+     * recalculate all computed state props
+     */
     private recalculateState(changedProps?);
     private getComputedData(changedProps?);
     private savePrevState(changedProps?);

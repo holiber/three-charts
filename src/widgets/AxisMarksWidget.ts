@@ -47,11 +47,10 @@ export class AxisMarksWidget extends ChartWidget {
 	}
 
 	protected bindEvents() {
-		this.chartState.screen.onTransformationFrame((options) => this.onTransformationFrame(options));
-	}
-
-	private onTransformationFrame(options: IScreenTransformOptions) {
-		this.updateMarksPositions();
+		this.bindEvent(
+			this.chartState.screen.onTransformationFrame(() => this.updateMarksPositions()),
+			this.chartState.onResize(() => this.updateMarksPositions())
+		);
 	}
 
 	private updateMarksPositions() {

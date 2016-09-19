@@ -24,12 +24,13 @@ import {TrendsLineWidget} from "./widgets/TrendsLineWidget";
 import {TrendsCandlesWidget} from './widgets/TrendsCandleWidget';
 import {TrendsBeaconWidget} from "./widgets/TrendsBeaconWidget";
 
-export const MAX_DATA_LENGTH = 2692000;//1000;
+export const MAX_DATA_LENGTH = 2692000;
 
 export class Chart {
 	state: ChartState;
 	isStopped: boolean;
 	isDestroyed: boolean;
+	private $container: Element;
 	private $el: HTMLElement;
 	private renderer: Renderer;
 	private scene: Scene;
@@ -38,6 +39,8 @@ export class Chart {
 	private widgets: Array<ChartWidget> = [];
 	private stats: Stats;
 	private zoomThrottled: Function;
+	private windowResizeSubscription: EventListener;
+	private unsubscribers: Function[];
 
 	static devicePixelRatio = window.devicePixelRatio;
 	static installedWidgets: {[name: string]: typeof ChartWidget} = {};
@@ -46,10 +49,20 @@ export class Chart {
 		WebGLRenderer: THREE.WebGLRenderer
 	};
 
-	constructor(state: IChartState) {
+	constructor(state: IChartState, $container: Element) {
+
+		if (!$container) {
+			Utils.error('$el must be set');
+		}
+		// calculate chart size
+		let style = getComputedStyle($container);
+		state.width = parseInt(style.width);
+		state.height = parseInt(style.height);
+
 		this.state = new ChartState(state);
 		this.zoomThrottled = Utils.throttle((zoomValue: number, origin: number) => this.zoom(zoomValue, origin), 200);
-		this.init();
+		this.$container = $container;
+		this.init($container);
 	};
 
 	static installWidget<WidgetClass extends typeof ChartWidget>(Widget: WidgetClass) {
@@ -59,9 +72,9 @@ export class Chart {
 		this.installedWidgets[Widget.widgetName] = Widget;
 	}
 
-	private init() {
+	private init($container: Element) {
 		var state = this.state;
-		var {width: w, height: h, $el, showStats, autoRender} = state.data;
+		var {width: w, height: h, showStats, autoRender} = state.data;
 		this.scene = new THREE.Scene();
 		this.isStopped = !autoRender.enabled;
 
@@ -69,22 +82,16 @@ export class Chart {
 		renderer.setPixelRatio(Chart.devicePixelRatio);
 		renderer.setClearColor(state.data.backgroundColor, state.data.backgroundOpacity);
 		renderer.setSize(w, h);
-		$el.appendChild(renderer.domElement);
+		$container.appendChild(renderer.domElement);
 		this.$el = renderer.domElement;
 		this.$el.style.display = 'block';
 
 		if (showStats) {
 			this.stats = new Stats();
-			$el.appendChild(this.stats.domElement);
+			$container.appendChild(this.stats.domElement);
 		}
 
-		var camSettings = state.screen.getCameraSettings();
-		this.camera = new PerspectiveCamera(camSettings.FOV, camSettings.aspect, camSettings.near, camSettings.far);
-		this.camera.position.set(camSettings.x, camSettings.y, camSettings.z);
-		this.cameraInitialPosition = this.camera.position.clone();
-		this.scene.add(this.camera);
-		this.onScreenTransform(this.state.screen.options);
-		//this.camera.position.z = 2000;
+		this.setupCamera();
 
 		// init widgets
 		for (let widgetName in Chart.installedWidgets) {
@@ -177,16 +184,43 @@ export class Chart {
 			$el.addEventListener('touchmove', (ev: TouchEvent) => {this.onTouchMove(ev)});
 			$el.addEventListener('touchend', (ev: TouchEvent) => {this.onTouchEnd(ev)});
 		}
-		this.state.onTrendsChange(() => this.autoscroll());
-		this.state.screen.onTransformationFrame((options) => this.onScreenTransform(options))
+		if (this.state.data.autoResize) {
+			this.windowResizeSubscription = (ev: UIEvent) => {this.onWindowResize(ev)};
+			window.addEventListener('resize', this.windowResizeSubscription);
+		}
+
+		this.unsubscribers = [
+			this.state.onTrendsChange(() => this.autoscroll()),
+			this.state.screen.onTransformationFrame((options) => this.onScreenTransformHandler(options)),
+			this.state.onResize((options) => this.onChartResize())
+		];
 	}
 
 	private unbindEvents() {
 		// TODO: unbind events correctly
-		this.$el.remove()
+		this.$el.remove();
+		window.removeEventListener('resize', this.windowResizeSubscription);
+		this.unsubscribers.forEach(unsubscribe => unsubscribe());
 	}
 
-	private onScreenTransform(options: IScreenTransformOptions) {
+	private setupCamera() {
+		let camSettings = this.state.screen.getCameraSettings();
+		if (!this.camera) {
+			this.camera = new PerspectiveCamera(camSettings.FOV, camSettings.aspect, camSettings.near, camSettings.far);
+			this.scene.add(this.camera);
+		} else {
+			this.camera.fov = camSettings.FOV;
+			this.camera.aspect = camSettings.aspect;
+			this.camera.far = camSettings.far;
+			this.camera.near = camSettings.near;
+			this.camera.updateProjectionMatrix();
+		}
+		this.camera.position.set(camSettings.x, camSettings.y, camSettings.z);
+		this.cameraInitialPosition = this.camera.position.clone();
+		this.onScreenTransformHandler(this.state.screen.options);
+	}
+
+	private onScreenTransformHandler(options: IScreenTransformOptions) {
 		if (options.scrollX != void 0) {
 			let scrollX = this.cameraInitialPosition.x + options.scrollX;
 			// scrollX =  Math.round(scrollX); // prevent to set camera beetween pixels
@@ -254,6 +288,21 @@ export class Chart {
 		this.setState({cursor: {dragMode: false}});
 	}
 
+	private onWindowResize(ev: UIEvent) {
+		let style = getComputedStyle(this.$container);
+		let statePatch: IChartState = {
+			width: parseInt(style.width),
+			height: parseInt(style.height)
+		};
+		this.setState(statePatch);
+	}
+
+	private onChartResize() {
+		let {width, height} = this.state.data;
+		this.renderer.setSize(width, height);
+		this.setupCamera();
+	}
+
 	private zoom(zoomValue: number, zoomOrigin: number) {
 		const MAX_ZOOM_VALUE = 1.5;
 		const MIN_ZOOM_VALUE = 0.7;
@@ -269,7 +318,7 @@ export class Chart {
 	/**
 	 * creates simple chart without animations and minimal widgets set
 	 */
-	static createPreviewChart(userOptions: IChartState): Chart {
+	static createPreviewChart(userOptions: IChartState, $el: Element): Chart {
 		var previewChartOptions: IChartState = {
 			animations: {enabled: false},
 			widgets: {
@@ -279,7 +328,7 @@ export class Chart {
 			}
 		};
 		var options = Utils.deepMerge(userOptions, previewChartOptions);
-		return new Chart(options);
+		return new Chart(options, $el);
 	}
 
 

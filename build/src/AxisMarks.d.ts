@@ -1,6 +1,7 @@
 import { ChartState } from "./State";
 import { AXIS_TYPE } from "./interfaces";
 import { ITrendData } from "./Trend";
+import { EventEmitter } from './EventEmmiter';
 export interface IAxisMarkUpdateOptions {
     value: number;
     displayedValue?: string;
@@ -33,7 +34,7 @@ export declare class AxisMark {
     axisType: AXIS_TYPE;
     protected chartState: ChartState;
     protected renderOnTrendsChange: boolean;
-    protected ee: EventEmitter2;
+    protected ee: EventEmitter;
     constructor(chartState: ChartState, axisType: AXIS_TYPE, options: IAxisMarkOptions);
     protected bindEvents(): void;
     setOptions(newOptions: IAxisMarkUpdateOptions): void;

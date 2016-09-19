@@ -41,15 +41,21 @@ export class GridWidget extends ChartWidget{
 
 	bindEvents() {
 		// grid is bigger then screen, so it's no need to update it on each scroll event
-		let updateGridThrettled = Utils.throttle(() => this.updateGrid(), 1000);
-		this.chartState.onScroll(() => updateGridThrettled());
-		this.chartState.screen.onZoomFrame((options) => {
-			updateGridThrettled();
-			this.onZoomFrame(options);
-		});
-		this.chartState.onDestroy(() => {
-			this.isDestroyed = true;
-		})
+		let updateGridThrottled = Utils.throttle(() => this.updateGrid(), 1000);
+		this.bindEvent(this.chartState.onScroll(() => updateGridThrottled()),
+			this.chartState.screen.onZoomFrame((options) => {
+				updateGridThrottled();
+				this.onZoomFrame(options);
+			}),
+			this.chartState.onDestroy(() => {
+				this.isDestroyed = true;
+				this.unbindEvents();
+			}),
+			this.chartState.onResize(() => {
+				this.updateGrid();
+			})
+		);
+
 	}
 
 	private initGrid() {

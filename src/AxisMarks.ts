@@ -3,7 +3,7 @@ import {ChartState} from "./State";
 import {Utils} from "./Utils";
 import {AXIS_TYPE} from "./interfaces";
 import {ITrendData, ITrendOptions} from "./Trend";
-import {EventEmitter} from './deps';
+import {EventEmitter} from './EventEmmiter';
 
 export interface IAxisMarkUpdateOptions {
 	value: number,
@@ -33,7 +33,7 @@ const AXIS_MARK_DEFAULT_OPTIONS: IAxisMarkOptions = {
 export class AxisMarks {
 	private chartState: ChartState;
 	private axisType: AXIS_TYPE;
-	private ee: EventEmitter2;
+	private ee: EventEmitter;
 	private items: {[name: string]: AxisMark} = {};
 
 	constructor(chartState: ChartState, axisType: AXIS_TYPE) {
@@ -100,7 +100,7 @@ export class AxisMark {
 	axisType: AXIS_TYPE;
 	protected chartState: ChartState;
 	protected renderOnTrendsChange = false;
-	protected ee: EventEmitter2;
+	protected ee: EventEmitter;
 
 	constructor(chartState: ChartState, axisType: AXIS_TYPE, options: IAxisMarkOptions) {
 		this.ee = new EventEmitter();

@@ -35,8 +35,8 @@ export class AxisWidget extends ChartWidget {
 		this.axisYObject = new Object3D();
 		this.object3D.add(this.axisXObject);
 		this.object3D.add(this.axisYObject);
-		this.initAxis(AXIS_TYPE.X);
-		this.initAxis(AXIS_TYPE.Y);
+		this.setupAxis(AXIS_TYPE.X);
+		this.setupAxis(AXIS_TYPE.Y);
 
 		// canvas drawing is expensive operation, so when we scroll, redraw must be called only once per second
 		this.updateAxisXRequest = Utils.throttle(() => this.updateAxis(AXIS_TYPE.X), 1000);
@@ -47,15 +47,20 @@ export class AxisWidget extends ChartWidget {
 
 	bindEvents() {
 		var state = this.chartState;
-		state.screen.onTransformationFrame((options) => {
-			this.onScrollChange(options.scrollX, options.scrollY);
-		});
-		state.screen.onZoomFrame((options) => {this.onZoomFrame(options)});
-		state.onDestroy(() => this.onDestroy())
+
+		this.bindEvent(
+			state.screen.onTransformationFrame((options) => {
+				this.onScrollChange(options.scrollX, options.scrollY);
+			}),
+			state.screen.onZoomFrame((options) => {this.onZoomFrame(options)}),
+			state.onDestroy(() => this.onDestroy()),
+			state.onResize(() => this.onResize())
+		);
 	}
 
 	private onDestroy() {
 		this.isDestroyed = true;
+		this.unbindEvents();
 	}
 
 	private onScrollChange(x: number, y: number) {
@@ -72,16 +77,24 @@ export class AxisWidget extends ChartWidget {
 
 	}
 
-	private initAxis(orientation: AXIS_TYPE) {
-		
-		var isXAxis = orientation == AXIS_TYPE.X;
-		var {width: visibleWidth, height: visibleHeight} = this.chartState.data;
-		var canvasWidth = 0, canvasHeight = 0;
+	private onResize() {
+		this.setupAxis(AXIS_TYPE.X);
+		this.setupAxis(AXIS_TYPE.Y);
+	}
 
+	private setupAxis(orientation: AXIS_TYPE) {
+
+		let isXAxis = orientation == AXIS_TYPE.X;
+		let {width: visibleWidth, height: visibleHeight} = this.chartState.data;
+		let canvasWidth = 0, canvasHeight = 0;
+
+		// clean meshes
 		if (isXAxis) {
+			this.axisXObject.traverse(obj => this.axisXObject.remove(obj));
 			canvasWidth = visibleWidth * 3;
 			canvasHeight = 50;
 		} else {
+			this.axisYObject.traverse(obj => this.axisYObject.remove(obj));
 			canvasWidth = 50;
 			canvasHeight = visibleHeight * 3;
 		}

@@ -16,7 +16,8 @@ export declare class AxisWidget extends ChartWidget {
     bindEvents(): void;
     private onDestroy();
     private onScrollChange(x, y);
-    private initAxis(orientation);
+    private onResize();
+    private setupAxis(orientation);
     getObject3D(): Object3D;
     private updateAxis(orientation);
     private onZoomFrame(options);

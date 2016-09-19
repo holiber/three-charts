@@ -1,5 +1,5 @@
 import { IIteralable } from "./interfaces";
-import { EventEmitter } from './deps';
+import { EventEmitter } from './EventEmmiter';
 import { ChartState } from "./State";
 import Vector3 = THREE.Vector3;
 import { ITrendData, ITrendOptions, ITrendItem, Trend, TREND_TYPE, ITrendTypeSettings } from "./Trend";
@@ -28,7 +28,7 @@ export class TrendSegments {
 	private startSegmentId = 0;
 	private endSegmentId = 0;
 	private trend: Trend;
-	private ee: EventEmitter2;
+	private ee: EventEmitter;
 
 	constructor (chartState: ChartState, trend: Trend) {
 		this.chartState = chartState;
@@ -201,7 +201,7 @@ export class TrendSegments {
 		var eventName = 'animationFrame';
 		this.ee.on('animationFrame', cb);
 		return () => {
-			this.ee.removeListener(eventName, cb);
+			this.ee.off(eventName, cb);
 		}
 	}
 
@@ -209,7 +209,7 @@ export class TrendSegments {
 		var eventName = 'rebuild';
 		this.ee.on(eventName, cb);
 		return () => {
-			this.ee.removeListener(eventName, cb);
+			this.ee.off(eventName, cb);
 		}
 	}
 
@@ -217,7 +217,7 @@ export class TrendSegments {
 		var eventName = 'displayedRangeChanged';
 		this.ee.on(eventName, cb);
 		return () => {
-			this.ee.removeListener(eventName, cb);
+			this.ee.off(eventName, cb);
 		}
 	}
 	

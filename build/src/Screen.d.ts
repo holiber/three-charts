@@ -1,4 +1,3 @@
-import PerspectiveCamera = THREE.PerspectiveCamera;
 import Vector3 = THREE.Vector3;
 import { ChartState } from "./State";
 export interface IScreenTransformOptions {
@@ -13,7 +12,6 @@ export interface IScreenTransformOptions {
  * manage camera, and contains methods for transforming pixels to values
  */
 export declare class Screen {
-    camera: PerspectiveCamera;
     options: IScreenTransformOptions;
     private chartState;
     private scrollXAnimation;

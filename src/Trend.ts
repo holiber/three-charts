@@ -3,7 +3,8 @@ import {Utils} from "./Utils";
 import {MAX_DATA_LENGTH} from "./Chart";
 import {ITrendMarkOptions, TrendMarks} from "./TrendMarks";
 import {TrendSegments} from "./TrendSegments";
-import {EventEmitter, Promise} from './deps';
+import {EventEmitter} from './EventEmmiter';
+import {Promise} from './deps';
 
 export interface IPrependPromiseExecutor {
 	(requestedDataLength: number, resolve: (data: TTrendRawData) => void, reject: () => void): void;
@@ -72,7 +73,7 @@ export class Trend {
 	private chartState: ChartState;
 	private calculatedOptions: ITrendOptions;
 	private prependRequest: Promise<TTrendRawData>;
-	private ee: EventEmitter2;
+	private ee: EventEmitter;
 	
 	constructor(chartState: ChartState, trendName: string, initialState: IChartState) {
 		var options = initialState.trends[trendName];

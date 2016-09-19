@@ -14,15 +14,31 @@ export interface IChartWidgetConstructor {
 export abstract class ChartWidget {
 	static widgetName = '';
 	protected chartState: ChartState;
+	private unsubscribers: Function[] = [];
 
 	constructor (chartState: ChartState) {
 		this.chartState = chartState;
 		this.bindEvents();
 	}
+
 	
 	abstract getObject3D(): Object3D;
 	
 	protected bindEvents() {}
+
+	protected bindEvent(...args: Array<Function | Function[]>): void {
+		let unsubscribers: Function[] = [];
+		if (!Array.isArray(args[0])) {
+			unsubscribers.push(args[0] as Function);
+		} else {
+			unsubscribers.push(...args as Function[]);
+		}
+		this.unsubscribers.push(...unsubscribers);
+	}
+	protected unbindEvents() {
+		this.unsubscribers.forEach(unsubscriber => unsubscriber());
+		this.unsubscribers.length = 0;
+	}
 	
 	static getDefaultOptions(): IChartWidgetOptions {
 		return {enabled: true}
