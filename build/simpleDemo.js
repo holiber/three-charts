@@ -10892,7 +10892,7 @@ var simpleDemo =
 	                enabled: true,
 	                trendChangeSpeed: 0.5,
 	                trendChangeEase: void 0,
-	                zoomSpeed: 0.5,
+	                zoomSpeed: 0.25,
 	                zoomEase: Linear.easeNone,
 	                scrollSpeed: 0.5,
 	                scrollEase: Linear.easeNone,
