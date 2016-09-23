@@ -42,7 +42,7 @@ export class Chart {
 	private stats: Stats;
 	private zoomThrottled: Function;
 	private unsubscribers: Function[];
-	private resizeSensor: ResizeSensor;
+	private resizeSensor: ResizeSensorType;
 
 	static devicePixelRatio = window.devicePixelRatio;
 	static installedWidgets: {[name: string]: typeof ChartWidget} = {};
