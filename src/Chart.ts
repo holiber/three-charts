@@ -23,7 +23,7 @@ import { TrendsIndicatorWidget } from "./widgets/TrendsIndicatorWidget";
 import { TrendsLineWidget } from "./widgets/TrendsLineWidget";
 import { TrendsCandlesWidget } from './widgets/TrendsCandleWidget';
 import { TrendsBeaconWidget } from "./widgets/TrendsBeaconWidget";
-import { ResizeSensor } from './deps';
+import { ResizeSensor, ResizeSensorType } from './deps';
 
 
 export const MAX_DATA_LENGTH = 2692000;

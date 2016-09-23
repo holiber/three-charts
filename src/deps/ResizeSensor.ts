@@ -1,5 +1,5 @@
-declare class ResizeSensorType {
-	constructor ($el: Element, resizeCallback: ($el: Element) => void);
+export interface ResizeSensorType {
+	new ($el: Element, resizeCallback: ($el: Element) => void): ResizeSensorType;
 	detach(): void;
 }
 //

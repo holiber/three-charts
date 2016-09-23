@@ -1,8 +1,8 @@
-
-/// <reference path="./ResizeSensor.d.ts" />
+/// <reference path="./ResizeSensor.ts" />
 
 // TODO: think about different bundles
 
+import { ResizeSensorType } from './ResizeSensor';
 (<any>window).Stats = require('three/examples/js/libs/stats.min');
 (<any>window).TweenLite = require('gsap/src/uncompressed/TweenMax');
 //require('gsap/src/uncompressed/easing/EasePack.js');
@@ -14,4 +14,5 @@ export const EE2 = require('EventEmitter2') as typeof EventEmitter2;
 
 export { Promise } from '../polyfills/es6-promise';
 
-export const ResizeSensor = require('css-element-queries/src/ResizeSensor') as typeof ResizeSensorType;
+export * from './ResizeSensor';
+export const ResizeSensor = require('css-element-queries/src/ResizeSensor') as ResizeSensorType;
