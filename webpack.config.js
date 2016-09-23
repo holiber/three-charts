@@ -1,6 +1,7 @@
 var CommonsPlugin = new require("webpack/lib/optimize/CommonsChunkPlugin");
 var WebpackOnBuildPlugin = require('on-build-webpack');
 var CopyWebpackPlugin = require('copy-webpack-plugin');
+var webpack = require('webpack');
 
 
 module.exports = {
@@ -30,6 +31,13 @@ module.exports = {
     },
 
     plugins: [
+
+        new webpack.optimize.UglifyJsPlugin({
+            compress: false,
+            beautify: true,
+            mangle: false
+        }),
+
         new CopyWebpackPlugin([
             { from: 'node_modules/three/three.js' },
             { from: 'src/polyfills', to: 'src/polyfills' }

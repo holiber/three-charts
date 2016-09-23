@@ -212,8 +212,8 @@ export class Chart {
 
 	private unbindEvents() {
 		// TODO: unbind events correctly
-		this.$el.remove();
 		this.resizeSensor && this.resizeSensor.detach();
+		this.$el.remove();
 		this.unsubscribers.forEach(unsubscribe => unsubscribe());
 	}
 

@@ -22,8 +22,8 @@
   },
   "typings": "./typings/index.d.ts",
   "scripts": {
-    "start": "npm run rimraf -- build && webpack --watch --process",
-    "build": "npm run rimraf -- build && webpack -process",
+    "start": "npm run rimraf -- build && webpack --watch --progress --colors",
+    "build": "npm run rimraf -- build && webpack --progress --colors",
     "postinstall": "typings install",
     "test": "echo \"Error: no test specified\" && exit 1",
     "rimraf": "rimraf"
