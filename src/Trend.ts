@@ -4,7 +4,7 @@ import {MAX_DATA_LENGTH} from "./Chart";
 import {ITrendMarkOptions, TrendMarks} from "./TrendMarks";
 import {TrendSegments} from "./TrendSegments";
 import {EventEmitter} from './EventEmmiter';
-import {Promise} from './deps';
+import {Promise} from './deps/deps';
 
 export interface IPrependPromiseExecutor {
 	(requestedDataLength: number, resolve: (data: TTrendRawData) => void, reject: () => void): void;

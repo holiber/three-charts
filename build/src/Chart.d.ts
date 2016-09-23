@@ -16,8 +16,8 @@ export declare class Chart {
     private widgets;
     private stats;
     private zoomThrottled;
-    private windowResizeSubscription;
     private unsubscribers;
+    private resizeSensor;
     static devicePixelRatio: number;
     static installedWidgets: {
         [name: string]: typeof ChartWidget;
@@ -57,7 +57,7 @@ export declare class Chart {
     private onMouseWheel(ev);
     private onTouchMove(ev);
     private onTouchEnd(ev);
-    private onWindowResize(ev);
+    private onChartContainerResizeHandler(width, height);
     private onChartResize();
     private zoom(zoomValue, zoomOrigin);
     /**

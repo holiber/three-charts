@@ -1,4 +1,4 @@
-import {EE2} from './deps';
+import {EE2} from './deps/deps';
 
 /**
  * this class uses as proxy for EventEmitter2

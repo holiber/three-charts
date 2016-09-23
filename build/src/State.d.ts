@@ -5,7 +5,7 @@ import { Trends, ITrendsOptions } from "./Trends";
 import { Screen } from "./Screen";
 import { AxisMarks } from "./AxisMarks";
 import { IAxisOptions, IAnimationsOptions } from "./interfaces";
-import { Promise } from './deps';
+import { Promise } from './deps/deps';
 /**
  * readonly computed state data
  * calculated after recalculateState() call

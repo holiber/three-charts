@@ -7,4 +7,5 @@ require('three/examples/js/renderers/CanvasRenderer.js');
 require('three/examples/js/renderers/Projector.js');
 export const isPlainObject = require('is-plain-object') as Function;
 export const EE2 = require('EventEmitter2') as typeof EventEmitter2;
-export {Promise} from './polyfills/es6-promise';
+export { ResizeSensor} from './ResizeSensor';
+export { Promise } from '../polyfills/es6-promise';

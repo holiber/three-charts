@@ -1,28 +1,30 @@
 // deps must be always on top
-require('./deps');
+require('./deps/deps');
 
-import {Trend} from "./Trend";
+import { Trend } from "./Trend";
 import Vector3 = THREE.Vector3;
 import PerspectiveCamera = THREE.PerspectiveCamera;
 import Renderer = THREE.Renderer;
 import Scene = THREE.Scene;
 import WebGLRenderer = THREE.WebGLRenderer;
 import Object3D = THREE.Object3D;
-import {ChartState, IChartState} from "./State";
-import {ChartWidget, IChartWidgetConstructor} from "./Widget";
-import {Utils} from "./Utils";
-import {IScreenTransformOptions} from "./Screen";
-import {AxisWidget} from "./widgets/AxisWidget";
-import {GridWidget} from "./widgets/GridWidget";
-import {TrendsGradientWidget} from "./widgets/TrendsGradientWidget";
-import {TrendsLoadingWidget} from "./widgets/TrendsLoadingWidget";
-import {AxisMarksWidget} from "./widgets/AxisMarksWidget";
-import {TrendsMarksWidget} from "./widgets/TrendsMarksWidget";
-import {BorderWidget} from "./widgets/BorderWidget";
-import {TrendsIndicatorWidget} from "./widgets/TrendsIndicatorWidget";
-import {TrendsLineWidget} from "./widgets/TrendsLineWidget";
-import {TrendsCandlesWidget} from './widgets/TrendsCandleWidget';
-import {TrendsBeaconWidget} from "./widgets/TrendsBeaconWidget";
+import { ChartState, IChartState } from "./State";
+import { ChartWidget, IChartWidgetConstructor } from "./Widget";
+import { Utils } from "./Utils";
+import { IScreenTransformOptions } from "./Screen";
+import { AxisWidget } from "./widgets/AxisWidget";
+import { GridWidget } from "./widgets/GridWidget";
+import { TrendsGradientWidget } from "./widgets/TrendsGradientWidget";
+import { TrendsLoadingWidget } from "./widgets/TrendsLoadingWidget";
+import { AxisMarksWidget } from "./widgets/AxisMarksWidget";
+import { TrendsMarksWidget } from "./widgets/TrendsMarksWidget";
+import { BorderWidget } from "./widgets/BorderWidget";
+import { TrendsIndicatorWidget } from "./widgets/TrendsIndicatorWidget";
+import { TrendsLineWidget } from "./widgets/TrendsLineWidget";
+import { TrendsCandlesWidget } from './widgets/TrendsCandleWidget';
+import { TrendsBeaconWidget } from "./widgets/TrendsBeaconWidget";
+import { ResizeSensor } from './deps';
+
 
 export const MAX_DATA_LENGTH = 2692000;
 
@@ -39,8 +41,8 @@ export class Chart {
 	private widgets: Array<ChartWidget> = [];
 	private stats: Stats;
 	private zoomThrottled: Function;
-	private windowResizeSubscription: EventListener;
 	private unsubscribers: Function[];
+	private resizeSensor: ResizeSensor;
 
 	static devicePixelRatio = window.devicePixelRatio;
 	static installedWidgets: {[name: string]: typeof ChartWidget} = {};
@@ -78,7 +80,10 @@ export class Chart {
 		this.scene = new THREE.Scene();
 		this.isStopped = !autoRender.enabled;
 
-		var renderer = this.renderer = new (Chart.renderers[this.state.data.renderer] as any)({antialias: true, alpha: true});
+		var renderer = this.renderer = new (Chart.renderers[this.state.data.renderer] as any)({
+			antialias: true,
+			alpha: true
+		});
 		renderer.setPixelRatio(Chart.devicePixelRatio);
 		renderer.setClearColor(state.data.backgroundColor, state.data.backgroundOpacity);
 		renderer.setSize(w, h);
@@ -106,7 +111,7 @@ export class Chart {
 		this.bindEvents();
 		this.renderLoop();
 	}
-	
+
 	private renderLoop() {
 		if (this.isDestroyed) return;
 		this.stats && this.stats.begin();
@@ -122,7 +127,7 @@ export class Chart {
 		}
 		this.stats && this.stats.end();
 	}
-	
+
 	render() {
 		this.renderer.render(this.scene, this.camera);
 	}
@@ -150,11 +155,11 @@ export class Chart {
 		} catch (wtf) {
 			// sometimes with many chart instances forceContextLoss not working
 		}
-		(this.renderer as any).context  = null;
+		(this.renderer as any).context = null;
 		this.renderer.domElement = null;
 		this.renderer = null;
 	}
-	
+
 	getState(): IChartState {
 		return this.state.data
 	}
@@ -165,7 +170,7 @@ export class Chart {
 	getTrend(trendName: string): Trend {
 		return this.state.getTrend(trendName);
 	}
-	
+
 	/**
 	 * shortcut for Chart.state.setState
 	 */
@@ -177,16 +182,25 @@ export class Chart {
 	private bindEvents() {
 		var $el = this.$el;
 		if (this.state.data.controls.enabled) {
-			$el.addEventListener('mousewheel', (ev: MouseWheelEvent) => {this.onMouseWheel(ev)});
-			$el.addEventListener('mousemove', (ev: MouseEvent) => {this.onMouseMove(ev)});
+			$el.addEventListener('mousewheel', (ev: MouseWheelEvent) => {
+				this.onMouseWheel(ev)
+			});
+			$el.addEventListener('mousemove', (ev: MouseEvent) => {
+				this.onMouseMove(ev)
+			});
 			$el.addEventListener('mousedown', (ev: MouseEvent) => this.onMouseDown(ev));
 			$el.addEventListener('mouseup', (ev: MouseEvent) => this.onMouseUp(ev));
-			$el.addEventListener('touchmove', (ev: TouchEvent) => {this.onTouchMove(ev)});
-			$el.addEventListener('touchend', (ev: TouchEvent) => {this.onTouchEnd(ev)});
+			$el.addEventListener('touchmove', (ev: TouchEvent) => {
+				this.onTouchMove(ev)
+			});
+			$el.addEventListener('touchend', (ev: TouchEvent) => {
+				this.onTouchEnd(ev)
+			});
 		}
 		if (this.state.data.autoResize) {
-			this.windowResizeSubscription = (ev: UIEvent) => {this.onWindowResize(ev)};
-			window.addEventListener('resize', this.windowResizeSubscription);
+			this.resizeSensor = new ResizeSensor(this.$container, () => {
+				this.onChartContainerResizeHandler(this.$container.clientWidth, this.$container.clientHeight);
+			});
 		}
 
 		this.unsubscribers = [
@@ -199,7 +213,7 @@ export class Chart {
 	private unbindEvents() {
 		// TODO: unbind events correctly
 		this.$el.remove();
-		window.removeEventListener('resize', this.windowResizeSubscription);
+		this.resizeSensor && this.resizeSensor.detach();
 		this.unsubscribers.forEach(unsubscribe => unsubscribe());
 	}
 
@@ -232,7 +246,7 @@ export class Chart {
 			this.camera.position.setY(scrollY);
 		}
 	}
-	
+
 	private autoscroll() {
 		var state = this.state;
 		if (!state.data.autoScroll) return;
@@ -249,7 +263,7 @@ export class Chart {
 			this.setState({xAxis: {range: {scroll: currentScroll + scrollDelta}}});
 		}
 	}
-	
+
 	private onScrollStop() {
 		// var tendsXMax = this.state.data.computedData.trends.maxX;
 		// var paddingRightX = this.state.getPaddingRight();
@@ -261,7 +275,7 @@ export class Chart {
 	private onMouseDown(ev: MouseEvent) {
 		this.setState({cursor: {dragMode: true, x: ev.clientX, y: ev.clientY}});
 	}
-	
+
 	private onMouseUp(ev: MouseEvent) {
 		this.setState({cursor: {dragMode: false}});
 	}
@@ -288,13 +302,8 @@ export class Chart {
 		this.setState({cursor: {dragMode: false}});
 	}
 
-	private onWindowResize(ev: UIEvent) {
-		let style = getComputedStyle(this.$container);
-		let statePatch: IChartState = {
-			width: parseInt(style.width),
-			height: parseInt(style.height)
-		};
-		this.setState(statePatch);
+	private onChartContainerResizeHandler(width: number, height: number) {
+		this.setState({width, height});
 	}
 
 	private onChartResize() {

@@ -1,7 +1,7 @@
 import Texture = THREE.Texture;
 import Color = THREE.Color;
 import { TIteralable, IIteralable } from "./interfaces";
-import { isPlainObject } from './deps';
+import { isPlainObject } from './deps/deps';
 
 function deepmerge(target: any, src: any, mergeArrays = true) {
 	var array = Array.isArray(src);

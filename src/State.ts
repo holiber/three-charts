@@ -11,7 +11,7 @@ import {
 	AXIS_TYPE, AXIS_DATA_TYPE, IAxisOptions, IAnimationsOptions, AXIS_RANGE_TYPE
 } from "./interfaces";
 import {Chart} from "./Chart";
-import {Promise} from './deps';
+import {Promise} from './deps/deps';
 
 
 interface IRecalculatedStateResult {
