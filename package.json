@@ -2,7 +2,7 @@
   "name": "three-chart",
   "version": "0.0.1",
   "description": "line chart based on threejs",
-  "main": "index.js",
+  "main": "build/index.js",
   "dependencies": {
     "createjs-tweenjs": "^0.6.0",
     "css-element-queries": "^0.3.2",
