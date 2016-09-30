@@ -53,6 +53,8 @@ export class Chart {
 
 	constructor(state: IChartState, $container: Element) {
 
+		if (!THREE || !THREE.REVISION) Utils.error('three.js not found');
+
 		if (!$container) {
 			Utils.error('$el must be set');
 		}
@@ -212,7 +214,12 @@ export class Chart {
 
 	private unbindEvents() {
 		// TODO: unbind events correctly
-		this.resizeSensor && this.resizeSensor.detach();
+		try {
+			this.resizeSensor && this.resizeSensor.detach();
+		} catch (e) {
+			// ups.. somebody already removed resizeSensor childNode
+			// detected in angular2 apps
+		}
 		this.$el.remove();
 		this.unsubscribers.forEach(unsubscribe => unsubscribe());
 	}

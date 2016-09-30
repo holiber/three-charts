@@ -1,11 +1,10 @@
+import Vector3 = THREE.Vector3;
 import {ITrendOptions, Trend, ITrendData} from "./Trend";
 import {EventEmitter} from './EventEmmiter';
 import {Utils} from './Utils';
-import Vector3 = THREE.Vector3;
 import {IChartWidgetOptions, ChartWidget} from "./Widget";
 import {Trends, ITrendsOptions} from "./Trends";
 import {Screen} from "./Screen";
-import {IChartEvent} from "./Events";
 import {AxisMarks} from "./AxisMarks";
 import {
 	AXIS_TYPE, AXIS_DATA_TYPE, IAxisOptions, IAnimationsOptions, AXIS_RANGE_TYPE
@@ -16,8 +15,7 @@ import {Promise} from './deps/deps';
 
 interface IRecalculatedStateResult {
 	changedProps: IChartState,
-	patch: IChartState,
-	eventsToEmit: IChartEvent[]
+	patch: IChartState
 }
 
 const CHART_STATE_EVENTS = {
@@ -269,7 +267,6 @@ export class ChartState {
 	private recalculateState(changedProps?: IChartState): IRecalculatedStateResult {
 		var data = this.data;
 		var patch: IChartState = {};
-		var eventsToEmit: IChartEvent[] = [];
 		var actualData = Utils.deepMerge({}, data);
 
 		// recalculate widgets
@@ -340,7 +337,7 @@ export class ChartState {
 		patch.computedData = this.getComputedData(allChangedProps);
 		this.savePrevState(patch);
 		this.data = Utils.deepMerge(this.data, patch);
-		return {changedProps: allChangedProps, patch: patch, eventsToEmit: eventsToEmit}
+		return {changedProps: allChangedProps, patch: patch}
 	}
 
 	private getComputedData(changedProps?: IChartState): IChartStateComputedData {

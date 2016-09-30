@@ -1,4 +1,4 @@
-var CommonsPlugin = new require("webpack/lib/optimize/CommonsChunkPlugin");
+var UnminifiedWebpackPlugin = require('unminified-webpack-plugin');
 var WebpackOnBuildPlugin = require('on-build-webpack');
 var CopyWebpackPlugin = require('copy-webpack-plugin');
 var webpack = require('webpack');
@@ -12,7 +12,7 @@ module.exports = {
     },
     output: {
         path: __dirname + '/build',
-        filename: '[name].js',
+        filename: '[name].min.js',
         library: '[name]'
     },
     resolve: {
@@ -32,25 +32,32 @@ module.exports = {
 
     plugins: [
 
+        // new webpack.optimize.UglifyJsPlugin({
+        //     compress: false,
+        //     beautify: true,
+        //     mangle: false
+        // }),
+
         new webpack.optimize.UglifyJsPlugin({
-            compress: false,
-            beautify: true,
-            mangle: false
+            compress: {
+                warnings: false
+            }
         }),
 
         new CopyWebpackPlugin([
             { from: 'node_modules/three/three.js' },
             { from: 'src/polyfills', to: 'src/polyfills' }
         ]),
+
+        new UnminifiedWebpackPlugin(),
         
-        // make webgl-chart.js index file
+        // make index file and add commonJS support
         new WebpackOnBuildPlugin(function(stats) {
             var fs = require('fs');
-            var sourceFile = __dirname + '/build/ThreeChart.js';
-            var scriptContent = fs.readFileSync(sourceFile);
-            scriptContent += '\n if (typeof module !== "undefined" && module.exports) module.exports = ThreeChart;';
-            fs.writeFileSync(sourceFile, scriptContent);
-            fs.writeFileSync(__dirname + '/build/index.js', scriptContent);
+            var commonJsSupportScript = '\n if (typeof module !== "undefined" && module.exports) module.exports = ThreeChart;';
+            fs.appendFileSync(__dirname + '/build/ThreeChart.js', commonJsSupportScript);
+            fs.appendFileSync(__dirname + '/build/ThreeChart.min.js', commonJsSupportScript);
+            fs.writeFileSync(__dirname + '/build/index.js', 'module.exports = require("./ThreeChart")');
         })
 
     ]

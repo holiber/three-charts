@@ -1,5 +1,5 @@
-import { ITrendOptions, Trend, ITrendData } from "./Trend";
 import Vector3 = THREE.Vector3;
+import { ITrendOptions, Trend, ITrendData } from "./Trend";
 import { IChartWidgetOptions } from "./Widget";
 import { Trends, ITrendsOptions } from "./Trends";
 import { Screen } from "./Screen";
