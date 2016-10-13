@@ -1,11 +1,12 @@
 import Vector3 = THREE.Vector3;
 import { ITrendOptions, Trend, ITrendData } from "./Trend";
-import { IChartWidgetOptions } from "./Widget";
-import { Trends, ITrendsOptions } from "./Trends";
+import { IChartWidgetOptions, ChartWidget } from "./Widget";
+import { TrendsManager, ITrendsOptions } from "./TrendsManager";
 import { Screen } from "./Screen";
 import { AxisMarks } from "./AxisMarks";
 import { IAxisOptions, IAnimationsOptions } from "./interfaces";
 import { Promise } from './deps/deps';
+import { ChartPlugin } from './Plugin';
 /**
  * readonly computed state data
  * calculated after recalculateState() call
@@ -59,6 +60,10 @@ export interface IChartState {
      * overridden settings for single setState operation
      */
     operationState?: IChartState;
+    pluginsState?: {
+        [pluginName: string]: any;
+    };
+    eventEmitterMaxListeners?: number;
     [key: string]: any;
 }
 /**
@@ -66,16 +71,24 @@ export interface IChartState {
  */
 export declare class ChartState {
     data: IChartState;
-    trends: Trends;
+    widgetsClasses: {
+        [name: string]: typeof ChartWidget;
+    };
+    plugins: {
+        [pluginName: string]: ChartPlugin;
+    };
+    trendsManager: TrendsManager;
     screen: Screen;
     xAxisMarks: AxisMarks;
     yAxisMarks: AxisMarks;
     /**
      * true then chartState was initialized and ready to use
      */
-    private isReady;
+    isReady: boolean;
     private ee;
-    constructor(initialState: IChartState);
+    constructor(initialState: IChartState, widgetsClasses?: {
+        [name: string]: typeof ChartWidget;
+    }, plugins?: ChartPlugin[]);
     /**
      * destroy state, use Chart.destroy to completely destroy chart
      */
@@ -92,6 +105,9 @@ export declare class ChartState {
     }) => void): Function;
     onZoom(cb: (changedProps: IChartState) => void): Function;
     onResize(cb: (changedProps: IChartState) => void): Function;
+    onPluginsStateChange(cb: (changedPluginsStates: {
+        [pluginName: string]: Plugin;
+    }) => any): Function;
     getTrend(trendName: string): Trend;
     setState(newState: IChartState, eventData?: any, silent?: boolean): void;
     /**
@@ -101,6 +117,15 @@ export declare class ChartState {
     private getComputedData(changedProps?);
     private savePrevState(changedProps?);
     private emitChangedStateEvents(changedProps, eventData);
+    /**
+     * init plugins and save plugins options in initialState
+     */
+    private installPlugins(plugins, initialState);
+    /**
+     * returns plugin instance by plugin name
+     * @example
+     */
+    getPlugin(pluginName: string): ChartPlugin;
     private initListeners();
     private handleTrendsChange(changedTrends, newData);
     private recalculateXAxis(actualData, changedProps);

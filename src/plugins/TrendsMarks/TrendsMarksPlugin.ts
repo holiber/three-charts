@@ -1,15 +1,17 @@
-
-import {ChartState} from "./State";
-import {Utils} from "./Utils";
-import { Trend, ITrendOptions, TREND_TYPE } from "./Trend";
+import { ChartState } from "../../State";
+import { Utils } from "../../Utils";
+import { TREND_TYPE } from "../../Trend";
 import Vector3 = THREE.Vector3;
-import {TrendSegment} from "./TrendSegments";
-import {EventEmitter} from './EventEmmiter';
+import { TrendSegment } from "../../TrendSegments";
+import { ChartPlugin } from '../../Plugin';
+import { TrendsMarksWidget } from './TrendsMarksWidget';
 
 export enum TREND_MARK_SIDE {TOP, BOTTOM}
 export enum EVENTS {CHANGE}
+export type TTrendsMarksPluginOptions = {items: ITrendMarkOptions[]};
 
 export interface ITrendMarkOptions {
+	trendName: string,
 	value: number,
 	name?: string,
 	title?: string
@@ -31,6 +33,7 @@ export interface ITrendMarkOptions {
 }
 
 const AXIS_MARK_DEFAULT_OPTIONS: ITrendMarkOptions = {
+	trendName: '',
 	title: '',
 	description: '',
 	descriptionColor: 'rgb(40,136,75)',
@@ -43,62 +46,61 @@ const AXIS_MARK_DEFAULT_OPTIONS: ITrendMarkOptions = {
 	margin: 20
 };
 
-export class TrendMarks {
-	private chartState: ChartState;
-	private ee: EventEmitter;
-	private trend: Trend;
+
+export class TrendsMarksPlugin extends ChartPlugin {
+	static NAME = 'TrendsMarks';
+	static pluginWidgets = [TrendsMarksWidget];
+
 	private items: {[name: string]: TrendMark} = {};
 	private rects: {[name: string]: number[]} = {};
 
-	constructor(chartState: ChartState, trend: Trend) {
-		this.chartState = chartState;
-		this.ee = new EventEmitter();
-		this.trend = trend;
-		this.onMarksChange();
+	constructor(trendsMarksPluginOptions: TTrendsMarksPluginOptions) {
+		super(trendsMarksPluginOptions);
+	}
+
+	protected onInitialStateApplied() {
 		this.bindEvents();
+		this.onMarksChangeHandler();
 	}
 
-	private bindEvents() {
-		this.trend.segments.onRebuild(() => this.updateMarksSegments());
-		this.trend.onChange((changedOptions) => this.onTrendChange(changedOptions));
+	protected onStateChanged() {
+		this.onMarksChangeHandler();
+	}
+
+
+	getOptions(): TTrendsMarksPluginOptions {
+		return super.getOptions() as TTrendsMarksPluginOptions;
+	}
+
+	getItems() {
+		return this.items;
+	}
+
+	getItem(markName: string) {
+		return this.items[markName];
+	}
+
+	createMark(options: ITrendMarkOptions) {
+		var marksOptions = this.getOptions().items;
+		var newMarkOptions = marksOptions.concat([options]);
+		this.chartState.setState({pluginsState: {[this.name]: {items: newMarkOptions}}});
+	}
+
+	onChange(cb: () => any) {
+		return this.ee.subscribe(EVENTS[EVENTS.CHANGE], cb);
+	}
+
+	protected bindEvents() {
+		this.chartState.trendsManager.onSegmentsRebuilded(() => this.updateMarksSegments());
 		this.chartState.screen.onZoomFrame(() => this.calclulateMarksPositions());
-		this.chartState.onDestroy(() => this.ee.removeAllListeners());
 	}
 
-	private onTrendChange(changedOptions: ITrendOptions) {
-		if (!changedOptions.marks) return;
-		this.onMarksChange();
-		this.ee.emit(EVENTS[EVENTS.CHANGE]);
-	}
-	
-	onChange(cb: () => void): Function {
-		var eventName = EVENTS[EVENTS.CHANGE];
-		this.ee.on(eventName, cb);
-		return () => {
-			this.ee.off(eventName, cb);
-		}
+	protected onInitialStateAppliedHandler() {
+		this.onMarksChangeHandler();
 	}
 
-	private updateMarksSegments() {
-		var marks = this.items;
-		var marksArr: TrendMark[] = [];
-		var xVals: number[] = [];
-		for (let markName in marks) {
-			let mark = marks[markName];
-			xVals.push(mark.options.value);
-			marksArr.push(mark);
-			mark._setSegment(null);
-		}
-		marksArr.sort((a, b) => a.options.value - b.options.value);
-		var points = this.trend.segments.getSegmentsForXValues(xVals.sort((a, b) => a - b));
-		for (let markInd = 0; markInd < marksArr.length; markInd++) {
-			marksArr[markInd]._setSegment(points[markInd]);
-		}
-		this.calclulateMarksPositions();
-	}
-
-	private onMarksChange() {
-		var trendsMarksOptions = this.trend.getOptions().marks;
+	private onMarksChangeHandler() {
+		var trendsMarksOptions = this.getOptions().items;
 		let actualMarksNames: string[] = [];
 		for (let options of trendsMarksOptions) {
 			var marks = this.items;
@@ -114,8 +116,8 @@ export class TrendMarks {
 			}
 
 			options = Utils.deepMerge(AXIS_MARK_DEFAULT_OPTIONS, options);
-			
-			let mark = new TrendMark(this.chartState, options, this.trend);
+
+			let mark = new TrendMark(this.chartState, options);
 			marks[options.name] = mark;
 		}
 
@@ -125,22 +127,9 @@ export class TrendMarks {
 			delete this.items[markName];
 		}
 		this.updateMarksSegments();
-	}
-	
-	createMark(options: ITrendMarkOptions) {
-		var marksOptions = this.trend.getOptions().marks;
-		var newMarkOptions = marksOptions.concat([options]);
-		this.chartState.setState({trends: {[this.trend.name]: {marks: newMarkOptions}}});
+		this.ee.emit(EVENTS[EVENTS.CHANGE]);
 	}
 
-
-	getItems() {
-		return this.items;
-	}
-	
-	getItem(markName: string) {
-		return this.items[markName];
-	}
 
 	private calclulateMarksPositions() {
 		this.rects = {};
@@ -186,13 +175,45 @@ export class TrendMarks {
 
 		if (isTopSideMark) {
 			newOffset = markRect[1] - markRect[3] - state.getPointOnYAxis(mark.yVal);
-		} else  {
+		} else {
 			newOffset = state.getPointOnYAxis(mark.yVal) - markRect[1];
 		}
 
 		mark._setOffset(newOffset);
 		mark._setRow(row);
 		this.rects[name] = markRect;
+	}
+
+	private updateMarksSegments() {
+		let chartState = this.chartState;
+		let trends = chartState.trendsManager.trends;
+		for (let trendName in trends) {
+			var marks = this.getTrendMarks(trendName);
+			var marksArr: TrendMark[] = [];
+			var xVals: number[] = [];
+			for (let markName in marks) {
+				let mark = marks[markName];
+				xVals.push(mark.options.value);
+				marksArr.push(mark);
+				mark._setSegment(null);
+			}
+			marksArr.sort((a, b) => a.options.value - b.options.value);
+			let trend = chartState.getTrend(trendName);
+			let points = trend.segments.getSegmentsForXValues(xVals.sort((a, b) => a - b));
+			for (let markInd = 0; markInd < marksArr.length; markInd++) {
+				marksArr[markInd]._setSegment(points[markInd]);
+			}
+		}
+		this.calclulateMarksPositions();
+	}
+
+	private getTrendMarks(trendName: string): TrendMark[] {
+		let trendMarks: TrendMark[] = [];
+		for (let markName in this.items) {
+			if (this.items[markName].options.trendName != trendName) continue;
+			trendMarks.push(this.items[markName]);
+		}
+		return trendMarks;
 	}
 
 }
@@ -204,13 +225,11 @@ export class TrendMark {
 	yVal: number;
 	offset: number;
 	row = 0;
-	protected trend: Trend;
 	protected chartState: ChartState;
 
-	constructor(chartState: ChartState, options: ITrendMarkOptions, trend: Trend) {
+	constructor(chartState: ChartState, options: ITrendMarkOptions) {
 		this.options = options;
 		this.chartState = chartState;
-		this.trend = trend;
 	}
 
 
@@ -221,7 +240,9 @@ export class TrendMark {
 		this.segment = segment;
 		if (!segment) return;
 
-		if (this.trend.getOptions().type == TREND_TYPE.LINE) {
+		let trend = this.chartState.getTrend(this.options.trendName)
+
+		if (trend.getOptions().type == TREND_TYPE.LINE) {
 			this.xVal = segment.endXVal;
 			this.yVal = segment.endYVal;
 		} else if (this.options.orientation == TREND_MARK_SIDE.TOP) {

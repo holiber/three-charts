@@ -12,7 +12,7 @@ module.exports = {
     },
     output: {
         path: __dirname + '/build',
-        filename: '[name].min.js',
+        filename: '[name].js',
         library: '[name]'
     },
     resolve: {
@@ -32,24 +32,24 @@ module.exports = {
 
     plugins: [
 
-        // new webpack.optimize.UglifyJsPlugin({
-        //     compress: false,
-        //     beautify: true,
-        //     mangle: false
-        // }),
-
         new webpack.optimize.UglifyJsPlugin({
-            compress: {
-                warnings: false
-            }
+            compress: false,
+            beautify: true,
+            mangle: false
         }),
+
+        // new webpack.optimize.UglifyJsPlugin({
+        //     compress: {
+        //         warnings: false
+        //     }
+        // }),
 
         new CopyWebpackPlugin([
             { from: 'node_modules/three/three.js' },
             { from: 'src/polyfills', to: 'src/polyfills' }
         ]),
 
-        new UnminifiedWebpackPlugin(),
+        // new UnminifiedWebpackPlugin(),
         
         // make index file and add commonJS support
         new WebpackOnBuildPlugin(function(stats) {

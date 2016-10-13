@@ -43,6 +43,11 @@ export interface IAxisRange {
 		end?: number
 	},
 
+	margin?: {
+		start?: number,
+		end?: number
+	},
+
 	maxLength?: number;
 	minLength?: number;
 	zeroVal?: number,

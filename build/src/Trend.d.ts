@@ -1,5 +1,4 @@
 import { ChartState, IChartState } from "./State";
-import { ITrendMarkOptions, TrendMarks } from "./TrendMarks";
 import { TrendSegments } from "./TrendSegments";
 export interface IPrependPromiseExecutor {
     (requestedDataLength: number, resolve: (data: TTrendRawData) => void, reject: () => void): void;
@@ -32,7 +31,6 @@ export interface ITrendOptions {
     hasIndicator?: boolean;
     hasBeacon?: boolean;
     maxSegmentLength?: number;
-    marks?: ITrendMarkOptions[];
     settingsForTypes?: {
         CANDLE?: ITrendTypeSettings;
         LINE?: ITrendTypeSettings;
@@ -40,7 +38,6 @@ export interface ITrendOptions {
 }
 export declare class Trend {
     name: string;
-    marks: TrendMarks;
     segments: TrendSegments;
     minXVal: number;
     minYVal: number;

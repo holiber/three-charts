@@ -1,37 +1,43 @@
 
 import {Trend, ITrendOptions} from "./Trend";
 import {ChartState, IChartState} from "./State";
+import { EventEmitter } from './EventEmmiter';
 
 export interface ITrendsOptions {
 	[trendName: string]: ITrendOptions;
 }
 
+const EVENTS = {
+	SEGMENTS_REBUILDED: 'segmentsRebuilded'
+};
+
 /**
- * Trends collection
+ * Trends manager
  */
-export class Trends {
-	items: {[name: string]: Trend} = {};
+export class TrendsManager {
+	trends: {[name: string]: Trend} = {};
 	calculatedOptions: ITrendsOptions;
+	private ee = new EventEmitter();
 	private chartState: ChartState;
 	
 	constructor(state: ChartState, initialState: IChartState) {
 		this.chartState = state;
 		var trendsCalculatedOptions: ITrendsOptions = {};
 		for (let trendName in initialState.trends) {
-			let trend = new Trend(state, trendName, initialState);
+			let trend = this.createTrend(state, trendName, initialState);
 			trendsCalculatedOptions[trendName] = trend.getCalculatedOptions();
-			this.items[trendName] = trend;
 		}
 		this.calculatedOptions = trendsCalculatedOptions;
+		this.bindEvents();
 	}
 
 	getTrend(trendName: string) {
-		return this.items[trendName];
+		return this.trends[trendName];
 	}
 	
 	getEnabledTrends(): Trend[] {
 		var enabledTrends: Trend[] = [];
-		var allTrends = this.items;
+		var allTrends = this.trends;
 		for (let trendName in allTrends) {
 			let trend = allTrends[trendName];
 			trend.getOptions().enabled && enabledTrends.push(trend);
@@ -65,16 +71,9 @@ export class Trends {
 			compareFn = Math.min;
 		}
 		for (let trend of trends) {
-			// TODO: refactor this shit
-			// if (!trend.segments) {
-				var trendData = trend.getData(fromX, toX);
-				var trendYValues = trendData.map((dataItem) => dataItem.yVal);
-				result = compareFn(result, ...trendYValues);
-			// } else {
-			// 	let segments = trend.segments.getSegments(fromX, toX);
-			// 	let segmentsYValues = segments.map((segment) => extremumIsMax ? segment.maxYVal: segment.minYVal);
-			// 	result = compareFn(result, ...segmentsYValues);
-			// }
+			var trendData = trend.getData(fromX, toX);
+			var trendYValues = trendData.map((dataItem) => dataItem.yVal);
+			result = compareFn(result, ...trendYValues);
 		}
 		if (result == Infinity || result == -Infinity) result = NaN;
 		return result;
@@ -82,4 +81,24 @@ export class Trends {
 
 	getMaxYVal(fromX?: number, toX?: number) {return this.getExtremumYVal(true, fromX, toX)}
 	getMinYVal(fromX?: number, toX?: number) {return this.getExtremumYVal(false, fromX, toX)}
+
+	onSegmentsRebuilded(cb: (trendName: string) => any) {
+		return this.ee.subscribe(EVENTS.SEGMENTS_REBUILDED, cb);
+	}
+
+	private bindEvents() {
+		this.chartState.onInitialStateApplied(() => this.onInitialStateAppliedHandler());
+	}
+
+	private onInitialStateAppliedHandler() {
+		for (let trendName in this.trends) {
+			this.trends[trendName].segments.onRebuild(() => this.ee.emit(EVENTS.SEGMENTS_REBUILDED, trendName));
+		}
+	}
+
+	private createTrend(state: ChartState, trendName: string, initialState: IChartState): Trend {
+		let trend = new Trend(state, trendName, initialState);
+		this.trends[trendName] = trend;
+		return trend;
+	}
 }

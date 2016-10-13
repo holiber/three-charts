@@ -7,6 +7,11 @@ import { Utils } from "./Utils";
 import convertArray = THREE.AnimationUtils.convertArray;
 
 const MAX_ANIMATED_SEGMENTS = 100;
+const EVENTS = {
+	REBUILD: 'rebuild',
+	DISLPAYED_RANGE_CHANGED: 'displayedRangeChanged',
+	ANIMATION_FRAME: 'animationFrame'
+};
 
 /**
  *  Class helps to display and animate trends segments
@@ -124,7 +129,7 @@ export class TrendSegments {
 		this.stopAllAnimations();
 		this.appendData(null, true);
 		this.recalculateDisplayedRange(true);
-		this.ee.emit('rebuild');
+		this.ee.emit(EVENTS.REBUILD);
 	}
 
 	private stopAllAnimations() {
@@ -148,7 +153,7 @@ export class TrendSegments {
 			firstDisplayedSegment.id !== this.firstDisplayedSegment.id ||
 			lastDisplayedSegment.id !== this.lastDisplayedSegment.id
 		);
-		if (displayedRangeChanged) this.ee.emit('displayedRangeChanged');
+		if (displayedRangeChanged) this.ee.emit(EVENTS.DISLPAYED_RANGE_CHANGED);
 	}
 
 	// getSegments(fromX?: number, toX?: number): TrendSegment[] {
@@ -198,27 +203,15 @@ export class TrendSegments {
 	}
 
 	onAnimationFrame(cb: (animationState: TrendSegments) => void): Function {
-		var eventName = 'animationFrame';
-		this.ee.on('animationFrame', cb);
-		return () => {
-			this.ee.off(eventName, cb);
-		}
+		return this.ee.subscribe(EVENTS.ANIMATION_FRAME, cb);
 	}
 
 	onRebuild(cb: Function) {
-		var eventName = 'rebuild';
-		this.ee.on(eventName, cb);
-		return () => {
-			this.ee.off(eventName, cb);
-		}
+		return this.ee.subscribe(EVENTS.REBUILD, cb);
 	}
 
 	onDisplayedRangeChanged(cb: Function) {
-		var eventName = 'displayedRangeChanged';
-		this.ee.on(eventName, cb);
-		return () => {
-			this.ee.off(eventName, cb);
-		}
+		return this.ee.subscribe(EVENTS.DISLPAYED_RANGE_CHANGED, cb);
 	}
 	
 	allocateNextSegment() {
@@ -424,7 +417,7 @@ export class TrendSegments {
 			}
 		}
 		this.animatedSegmentsIds = this.animatedSegmentsForAppend.concat(this.animatedSegmentsForPrepend);
-		this.ee.emit('animationFrame', this);
+		this.ee.emit(EVENTS.ANIMATION_FRAME, this);
 	}
 
 }

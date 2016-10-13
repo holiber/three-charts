@@ -5,14 +5,14 @@ import Material = THREE.Material;
 import Vector3 = THREE.Vector3;
 import Line = THREE.Line;
 import Object3D = THREE.Object3D;
-import {ChartState} from "../State";
+import {ChartState} from "../../State";
 import Face3 = THREE.Face3;
 import Texture = THREE.Texture;
 import Vector2 = THREE.Vector2;
-import {TrendsWidget, TrendWidget} from "./TrendsWidget";
+import {TrendsWidget, TrendWidget} from "../../widgets/TrendsWidget";
 import LineSegments = THREE.LineSegments;
-import { TrendMark, TREND_MARK_SIDE } from "../TrendMarks";
-import {Utils} from "../Utils";
+import { TrendMark, TREND_MARK_SIDE, TrendsMarksPlugin } from "./TrendsMarksPlugin";
+import {Utils} from "../../Utils";
 import LineDashedMaterial = THREE.LineDashedMaterial;
 import MeshBasicMaterial = THREE.MeshBasicMaterial;
 
@@ -34,6 +34,7 @@ export class TrendsMarksWidget extends TrendsWidget<TrendMarksWidget> {
  */
 export class TrendMarksWidget extends TrendWidget {
 
+	private trendsMarksPlugin: TrendsMarksPlugin;
 	private object3D: Object3D;
 	private marksWidgets: {[name: string]: TrendMarkWidget} = {};
 
@@ -49,11 +50,15 @@ export class TrendMarksWidget extends TrendWidget {
 	
 	protected bindEvents() {
 		super.bindEvents();
-		this.trend.marks.onChange(() => this.onMarksChange());
+		this.getTrendsMarksPlugin().onChange(() => this.onMarksChange());
+	}
+
+	private getTrendsMarksPlugin(): TrendsMarksPlugin {
+		return this.chartState.getPlugin(TrendsMarksPlugin.NAME) as TrendsMarksPlugin;
 	}
 
 	private onMarksChange() {
-		let marksItems = this.trend.marks.getItems();
+		let marksItems = this.getTrendsMarksPlugin().getItems();
 		let widgets = this.marksWidgets;
 		let actualMarksNames: string[] = [];
 		for (let markName in marksItems) {
@@ -78,13 +83,6 @@ export class TrendMarksWidget extends TrendWidget {
 		this.object3D.remove(this.marksWidgets[markName].getObject3D());
 		delete this.marksWidgets[markName];
 	}
-
-	// protected onTransformationFrame() {
-	// 	var widgets = this.marksWidgets;
-	// 	for (let markName in widgets) {
-	// 		widgets[markName].onTrendAnimate();
-	// 	}
-	// }
 
 	protected onZoomFrame() {
 		var widgets = this.marksWidgets;

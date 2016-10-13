@@ -41,8 +41,8 @@ export declare class TrendSegments {
      */
     getSegmentsForXValues(values: number[]): TrendSegment[];
     onAnimationFrame(cb: (animationState: TrendSegments) => void): Function;
-    onRebuild(cb: Function): () => void;
-    onDisplayedRangeChanged(cb: Function): () => void;
+    onRebuild(cb: Function): Function;
+    onDisplayedRangeChanged(cb: Function): Function;
     allocateNextSegment(): TrendSegment;
     allocatePrevSegment(): TrendSegment;
     private appendData(newData, needRebuildSegments?);

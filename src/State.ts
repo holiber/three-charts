@@ -3,7 +3,7 @@ import {ITrendOptions, Trend, ITrendData} from "./Trend";
 import {EventEmitter} from './EventEmmiter';
 import {Utils} from './Utils';
 import {IChartWidgetOptions, ChartWidget} from "./Widget";
-import {Trends, ITrendsOptions} from "./Trends";
+import {TrendsManager, ITrendsOptions} from "./TrendsManager";
 import {Screen} from "./Screen";
 import {AxisMarks} from "./AxisMarks";
 import {
@@ -11,6 +11,7 @@ import {
 } from "./interfaces";
 import {Chart} from "./Chart";
 import {Promise} from './deps/deps';
+import { ChartPlugin } from './Plugin';
 
 
 interface IRecalculatedStateResult {
@@ -28,7 +29,8 @@ const CHART_STATE_EVENTS = {
 	ZOOM: 'zoom',
 	RESIZE: 'resize',
 	SCROLL: 'scroll',
-	SCROLL_STOP: 'scrollStop'
+	SCROLL_STOP: 'scrollStop',
+	PLUGINS_STATE_CHANGED: 'pluginsStateChanged'
 };
 
 /**
@@ -82,6 +84,8 @@ export interface IChartState {
 	 * overridden settings for single setState operation
 	 */
 	operationState?: IChartState;
+	pluginsState?: {[pluginName: string]: any};
+	eventEmitterMaxListeners?: number;
 	[key: string]: any; // for "for in" loops
 }
 
@@ -95,14 +99,29 @@ export class ChartState {
 		$el: null,
 		zoom: 0,
 		xAxis: {
-			range: {type: AXIS_RANGE_TYPE.ALL, from: 0, to: 0, scroll: 0, padding: {start: 0, end: 5}, zoom: 1},
+			range: {
+				type: AXIS_RANGE_TYPE.ALL,
+				from: 0,
+				to: 0,
+				scroll: 0,
+				zoom: 1,
+				padding: {start: 0, end: 5},
+				margin: {start: 0, end: 5}
+			},
 			dataType: AXIS_DATA_TYPE.NUMBER,
 			gridMinSize: 100,
 			autoScroll: true,
 			marks: [],
 		},
 		yAxis: {
-			range: {type: AXIS_RANGE_TYPE.RELATIVE_END, from: 0, to: 0, padding: {start: 5, end: 5}, zoom: 1},
+			range: {
+				type: AXIS_RANGE_TYPE.RELATIVE_END,
+				from: 0,
+				to: 0,
+				zoom: 1,
+				padding: {start: 5, end: 5},
+				margin: {start: 5, end: 5}
+			},
 			dataType: AXIS_DATA_TYPE.NUMBER,
 			gridMinSize: 50,
 			marks: []
@@ -130,9 +149,13 @@ export class ChartState {
 		},
 		backgroundColor: 0x000000,
 		backgroundOpacity: 1,
-		showStats: false
+		showStats: false,
+		pluginsState: {},
+		eventEmitterMaxListeners: 20
 	};
-	trends: Trends;
+	widgetsClasses: {[name: string]: typeof ChartWidget} = {};
+	plugins: {[pluginName: string]: ChartPlugin} = {};
+	trendsManager: TrendsManager;
 	screen: Screen;
 	xAxisMarks: AxisMarks;
 	yAxisMarks: AxisMarks;
@@ -140,17 +163,23 @@ export class ChartState {
 	/**
 	 * true then chartState was initialized and ready to use
 	 */
-	private isReady = false;
+	isReady = false;
+
 
 	private ee: EventEmitter;
 
-	constructor(initialState: IChartState) {
+	constructor(
+		initialState: IChartState,
+		widgetsClasses: {[name: string]: typeof ChartWidget} = {},
+		plugins: ChartPlugin[] = []
+	) {
 		this.ee = new EventEmitter();
-		this.ee.setMaxListeners(15);
+		this.ee.setMaxListeners(initialState.eventEmitterMaxListeners || this.data.eventEmitterMaxListeners);
 
-
-		this.trends = new Trends(this, initialState);
-		initialState.trends = this.trends.calculatedOptions;
+		this.widgetsClasses = widgetsClasses;
+		this.trendsManager = new TrendsManager(this, initialState);
+		initialState.trends = this.trendsManager.calculatedOptions;
+		initialState = this.installPlugins(plugins, initialState);
 		this.setState(initialState);
 		this.setState({computedData: this.getComputedData()});
 		this.savePrevState();
@@ -162,7 +191,7 @@ export class ChartState {
 		
 		// message to other modules that ChartState.data is ready for use 
 		this.ee.emit(CHART_STATE_EVENTS.INITIAL_STATE_APPLIED, initialState);
-		
+
 		// message to other modules that ChartState is ready for use
 		this.isReady = true;
 		this.ee.emit(CHART_STATE_EVENTS.READY, initialState);
@@ -216,9 +245,13 @@ export class ChartState {
 	onResize(cb: (changedProps: IChartState) => void) {
 		return this.ee.subscribe(CHART_STATE_EVENTS.RESIZE, cb);
 	}
+
+	onPluginsStateChange(cb: (changedPluginsStates: {[pluginName: string]: Plugin}) => any) {
+		return this.ee.subscribe(CHART_STATE_EVENTS.PLUGINS_STATE_CHANGED, cb);
+	}
 	
 	getTrend(trendName: string): Trend {
-		return this.trends.getTrend(trendName);
+		return this.trendsManager.getTrend(trendName);
 	}
 
 	setState(newState: IChartState, eventData?: any, silent = false) {
@@ -273,8 +306,8 @@ export class ChartState {
 		if (changedProps.widgets || !data.widgets) {
 			patch.widgets = {};
 			let widgetsOptions = data.widgets || {};
-			for (let widgetName in Chart.installedWidgets) {
-				let WidgetClass = Chart.installedWidgets[widgetName];
+			for (let widgetName in this.widgetsClasses) {
+				let WidgetClass =  this.widgetsClasses[widgetName];
 				let userOptions = widgetsOptions[widgetName] || {};
 				let defaultOptions = WidgetClass.getDefaultOptions() || ChartWidget.getDefaultOptions();
 				patch.widgets[widgetName] = Utils.deepMerge(defaultOptions, userOptions) as IChartWidgetOptions;
@@ -344,10 +377,10 @@ export class ChartState {
 		var computeAll = !changedProps;
 		var computedData: IChartStateComputedData = {};
 
-		if (computeAll || changedProps.trends && this.trends) {
+		if (computeAll || changedProps.trends && this.trendsManager) {
 			computedData.trends = {
-				maxXVal: this.trends.getEndXVal(),
-				minXVal: this.trends.getStartXVal()
+				maxXVal: this.trendsManager.getEndXVal(),
+				minXVal: this.trendsManager.getStartXVal()
 			}
 		}
 		return computedData;
@@ -400,7 +433,38 @@ export class ChartState {
 		let resizeEventNeeded = (changedProps.width || changedProps.height);
 		resizeEventNeeded && this.ee.emit(CHART_STATE_EVENTS.RESIZE, changedProps);
 
+		let pluginStateChangedEventNeeded = !!(changedProps.pluginsState);
+		pluginStateChangedEventNeeded && this.ee.emit(CHART_STATE_EVENTS.PLUGINS_STATE_CHANGED, changedProps.pluginsState);
 	}
+
+
+	/**
+	 * init plugins and save plugins options in initialState
+	 */
+	private installPlugins(plugins: ChartPlugin[], initialState: IChartState): IChartState {
+		initialState.pluginsState = {};
+		plugins.forEach(plugin => {
+			let PluginClass = plugin.constructor as typeof ChartPlugin;
+			let pluginName = PluginClass.NAME;
+			PluginClass.pluginWidgets.forEach(
+				PluginWidget => this.widgetsClasses[PluginWidget.widgetName] = PluginWidget
+			);
+			initialState.pluginsState[pluginName] = Utils.deepMerge({}, plugin.initialState);
+			this.plugins[pluginName] = plugin;
+			plugin.setupChartState(this);
+		});
+		return initialState;
+	}
+
+
+	/**
+	 * returns plugin instance by plugin name
+	 * @example
+	 */
+	getPlugin(pluginName: string): ChartPlugin {
+		return this.plugins[pluginName];
+	}
+
 
 	private initListeners() {
 		this.ee.on(CHART_STATE_EVENTS.TRENDS_CHANGE, (changedTrends: ITrendsOptions, newData: ITrendData) => {
@@ -477,7 +541,7 @@ export class ChartState {
 		var patch: IAxisOptions = {range: {}};
 		var yAxisRange = actualData.yAxis.range;
 		var isInitialize = yAxisRange.scaleFactor == void 0;
-		var trends = this.trends;
+		var trends = this.trendsManager;
 		var trendsEndXVal = trends.getEndXVal();
 		var trendsStartXVal = trends.getStartXVal();
 		var xRange = actualData.xAxis.range;
@@ -493,7 +557,6 @@ export class ChartState {
 			xFrom = trendsStartXVal;
 			xTo = xFrom + xRangeLength;
 		}
-
 
 		var maxY = trends.getMaxYVal(xFrom, xTo);
 		var minY = trends.getMinYVal(xFrom, xTo);
@@ -512,15 +575,23 @@ export class ChartState {
 			maxY = yAxisRange.zeroVal + maxDistanceFromZeroVal;
 			minY = yAxisRange.zeroVal - maxDistanceFromZeroVal;
 		}
+		let margin = yAxisRange.margin;
+		let padding = {
+			start: yAxisRange.padding.start + margin.start,
+			end: yAxisRange.padding.end + margin.end
+		};
 
-		var padding = yAxisRange.padding;
-		var rangeLength = maxY - minY;
-		var paddingTopInPercents = padding.end / actualData.height;
-		var paddingBottomInPercents = padding.start / actualData.height;
-		var rangeLengthInPercents = 1 - paddingTopInPercents - paddingBottomInPercents;
-		var visibleRangeLength = rangeLength / rangeLengthInPercents;
-		var fromVal = minY - visibleRangeLength * paddingBottomInPercents;
-		var toVal = maxY + visibleRangeLength * paddingTopInPercents;
+		if (padding.end + padding.start >= actualData.height) {
+			Utils.warn('Sum of padding and margins of yAxi more then available chart height. Trends can be rendered incorrectly');
+		}
+
+		let rangeLength = maxY - minY;
+		let paddingTopInPercents = padding.end / actualData.height;
+		let paddingBottomInPercents = padding.start / actualData.height;
+		let rangeLengthInPercents = 1 - paddingTopInPercents - paddingBottomInPercents;
+		let visibleRangeLength = rangeLength / rangeLengthInPercents;
+		let fromVal = minY - visibleRangeLength * paddingBottomInPercents;
+		let toVal = maxY + visibleRangeLength * paddingTopInPercents;
 		
 		if (isInitialize) {
 			zeroVal = yAxisRange.zeroVal != void 0 ? yAxisRange.zeroVal : fromVal;
@@ -531,12 +602,13 @@ export class ChartState {
 			scaleFactor = yAxisRange.scaleFactor;
 			zeroVal = yAxisRange.zeroVal;
 
-			var maxScreenY = Math.round(this.getScreenYByValue(maxY));
-			var minScreenY = Math.round(this.getScreenYByValue(minY));
+			let maxScreenY = Math.round(this.getScreenYByValue(maxY));
+			let minScreenY = Math.round(this.getScreenYByValue(minY));
 			needToZoom = (
-				maxScreenY > actualData.height ||
+				maxScreenY > actualData.height - margin.end ||
 				maxScreenY < actualData.height - padding.end ||
-				minScreenY < 0 || minScreenY > padding.start
+				minScreenY < margin.start ||
+				minScreenY > padding.start
 			);
 		}
 
@@ -575,7 +647,7 @@ export class ChartState {
 
 	scrollToEnd(): Promise<void> {
 		let state = this.data;
-		let endXVal = this.trends.getEndXVal();
+		let endXVal = this.trendsManager.getEndXVal();
 		let range = state.xAxis.range;
 		var scroll = endXVal - this.pxToValueByXAxis(state.width) + this.pxToValueByXAxis(range.padding.end) - range.zeroVal;
 		this.setState({xAxis: {range: {scroll: scroll}}});

@@ -54,7 +54,7 @@ export class TrendGradient extends TrendWidget {
 	constructor (chartState: ChartState, trendName: string) {
 		super(chartState, trendName);
 		this.chartState = chartState;
-		this.trend = chartState.trends.getTrend(trendName);
+		this.trend = chartState.trendsManager.getTrend(trendName);
 		this.appendData(this.trend.getData());
 	}
 

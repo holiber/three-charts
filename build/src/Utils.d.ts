@@ -42,6 +42,10 @@ export declare class Utils {
      */
     static error(msg: string): void;
     /**
+     * throw error
+     */
+    static warn(msg: string): void;
+    /**
      * @returns new unique id
      */
     static getUid(): TUid;

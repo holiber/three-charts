@@ -90,7 +90,7 @@ export abstract class TrendWidget {
 	private unsubscribers: Function[] = [];
 
 	constructor (protected chartState: ChartState, protected trendName: string) {
-		this.trend = chartState.trends.getTrend(trendName);
+		this.trend = chartState.trendsManager.getTrend(trendName);
 		this.chartState = chartState;
 		this.bindEvents();
 	}

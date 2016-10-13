@@ -1,7 +1,8 @@
-import { Chart, AXIS_RANGE_TYPE, ITrendItem, ITrendMarkOptions, Utils, AXIS_DATA_TYPE } from '../src';
+import { Chart, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE } from '../src';
 import { TREND_TYPE } from '../src/Trend';
-import { TREND_MARK_SIDE } from '../src/TrendMarks';
+import { TREND_MARK_SIDE, ITrendMarkOptions } from '../src/plugins/TrendsMarks/TrendsMarksPlugin';
 import enabled = THREE.Cache.enabled;
+import { TrendsMarksPlugin } from '../src/plugins/TrendsMarks/TrendsMarksPlugin';
 
 var chart: Chart;
 
@@ -71,6 +72,7 @@ class MarksSource {
 		}
 			
 		return {
+			trendName: 'main',
 			value: val,
 			title: Utils.getRandomItem(['Alex Malcon', 'Serg Morrs', 'Harry Potter']),
 			description: Utils.getRandomItem(['$10 -> 20$', '$15 -> 30$', '40$ -> 80$']),
@@ -99,7 +101,7 @@ window.onload = function () {
 			range: {
 
 				padding: {end: 100, start: 100},
-				isMirrorMode: true,
+				margin: {end: 50, start: 50},
 				zeroVal: 70
 			}
 		},
@@ -130,7 +132,6 @@ window.onload = function () {
 				hasBeacon: true,
 				hasIndicator: true,
 				hasGradient: false,
-				marks: [MarksSource.generate(now + 3000), MarksSource.generate(now + 3000), MarksSource.generate(now + 4000)]
 			},
 			// 'red': {dataset: dsRed.data, lineColor: 0xFF2222, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
 			// 'blue': {dataset: dsBlue.data, lineColor: 0x2222FF, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
@@ -148,7 +149,11 @@ window.onload = function () {
 			// TrendsLoading: {enabled: false},
 			// AxisMarks: {enabled: false}
 		}
-	}, document.querySelector('.chart'));
+	},
+	document.querySelector('.chart'),
+	[
+		new TrendsMarksPlugin({items: [MarksSource.generate(now + 3000), MarksSource.generate(now + 3000), MarksSource.generate(now + 4000)]})
+	]);
 
 	chart.setState({animations: {enabled: false}});
 	chart.setState({animations: {enabled: true}});
@@ -167,7 +172,8 @@ window.onload = function () {
 		}
 		var markOptions = MarksSource.getNext(mainTrend.getLastItem().xVal);
 		if (markOptions) setTimeout(() => {
-			mainTrend.marks.createMark(markOptions);
+			let trendsMarks = chart.state.getPlugin(TrendsMarksPlugin.NAME) as TrendsMarksPlugin;
+			trendsMarks.createMark(markOptions);
 		}, 500);
 	});
 

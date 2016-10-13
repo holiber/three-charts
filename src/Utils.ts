@@ -141,6 +141,13 @@ export class Utils {
 	}
 
 	/**
+	 * throw error
+	 */
+	static warn(msg: string) {
+		console.warn('Chart warning: ' + msg);
+	}
+
+	/**
 	 * @returns new unique id
 	 */
 	static getUid(): TUid {

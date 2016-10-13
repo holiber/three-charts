@@ -1,4 +1,5 @@
 // deps must be always on top
+import { ChartPlugin } from './Plugin';
 require('./deps/deps');
 
 import { Trend } from "./Trend";
@@ -17,7 +18,6 @@ import { GridWidget } from "./widgets/GridWidget";
 import { TrendsGradientWidget } from "./widgets/TrendsGradientWidget";
 import { TrendsLoadingWidget } from "./widgets/TrendsLoadingWidget";
 import { AxisMarksWidget } from "./widgets/AxisMarksWidget";
-import { TrendsMarksWidget } from "./widgets/TrendsMarksWidget";
 import { BorderWidget } from "./widgets/BorderWidget";
 import { TrendsIndicatorWidget } from "./widgets/TrendsIndicatorWidget";
 import { TrendsLineWidget } from "./widgets/TrendsLineWidget";
@@ -51,7 +51,7 @@ export class Chart {
 		WebGLRenderer: THREE.WebGLRenderer
 	};
 
-	constructor(state: IChartState, $container: Element) {
+	constructor(state: IChartState, $container: Element, plugins: ChartPlugin[] = []) {
 
 		if (!THREE || !THREE.REVISION) Utils.error('three.js not found');
 
@@ -63,7 +63,7 @@ export class Chart {
 		state.width = parseInt(style.width);
 		state.height = parseInt(style.height);
 
-		this.state = new ChartState(state);
+		this.state = new ChartState(state, Chart.installedWidgets, plugins);
 		this.zoomThrottled = Utils.throttle((zoomValue: number, origin: number) => this.zoom(zoomValue, origin), 200);
 		this.$container = $container;
 		this.init($container);
@@ -101,10 +101,11 @@ export class Chart {
 		this.setupCamera();
 
 		// init widgets
-		for (let widgetName in Chart.installedWidgets) {
+		let widgetsClasses = this.state.widgetsClasses;
+		for (let widgetName in widgetsClasses) {
 			let widgetOptions = this.state.data.widgets[widgetName];
 			if (!widgetOptions.enabled) continue;
-			let WidgetConstructor = Chart.installedWidgets[widgetName] as IChartWidgetConstructor;
+			let WidgetConstructor = widgetsClasses[widgetName] as IChartWidgetConstructor;
 			let widget = new WidgetConstructor(this.state);
 			this.scene.add(widget.getObject3D());
 			this.widgets.push(widget);
@@ -360,5 +361,4 @@ Chart.installWidget(TrendsIndicatorWidget);
 // Chart.installWidget(TrendsGradientWidget);
 Chart.installWidget(TrendsLoadingWidget);
 Chart.installWidget(AxisMarksWidget);
-Chart.installWidget(TrendsMarksWidget);
 Chart.installWidget(BorderWidget);

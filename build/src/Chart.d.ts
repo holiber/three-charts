@@ -1,3 +1,4 @@
+import { ChartPlugin } from './Plugin';
 import { Trend } from "./Trend";
 import Renderer = THREE.Renderer;
 import { ChartState, IChartState } from "./State";
@@ -25,7 +26,7 @@ export declare class Chart {
     static renderers: {
         [rendererName: string]: Renderer;
     };
-    constructor(state: IChartState, $container: Element);
+    constructor(state: IChartState, $container: Element, plugins?: ChartPlugin[]);
     static installWidget<WidgetClass extends typeof ChartWidget>(Widget: WidgetClass): void;
     private init($container);
     private renderLoop();

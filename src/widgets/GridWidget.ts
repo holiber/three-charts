@@ -60,7 +60,7 @@ export class GridWidget extends ChartWidget{
 
 	private initGrid() {
 		var geometry = new THREE.Geometry();
-		var material = new THREE.LineBasicMaterial( { linewidth: 2.5, opacity: 0.05, transparent: true});
+		var material = new THREE.LineBasicMaterial( { linewidth: 1, opacity: 0.1, transparent: true});
 		var xLinesCount = this.gridSizeH;
 		var yLinesCount = this.gridSizeV;
 		while (xLinesCount--) geometry.vertices.push(new Vector3(), new Vector3());

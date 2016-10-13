@@ -1,7 +1,5 @@
 import {ChartState, IChartState} from "./State";
 import {Utils} from "./Utils";
-import {MAX_DATA_LENGTH} from "./Chart";
-import {ITrendMarkOptions, TrendMarks} from "./TrendMarks";
 import {TrendSegments} from "./TrendSegments";
 import {EventEmitter} from './EventEmmiter';
 import {Promise} from './deps/deps';
@@ -33,7 +31,6 @@ export interface ITrendOptions {
 	hasIndicator?: boolean;
 	hasBeacon?: boolean;
 	maxSegmentLength?: number;
-	marks?: ITrendMarkOptions[];
 	settingsForTypes?: {
 		CANDLE?: ITrendTypeSettings,
 		LINE?: ITrendTypeSettings
@@ -44,7 +41,6 @@ const DEFAULT_OPTIONS: ITrendOptions = {
 	enabled: true,
 	type: TREND_TYPE.LINE,
 	data: [],
-	marks: [],
 	maxSegmentLength: 1000,
 	lineWidth: 2,
 	lineColor: 0xFFFFFF,
@@ -64,7 +60,6 @@ const DEFAULT_OPTIONS: ITrendOptions = {
 
 export class Trend {
 	name: string;
-	marks: TrendMarks;
 	segments: TrendSegments;
 	minXVal = Infinity;
 	minYVal = Infinity;
@@ -89,7 +84,6 @@ export class Trend {
 
 	private onInitialStateApplied() {
 		this.segments = new TrendSegments(this.chartState, this);
-		this.marks = new TrendMarks(this.chartState, this);
 	}
 
 	private bindEvents() {
