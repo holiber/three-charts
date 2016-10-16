@@ -4,22 +4,29 @@ var WebpackOnBuildPlugin = require('on-build-webpack');
 var CopyWebpackPlugin = require('copy-webpack-plugin');
 var CommonsPlugin = new require("webpack/lib/optimize/CommonsChunkPlugin");
 var fs = require('fs');
+var rimraf = require('rimraf');
 
 var path = require('path');
-var _root = path.resolve(__dirname, '..');
+var _root = path.resolve(__dirname, '.');
 function root(args) {
     args = Array.prototype.slice.call(arguments, 0);
     return path.join.apply(path, [_root].concat(args));
 }
 
+var sourcePath = root('./src/');
+
+/**
+ * collect all plugins names from folders
+ */
+function getPluginsNames() {
+    var pluginsDirs = fs.readdirSync(sourcePath);
+    var pluginsList = pluginsDirs.filter(fileName => fs.statSync(sourcePath + fileName).isDirectory());
+    return pluginsList;
+}
 
 module.exports = {
     entry: function () {
-        // collect all plugins
-        var sourcePath = root('./plugins/src/');
-        console.log(sourcePath);
-        var pluginsDirs = fs.readdirSync(sourcePath);
-        var pluginsList = pluginsDirs.filter(fileName => fs.statSync(sourcePath + fileName).isDirectory());
+        var pluginsList = getPluginsNames();
         var entry = {};
         pluginsList.forEach((pluginName) => entry[pluginName] = sourcePath + pluginName + '/index.ts');
         console.log('entry:', entry);
@@ -27,15 +34,15 @@ module.exports = {
 
     }(),
     output: {
-        path: root('plugins/build'),
+        path: root('build'),
         filename: 'plugins/src/[name]/[name].js',
-        library: '[name]',
+        library: 'THREE_CHARTS',
         libraryTarget: "umd"
     },
     resolve: {
         // Add `.ts` and `.tsx` as a resolvable extension.
         root: root('./src'),
-        modulesDirectories: ['../node_modules', './deps'],
+        modulesDirectories: ['../node_modules'],
         extensions: ['', '.webpack.js', '.web.js', '.ts', '.tsx', '.js']
     },
     devtool: 'source-map',
@@ -47,9 +54,6 @@ module.exports = {
             }
         ]
     },
-    externals: {
-        '../ThreeChart': 'ThreeChartLib'
-    },
 
     plugins: [
 
@@ -59,25 +63,18 @@ module.exports = {
             mangle: false
         }),
 
-        // new webpack.optimize.UglifyJsPlugin({
-        //     compress: {
-        //         warnings: false
-        //     }
-        // }),
-
-        // new CommonsPlugin({
-        //     name: "common"
-        // }),
-
-        // new UnminifiedWebpackPlugin(),
-        
-        // make index file and add commonJS support
         new WebpackOnBuildPlugin(function(stats) {
-            var fs = require('fs');
-            // var commonJsSupportScript = '\n if (typeof module !== "undefined" && module.exports) module.exports = ThreeChart;';
-            // fs.appendFileSync(__dirname + '/build/ThreeChart.js', commonJsSupportScript);
-            // fs.appendFileSync(__dirname + '/build/ThreeChart.min.js', commonJsSupportScript);
-            // fs.writeFileSync(helpers.root('build') + '/index.js', 'module.exports = require("./ThreeChart")');
+
+            // fix directories paths
+            fs.renameSync(root('build/plugins/src'), root('build-tmp'));
+            rimraf.sync(root('build'));
+            fs.renameSync(root('build-tmp'), root('build'));
+
+            // make index.js files for each plugin
+            getPluginsNames().forEach(pluginName => {
+                fs.writeFileSync(root('build/' + pluginName + '/index.js'), 'module.exports = require("./' + pluginName + '")');
+            });
+
         })
 
     ]

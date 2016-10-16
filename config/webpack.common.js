@@ -15,7 +15,7 @@ module.exports = {
     output: {
         path: helpers.root('build'),
         filename: '[name].js',
-        library: '[name]',
+        library: 'THREE_CHARTS',
         libraryTarget: "umd"
     },
     resolve: {

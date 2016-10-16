@@ -1,7 +1,6 @@
 import { Chart, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE } from 'three-chart';
 import enabled = THREE.Cache.enabled;
-// import { TREND_MARK_SIDE, ITrendMarkOptions, TrendsMarksPlugin } from '../plugins/build/plugins/src/TrendsMarksPlugin/TrendsMarksPlugin';
-
+import { TREND_MARK_SIDE, ITrendMarkOptions, TrendsMarksPlugin } from '../plugins/build/TrendsMarksPlugin';
 
 var chart: Chart;
 
@@ -150,10 +149,10 @@ window.onload = function () {
 		}
 	},
 	document.querySelector('.chart')
-	// 	,
-	// [
-	// 	new TrendsMarksPlugin({items: [MarksSource.generate(now + 3000), MarksSource.generate(now + 3000), MarksSource.generate(now + 4000)]})
-	// ]
+		,
+	[
+		new TrendsMarksPlugin({items: [MarksSource.generate(now + 3000), MarksSource.generate(now + 3000), MarksSource.generate(now + 4000)]})
+	]
 	);
 
 	chart.setState({animations: {enabled: false}});
@@ -171,11 +170,11 @@ window.onload = function () {
 			deadlineMark.setOptions({value: closeValue + 10000});
 			closeMark.setOptions({value: closeValue + 20000})
 		}
-		// var markOptions = MarksSource.getNext(mainTrend.getLastItem().xVal);
-		// if (markOptions) setTimeout(() => {
-		// 	let trendsMarks = chart.state.getPlugin(TrendsMarksPlugin.NAME) as TrendsMarksPlugin;
-		// 	trendsMarks.createMark(markOptions);
-		// }, 500);
+		var markOptions = MarksSource.getNext(mainTrend.getLastItem().xVal);
+		if (markOptions) setTimeout(() => {
+			let trendsMarks = chart.state.getPlugin(TrendsMarksPlugin.NAME) as TrendsMarksPlugin;
+			trendsMarks.createMark(markOptions);
+		}, 500);
 	});
 
 
