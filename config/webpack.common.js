@@ -48,6 +48,7 @@ module.exports = {
 
         new CopyWebpackPlugin([
             { from: 'node_modules/three/three.js' },
+            { from: 'node_modules/gsap/src/uncompressed/TweenMax.js'},
             { from: 'src/polyfills', to: 'src/polyfills' }
         ]),
 

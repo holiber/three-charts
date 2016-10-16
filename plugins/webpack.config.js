@@ -30,7 +30,7 @@ module.exports = {
         path: root('plugins/build'),
         filename: 'plugins/src/[name]/[name].js',
         library: '[name]',
-        libraryTarget: "commonjs"
+        libraryTarget: "umd"
     },
     resolve: {
         // Add `.ts` and `.tsx` as a resolvable extension.

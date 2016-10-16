@@ -1,4 +1,4 @@
-import {ChartState, Utils, TrendsWidget, TrendWidget } from "../ThreeChart";
+import {ChartState, Utils, TrendsWidget, TrendWidget } from 'three-chart';
 import Geometry = THREE.Geometry;
 import Mesh = THREE.Mesh;
 import LineBasicMaterial = THREE.LineBasicMaterial;
