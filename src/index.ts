@@ -8,4 +8,5 @@ export * from './TrendSegments';
 export * from './TrendsManager';
 export * from './Utils';
 export * from './Widget';
+export * from './Plugin';
 export * from './widgets/TrendsWidget';

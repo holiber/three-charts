@@ -1,8 +1,9 @@
 import { Chart, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE } from '../src';
 import { TREND_TYPE } from '../src/Trend';
-import { TREND_MARK_SIDE, ITrendMarkOptions } from '../src/plugins/TrendsMarks/TrendsMarksPlugin';
 import enabled = THREE.Cache.enabled;
-import { TrendsMarksPlugin } from '../src/plugins/TrendsMarks/TrendsMarksPlugin';
+// import '../plugins/build/plugins/src/TrendsMarksPlugin';
+// import { TREND_MARK_SIDE, ITrendMarkOptions, TrendsMarksPlugin } from '../plugins/build/plugins/src/TrendsMarksPlugin';
+
 
 var chart: Chart;
 
@@ -58,31 +59,31 @@ class DataSourse {
 	}
 }
 
-class MarksSource {
-	static getNext(val: number): ITrendMarkOptions {
-		if (Math.random() > 0.2) return null;
-		return this.generate(val);
-	}
-
-	static generate(val: number): ITrendMarkOptions {
-		let descriptionColor = 'rgb(40,136,75)';
-		let orientation =  Utils.getRandomItem([TREND_MARK_SIDE.TOP, TREND_MARK_SIDE.BOTTOM]);
-		if (orientation == TREND_MARK_SIDE.BOTTOM) {
-			descriptionColor = 'rgb(219,73,49)';
-		}
-			
-		return {
-			trendName: 'main',
-			value: val,
-			title: Utils.getRandomItem(['Alex Malcon', 'Serg Morrs', 'Harry Potter']),
-			description: Utils.getRandomItem(['$10 -> 20$', '$15 -> 30$', '40$ -> 80$']),
-			icon: Utils.getRandomItem(['AM', 'SM', 'HP']),
-			iconColor: Utils.getRandomItem(['rgb(69,67,130)', 'rgb(124,39,122)']),
-			orientation: orientation,
-			descriptionColor: descriptionColor
-		}
-	}
-}
+// class MarksSource {
+// 	static getNext(val: number): ITrendMarkOptions {
+// 		if (Math.random() > 0.2) return null;
+// 		return this.generate(val);
+// 	}
+//
+// 	static generate(val: number): ITrendMarkOptions {
+// 		let descriptionColor = 'rgb(40,136,75)';
+// 		let orientation =  Utils.getRandomItem([TREND_MARK_SIDE.TOP, TREND_MARK_SIDE.BOTTOM]);
+// 		if (orientation == TREND_MARK_SIDE.BOTTOM) {
+// 			descriptionColor = 'rgb(219,73,49)';
+// 		}
+//
+// 		return {
+// 			trendName: 'main',
+// 			value: val,
+// 			title: Utils.getRandomItem(['Alex Malcon', 'Serg Morrs', 'Harry Potter']),
+// 			description: Utils.getRandomItem(['$10 -> 20$', '$15 -> 30$', '40$ -> 80$']),
+// 			icon: Utils.getRandomItem(['AM', 'SM', 'HP']),
+// 			iconColor: Utils.getRandomItem(['rgb(69,67,130)', 'rgb(124,39,122)']),
+// 			orientation: orientation,
+// 			descriptionColor: descriptionColor
+// 		}
+// 	}
+// }
 
 window.onload = function () {
 
@@ -150,10 +151,12 @@ window.onload = function () {
 			// AxisMarks: {enabled: false}
 		}
 	},
-	document.querySelector('.chart'),
-	[
-		new TrendsMarksPlugin({items: [MarksSource.generate(now + 3000), MarksSource.generate(now + 3000), MarksSource.generate(now + 4000)]})
-	]);
+	document.querySelector('.chart')
+	//	,
+	// [
+	// 	new TrendsMarksPlugin({items: [MarksSource.generate(now + 3000), MarksSource.generate(now + 3000), MarksSource.generate(now + 4000)]})
+	// ]
+	);
 
 	chart.setState({animations: {enabled: false}});
 	chart.setState({animations: {enabled: true}});
@@ -170,11 +173,11 @@ window.onload = function () {
 			deadlineMark.setOptions({value: closeValue + 10000});
 			closeMark.setOptions({value: closeValue + 20000})
 		}
-		var markOptions = MarksSource.getNext(mainTrend.getLastItem().xVal);
-		if (markOptions) setTimeout(() => {
-			let trendsMarks = chart.state.getPlugin(TrendsMarksPlugin.NAME) as TrendsMarksPlugin;
-			trendsMarks.createMark(markOptions);
-		}, 500);
+		// var markOptions = MarksSource.getNext(mainTrend.getLastItem().xVal);
+		// if (markOptions) setTimeout(() => {
+		// 	let trendsMarks = chart.state.getPlugin(TrendsMarksPlugin.NAME) as TrendsMarksPlugin;
+		// 	trendsMarks.createMark(markOptions);
+		// }, 500);
 	});
 
 

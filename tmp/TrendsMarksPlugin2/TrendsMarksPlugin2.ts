@@ -1,10 +1,10 @@
-import { ChartState } from "../../State";
-import { Utils } from "../../Utils";
-import { TREND_TYPE } from "../../Trend";
+import { ChartState } from "../ThreeChart";
+import { Utils } from "../ThreeChart";
+import { TREND_TYPE } from "../ThreeChart";
 import Vector3 = THREE.Vector3;
-import { TrendSegment } from "../../TrendSegments";
-import { ChartPlugin } from '../../Plugin';
-import { TrendsMarksWidget } from './TrendsMarksWidget';
+import { TrendSegment } from "../ThreeChart";
+import { ChartPlugin, ChartWidget } from '../ThreeChart';
+import { TrendsMarksWidget } from '../TrendsMarksPlugin/TrendsMarksWidget';
 
 export enum TREND_MARK_SIDE {TOP, BOTTOM}
 export enum EVENTS {CHANGE}
@@ -47,9 +47,9 @@ const AXIS_MARK_DEFAULT_OPTIONS: ITrendMarkOptions = {
 };
 
 
-export class TrendsMarksPlugin extends ChartPlugin {
+export class TrendsMarksPlugin2 extends ChartPlugin {
 	static NAME = 'TrendsMarks';
-	static pluginWidgets = [TrendsMarksWidget];
+	static pluginWidgets = [TrendsMarksWidget] as typeof ChartWidget[];
 
 	private items: {[name: string]: TrendMark} = {};
 	private rects: {[name: string]: number[]} = {};

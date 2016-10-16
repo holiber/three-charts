@@ -1,3 +1,4 @@
+import {ChartState, Utils, TrendsWidget, TrendWidget } from "../ThreeChart";
 import Geometry = THREE.Geometry;
 import Mesh = THREE.Mesh;
 import LineBasicMaterial = THREE.LineBasicMaterial;
@@ -5,16 +6,13 @@ import Material = THREE.Material;
 import Vector3 = THREE.Vector3;
 import Line = THREE.Line;
 import Object3D = THREE.Object3D;
-import {ChartState} from "../../State";
 import Face3 = THREE.Face3;
 import Texture = THREE.Texture;
 import Vector2 = THREE.Vector2;
-import {TrendsWidget, TrendWidget} from "../../widgets/TrendsWidget";
 import LineSegments = THREE.LineSegments;
-import { TrendMark, TREND_MARK_SIDE, TrendsMarksPlugin } from "./TrendsMarksPlugin";
-import {Utils} from "../../Utils";
 import LineDashedMaterial = THREE.LineDashedMaterial;
 import MeshBasicMaterial = THREE.MeshBasicMaterial;
+import { TrendMark, TREND_MARK_SIDE, TrendsMarksPlugin } from "../TrendsMarksPlugin/TrendsMarksPlugin";
 
 
 const MAX_MARKS_IN_ROW = 3;
@@ -22,7 +20,7 @@ const MAX_MARKS_IN_ROW = 3;
 /**
  * widget for drawing trends marks for all trends
  */
-export class TrendsMarksWidget extends TrendsWidget<TrendMarksWidget> {
+export class TrendsMarksWidget2 extends TrendsWidget<TrendMarksWidget> {
 	static widgetName = "TrendsMarks";
 	protected getTrendWidgetClass() {
 		return TrendMarksWidget;
