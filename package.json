@@ -27,7 +27,7 @@
     "start": "npm run rimraf -- build && webpack --watch --progress --colors",
     "build": "npm run rimraf -- build && webpack --progress --colors",
     "build-plugins": "npm run rimraf -- plugins/build && webpack  --config plugins/webpack.config.js --progress --colors",
-    "reinstall-chart": "rimraf -- node_modules/three-chart && npm cache clean && npm i three-chart",
+    "reinstall-chart": "rimraf -- node_modules/three-chart && npm cache clean && npm i three-chart --save-dev",
     "postinstall": "typings install",
     "test": "echo \"Error: no test specified\" && exit 1",
     "rimraf": "rimraf"

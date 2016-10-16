@@ -1,6 +1,6 @@
 import { Chart, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE } from 'three-chart';
 import enabled = THREE.Cache.enabled;
-import { TREND_MARK_SIDE, ITrendMarkOptions, TrendsMarksPlugin } from '../plugins/build/plugins/src/TrendsMarksPlugin/TrendsMarksPlugin';
+// import { TREND_MARK_SIDE, ITrendMarkOptions, TrendsMarksPlugin } from '../plugins/build/plugins/src/TrendsMarksPlugin/TrendsMarksPlugin';
 
 
 var chart: Chart;
@@ -150,10 +150,10 @@ window.onload = function () {
 		}
 	},
 	document.querySelector('.chart')
-		,
-	[
-		new TrendsMarksPlugin({items: [MarksSource.generate(now + 3000), MarksSource.generate(now + 3000), MarksSource.generate(now + 4000)]})
-	]
+	// 	,
+	// [
+	// 	new TrendsMarksPlugin({items: [MarksSource.generate(now + 3000), MarksSource.generate(now + 3000), MarksSource.generate(now + 4000)]})
+	// ]
 	);
 
 	chart.setState({animations: {enabled: false}});

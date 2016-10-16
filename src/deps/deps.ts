@@ -3,6 +3,7 @@
 // TODO: think about different bundles
 
 import { ResizeSensorType } from './ResizeSensor';
+(<any>window).TweenLite = TweenMax;
 (<any>window).Stats = require('three/examples/js/libs/stats.min');
 
 //require('gsap/src/uncompressed/easing/EasePack.js');

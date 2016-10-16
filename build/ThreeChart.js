@@ -380,6 +380,7 @@
         Chart.installWidget(BorderWidget_1.BorderWidget);
     }, function(module, exports, __webpack_require__) {
         "use strict";
+        window.TweenLite = TweenMax;
         window.Stats = __webpack_require__(4);
         __webpack_require__(5);
         __webpack_require__(6);
