@@ -39,7 +39,7 @@
         __export(__webpack_require__(16));
         __export(__webpack_require__(14));
         __export(__webpack_require__(15));
-        __export(__webpack_require__(33));
+        __export(__webpack_require__(35));
         __export(__webpack_require__(25));
     }, function(module, exports, __webpack_require__) {
         "use strict";
@@ -49,15 +49,15 @@
         var Utils_1 = __webpack_require__(14);
         var AxisWidget_1 = __webpack_require__(22);
         var GridWidget_1 = __webpack_require__(23);
-        var TrendsLoadingWidget_1 = __webpack_require__(24);
-        var AxisMarksWidget_1 = __webpack_require__(26);
-        var BorderWidget_1 = __webpack_require__(27);
-        var TrendsIndicatorWidget_1 = __webpack_require__(28);
-        var TrendsLineWidget_1 = __webpack_require__(29);
-        var TrendsCandleWidget_1 = __webpack_require__(30);
-        var TrendsBeaconWidget_1 = __webpack_require__(31);
-        var deps_1 = __webpack_require__(32);
-        exports.MAX_DATA_LENGTH = 2692e3;
+        var TrendsGradientWidget_1 = __webpack_require__(24);
+        var TrendsLoadingWidget_1 = __webpack_require__(27);
+        var AxisMarksWidget_1 = __webpack_require__(28);
+        var BorderWidget_1 = __webpack_require__(29);
+        var TrendsIndicatorWidget_1 = __webpack_require__(30);
+        var TrendsLineWidget_1 = __webpack_require__(31);
+        var TrendsCandleWidget_1 = __webpack_require__(32);
+        var TrendsBeaconWidget_1 = __webpack_require__(33);
+        var deps_1 = __webpack_require__(34);
         var Chart = function() {
             function Chart(state, $container, plugins) {
                 var _this = this;
@@ -125,12 +125,12 @@
                 if (this.isStopped) return;
                 var fpsLimit = this.state.data.autoRender.fps;
                 if (fpsLimit) {
-                    var delay = 1e3 / fpsLimit;
+                    var delay_1 = 1e3 / fpsLimit;
                     setTimeout(function() {
                         return requestAnimationFrame(function() {
                             return _this.renderLoop();
                         });
-                    }, delay);
+                    }, delay_1);
                 } else {
                     requestAnimationFrame(function() {
                         return _this.renderLoop();
@@ -375,6 +375,7 @@
         Chart.installWidget(GridWidget_1.GridWidget);
         Chart.installWidget(TrendsBeaconWidget_1.TrendsBeaconWidget);
         Chart.installWidget(TrendsIndicatorWidget_1.TrendsIndicatorWidget);
+        Chart.installWidget(TrendsGradientWidget_1.TrendsGradientWidget);
         Chart.installWidget(TrendsLoadingWidget_1.TrendsLoadingWidget);
         Chart.installWidget(AxisMarksWidget_1.AxisMarksWidget);
         Chart.installWidget(BorderWidget_1.BorderWidget);
@@ -1000,6 +1001,8 @@
                         _context.globalCompositeOperation = "lighter";
                     } else if (value === THREE.SubtractiveBlending) {
                         _context.globalCompositeOperation = "darker";
+                    } else if (value === THREE.MultiplyBlending) {
+                        _context.globalCompositeOperation = "multiply";
                     }
                     _contextGlobalCompositeOperation = value;
                 }
@@ -1220,22 +1223,27 @@
                 _objectCount = 0;
                 _renderData.objects.length = 0;
                 _renderData.lights.length = 0;
+                function addObject(object) {
+                    _object = getNextObjectInPool();
+                    _object.id = object.id;
+                    _object.object = object;
+                    _vector3.setFromMatrixPosition(object.matrixWorld);
+                    _vector3.applyProjection(_viewProjectionMatrix);
+                    _object.z = _vector3.z;
+                    _object.renderOrder = object.renderOrder;
+                    _renderData.objects.push(_object);
+                }
                 scene.traverseVisible(function(object) {
                     if (object instanceof THREE.Light) {
                         _renderData.lights.push(object);
-                    } else if (object instanceof THREE.Mesh || object instanceof THREE.Line || object instanceof THREE.Sprite) {
-                        var material = object.material;
-                        if (material.visible === false) return;
-                        if (object.frustumCulled === false || _frustum.intersectsObject(object) === true) {
-                            _object = getNextObjectInPool();
-                            _object.id = object.id;
-                            _object.object = object;
-                            _vector3.setFromMatrixPosition(object.matrixWorld);
-                            _vector3.applyProjection(_viewProjectionMatrix);
-                            _object.z = _vector3.z;
-                            _object.renderOrder = object.renderOrder;
-                            _renderData.objects.push(_object);
-                        }
+                    } else if (object instanceof THREE.Mesh || object instanceof THREE.Line) {
+                        if (object.material.visible === false) return;
+                        if (object.frustumCulled === true && _frustum.intersectsObject(object) === false) return;
+                        addObject(object);
+                    } else if (object instanceof THREE.Sprite) {
+                        if (object.material.visible === false) return;
+                        if (object.frustumCulled === true && _frustum.intersectsSprite(object) === false) return;
+                        addObject(object);
                     }
                 });
                 if (sortObjects === true) {
@@ -2815,21 +2823,6 @@
                 var _a = [ left1 + width1, left2 + width2, top1 + height1, top2 + height2 ], right1 = _a[0], right2 = _a[1], bottom1 = _a[2], bottom2 = _a[3];
                 return !(left2 > right1 || right2 < left1 || top2 > bottom1 || bottom2 < top1);
             };
-            /**!
-	     * @preserve $.parseColor
-	     * Copyright 2011 THEtheChad Elliott
-	     * Released under the MIT and GPL licenses.
-	     */
-            Utils.parseColor = function(color) {
-                var cache, p = parseInt, color = color.replace(/\s\s*/g, "");
-                if (cache = /^#([\da-fA-F]{2})([\da-fA-F]{2})([\da-fA-F]{2})/.exec(color)) cache = [ p(cache[1], 16), p(cache[2], 16), p(cache[3], 16) ]; else if (cache = /^#([\da-fA-F])([\da-fA-F])([\da-fA-F])/.exec(color)) cache = [ p(cache[1], 16) * 17, p(cache[2], 16) * 17, p(cache[3], 16) * 17 ]; else if (cache = /^rgba\(([\d]+),([\d]+),([\d]+),([\d]+|[\d]*.[\d]+)\)/.exec(color)) cache = [ +cache[1], +cache[2], +cache[3], +cache[4] ]; else if (cache = /^rgb\(([\d]+),([\d]+),([\d]+)\)/.exec(color)) cache = [ +cache[1], +cache[2], +cache[3] ]; else throw Error(color + " is not supported by $.parseColor");
-                isNaN(cache[3]) && (cache[3] = 1);
-                return cache;
-            };
-            Utils.getHexColor = function(str) {
-                var rgb = this.parseColor(str);
-                return (rgb[0] << 8 * 2) + (rgb[1] << 8) + rgb[2];
-            };
             Utils.throttle = function(func, ms) {
                 var isThrottled = false, savedArgs, savedThis;
                 function wrapper() {
@@ -2997,7 +2990,7 @@
             TrendsManager.prototype.onInitialStateAppliedHandler = function() {
                 var _this = this;
                 var _loop_1 = function(trendName) {
-                    this_1.trends[trendName].segments.onRebuild(function() {
+                    this_1.trends[trendName].segmentsManager.onRebuild(function() {
                         return _this.ee.emit(EVENTS.SEGMENTS_REBUILDED, trendName);
                     });
                 };
@@ -3017,7 +3010,7 @@
     }, function(module, exports, __webpack_require__) {
         "use strict";
         var Utils_1 = __webpack_require__(14);
-        var TrendSegments_1 = __webpack_require__(18);
+        var TrendSegmentsManager_1 = __webpack_require__(18);
         var EventEmmiter_1 = __webpack_require__(13);
         var deps_1 = __webpack_require__(3);
         var EVENTS = {
@@ -3036,7 +3029,8 @@
             maxSegmentLength: 1e3,
             lineWidth: 2,
             lineColor: 16777215,
-            hasGradient: true,
+            hasBackground: false,
+            backgroundColor: "rgba(#5273BD, 0.15)",
             hasBeacon: false,
             settingsForTypes: {
                 CANDLE: {
@@ -3066,7 +3060,7 @@
                 this.bindEvents();
             }
             Trend.prototype.onInitialStateApplied = function() {
-                this.segments = new TrendSegments_1.TrendSegments(this.chartState, this);
+                this.segmentsManager = new TrendSegmentsManager_1.TrendSegmentsManager(this.chartState, this);
             };
             Trend.prototype.bindEvents = function() {
                 var _this = this;
@@ -3238,8 +3232,8 @@
             DISLPAYED_RANGE_CHANGED: "displayedRangeChanged",
             ANIMATION_FRAME: "animationFrame"
         };
-        var TrendSegments = function() {
-            function TrendSegments(chartState, trend) {
+        var TrendSegmentsManager = function() {
+            function TrendSegmentsManager(chartState, trend) {
                 this.segmentsById = {};
                 this.segments = [];
                 this.animatedSegmentsIds = [];
@@ -3256,7 +3250,7 @@
                 this.tryToRebuildSegments();
                 this.bindEvents();
             }
-            TrendSegments.prototype.bindEvents = function() {
+            TrendSegmentsManager.prototype.bindEvents = function() {
                 var _this = this;
                 this.trend.onChange(function(changedOptions, newData) {
                     return _this.onTrendChangeHandler(changedOptions, newData);
@@ -3271,18 +3265,18 @@
                     return _this.onDestroyHandler();
                 });
             };
-            TrendSegments.prototype.onDestroyHandler = function() {
+            TrendSegmentsManager.prototype.onDestroyHandler = function() {
                 this.ee.removeAllListeners();
                 this.appendAnimation && this.appendAnimation.kill();
                 this.prependAnimation && this.prependAnimation.kill();
             };
-            TrendSegments.prototype.onZoomHandler = function() {
+            TrendSegmentsManager.prototype.onZoomHandler = function() {
                 var segmentsRebuilded = this.tryToRebuildSegments();
                 if (!segmentsRebuilded) {
                     this.recalculateDisplayedRange();
                 }
             };
-            TrendSegments.prototype.onTrendChangeHandler = function(changedOptions, newData) {
+            TrendSegmentsManager.prototype.onTrendChangeHandler = function(changedOptions, newData) {
                 var needToRebuildSegments = changedOptions.type != void 0 || changedOptions.maxSegmentLength != void 0;
                 if (needToRebuildSegments) {
                     this.tryToRebuildSegments(true);
@@ -3294,13 +3288,16 @@
                 isAppend ? this.appendData(newData) : this.prependData(newData);
                 this.recalculateDisplayedRange();
             };
-            TrendSegments.prototype.getEndSegment = function() {
+            TrendSegmentsManager.prototype.getSegment = function(id) {
+                return this.segmentsById[id];
+            };
+            TrendSegmentsManager.prototype.getEndSegment = function() {
                 return this.segmentsById[this.endSegmentId];
             };
-            TrendSegments.prototype.getStartSegment = function() {
+            TrendSegmentsManager.prototype.getStartSegment = function() {
                 return this.segmentsById[this.startSegmentId];
             };
-            TrendSegments.prototype.tryToRebuildSegments = function(force) {
+            TrendSegmentsManager.prototype.tryToRebuildSegments = function(force) {
                 if (force === void 0) {
                     force = false;
                 }
@@ -3333,27 +3330,29 @@
                 this.recalculateDisplayedRange(true);
                 this.ee.emit(EVENTS.REBUILD);
             };
-            TrendSegments.prototype.stopAllAnimations = function() {
+            TrendSegmentsManager.prototype.stopAllAnimations = function() {
                 this.animatedSegmentsIds = [];
                 this.animatedSegmentsForAppend = [];
                 this.animatedSegmentsForAppend = [];
                 if (this.prependAnimation) this.prependAnimation.kill();
                 if (this.appendAnimation) this.appendAnimation.kill();
             };
-            TrendSegments.prototype.recalculateDisplayedRange = function(segmentsAreRebuilded) {
+            TrendSegmentsManager.prototype.recalculateDisplayedRange = function(segmentsAreRebuilded) {
                 if (segmentsAreRebuilded === void 0) {
                     segmentsAreRebuilded = false;
                 }
                 var _a = this.chartState.data.xAxis.range, from = _a.from, to = _a.to;
                 var _b = this, firstDisplayedSegment = _b.firstDisplayedSegment, lastDisplayedSegment = _b.lastDisplayedSegment;
                 var displayedRange = to - from;
-                this.firstDisplayedSegment = Utils_1.Utils.binarySearchClosest(this.segments, from - displayedRange, "startXVal");
-                this.lastDisplayedSegment = Utils_1.Utils.binarySearchClosest(this.segments, to + displayedRange, "endXVal");
+                this.firstDisplayedSegmentInd = Utils_1.Utils.binarySearchClosestInd(this.segments, from - displayedRange, "startXVal");
+                this.firstDisplayedSegment = this.segments[this.firstDisplayedSegmentInd];
+                this.lastDisplayedSegmentInd = Utils_1.Utils.binarySearchClosestInd(this.segments, to + displayedRange, "endXVal");
+                this.lastDisplayedSegment = this.segments[this.lastDisplayedSegmentInd];
                 if (segmentsAreRebuilded) return;
                 var displayedRangeChanged = firstDisplayedSegment.id !== this.firstDisplayedSegment.id || lastDisplayedSegment.id !== this.lastDisplayedSegment.id;
                 if (displayedRangeChanged) this.ee.emit(EVENTS.DISLPAYED_RANGE_CHANGED);
             };
-            TrendSegments.prototype.getSegmentsForXValues = function(values) {
+            TrendSegmentsManager.prototype.getSegmentsForXValues = function(values) {
                 var valueInd = 0;
                 var value = values[valueInd];
                 var lastValueInd = values.length - 1;
@@ -3378,16 +3377,16 @@
                 }
                 return results;
             };
-            TrendSegments.prototype.onAnimationFrame = function(cb) {
+            TrendSegmentsManager.prototype.onAnimationFrame = function(cb) {
                 return this.ee.subscribe(EVENTS.ANIMATION_FRAME, cb);
             };
-            TrendSegments.prototype.onRebuild = function(cb) {
+            TrendSegmentsManager.prototype.onRebuild = function(cb) {
                 return this.ee.subscribe(EVENTS.REBUILD, cb);
             };
-            TrendSegments.prototype.onDisplayedRangeChanged = function(cb) {
+            TrendSegmentsManager.prototype.onDisplayedRangeChanged = function(cb) {
                 return this.ee.subscribe(EVENTS.DISLPAYED_RANGE_CHANGED, cb);
             };
-            TrendSegments.prototype.allocateNextSegment = function() {
+            TrendSegmentsManager.prototype.allocateNextSegment = function() {
                 var id = this.nextEmptyId++;
                 var segment = new TrendSegment(this, id);
                 var prevSegment = this.segmentsById[this.endSegmentId];
@@ -3401,7 +3400,7 @@
                 this.segments.push(segment);
                 return segment;
             };
-            TrendSegments.prototype.allocatePrevSegment = function() {
+            TrendSegmentsManager.prototype.allocatePrevSegment = function() {
                 var id = this.nextEmptyId++;
                 var segment = new TrendSegment(this, id);
                 var nextSegment = this.segmentsById[this.startSegmentId];
@@ -3415,7 +3414,7 @@
                 this.segments.unshift(segment);
                 return segment;
             };
-            TrendSegments.prototype.appendData = function(newData, needRebuildSegments) {
+            TrendSegmentsManager.prototype.appendData = function(newData, needRebuildSegments) {
                 if (needRebuildSegments === void 0) {
                     needRebuildSegments = false;
                 }
@@ -3474,7 +3473,7 @@
                 if (this.animatedSegmentsForAppend.length > MAX_ANIMATED_SEGMENTS) time = 0;
                 this.animate(time);
             };
-            TrendSegments.prototype.prependData = function(newData) {
+            TrendSegmentsManager.prototype.prependData = function(newData) {
                 var trendData = this.trend.getData();
                 var segment = this.getStartSegment() || this.segmentsById[0];
                 var initialSegment = segment.hasValue ? segment : null;
@@ -3516,7 +3515,7 @@
                 if (this.animatedSegmentsForPrepend.length > MAX_ANIMATED_SEGMENTS) time = 0;
                 this.animate(time, true);
             };
-            TrendSegments.prototype.animate = function(time, isPrepend) {
+            TrendSegmentsManager.prototype.animate = function(time, isPrepend) {
                 var _this = this;
                 if (isPrepend === void 0) {
                     isPrepend = false;
@@ -3551,7 +3550,7 @@
                     this.appendAnimation = animation;
                 }
             };
-            TrendSegments.prototype.onAnimationFrameHandler = function(coefficient, isPrepend) {
+            TrendSegmentsManager.prototype.onAnimationFrameHandler = function(coefficient, isPrepend) {
                 if (isPrepend === void 0) {
                     isPrepend = false;
                 }
@@ -3569,9 +3568,9 @@
                 this.animatedSegmentsIds = this.animatedSegmentsForAppend.concat(this.animatedSegmentsForPrepend);
                 this.ee.emit(EVENTS.ANIMATION_FRAME, this);
             };
-            return TrendSegments;
+            return TrendSegmentsManager;
         }();
-        exports.TrendSegments = TrendSegments;
+        exports.TrendSegmentsManager = TrendSegmentsManager;
         var TrendSegment = function() {
             function TrendSegment(trendPoints, id) {
                 this.isCompleted = false;
@@ -4489,108 +4488,138 @@
             }
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
+        var Geometry = THREE.Geometry;
         var Utils_1 = __webpack_require__(14);
-        var Mesh = THREE.Mesh;
-        var PlaneBufferGeometry = THREE.PlaneBufferGeometry;
-        var MeshBasicMaterial = THREE.MeshBasicMaterial;
         var TrendsWidget_1 = __webpack_require__(25);
-        var Trend_1 = __webpack_require__(17);
-        var TrendsLoadingWidget = function(_super) {
-            __extends(TrendsLoadingWidget, _super);
-            function TrendsLoadingWidget() {
+        var Color_1 = __webpack_require__(26);
+        var MAX_SEGMENTS = 2e3;
+        var TrendsGradientWidget = function(_super) {
+            __extends(TrendsGradientWidget, _super);
+            function TrendsGradientWidget() {
                 _super.apply(this, arguments);
             }
-            TrendsLoadingWidget.prototype.getTrendWidgetClass = function() {
-                return TrendLoading;
+            TrendsGradientWidget.prototype.getTrendWidgetClass = function() {
+                return TrendGradient;
             };
-            TrendsLoadingWidget.widgetName = "TrendsLoading";
-            return TrendsLoadingWidget;
+            TrendsGradientWidget.widgetName = "TrendsGradient";
+            return TrendsGradientWidget;
         }(TrendsWidget_1.TrendsWidget);
-        exports.TrendsLoadingWidget = TrendsLoadingWidget;
-        var TrendLoading = function(_super) {
-            __extends(TrendLoading, _super);
-            function TrendLoading(state, trendName) {
-                _super.call(this, state, trendName);
-                this.isActive = false;
-                this.mesh = new Mesh(new PlaneBufferGeometry(32, 32), new MeshBasicMaterial({
-                    map: TrendLoading.createTexture(),
-                    transparent: true
-                }));
-                this.deactivate();
+        exports.TrendsGradientWidget = TrendsGradientWidget;
+        var TrendGradient = function(_super) {
+            __extends(TrendGradient, _super);
+            function TrendGradient(chartState, trendName) {
+                _super.call(this, chartState, trendName);
+                this.visibleSegmentsCnt = 0;
+                this.segmentsIds = new Uint16Array(MAX_SEGMENTS);
+                this.trend = chartState.trendsManager.getTrend(trendName);
+                this.initGradient();
+                this.updateSegments();
             }
-            TrendLoading.widgetIsEnabled = function(trendOptions, chartState) {
-                return trendOptions.enabled && chartState.data.animations.enabled;
+            TrendGradient.widgetIsEnabled = function(trendOptions) {
+                return trendOptions.enabled && trendOptions.hasBackground;
             };
-            TrendLoading.prototype.getObject3D = function() {
-                return this.mesh;
-            };
-            TrendLoading.prototype.bindEvents = function() {
+            TrendGradient.prototype.bindEvents = function() {
                 var _this = this;
                 _super.prototype.bindEvents.call(this);
-                this.bindEvent(this.trend.onPrependRequest(function() {
-                    return _this.activate();
+                this.bindEvent(this.trend.segmentsManager.onRebuild(function() {
+                    _this.updateSegments();
+                }));
+                this.bindEvent(this.trend.segmentsManager.onDisplayedRangeChanged(function() {
+                    _this.updateSegments();
                 }));
             };
-            TrendLoading.prototype.prependData = function() {
-                this.deactivate();
+            TrendGradient.prototype.getObject3D = function() {
+                return this.gradient;
             };
-            TrendLoading.prototype.activate = function() {
-                var mesh = this.mesh;
-                mesh.material.opacity = 1;
-                mesh.rotation.z = 0;
-                var animation = TweenLite.to(this.mesh.rotation, .5, {
-                    z: Math.PI * 2
-                });
-                animation.eventCallback("onComplete", function() {
-                    animation.restart();
-                });
-                this.animation = animation;
-                this.isActive = true;
-                this.updatePosition();
-            };
-            TrendLoading.prototype.deactivate = function() {
-                this.animation && this.animation.kill();
-                this.mesh.material.opacity = 0;
-                this.isActive = false;
-            };
-            TrendLoading.createTexture = function() {
-                var h = 64, w = 64;
-                return Utils_1.Utils.createTexture(h, w, function(ctx) {
-                    ctx.strokeStyle = "rgba(255,255,255,0.95)";
-                    ctx.lineWidth = 5;
-                    var center = h / 2;
-                    ctx.beginPath();
-                    ctx.arc(center, center, 22, 0, Math.PI / 2);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.arc(center, center, 22, Math.PI, Math.PI + Math.PI / 2);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.arc(center, center, 3, 0, Math.PI * 2);
-                    ctx.stroke();
-                });
-            };
-            TrendLoading.prototype.onZoomFrame = function() {
-                this.updatePosition();
-            };
-            TrendLoading.prototype.updatePosition = function() {
-                if (!this.isActive) return;
-                var trend = this.trend;
-                var segment = trend.segments.getStartSegment();
-                var x, y;
-                if (trend.getOptions().type == Trend_1.TREND_TYPE.LINE) {
-                    x = segment.currentAnimationState.startXVal;
-                    y = segment.currentAnimationState.startYVal;
-                } else {
-                    x = segment.currentAnimationState.xVal - segment.maxLength;
-                    y = segment.currentAnimationState.yVal;
+            TrendGradient.prototype.initGradient = function() {
+                var geometry = new Geometry();
+                for (var i = 0; i < MAX_SEGMENTS; i++) {
+                    geometry.vertices.push(new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3());
+                    var ind = i * 4;
+                    geometry.faces.push(new THREE.Face3(ind, ind + 1, ind + 2), new THREE.Face3(ind + 3, ind, ind + 2));
                 }
-                var pointVector = this.chartState.screen.getPointOnChart(x, y);
-                this.mesh.position.set(pointVector.x, pointVector.y, 0);
+                var color = new Color_1.ChartColor(this.trend.getOptions().backgroundColor);
+                this.gradient = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
+                    color: color.value,
+                    transparent: true,
+                    opacity: color.a
+                }));
+                var _a = this.chartState.data.xAxis.range, scaleXFactor = _a.scaleFactor, zoomX = _a.zoom;
+                var _b = this.chartState.data.yAxis.range, scaleYFactor = _b.scaleFactor, zoomY = _b.zoom;
+                this.gradient.scale.set(scaleXFactor * zoomX, scaleYFactor * zoomY, 1);
+                this.gradient.frustumCulled = false;
             };
-            return TrendLoading;
+            TrendGradient.prototype.onZoomFrame = function(options) {
+                var state = this.chartState.data;
+                var scaleXFactor = state.xAxis.range.scaleFactor;
+                var scaleYFactor = state.yAxis.range.scaleFactor;
+                var currentScale = this.gradient.scale;
+                if (options.zoomX) currentScale.setX(scaleXFactor * options.zoomX);
+                if (options.zoomY) currentScale.setY(scaleYFactor * options.zoomY);
+            };
+            TrendGradient.prototype.onSegmentsAnimate = function(trendSegmentsManager) {
+                var animatedSegmentsIds = trendSegmentsManager.animatedSegmentsIds;
+                for (var i = 0; i < this.visibleSegmentsCnt; i++) {
+                    var segmentId = this.segmentsIds[i];
+                    if (!animatedSegmentsIds.includes(segmentId)) continue;
+                    this.setupSegmentVertices(i, trendSegmentsManager.getSegment(segmentId).currentAnimationState);
+                }
+                this.gradient.geometry.verticesNeedUpdate = true;
+            };
+            TrendGradient.prototype.updateSegments = function() {
+                var geometry = this.gradient.geometry;
+                var _a = this.trend.segmentsManager, trendSegments = _a.segments, segmentInd = _a.firstDisplayedSegmentInd, lastDisplayedSegmentInd = _a.lastDisplayedSegmentInd;
+                var prevVisibleSegmentsCnt = this.visibleSegmentsCnt;
+                this.visibleSegmentsCnt = lastDisplayedSegmentInd - segmentInd + 1;
+                var segmentsToProcessCnt = Math.max(prevVisibleSegmentsCnt, this.visibleSegmentsCnt);
+                if (segmentsToProcessCnt > MAX_SEGMENTS) {
+                    Utils_1.Utils.error(TrendsGradientWidget.widgetName + ": MAX_SEGMENTS reached");
+                }
+                for (var i = 0; i <= segmentsToProcessCnt; i++) {
+                    if (segmentInd <= lastDisplayedSegmentInd) {
+                        var segment = trendSegments[segmentInd];
+                        this.setupSegmentVertices(i, segment.currentAnimationState);
+                        this.segmentsIds[i] = segment.id;
+                        segmentInd++;
+                    } else {
+                        this.setupSegmentVertices(i);
+                    }
+                }
+                geometry.verticesNeedUpdate = true;
+            };
+            TrendGradient.prototype.setupSegmentVertices = function(segmentInd, segmentState) {
+                var gradientSegmentInd = segmentInd * 4;
+                var vertices = this.gradient.geometry.vertices;
+                var topLeft = vertices[gradientSegmentInd];
+                var bottomLeft = vertices[gradientSegmentInd + 1];
+                var bottomRight = vertices[gradientSegmentInd + 2];
+                var topRight = vertices[gradientSegmentInd + 3];
+                var screenHeightVal = this.chartState.pxToValueByYAxis(this.chartState.data.height);
+                if (segmentState) {
+                    var startX = this.toLocalX(segmentState.startXVal);
+                    var startY = this.toLocalY(segmentState.startYVal);
+                    var endX = this.toLocalX(segmentState.endXVal);
+                    var endY = this.toLocalY(segmentState.endYVal);
+                    topLeft.set(startX, startY, 0);
+                    topRight.set(endX, endY, 0);
+                    bottomLeft.set(topLeft.x, topLeft.y - screenHeightVal, 0);
+                    bottomRight.set(topRight.x, topRight.y - screenHeightVal, 0);
+                } else {
+                    topLeft.set(0, 0, 0);
+                    topRight.set(0, 0, 0);
+                    bottomLeft.set(0, 0, 0);
+                    bottomRight.set(0, 0, 0);
+                }
+            };
+            TrendGradient.prototype.toLocalX = function(xVal) {
+                return xVal - this.chartState.data.xAxis.range.zeroVal;
+            };
+            TrendGradient.prototype.toLocalY = function(yVal) {
+                return yVal - this.chartState.data.yAxis.range.zeroVal;
+            };
+            return TrendGradient;
         }(TrendsWidget_1.TrendWidget);
-        exports.TrendLoading = TrendLoading;
+        exports.TrendGradient = TrendGradient;
     }, function(module, exports, __webpack_require__) {
         "use strict";
         var __extends = this && this.__extends || function(d, b) {
@@ -4690,7 +4719,7 @@
             TrendWidget.prototype.onZoom = function() {};
             TrendWidget.prototype.bindEvents = function() {
                 var _this = this;
-                this.bindEvent(this.trend.segments.onAnimationFrame(function(trendPoints) {
+                this.bindEvent(this.trend.segmentsManager.onAnimationFrame(function(trendPoints) {
                     return _this.onSegmentsAnimate(trendPoints);
                 }));
                 this.bindEvent(this.chartState.screen.onTransformationFrame(function(options) {
@@ -4709,6 +4738,149 @@
             return TrendWidget;
         }();
         exports.TrendWidget = TrendWidget;
+    }, function(module, exports) {
+        "use strict";
+        var ChartColor = function() {
+            function ChartColor(color) {
+                this.set(color);
+            }
+            /**!
+	     * @preserve $.parseColor
+	     * Copyright 2011 THEtheChad Elliott
+	     * Released under the MIT and GPL licenses.
+	     */
+            ChartColor.parseColor = function(color) {
+                var cache, p = parseInt, color = color.replace(/\s\s*/g, "");
+                if (cache = /^#([\da-fA-F]{2})([\da-fA-F]{2})([\da-fA-F]{2})/.exec(color)) cache = [ p(cache[1], 16), p(cache[2], 16), p(cache[3], 16) ]; else if (cache = /^#([\da-fA-F])([\da-fA-F])([\da-fA-F])/.exec(color)) cache = [ p(cache[1], 16) * 17, p(cache[2], 16) * 17, p(cache[3], 16) * 17 ]; else if (cache = /^rgba\(#([\da-fA-F]{2})([\da-fA-F]{2})([\da-fA-F]{2}),(([0-9]*[.])?[0-9]+)/.exec(color)) cache = [ p(cache[1], 16), p(cache[2], 16), p(cache[3], 16), +cache[4] ]; else if (cache = /^rgba\(([\d]+),([\d]+),([\d]+),([\d]+|[\d]*.[\d]+)\)/.exec(color)) cache = [ +cache[1], +cache[2], +cache[3], +cache[4] ]; else if (cache = /^rgb\(([\d]+),([\d]+),([\d]+)\)/.exec(color)) cache = [ +cache[1], +cache[2], +cache[3] ]; else throw Error(color + " is not supported by parseColor");
+                isNaN(cache[3]) && (cache[3] = 1);
+                return cache;
+            };
+            ChartColor.prototype.set = function(color) {
+                if (typeof color == "number") color = "#" + color.toString(16);
+                var colorStr = color;
+                var rgba = ChartColor.parseColor(colorStr);
+                this.r = rgba[0];
+                this.g = rgba[1];
+                this.b = rgba[2];
+                this.a = rgba[3];
+                this.value = (rgba[0] << 8 * 2) + (rgba[1] << 8) + rgba[2];
+                this.hexStr = "#" + this.value.toString(16);
+                this.rgbaStr = "rgba(" + this.r + ", " + this.g + ", " + this.b + ", " + this.a + ")";
+            };
+            return ChartColor;
+        }();
+        exports.ChartColor = ChartColor;
+    }, function(module, exports, __webpack_require__) {
+        "use strict";
+        var __extends = this && this.__extends || function(d, b) {
+            for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+            function __() {
+                this.constructor = d;
+            }
+            d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+        };
+        var Utils_1 = __webpack_require__(14);
+        var Mesh = THREE.Mesh;
+        var PlaneBufferGeometry = THREE.PlaneBufferGeometry;
+        var MeshBasicMaterial = THREE.MeshBasicMaterial;
+        var TrendsWidget_1 = __webpack_require__(25);
+        var Trend_1 = __webpack_require__(17);
+        var TrendsLoadingWidget = function(_super) {
+            __extends(TrendsLoadingWidget, _super);
+            function TrendsLoadingWidget() {
+                _super.apply(this, arguments);
+            }
+            TrendsLoadingWidget.prototype.getTrendWidgetClass = function() {
+                return TrendLoading;
+            };
+            TrendsLoadingWidget.widgetName = "TrendsLoading";
+            return TrendsLoadingWidget;
+        }(TrendsWidget_1.TrendsWidget);
+        exports.TrendsLoadingWidget = TrendsLoadingWidget;
+        var TrendLoading = function(_super) {
+            __extends(TrendLoading, _super);
+            function TrendLoading(state, trendName) {
+                _super.call(this, state, trendName);
+                this.isActive = false;
+                this.mesh = new Mesh(new PlaneBufferGeometry(32, 32), new MeshBasicMaterial({
+                    map: TrendLoading.createTexture(),
+                    transparent: true
+                }));
+                this.deactivate();
+            }
+            TrendLoading.widgetIsEnabled = function(trendOptions, chartState) {
+                return trendOptions.enabled && chartState.data.animations.enabled;
+            };
+            TrendLoading.prototype.getObject3D = function() {
+                return this.mesh;
+            };
+            TrendLoading.prototype.bindEvents = function() {
+                var _this = this;
+                _super.prototype.bindEvents.call(this);
+                this.bindEvent(this.trend.onPrependRequest(function() {
+                    return _this.activate();
+                }));
+            };
+            TrendLoading.prototype.prependData = function() {
+                this.deactivate();
+            };
+            TrendLoading.prototype.activate = function() {
+                var mesh = this.mesh;
+                mesh.material.opacity = 1;
+                mesh.rotation.z = 0;
+                var animation = TweenLite.to(this.mesh.rotation, .5, {
+                    z: Math.PI * 2
+                });
+                animation.eventCallback("onComplete", function() {
+                    animation.restart();
+                });
+                this.animation = animation;
+                this.isActive = true;
+                this.updatePosition();
+            };
+            TrendLoading.prototype.deactivate = function() {
+                this.animation && this.animation.kill();
+                this.mesh.material.opacity = 0;
+                this.isActive = false;
+            };
+            TrendLoading.createTexture = function() {
+                var h = 64, w = 64;
+                return Utils_1.Utils.createTexture(h, w, function(ctx) {
+                    ctx.strokeStyle = "rgba(255,255,255,0.95)";
+                    ctx.lineWidth = 5;
+                    var center = h / 2;
+                    ctx.beginPath();
+                    ctx.arc(center, center, 22, 0, Math.PI / 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(center, center, 22, Math.PI, Math.PI + Math.PI / 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(center, center, 3, 0, Math.PI * 2);
+                    ctx.stroke();
+                });
+            };
+            TrendLoading.prototype.onZoomFrame = function() {
+                this.updatePosition();
+            };
+            TrendLoading.prototype.updatePosition = function() {
+                if (!this.isActive) return;
+                var trend = this.trend;
+                var segment = trend.segmentsManager.getStartSegment();
+                var x, y;
+                if (trend.getOptions().type == Trend_1.TREND_TYPE.LINE) {
+                    x = segment.currentAnimationState.startXVal;
+                    y = segment.currentAnimationState.startYVal;
+                } else {
+                    x = segment.currentAnimationState.xVal - segment.maxLength;
+                    y = segment.currentAnimationState.yVal;
+                }
+                var pointVector = this.chartState.screen.getPointOnChart(x, y);
+                this.mesh.position.set(pointVector.x, pointVector.y, 0);
+            };
+            return TrendLoading;
+        }(TrendsWidget_1.TrendWidget);
+        exports.TrendLoading = TrendLoading;
     }, function(module, exports, __webpack_require__) {
         "use strict";
         var __extends = this && this.__extends || function(d, b) {
@@ -4727,6 +4899,7 @@
         var Line = THREE.Line;
         var Mesh = THREE.Mesh;
         var interfaces_1 = __webpack_require__(21);
+        var Color_1 = __webpack_require__(26);
         var AxisMarksWidget = function(_super) {
             __extends(AxisMarksWidget, _super);
             function AxisMarksWidget(chartState) {
@@ -4811,7 +4984,7 @@
                 var lineGeometry = new Geometry();
                 lineGeometry.vertices.push(new Vector3(0, 0, 0), new Vector3(0, 0, 0));
                 return new Line(lineGeometry, new LineBasicMaterial({
-                    color: Utils_1.Utils.getHexColor(lineColor),
+                    color: new Color_1.ChartColor(lineColor).value,
                     linewidth: lineWidth
                 }));
             };
@@ -4943,7 +5116,7 @@
         var Utils_1 = __webpack_require__(14);
         var Mesh = THREE.Mesh;
         var TrendsWidget_1 = __webpack_require__(25);
-        var Color = THREE.Color;
+        var Color_1 = __webpack_require__(26);
         var CANVAS_WIDTH = 128;
         var CANVAS_HEIGHT = 64;
         var OFFSET_X = 15;
@@ -4982,11 +5155,11 @@
                 texture.needsUpdate = true;
             };
             TrendIndicator.prototype.initObject = function() {
-                var color = new Color(this.trend.getOptions().lineColor);
+                var color = new Color_1.ChartColor(this.trend.getOptions().lineColor);
                 var texture = Utils_1.Utils.createPixelPerfectTexture(CANVAS_WIDTH, CANVAS_HEIGHT, function(ctx) {
                     ctx.beginPath();
                     ctx.font = "15px Arial";
-                    ctx.fillStyle = color.getStyle();
+                    ctx.fillStyle = color.rgbaStr;
                     ctx.strokeStyle = "rgba(255,255,255,0.95)";
                 });
                 var material = new THREE.MeshBasicMaterial({
@@ -4997,7 +5170,7 @@
                 this.mesh = new Mesh(new THREE.PlaneGeometry(CANVAS_WIDTH, CANVAS_HEIGHT), material);
             };
             TrendIndicator.prototype.onTransformationFrame = function() {
-                this.segment = this.trend.segments.getEndSegment();
+                this.segment = this.trend.segmentsManager.getEndSegment();
                 this.updatePosition();
             };
             TrendIndicator.prototype.onSegmentsAnimate = function(segments) {
@@ -5074,11 +5247,11 @@
             TrendLine.prototype.bindEvents = function() {
                 var _this = this;
                 _super.prototype.bindEvents.call(this);
-                this.bindEvent(this.trend.segments.onRebuild(function() {
+                this.bindEvent(this.trend.segmentsManager.onRebuild(function() {
                     _this.destroySegments();
                     _this.setupSegments();
                 }));
-                this.bindEvent(this.trend.segments.onDisplayedRangeChanged(function() {
+                this.bindEvent(this.trend.segmentsManager.onDisplayedRangeChanged(function() {
                     _this.setupSegments();
                 }));
             };
@@ -5086,8 +5259,6 @@
                 var geometry = new Geometry();
                 var _a = this.chartState.data.xAxis.range, scaleXFactor = _a.scaleFactor, zoomX = _a.zoom;
                 var _b = this.chartState.data.yAxis.range, scaleYFactor = _b.scaleFactor, zoomY = _b.zoom;
-                this.scaleXFactor = scaleXFactor;
-                this.scaleYFactor = scaleYFactor;
                 this.lineSegments = new LineSegments(geometry, this.material);
                 this.lineSegments.scale.set(scaleXFactor * zoomX, scaleYFactor * zoomY, 1);
                 this.lineSegments.frustumCulled = false;
@@ -5100,10 +5271,10 @@
             };
             TrendLine.prototype.setupSegments = function() {
                 var geometry = this.lineSegments.geometry;
-                var _a = this.trend.segments, firstDisplayedSegment = _a.firstDisplayedSegment, lastDisplayedSegment = _a.lastDisplayedSegment;
+                var _a = this.trend.segmentsManager, firstDisplayedSegment = _a.firstDisplayedSegment, lastDisplayedSegment = _a.lastDisplayedSegment;
                 for (var segmentId in this.displayedSegments) {
                     var lineSegment = this.displayedSegments[segmentId];
-                    var segment_1 = this.trend.segments.segments[lineSegment.segmentId];
+                    var segment_1 = this.trend.segmentsManager.segments[lineSegment.segmentId];
                     var segmentIsNotDisplayed = segment_1.startXVal < firstDisplayedSegment.startXVal || segment_1.endXVal > lastDisplayedSegment.endXVal;
                     if (segmentIsNotDisplayed) this.destroySegment(Number(segmentId));
                 }
@@ -5144,8 +5315,11 @@
             };
             TrendLine.prototype.onZoomFrame = function(options) {
                 var currentScale = this.lineSegments.scale;
-                if (options.zoomX) currentScale.setX(this.scaleXFactor * options.zoomX);
-                if (options.zoomY) currentScale.setY(this.scaleYFactor * options.zoomY);
+                var state = this.chartState.data;
+                var scaleXFactor = state.xAxis.range.scaleFactor;
+                var scaleYFactor = state.yAxis.range.scaleFactor;
+                if (options.zoomX) currentScale.setX(scaleXFactor * options.zoomX);
+                if (options.zoomY) currentScale.setY(scaleYFactor * options.zoomY);
             };
             TrendLine.prototype.onSegmentsAnimate = function(trendSegments) {
                 var geometry = this.lineSegments.geometry;
@@ -5222,11 +5396,11 @@
             TrendCandlesWidget.prototype.bindEvents = function() {
                 var _this = this;
                 _super.prototype.bindEvents.call(this);
-                this.bindEvent(this.trend.segments.onRebuild(function() {
+                this.bindEvent(this.trend.segmentsManager.onRebuild(function() {
                     _this.destroyCandles();
                     _this.setupCandles();
                 }));
-                this.bindEvent(this.trend.segments.onDisplayedRangeChanged(function() {
+                this.bindEvent(this.trend.segmentsManager.onDisplayedRangeChanged(function() {
                     _this.setupCandles();
                 }));
             };
@@ -5243,7 +5417,7 @@
                 this.setupCandles();
             };
             TrendCandlesWidget.prototype.setupCandles = function() {
-                var _a = this.trend.segments, firstDisplayedSegment = _a.firstDisplayedSegment, lastDisplayedSegment = _a.lastDisplayedSegment;
+                var _a = this.trend.segmentsManager, firstDisplayedSegment = _a.firstDisplayedSegment, lastDisplayedSegment = _a.lastDisplayedSegment;
                 for (var segmentId in this.candles) {
                     var segment_1 = this.candles[segmentId].segment;
                     var segmentIsNotDisplayed = segment_1.startXVal < firstDisplayedSegment.startXVal || segment_1.endXVal > lastDisplayedSegment.endXVal;
@@ -5429,7 +5603,7 @@
                 light.add(new Mesh(new PlaneBufferGeometry(5, 5), new MeshBasicMaterial({
                     map: TrendBeacon.createTexture()
                 })));
-                this.segment = this.trend.segments.getEndSegment();
+                this.segment = this.trend.segmentsManager.getEndSegment();
             };
             TrendBeacon.prototype.animate = function() {
                 var _this = this;
@@ -5468,7 +5642,7 @@
                 });
             };
             TrendBeacon.prototype.onTransformationFrame = function() {
-                this.segment = this.trend.segments.getEndSegment();
+                this.segment = this.trend.segmentsManager.getEndSegment();
                 this.updatePosition();
             };
             TrendBeacon.prototype.onSegmentsAnimate = function(trendsSegments) {

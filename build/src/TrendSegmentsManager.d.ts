@@ -5,7 +5,7 @@ import { ITrendItem, Trend } from "./Trend";
 /**
  *  Class helps to display and animate trends segments
  */
-export declare class TrendSegments {
+export declare class TrendSegmentsManager {
     segmentsById: {
         [id: string]: TrendSegment;
     };
@@ -14,7 +14,9 @@ export declare class TrendSegments {
     animatedSegmentsIds: number[];
     maxSegmentLength: number;
     segmentsLength: number;
+    firstDisplayedSegmentInd: number;
     firstDisplayedSegment: TrendSegment;
+    lastDisplayedSegmentInd: number;
     lastDisplayedSegment: TrendSegment;
     private appendAnimation;
     private prependAnimation;
@@ -30,6 +32,7 @@ export declare class TrendSegments {
     private onDestroyHandler();
     private onZoomHandler();
     private onTrendChangeHandler(changedOptions, newData);
+    getSegment(id: number): TrendSegment;
     getEndSegment(): TrendSegment;
     getStartSegment(): TrendSegment;
     private tryToRebuildSegments(force?);
@@ -40,7 +43,7 @@ export declare class TrendSegments {
      * values must be sorted!
      */
     getSegmentsForXValues(values: number[]): TrendSegment[];
-    onAnimationFrame(cb: (animationState: TrendSegments) => void): Function;
+    onAnimationFrame(cb: (animationState: TrendSegmentsManager) => void): Function;
     onRebuild(cb: Function): Function;
     onDisplayedRangeChanged(cb: Function): Function;
     allocateNextSegment(): TrendSegment;
@@ -81,7 +84,7 @@ export declare class TrendSegment implements ITrendSegmentState {
     targetAnimationState: ITrendSegmentState;
     currentAnimationState: ITrendSegmentState;
     private trendSegments;
-    constructor(trendPoints: TrendSegments, id: number);
+    constructor(trendPoints: TrendSegmentsManager, id: number);
     createAnimationState(): ITrendSegmentState;
     appendItem(item: ITrendItem): boolean;
     prependItem(item: ITrendItem): boolean;

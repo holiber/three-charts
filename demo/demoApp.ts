@@ -1,6 +1,6 @@
-import { Chart, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE } from 'three-chart';
+import { Chart, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE } from '../src/';
 import enabled = THREE.Cache.enabled;
-import { TREND_MARK_SIDE, ITrendMarkOptions, TrendsMarksPlugin } from '../plugins/build/TrendsMarksPlugin';
+// import { TREND_MARK_SIDE, ITrendMarkOptions, TrendsMarksPlugin } from '../plugins/build/TrendsMarksPlugin';
 
 var chart: Chart;
 
@@ -56,31 +56,31 @@ class DataSourse {
 	}
 }
 
-class MarksSource {
-	static getNext(val: number): ITrendMarkOptions {
-		if (Math.random() > 0.2) return null;
-		return this.generate(val);
-	}
-
-	static generate(val: number): ITrendMarkOptions {
-		let descriptionColor = 'rgb(40,136,75)';
-		let orientation =  Utils.getRandomItem([TREND_MARK_SIDE.TOP, TREND_MARK_SIDE.BOTTOM]);
-		if (orientation == TREND_MARK_SIDE.BOTTOM) {
-			descriptionColor = 'rgb(219,73,49)';
-		}
-
-		return {
-			trendName: 'main',
-			value: val,
-			title: Utils.getRandomItem(['Alex Malcon', 'Serg Morrs', 'Harry Potter']),
-			description: Utils.getRandomItem(['$10 -> 20$', '$15 -> 30$', '40$ -> 80$']),
-			icon: Utils.getRandomItem(['AM', 'SM', 'HP']),
-			iconColor: Utils.getRandomItem(['rgb(69,67,130)', 'rgb(124,39,122)']),
-			orientation: orientation,
-			descriptionColor: descriptionColor
-		}
-	}
-}
+// class MarksSource {
+// 	static getNext(val: number): ITrendMarkOptions {
+// 		if (Math.random() > 0.2) return null;
+// 		return this.generate(val);
+// 	}
+//
+// 	static generate(val: number): ITrendMarkOptions {
+// 		let descriptionColor = 'rgb(40,136,75)';
+// 		let orientation =  Utils.getRandomItem([TREND_MARK_SIDE.TOP, TREND_MARK_SIDE.BOTTOM]);
+// 		if (orientation == TREND_MARK_SIDE.BOTTOM) {
+// 			descriptionColor = 'rgb(219,73,49)';
+// 		}
+//
+// 		return {
+// 			trendName: 'main',
+// 			value: val,
+// 			title: Utils.getRandomItem(['Alex Malcon', 'Serg Morrs', 'Harry Potter']),
+// 			description: Utils.getRandomItem(['$10 -> 20$', '$15 -> 30$', '40$ -> 80$']),
+// 			icon: Utils.getRandomItem(['AM', 'SM', 'HP']),
+// 			iconColor: Utils.getRandomItem(['rgb(69,67,130)', 'rgb(124,39,122)']),
+// 			orientation: orientation,
+// 			descriptionColor: descriptionColor
+// 		}
+// 	}
+// }
 
 window.onload = function () {
 
@@ -129,7 +129,7 @@ window.onload = function () {
 				dataset: dsMain.getData(),
 				hasBeacon: true,
 				hasIndicator: true,
-				hasGradient: false,
+				hasBackground: true,
 			},
 			// 'red': {dataset: dsRed.data, lineColor: 0xFF2222, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
 			// 'blue': {dataset: dsBlue.data, lineColor: 0x2222FF, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
@@ -140,7 +140,7 @@ window.onload = function () {
 		widgets: {
 			//Grid: {enabled: false},
 			//Axis: {enabled: false},
-			TrendsGradient: {enabled: false},
+			// TrendsGradient: {enabled: false},
 			//TrendsBeacon: {enabled: false},
 			//TrendsIndicator: {enabled: false},
 			// TrendsMarks: {enabled: false},
@@ -149,10 +149,10 @@ window.onload = function () {
 		}
 	},
 	document.querySelector('.chart')
-		,
-	[
-		new TrendsMarksPlugin({items: [MarksSource.generate(now + 3000), MarksSource.generate(now + 3000), MarksSource.generate(now + 4000)]})
-	]
+	// 	,
+	// [
+	// 	new TrendsMarksPlugin({items: [MarksSource.generate(now + 3000), MarksSource.generate(now + 3000), MarksSource.generate(now + 4000)]})
+	// ]
 	);
 
 	chart.setState({animations: {enabled: false}});
@@ -170,11 +170,11 @@ window.onload = function () {
 			deadlineMark.setOptions({value: closeValue + 10000});
 			closeMark.setOptions({value: closeValue + 20000})
 		}
-		var markOptions = MarksSource.getNext(mainTrend.getLastItem().xVal);
-		if (markOptions) setTimeout(() => {
-			let trendsMarks = chart.state.getPlugin(TrendsMarksPlugin.NAME) as TrendsMarksPlugin;
-			trendsMarks.createMark(markOptions);
-		}, 500);
+		// var markOptions = MarksSource.getNext(mainTrend.getLastItem().xVal);
+		// if (markOptions) setTimeout(() => {
+		// 	let trendsMarks = chart.state.getPlugin(TrendsMarksPlugin.NAME) as TrendsMarksPlugin;
+		// 	trendsMarks.createMark(markOptions);
+		// }, 500);
 	});
 
 

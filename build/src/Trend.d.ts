@@ -1,5 +1,6 @@
 import { ChartState, IChartState } from "./State";
-import { TrendSegments } from "./TrendSegments";
+import { TrendSegmentsManager } from "./TrendSegmentsManager";
+import { TChartColor } from './Color';
 export interface IPrependPromiseExecutor {
     (requestedDataLength: number, resolve: (data: TTrendRawData) => void, reject: () => void): void;
 }
@@ -26,9 +27,10 @@ export interface ITrendOptions {
     name?: string;
     type?: TREND_TYPE;
     lineWidth?: number;
-    lineColor?: number;
-    hasGradient?: boolean;
+    lineColor?: TChartColor;
+    backgroundColor?: TChartColor;
     hasIndicator?: boolean;
+    hasBackground?: boolean;
     hasBeacon?: boolean;
     maxSegmentLength?: number;
     settingsForTypes?: {
@@ -38,7 +40,7 @@ export interface ITrendOptions {
 }
 export declare class Trend {
     name: string;
-    segments: TrendSegments;
+    segmentsManager: TrendSegmentsManager;
     minXVal: number;
     minYVal: number;
     maxXVal: number;

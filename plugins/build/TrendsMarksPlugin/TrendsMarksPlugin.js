@@ -193,7 +193,7 @@
                         return a.options.value - b.options.value;
                     });
                     var trend = chartState.getTrend(trendName);
-                    var points = trend.segments.getSegmentsForXValues(xVals.sort(function(a, b) {
+                    var points = trend.segmentsManager.getSegmentsForXValues(xVals.sort(function(a, b) {
                         return a - b;
                     }));
                     for (var markInd = 0; markInd < marksArr.length; markInd++) {
@@ -3247,7 +3247,7 @@
                     TrendsManager.prototype.onInitialStateAppliedHandler = function() {
                         var _this = this;
                         var _loop_1 = function(trendName) {
-                            this_1.trends[trendName].segments.onRebuild(function() {
+                            this_1.trends[trendName].segmentsManager.onRebuild(function() {
                                 return _this.ee.emit(EVENTS.SEGMENTS_REBUILDED, trendName);
                             });
                         };
@@ -3316,7 +3316,7 @@
                         this.bindEvents();
                     }
                     Trend.prototype.onInitialStateApplied = function() {
-                        this.segments = new TrendSegments_1.TrendSegments(this.chartState, this);
+                        this.segmentsManager = new TrendSegments_1.TrendSegments(this.chartState, this);
                     };
                     Trend.prototype.bindEvents = function() {
                         var _this = this;
@@ -4826,7 +4826,7 @@
                     TrendLoading.prototype.updatePosition = function() {
                         if (!this.isActive) return;
                         var trend = this.trend;
-                        var segment = trend.segments.getStartSegment();
+                        var segment = trend.segmentsManager.getStartSegment();
                         var x, y;
                         if (trend.getOptions().type == Trend_1.TREND_TYPE.LINE) {
                             x = segment.currentAnimationState.startXVal;
@@ -4940,7 +4940,7 @@
                     TrendWidget.prototype.onZoom = function() {};
                     TrendWidget.prototype.bindEvents = function() {
                         var _this = this;
-                        this.bindEvent(this.trend.segments.onAnimationFrame(function(trendPoints) {
+                        this.bindEvent(this.trend.segmentsManager.onAnimationFrame(function(trendPoints) {
                             return _this.onSegmentsAnimate(trendPoints);
                         }));
                         this.bindEvent(this.chartState.screen.onTransformationFrame(function(options) {
@@ -5247,7 +5247,7 @@
                         this.mesh = new Mesh(new THREE.PlaneGeometry(CANVAS_WIDTH, CANVAS_HEIGHT), material);
                     };
                     TrendIndicator.prototype.onTransformationFrame = function() {
-                        this.segment = this.trend.segments.getEndSegment();
+                        this.segment = this.trend.segmentsManager.getEndSegment();
                         this.updatePosition();
                     };
                     TrendIndicator.prototype.onSegmentsAnimate = function(segments) {
@@ -5324,11 +5324,11 @@
                     TrendLine.prototype.bindEvents = function() {
                         var _this = this;
                         _super.prototype.bindEvents.call(this);
-                        this.bindEvent(this.trend.segments.onRebuild(function() {
+                        this.bindEvent(this.trend.segmentsManager.onRebuild(function() {
                             _this.destroySegments();
                             _this.setupSegments();
                         }));
-                        this.bindEvent(this.trend.segments.onDisplayedRangeChanged(function() {
+                        this.bindEvent(this.trend.segmentsManager.onDisplayedRangeChanged(function() {
                             _this.setupSegments();
                         }));
                     };
@@ -5350,10 +5350,10 @@
                     };
                     TrendLine.prototype.setupSegments = function() {
                         var geometry = this.lineSegments.geometry;
-                        var _a = this.trend.segments, firstDisplayedSegment = _a.firstDisplayedSegment, lastDisplayedSegment = _a.lastDisplayedSegment;
+                        var _a = this.trend.segmentsManager, firstDisplayedSegment = _a.firstDisplayedSegment, lastDisplayedSegment = _a.lastDisplayedSegment;
                         for (var segmentId in this.displayedSegments) {
                             var lineSegment = this.displayedSegments[segmentId];
-                            var segment_1 = this.trend.segments.segments[lineSegment.segmentId];
+                            var segment_1 = this.trend.segmentsManager.segments[lineSegment.segmentId];
                             var segmentIsNotDisplayed = segment_1.startXVal < firstDisplayedSegment.startXVal || segment_1.endXVal > lastDisplayedSegment.endXVal;
                             if (segmentIsNotDisplayed) this.destroySegment(Number(segmentId));
                         }
@@ -5472,11 +5472,11 @@
                     TrendCandlesWidget.prototype.bindEvents = function() {
                         var _this = this;
                         _super.prototype.bindEvents.call(this);
-                        this.bindEvent(this.trend.segments.onRebuild(function() {
+                        this.bindEvent(this.trend.segmentsManager.onRebuild(function() {
                             _this.destroyCandles();
                             _this.setupCandles();
                         }));
-                        this.bindEvent(this.trend.segments.onDisplayedRangeChanged(function() {
+                        this.bindEvent(this.trend.segmentsManager.onDisplayedRangeChanged(function() {
                             _this.setupCandles();
                         }));
                     };
@@ -5493,7 +5493,7 @@
                         this.setupCandles();
                     };
                     TrendCandlesWidget.prototype.setupCandles = function() {
-                        var _a = this.trend.segments, firstDisplayedSegment = _a.firstDisplayedSegment, lastDisplayedSegment = _a.lastDisplayedSegment;
+                        var _a = this.trend.segmentsManager, firstDisplayedSegment = _a.firstDisplayedSegment, lastDisplayedSegment = _a.lastDisplayedSegment;
                         for (var segmentId in this.candles) {
                             var segment_1 = this.candles[segmentId].segment;
                             var segmentIsNotDisplayed = segment_1.startXVal < firstDisplayedSegment.startXVal || segment_1.endXVal > lastDisplayedSegment.endXVal;
@@ -5679,7 +5679,7 @@
                         light.add(new Mesh(new PlaneBufferGeometry(5, 5), new MeshBasicMaterial({
                             map: TrendBeacon.createTexture()
                         })));
-                        this.segment = this.trend.segments.getEndSegment();
+                        this.segment = this.trend.segmentsManager.getEndSegment();
                     };
                     TrendBeacon.prototype.animate = function() {
                         var _this = this;
@@ -5718,7 +5718,7 @@
                         });
                     };
                     TrendBeacon.prototype.onTransformationFrame = function() {
-                        this.segment = this.trend.segments.getEndSegment();
+                        this.segment = this.trend.segmentsManager.getEndSegment();
                         this.updatePosition();
                     };
                     TrendBeacon.prototype.onSegmentsAnimate = function(trendsSegments) {

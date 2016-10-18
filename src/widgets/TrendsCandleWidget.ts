@@ -5,7 +5,7 @@ import { ChartState } from '../State';
 import Object3D = THREE.Object3D;
 import Geometry = THREE.Geometry;
 import { IScreenTransformOptions } from '../Screen';
-import { TrendSegments, ITrendSegmentState } from '../TrendSegments.ts';
+import { TrendSegmentsManager, ITrendSegmentState } from '../TrendSegmentsManager';
 import Vector3 = THREE.Vector3;
 import Mesh = THREE.Mesh;
 import Line = THREE.Line;
@@ -60,11 +60,11 @@ export class TrendCandlesWidget extends TrendWidget {
 
 	protected bindEvents() {
 		super.bindEvents();
-		this.bindEvent(this.trend.segments.onRebuild(() => {
+		this.bindEvent(this.trend.segmentsManager.onRebuild(() => {
 			this.destroyCandles();
 			this.setupCandles();
 		}));
-		this.bindEvent(this.trend.segments.onDisplayedRangeChanged(() => {
+		this.bindEvent(this.trend.segmentsManager.onDisplayedRangeChanged(() => {
 			this.setupCandles();
 		}));
 	}
@@ -85,7 +85,7 @@ export class TrendCandlesWidget extends TrendWidget {
 	private setupCandles() {
 
 		// remove invisible
-		let {firstDisplayedSegment, lastDisplayedSegment} = this.trend.segments;
+		let {firstDisplayedSegment, lastDisplayedSegment} = this.trend.segmentsManager;
 
 		for (let segmentId in this.candles) {
 			let segment = this.candles[segmentId].segment;
@@ -119,7 +119,7 @@ export class TrendCandlesWidget extends TrendWidget {
 		if (options.zoomY) currentScale.setY(this.scaleYFactor * options.zoomY);
 	}
 
-	protected onSegmentsAnimate(trendSegments: TrendSegments) {
+	protected onSegmentsAnimate(trendSegments: TrendSegmentsManager) {
 		for (let segmentId of trendSegments.animatedSegmentsIds) {
 			if (!this.candles[segmentId]) continue;
 			let segmentState = trendSegments.segmentsById[segmentId].currentAnimationState;

@@ -12,30 +12,17 @@ import Vector2 = THREE.Vector2;
 import {ITrendOptions, ITrendData, Trend, ITrendItem} from "../Trend";
 import {Utils} from "../Utils";
 import {TrendsWidget, TrendWidget} from "./TrendsWidget";
+import PlaneGeometry = THREE.PlaneGeometry;
+import { IScreenTransformOptions } from '../Screen';
+import { TrendSegmentsManager, ITrendSegmentState } from '../TrendSegmentsManager';
+import { ChartColor } from '../Color';
 
-const MAX_VERTICES = 1000;
-
-
-const PART_VERTICES_COUNT = 5;
-const PART_FACES_COUNT = 3;
+const MAX_SEGMENTS = 2000;
 
 export class TrendsGradientWidget extends TrendsWidget<TrendGradient> {
 	static widgetName = "TrendsGradient";
 	protected getTrendWidgetClass() {
 		return TrendGradient;
-	}
-
-	static generateGradientTexture(): Texture {
-		var w = 1;
-		var h = 512;
-		return Utils.createTexture(w, h, (ctx) => {
-			var grd = ctx.createLinearGradient(0, 0, 0, h);
-			grd.addColorStop(0.5,"rgba(86,119,29, 1)");
-			grd.addColorStop(1,"rgba(86,119,29, 0.1)");
-			ctx.fillStyle = grd;
-			ctx.fillRect(0, 0, w, h);
-		});
-
 	}
 }
 
@@ -43,202 +30,154 @@ export class TrendsGradientWidget extends TrendsWidget<TrendGradient> {
 
 export class TrendGradient extends TrendWidget {
 	private gradient: Mesh;
+	private visibleSegmentsCnt = 0;
+	private segmentsIds = new Uint16Array(MAX_SEGMENTS);
 	
 	static widgetIsEnabled(trendOptions: ITrendOptions) {
-		return trendOptions.enabled && trendOptions.hasGradient
+		return trendOptions.enabled && trendOptions.hasBackground;
 	}
-
-	data: ITrendData = [];
-
 
 	constructor (chartState: ChartState, trendName: string) {
 		super(chartState, trendName);
-		this.chartState = chartState;
 		this.trend = chartState.trendsManager.getTrend(trendName);
-		this.appendData(this.trend.getData());
+		this.initGradient();
+		this.updateSegments();
+	}
+
+	protected bindEvents() {
+		super.bindEvents();
+
+		this.bindEvent(this.trend.segmentsManager.onRebuild(() => {
+			this.updateSegments();
+		}));
+		this.bindEvent(this.trend.segmentsManager.onDisplayedRangeChanged(() => {
+			// TODO: optimize updateSegments for onDisplayedRangeChanged
+			this.updateSegments();
+		}));
 	}
 
 	getObject3D(): Object3D {
 		return this.gradient;
 	}
 
+	initGradient() {
+		let geometry = new Geometry();
 
-	appendData(newData: ITrendData) {
-		if (this.data.length > MAX_VERTICES) {
-			throw 'max data length reached'
+		for (let i = 0; i < MAX_SEGMENTS; i++) {
+			geometry.vertices.push(
+				new THREE.Vector3(),
+				new THREE.Vector3(),
+				new THREE.Vector3(),
+				new THREE.Vector3()
+			);
+			let ind = i * 4;
+			geometry.faces.push(
+				new THREE.Face3( ind, ind + 1, ind + 2 ),
+				new THREE.Face3( ind + 3, ind, ind + 2 )
+			);
+
 		}
-		if (this.data.length == 0) {
-			this.initGradient(newData[0]);
-		}
-	
-		this.data.push(...newData);
-		this.updateGradient(newData);
-	
-	}
-	
-	private initGradient(startItem: ITrendItem) {
-		var geom = new Geometry();
-	
-	
-		// init arrays of vertices, faces and faceVertexUvs
-		var vertInd = PART_VERTICES_COUNT * MAX_VERTICES;
-		while (vertInd--) {
-			geom.vertices.push(new Vector3());
-		}
-		var faceInd = PART_FACES_COUNT * MAX_VERTICES;
-		while (faceInd--) {
-			geom.faces.push(new Face3(0, 0, 0));
-			geom.faceVertexUvs[0][faceInd] = [new Vector2(), new Vector2(), new Vector2()];
-		}
-	
-	
-		for (let i = 0; i < MAX_VERTICES - 1; i++) {
-			let item = startItem;
-			let nextItem = startItem;
-			this.setupGradientPart(i, geom, item, nextItem, nextItem);
-		}
-	
-		var texture = TrendsGradientWidget.generateGradientTexture();
-		var mesh = new THREE.Mesh(
-			geom,
-			new THREE.MeshBasicMaterial( {transparent: true, map: texture} )
+
+		let color = new ChartColor(this.trend.getOptions().backgroundColor);
+		this.gradient = new THREE.Mesh(
+			geometry,
+			new THREE.MeshBasicMaterial( {color: color.value, transparent: true, opacity: color.a} )
 		);
-		mesh.position.z = -1;
-		this.gradient = mesh;
+
+		let {scaleFactor: scaleXFactor, zoom: zoomX} = this.chartState.data.xAxis.range;
+		let {scaleFactor: scaleYFactor, zoom: zoomY} = this.chartState.data.yAxis.range;
+		this.gradient.scale.set(scaleXFactor * zoomX, scaleYFactor * zoomY, 1);
 		this.gradient.frustumCulled = false;
 	}
-	
-	
-	private updateGradient (newData: ITrendData) {
-		var data = this.data;
-		var startInd = data.length - newData.length;
-		var endInd = data.length - 1;
-		var startItem = newData[0];
-	
-		for (let ind = startInd; ind <= endInd; ind++) {
-			let item = data[ind];
-			let prevItem = data[ind - 1];
-			if (!prevItem) continue;
-			//let nextItem = {scrollXVal: startItem.scrollXVal + 5, scrollYVal: startItem.scrollYVal};
-	
-	
-			this.setupGradientPart(ind, this.gradient.geometry as Geometry, prevItem, item, startItem);
-		}
+
+	protected onZoomFrame(options: IScreenTransformOptions) {
+		let state = this.chartState.data;
+		let scaleXFactor = state.xAxis.range.scaleFactor;
+		let scaleYFactor = state.yAxis.range.scaleFactor;
+		var currentScale = this.gradient.scale;
+		if (options.zoomX) currentScale.setX(scaleXFactor * options.zoomX);
+		if (options.zoomY) currentScale.setY(scaleYFactor * options.zoomY);
 	}
-	
-	
-	
-	private setupGradientPart(
-		partInd: number,
-		gradientGeometry: Geometry,
-		trendItem: ITrendItem,
-		nextTrendItem: ITrendItem,
-	    startItem: ITrendItem
-	) {
-	
-		// gradient part scheme:
-		//
-		//           + vert5
-		//          /|
-		//         / | face3
-		//        /  |
-		// vert1 +---+ vert2
-		//       |  /|
-		// face2 | / | face1
-		// 	     |/  |
-		// vert4 +---+ vert3
-	
-	
-		let {vertices, faces, faceVertexUvs} = gradientGeometry;
-		let vertex = this.chartState.getPointOnChart(trendItem.xVal, trendItem.yVal);
-		let nextVertex = this.chartState.getPointOnChart(nextTrendItem.xVal, nextTrendItem.yVal);
-	
-		// setup vertices
-		let isRise = vertex.y < nextVertex.y;
-		let vert1 = isRise ? vertex.clone() : new Vector3(vertex.x, nextVertex.y);
-		let vert2 = isRise ? new Vector3(nextVertex.x, vertex.y) : nextVertex.clone();
-		let vert3 = new Vector3(nextVertex.x, 0);
-		let vert4 = new Vector3(vertex.x, 0);
-		let vert5 = isRise ? nextVertex.clone() : vertex.clone();
-		let vertInd1 = partInd * PART_VERTICES_COUNT;
-		let vertInd2 = partInd * PART_VERTICES_COUNT + 1;
-		let vertInd3 = partInd * PART_VERTICES_COUNT + 2;
-		let vertInd4 = partInd * PART_VERTICES_COUNT + 3;
-		let vertInd5 = partInd * PART_VERTICES_COUNT + 4;
-	
-		var hasEmptyVertices = (
-			!vertices[vertInd1] ||
-			!vertices[vertInd2] ||
-			!vertices[vertInd3] ||
-			!vertices[vertInd4] ||
-			!vertices[vertInd5]
-		);
-	
-		var verticesWasChanged = (
-			hasEmptyVertices ||
-			!vertices[vertInd1].equals(vert1) ||
-			!vertices[vertInd2].equals(vert2) ||
-			!vertices[vertInd3].equals(vert3) ||
-			!vertices[vertInd4].equals(vert4) ||
-			!vertices[vertInd5].equals(vert5)
-		);
-	
-		// setup faces
-		let faceInd1 = partInd * PART_FACES_COUNT;
-		let faceInd2 = partInd * PART_FACES_COUNT + 1;
-		let faceInd3 = partInd * PART_FACES_COUNT + 2;
-		faces[faceInd1] = new Face3(vertInd4, vertInd3, vertInd2);
-		faces[faceInd2] = new Face3(vertInd4, vertInd2, vertInd1);
-		faces[faceInd3] = new Face3(vertInd1, vertInd2, vertInd5);
-	
-		// setup textures
-		let gradientStartPos = vert1.y / this.chartState.data.height;
-		let gradientEndPos = vert5.y / this.chartState.data.height;
-		var uvs1 = faceVertexUvs[0][faceInd1];
-		var uvs2 = faceVertexUvs[0][faceInd2];
-		var uvs3 = faceVertexUvs[0][faceInd3];
-		uvs1[0].set(0, 0); uvs1[1].set(1, 0); uvs1[2].set(1, gradientStartPos);
-		uvs2[0].set(0, 0); uvs2[1].set(1, gradientStartPos); uvs2[2].set(0, gradientStartPos);
-		uvs3[0].set(0, gradientStartPos); uvs3[1].set(1, gradientStartPos); uvs3[2].set(1, gradientEndPos);
-	
-	
-		if (verticesWasChanged) {
-			var animate = true;
-			var animationOptions = this.chartState.data.animations
-			var time = animationOptions.trendChangeSpeed;
-			var ease = animationOptions.trendChangeEase;
-			if (!animate || hasEmptyVertices) {
-				vertices[vertInd1].set(vert1.x, vert1.y, 0);
-				vertices[vertInd2].set(vert2.x, vert2.y, 0);
-				vertices[vertInd3].set(vert3.x, vert3.y, 0);
-				vertices[vertInd4].set(vert4.x, vert4.y, 0);
-				vertices[vertInd5].set(vert5.x, vert5.y, 0);
-				gradientGeometry.verticesNeedUpdate = true;
-				gradientGeometry.uvsNeedUpdate = true;
+
+	protected onSegmentsAnimate(trendSegmentsManager: TrendSegmentsManager) {
+		let animatedSegmentsIds = trendSegmentsManager.animatedSegmentsIds;
+		for (let i = 0; i < this.visibleSegmentsCnt; i++) {
+			let segmentId = this.segmentsIds[i];
+			if (!animatedSegmentsIds.includes(segmentId)) continue;
+			this.setupSegmentVertices(i, trendSegmentsManager.getSegment(segmentId).currentAnimationState);
+		}
+		(this.gradient.geometry as PlaneGeometry).verticesNeedUpdate = true;
+	}
+
+	private updateSegments() {
+		let geometry = this.gradient.geometry as PlaneGeometry;
+		let {
+			segments: trendSegments,
+			firstDisplayedSegmentInd: segmentInd,
+			lastDisplayedSegmentInd
+		} = this.trend.segmentsManager;
+		let prevVisibleSegmentsCnt = this.visibleSegmentsCnt;
+		this.visibleSegmentsCnt = lastDisplayedSegmentInd - segmentInd + 1;
+		let segmentsToProcessCnt = Math.max(prevVisibleSegmentsCnt, this.visibleSegmentsCnt);
+
+		if (segmentsToProcessCnt > MAX_SEGMENTS) {
+			Utils.error(TrendsGradientWidget.widgetName + ': MAX_SEGMENTS reached');
+		}
+
+		// setup visible segments and collapse invisible
+		for (let i = 0; i <= segmentsToProcessCnt; i++) {
+			if (segmentInd <= lastDisplayedSegmentInd) {
+				let segment = trendSegments[segmentInd];
+				this.setupSegmentVertices(i, segment.currentAnimationState);
+				this.segmentsIds[i] = segment.id;
+				segmentInd++;
 			} else {
-				if (isRise) {
-					vertices[vertInd1].set(vert1.x, vert1.y, 0);
-					vertices[vertInd2].set(vert1.x, vert1.y, 0);
-					vertices[vertInd5].set(vert1.x, vert1.y, 0);
-				} else {
-					vertices[vertInd1].set(vert5.x, vert5.y, 0);
-					vertices[vertInd2].set(vert5.x, vert5.y, 0);
-					vertices[vertInd5].set(vert5.x, vert5.y, 0);
-				}
-				vertices[vertInd3].set(vert4.x, vert4.y, 0);
-				vertices[vertInd4].set(vert4.x, vert4.y, 0);
-	
-				TweenLite.to(vertices[vertInd1], time, {x: vert1.x, y: vert1.y, ease: ease});
-				TweenLite.to(vertices[vertInd2], time, {x: vert2.x, y: vert2.y, ease: ease});
-				TweenLite.to(vertices[vertInd3], time, {x: vert3.x, y: vert3.y, ease: ease});
-				TweenLite.to(vertices[vertInd4], time, {x: vert4.x, y: vert4.y, ease: ease});
-				TweenLite.to(vertices[vertInd5], time, {x: vert5.x, y: vert5.y, ease: ease})
-					.eventCallback('onUpdate', () => {
-						gradientGeometry.verticesNeedUpdate = true;
-						gradientGeometry.uvsNeedUpdate = true;
-					});
+				this.setupSegmentVertices(i);
 			}
 		}
+
+		geometry.verticesNeedUpdate = true;
 	}
+
+
+	/**
+	 * setup gradient segment by segmentState
+	 * if segmentState is undefined, then collapse vertices to 0,0,0
+	 */
+	private setupSegmentVertices(segmentInd: number, segmentState?: ITrendSegmentState) {
+		let gradientSegmentInd = segmentInd * 4;
+		let vertices = (this.gradient.geometry as PlaneGeometry).vertices;
+		let	topLeft = vertices[gradientSegmentInd];
+		let	bottomLeft = vertices[gradientSegmentInd + 1];
+		let	bottomRight = vertices[gradientSegmentInd + 2];
+		let	topRight = vertices[gradientSegmentInd + 3];
+		let screenHeightVal = this.chartState.pxToValueByYAxis(this.chartState.data.height);
+
+		if (segmentState) {
+			let startX = this.toLocalX(segmentState.startXVal);
+			let startY = this.toLocalY(segmentState.startYVal);
+			let endX = this.toLocalX(segmentState.endXVal);
+			let endY = this.toLocalY(segmentState.endYVal);
+			topLeft.set(startX, startY, 0);
+			topRight.set(endX, endY, 0);
+			bottomLeft.set(topLeft.x, topLeft.y - screenHeightVal, 0);
+			bottomRight.set(topRight.x, topRight.y - screenHeightVal, 0);
+		} else {
+			topLeft.set(0, 0, 0);
+			topRight.set(0, 0, 0);
+			bottomLeft.set(0, 0, 0);
+			bottomRight.set(0, 0, 0);
+		}
+
+	}
+
+	private toLocalX(xVal: number): number {
+		return xVal - this.chartState.data.xAxis.range.zeroVal;
+	}
+
+	private toLocalY(yVal: number): number {
+		return yVal - this.chartState.data.yAxis.range.zeroVal;
+	}
+
 	
 }

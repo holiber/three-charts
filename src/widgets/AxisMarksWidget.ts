@@ -14,6 +14,7 @@ import MeshBasicMaterial = THREE.MeshBasicMaterial;
 import {AxisMark, AxisMarks} from "../AxisMarks";
 import {AXIS_TYPE} from "../interfaces";
 import {IScreenTransformOptions} from "../Screen";
+import { ChartColor } from '../Color';
 
 
 /**
@@ -128,7 +129,7 @@ class AxisMarkWidget {
 		lineGeometry.vertices.push(new Vector3(0,0,0), new Vector3(0,0,0));
 		return new Line(
 			lineGeometry,
-			new LineBasicMaterial( { color: Utils.getHexColor(lineColor), linewidth: lineWidth})
+			new LineBasicMaterial( { color: new ChartColor(lineColor).value, linewidth: lineWidth})
 		);
 	}
 

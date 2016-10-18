@@ -2,7 +2,7 @@ import { TrendsWidget, TrendWidget } from './TrendsWidget';
 import { ChartState } from '../State';
 import Object3D = THREE.Object3D;
 import { IScreenTransformOptions } from '../Screen';
-import { TrendSegments } from '../TrendSegments.ts';
+import { TrendSegmentsManager } from '../TrendSegmentsManager';
 import Vector3 = THREE.Vector3;
 import { ITrendOptions } from '../Trend';
 /**
@@ -28,7 +28,7 @@ export declare class TrendCandlesWidget extends TrendWidget {
     private destroyCandles();
     private destroyCandle(segmentId);
     protected onZoomFrame(options: IScreenTransformOptions): void;
-    protected onSegmentsAnimate(trendSegments: TrendSegments): void;
+    protected onSegmentsAnimate(trendSegments: TrendSegmentsManager): void;
     /**
      * create or modify candle
      */

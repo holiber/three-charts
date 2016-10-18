@@ -10,7 +10,8 @@ import {TrendWidget, TrendsWidget} from "./TrendsWidget";
 import {ITrendOptions} from "../Trend";
 import PlaneGeometry = THREE.PlaneGeometry;
 import Color = THREE.Color;
-import {TrendSegments, TrendSegment} from "../TrendSegments.ts";
+import {TrendSegmentsManager, TrendSegment} from "../TrendSegmentsManager";
+import { ChartColor } from '../Color';
 
 const CANVAS_WIDTH = 128;
 const CANVAS_HEIGHT = 64;
@@ -56,11 +57,11 @@ export class TrendIndicator extends TrendWidget {
 	}
 
 	private initObject() {
-		var color = new Color(this.trend.getOptions().lineColor);
+		var color = new ChartColor(this.trend.getOptions().lineColor);
 		var texture = Utils.createPixelPerfectTexture(CANVAS_WIDTH, CANVAS_HEIGHT, (ctx) => {
 			ctx.beginPath();
 			ctx.font = "15px Arial";
-			ctx.fillStyle = color.getStyle();
+			ctx.fillStyle = color.rgbaStr;
 			ctx.strokeStyle = "rgba(255,255,255,0.95)";
 		});
 
@@ -75,11 +76,11 @@ export class TrendIndicator extends TrendWidget {
 
 	protected onTransformationFrame() {
 		// set new widget position
-		this.segment = this.trend.segments.getEndSegment();
+		this.segment = this.trend.segmentsManager.getEndSegment();
 		this.updatePosition();
 	}
 
-	protected onSegmentsAnimate(segments: TrendSegments) {
+	protected onSegmentsAnimate(segments: TrendSegmentsManager) {
 		// set new widget position
 		this.segment = segments.getEndSegment();
 		this.updatePosition();

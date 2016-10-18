@@ -5,8 +5,8 @@ require('./deps/deps');
 import { Trend } from "./Trend";
 import Vector3 = THREE.Vector3;
 import PerspectiveCamera = THREE.PerspectiveCamera;
-import Renderer = THREE.Renderer;
 import Scene = THREE.Scene;
+import Renderer = THREE.Renderer;
 import WebGLRenderer = THREE.WebGLRenderer;
 import Object3D = THREE.Object3D;
 import { ChartState, IChartState } from "./State";
@@ -26,8 +26,6 @@ import { TrendsBeaconWidget } from "./widgets/TrendsBeaconWidget";
 import { ResizeSensor, ResizeSensorType } from './deps';
 
 
-export const MAX_DATA_LENGTH = 2692000;
-
 export class Chart {
 	state: ChartState;
 	isStopped: boolean;
@@ -46,7 +44,7 @@ export class Chart {
 
 	static devicePixelRatio = window.devicePixelRatio;
 	static installedWidgets: {[name: string]: typeof ChartWidget} = {};
-	static renderers: {[rendererName: string]: Renderer} = {
+	static renderers: {[rendererName: string]: any} = {
 		CanvasRenderer: (THREE as any).CanvasRenderer,
 		WebGLRenderer: THREE.WebGLRenderer
 	};
@@ -358,7 +356,7 @@ Chart.installWidget(AxisWidget);
 Chart.installWidget(GridWidget);
 Chart.installWidget(TrendsBeaconWidget);
 Chart.installWidget(TrendsIndicatorWidget);
-// Chart.installWidget(TrendsGradientWidget);
+Chart.installWidget(TrendsGradientWidget);
 Chart.installWidget(TrendsLoadingWidget);
 Chart.installWidget(AxisMarksWidget);
 Chart.installWidget(BorderWidget);

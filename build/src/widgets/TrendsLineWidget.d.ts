@@ -1,6 +1,6 @@
 import { ChartState } from "../State";
 import { TrendsWidget, TrendWidget } from "./TrendsWidget";
-import { TrendSegments } from "../TrendSegments.ts";
+import { TrendSegmentsManager } from "../TrendSegmentsManager";
 import LineSegments = THREE.LineSegments;
 import { IScreenTransformOptions } from "../Screen";
 import { ITrendOptions } from '../Trend';
@@ -14,8 +14,6 @@ export declare class TrendsLineWidget extends TrendsWidget<TrendLine> {
 export declare class TrendLine extends TrendWidget {
     private material;
     private lineSegments;
-    private scaleXFactor;
-    private scaleYFactor;
     private vertices;
     private freeSegmentsInds;
     private displayedSegments;
@@ -29,7 +27,7 @@ export declare class TrendLine extends TrendWidget {
     private destroySegments();
     private destroySegment(segmentId);
     protected onZoomFrame(options: IScreenTransformOptions): void;
-    protected onSegmentsAnimate(trendSegments: TrendSegments): void;
+    protected onSegmentsAnimate(trendSegments: TrendSegmentsManager): void;
     private toLocalX(xVal);
     private toLocalY(yVal);
     private toLocalVec(vec);

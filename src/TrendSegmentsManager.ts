@@ -4,7 +4,6 @@ import { ChartState } from "./State";
 import Vector3 = THREE.Vector3;
 import { ITrendData, ITrendOptions, ITrendItem, Trend, TREND_TYPE, ITrendTypeSettings } from "./Trend";
 import { Utils } from "./Utils";
-import convertArray = THREE.AnimationUtils.convertArray;
 
 const MAX_ANIMATED_SEGMENTS = 100;
 const EVENTS = {
@@ -16,14 +15,16 @@ const EVENTS = {
 /**
  *  Class helps to display and animate trends segments
  */
-export class TrendSegments {
+export class TrendSegmentsManager {
 	segmentsById: {[id: string]: TrendSegment} = {};
 	segments: TrendSegment[] = [];
 	chartState: ChartState;
 	animatedSegmentsIds: number[] = [];
 	maxSegmentLength: number;
 	segmentsLength = 0;
+	firstDisplayedSegmentInd: number;
 	firstDisplayedSegment: TrendSegment;
+	lastDisplayedSegmentInd: number;
 	lastDisplayedSegment: TrendSegment;
 	private appendAnimation: TweenLite;
 	private prependAnimation: TweenLite;
@@ -82,6 +83,10 @@ export class TrendSegments {
 		var isAppend = (!data.length || data[0].xVal < newData[0].xVal);
 		isAppend ? this.appendData(newData) : this.prependData(newData);
 		this.recalculateDisplayedRange();
+	}
+
+	getSegment(id: number) {
+		return this.segmentsById[id];
 	}
 
 	getEndSegment(): TrendSegment {
@@ -145,8 +150,10 @@ export class TrendSegments {
 		var {firstDisplayedSegment, lastDisplayedSegment} = this;
 		var displayedRange = to - from;
 
-		this.firstDisplayedSegment = Utils.binarySearchClosest(this.segments, from - displayedRange, 'startXVal');
-		this.lastDisplayedSegment = Utils.binarySearchClosest(this.segments, to + displayedRange, 'endXVal');
+		this.firstDisplayedSegmentInd = Utils.binarySearchClosestInd(this.segments, from - displayedRange, 'startXVal');
+		this.firstDisplayedSegment = this.segments[this.firstDisplayedSegmentInd];
+		this.lastDisplayedSegmentInd = Utils.binarySearchClosestInd(this.segments, to + displayedRange, 'endXVal');
+		this.lastDisplayedSegment = this.segments[this.lastDisplayedSegmentInd];
 		if (segmentsAreRebuilded) return;
 
 		var displayedRangeChanged = (
@@ -202,7 +209,7 @@ export class TrendSegments {
 		return results;
 	}
 
-	onAnimationFrame(cb: (animationState: TrendSegments) => void): Function {
+	onAnimationFrame(cb: (animationState: TrendSegmentsManager) => void): Function {
 		return this.ee.subscribe(EVENTS.ANIMATION_FRAME, cb);
 	}
 
@@ -455,9 +462,9 @@ export class TrendSegment implements ITrendSegmentState {
 	targetAnimationState: ITrendSegmentState = {};
 	currentAnimationState: ITrendSegmentState = {};
 
-	private trendSegments: TrendSegments;
+	private trendSegments: TrendSegmentsManager;
 	
-	constructor(trendPoints: TrendSegments, id: number) {
+	constructor(trendPoints: TrendSegmentsManager, id: number) {
 		this.trendSegments = trendPoints;
 		this.id = id;
 		this.maxLength = trendPoints.maxSegmentLength;

@@ -92,7 +92,7 @@ export class TrendsManager {
 
 	private onInitialStateAppliedHandler() {
 		for (let trendName in this.trends) {
-			this.trends[trendName].segments.onRebuild(() => this.ee.emit(EVENTS.SEGMENTS_REBUILDED, trendName));
+			this.trends[trendName].segmentsManager.onRebuild(() => this.ee.emit(EVENTS.SEGMENTS_REBUILDED, trendName));
 		}
 	}
 

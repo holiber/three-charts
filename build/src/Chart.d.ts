@@ -1,9 +1,7 @@
 import { ChartPlugin } from './Plugin';
 import { Trend } from "./Trend";
-import Renderer = THREE.Renderer;
 import { ChartState, IChartState } from "./State";
 import { ChartWidget } from "./Widget";
-export declare const MAX_DATA_LENGTH: number;
 export declare class Chart {
     state: ChartState;
     isStopped: boolean;
@@ -24,7 +22,7 @@ export declare class Chart {
         [name: string]: typeof ChartWidget;
     };
     static renderers: {
-        [rendererName: string]: Renderer;
+        [rendererName: string]: any;
     };
     constructor(state: IChartState, $container: Element, plugins?: ChartPlugin[]);
     static installWidget<WidgetClass extends typeof ChartWidget>(Widget: WidgetClass): void;

@@ -4,7 +4,7 @@ export * from './AxisMarks';
 export * from './Screen';
 export * from './State';
 export * from './Trend';
-export * from './TrendSegments';
+export * from './TrendSegmentsManager';
 export * from './TrendsManager';
 export * from './Utils';
 export * from './Widget';

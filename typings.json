@@ -4,10 +4,11 @@
     "es6-promise": "registry:npm/es6-promise#3.0.0+20160211003958"
   },
   "globalDependencies": {
+    "core-js": "registry:dt/core-js#0.0.0+20160914114559",
     "eventemitter2": "registry:dt/eventemitter2#0.14.4+20160316155526",
     "greensock": "registry:dt/greensock#1.15.1+20160316155526",
     "stats": "registry:dt/stats#0.0.0+20160316155526",
-    "three": "registry:dt/three#0.0.0+20160417141754",
+    "three": "registry:dt/three#0.0.0+20161004170959",
     "webpack-env": "registry:dt/webpack-env#1.12.2+20160316155526"
   }
 }

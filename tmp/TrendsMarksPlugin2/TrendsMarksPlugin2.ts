@@ -199,7 +199,7 @@ export class TrendsMarksPlugin2 extends ChartPlugin {
 			}
 			marksArr.sort((a, b) => a.options.value - b.options.value);
 			let trend = chartState.getTrend(trendName);
-			let points = trend.segments.getSegmentsForXValues(xVals.sort((a, b) => a - b));
+			let points = trend.segmentsManager.getSegmentsForXValues(xVals.sort((a, b) => a - b));
 			for (let markInd = 0; markInd < marksArr.length; markInd++) {
 				marksArr[markInd]._setSegment(points[markInd]);
 			}

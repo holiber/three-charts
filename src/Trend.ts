@@ -1,8 +1,9 @@
 import {ChartState, IChartState} from "./State";
 import {Utils} from "./Utils";
-import {TrendSegments} from "./TrendSegments";
+import {TrendSegmentsManager} from "./TrendSegmentsManager";
 import {EventEmitter} from './EventEmmiter';
 import {Promise} from './deps/deps';
+import { TChartColor } from './Color';
 
 export interface IPrependPromiseExecutor {
 	(requestedDataLength: number, resolve: (data: TTrendRawData) => void, reject: () => void): void;
@@ -26,9 +27,10 @@ export interface ITrendOptions {
 	name?: string;
 	type?: TREND_TYPE;
 	lineWidth?: number;
-	lineColor?: number;
-	hasGradient?: boolean;
+	lineColor?: TChartColor;
+	backgroundColor?: TChartColor;
 	hasIndicator?: boolean;
+	hasBackground?: boolean;
 	hasBeacon?: boolean;
 	maxSegmentLength?: number;
 	settingsForTypes?: {
@@ -44,7 +46,8 @@ const DEFAULT_OPTIONS: ITrendOptions = {
 	maxSegmentLength: 1000,
 	lineWidth: 2,
 	lineColor: 0xFFFFFF,
-	hasGradient: true,
+	hasBackground: false,
+	backgroundColor: 'rgba(#5273BD, 0.15)',
 	hasBeacon: false,
 	settingsForTypes: {
 		CANDLE: {
@@ -60,7 +63,7 @@ const DEFAULT_OPTIONS: ITrendOptions = {
 
 export class Trend {
 	name: string;
-	segments: TrendSegments;
+	segmentsManager: TrendSegmentsManager;
 	minXVal = Infinity;
 	minYVal = Infinity;
 	maxXVal = -Infinity;
@@ -83,7 +86,7 @@ export class Trend {
 	}
 
 	private onInitialStateApplied() {
-		this.segments = new TrendSegments(this.chartState, this);
+		this.segmentsManager = new TrendSegmentsManager(this.chartState, this);
 	}
 
 	private bindEvents() {

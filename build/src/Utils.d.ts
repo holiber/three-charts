@@ -56,13 +56,6 @@ export declare class Utils {
     static binarySearchClosestInd(arr: IIteralable[], num: number, key: string): number;
     static binarySearchClosest<ArrayItem>(arr: ArrayItem[], num: number, key: string): ArrayItem;
     static rectsIntersect(r1: number[], r2: number[]): boolean;
-    /**!
-     * @preserve $.parseColor
-     * Copyright 2011 THEtheChad Elliott
-     * Released under the MIT and GPL licenses.
-     */
-    static parseColor(color: string): number[];
-    static getHexColor(str: string): number;
     static throttle(func: Function, ms: number): () => void;
     static msToTimeString(timestamp: number): string;
     static getRandomItem<T>(arr: Array<T>): T;

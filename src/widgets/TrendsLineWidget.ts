@@ -10,7 +10,7 @@ import Face3 = THREE.Face3;
 import Texture = THREE.Texture;
 import Vector2 = THREE.Vector2;
 import {TrendsWidget, TrendWidget} from "./TrendsWidget";
-import { TrendSegments, ITrendSegmentState } from "../TrendSegments.ts";
+import { TrendSegmentsManager, ITrendSegmentState } from "../TrendSegmentsManager";
 import LineSegments = THREE.LineSegments;
 import {IScreenTransformOptions} from "../Screen";
 import { ITrendOptions, TREND_TYPE } from '../Trend';
@@ -36,8 +36,6 @@ interface ILineSegment {
 export class TrendLine extends TrendWidget {
 	private material: LineBasicMaterial;
 	private lineSegments: LineSegments;
-	private scaleXFactor: number;
-	private scaleYFactor: number;
 	private vertices: Vector3[];
 
 	// contains indexes of free segments
@@ -63,11 +61,11 @@ export class TrendLine extends TrendWidget {
 
 	protected bindEvents() {
 		super.bindEvents();
-		this.bindEvent(this.trend.segments.onRebuild(() => {
+		this.bindEvent(this.trend.segmentsManager.onRebuild(() => {
 			this.destroySegments();
 			this.setupSegments();
 		}));
-		this.bindEvent(this.trend.segments.onDisplayedRangeChanged(() => {
+		this.bindEvent(this.trend.segmentsManager.onDisplayedRangeChanged(() => {
 			this.setupSegments();
 		}));
 	}
@@ -76,8 +74,6 @@ export class TrendLine extends TrendWidget {
 		let geometry = new Geometry();
 		let {scaleFactor: scaleXFactor, zoom: zoomX} = this.chartState.data.xAxis.range;
 		let {scaleFactor: scaleYFactor, zoom: zoomY} = this.chartState.data.yAxis.range;
-		this.scaleXFactor = scaleXFactor;
-		this.scaleYFactor = scaleYFactor;
 		this.lineSegments = new LineSegments(geometry, this.material);
 		this.lineSegments.scale.set(scaleXFactor * zoomX, scaleYFactor * zoomY, 1);
 		this.lineSegments.frustumCulled = false;
@@ -92,11 +88,11 @@ export class TrendLine extends TrendWidget {
 	private setupSegments() {
 		let geometry = this.lineSegments.geometry as Geometry;
 
-		let {firstDisplayedSegment, lastDisplayedSegment} = this.trend.segments;
+		let {firstDisplayedSegment, lastDisplayedSegment} = this.trend.segmentsManager;
 
 		for (let segmentId in this.displayedSegments) {
 			let lineSegment = this.displayedSegments[segmentId];
-			let segment = this.trend.segments.segments[lineSegment.segmentId];
+			let segment = this.trend.segmentsManager.segments[lineSegment.segmentId];
 			let segmentIsNotDisplayed = (
 				segment.startXVal < firstDisplayedSegment.startXVal ||
 				segment.endXVal > lastDisplayedSegment.endXVal
@@ -144,12 +140,15 @@ export class TrendLine extends TrendWidget {
 
 	protected onZoomFrame(options: IScreenTransformOptions) {
 		var currentScale = this.lineSegments.scale;
-		if (options.zoomX) currentScale.setX(this.scaleXFactor * options.zoomX);
-		if (options.zoomY) currentScale.setY(this.scaleYFactor * options.zoomY);
+		let state = this.chartState.data;
+		let scaleXFactor = state.xAxis.range.scaleFactor;
+		let scaleYFactor = state.yAxis.range.scaleFactor;
+		if (options.zoomX) currentScale.setX(scaleXFactor * options.zoomX);
+		if (options.zoomY) currentScale.setY(scaleYFactor * options.zoomY);
 	}
 
 
-	protected onSegmentsAnimate(trendSegments: TrendSegments) {
+	protected onSegmentsAnimate(trendSegments: TrendSegmentsManager) {
 		var geometry = this.lineSegments.geometry as Geometry;
 		for (let segmentId of trendSegments.animatedSegmentsIds) {
 			if (!this.displayedSegments[segmentId]) continue;

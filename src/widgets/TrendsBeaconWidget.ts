@@ -8,7 +8,7 @@ import MeshBasicMaterial = THREE.MeshBasicMaterial;
 import Vector3 = THREE.Vector3;
 import {TrendWidget, TrendsWidget} from "./TrendsWidget";
 import { ITrendOptions, TREND_TYPE } from "../Trend";
-import {TrendSegments, TrendSegment} from "../TrendSegments.ts";
+import {TrendSegmentsManager, TrendSegment} from "../TrendSegmentsManager";
 import chartreuse = THREE.ColorKeywords.chartreuse;
 
 /**
@@ -74,7 +74,7 @@ export class TrendBeacon extends TrendWidget {
 			new MeshBasicMaterial({map: TrendBeacon.createTexture()})
 		));
 
-		this.segment = this.trend.segments.getEndSegment();
+		this.segment = this.trend.segmentsManager.getEndSegment();
 	}
 
 	private animate() {
@@ -121,11 +121,11 @@ export class TrendBeacon extends TrendWidget {
 	}
 
 	protected onTransformationFrame() {
-		this.segment = this.trend.segments.getEndSegment();
+		this.segment = this.trend.segmentsManager.getEndSegment();
 		this.updatePosition();
 	}
 
-	protected onSegmentsAnimate(trendsSegments: TrendSegments) {
+	protected onSegmentsAnimate(trendsSegments: TrendSegmentsManager) {
 		this.segment = trendsSegments.getEndSegment();
 		this.updatePosition();
 	}

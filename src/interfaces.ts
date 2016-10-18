@@ -50,9 +50,15 @@ export interface IAxisRange {
 
 	maxLength?: number;
 	minLength?: number;
+
+	/**
+	 * value in world center coordinate
+	 */
 	zeroVal?: number,
 
-	/** only for internal usage **/
+	/**
+	 * ratio between 1 pixel and 1 value when zoom = 1
+	 */
 	scaleFactor?: number,
 }
 
