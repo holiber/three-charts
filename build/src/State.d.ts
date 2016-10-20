@@ -47,6 +47,11 @@ export interface IChartState {
      * also available 'CanvasRenderer'
      */
     renderer?: 'WebGLRenderer' | 'CanvasRenderer';
+    /**
+     * buffer size for displayed segments
+     * used by widgets
+     */
+    maxVisibleSegments?: number;
     autoResize?: boolean;
     controls?: {
         enabled: boolean;
@@ -56,10 +61,6 @@ export interface IChartState {
     backgroundColor?: number;
     backgroundOpacity?: number;
     computedData?: IChartStateComputedData;
-    /**
-     * overridden settings for single setState operation
-     */
-    operationState?: IChartState;
     pluginsState?: {
         [pluginName: string]: any;
     };

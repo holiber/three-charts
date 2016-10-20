@@ -138,6 +138,7 @@ window.onload = function () {
 		// autoRender: {fps: 100},
 		// animations: {enabled: false},
 		widgets: {
+			BorderWidget: {enabled: true},
 			//Grid: {enabled: false},
 			//Axis: {enabled: false},
 			// TrendsGradient: {enabled: false},

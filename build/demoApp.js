@@ -133,7 +133,11 @@
                     }
                 },
                 showStats: true,
-                widgets: {}
+                widgets: {
+                    BorderWidget: {
+                        enabled: true
+                    }
+                }
             }, document.querySelector(".chart"));
             chart.setState({
                 animations: {
@@ -2433,7 +2437,8 @@
                     backgroundOpacity: 1,
                     showStats: false,
                     pluginsState: {},
-                    eventEmitterMaxListeners: 20
+                    eventEmitterMaxListeners: 20,
+                    maxVisibleSegments: 1280
                 };
                 this.widgetsClasses = {};
                 this.plugins = {};
@@ -4723,7 +4728,6 @@
         var Utils_1 = __webpack_require__(14);
         var TrendsWidget_1 = __webpack_require__(25);
         var Color_1 = __webpack_require__(26);
-        var MAX_SEGMENTS = 2e3;
         var TrendsGradientWidget = function(_super) {
             __extends(TrendsGradientWidget, _super);
             function TrendsGradientWidget() {
@@ -4741,8 +4745,8 @@
             function TrendGradient(chartState, trendName) {
                 _super.call(this, chartState, trendName);
                 this.visibleSegmentsCnt = 0;
-                this.segmentsIds = new Uint16Array(MAX_SEGMENTS);
                 this.trend = chartState.trendsManager.getTrend(trendName);
+                this.segmentsIds = new Uint16Array(chartState.data.maxVisibleSegments);
                 this.initGradient();
                 this.updateSegments();
             }
@@ -4758,13 +4762,16 @@
                 this.bindEvent(this.trend.segmentsManager.onDisplayedRangeChanged(function() {
                     _this.updateSegments();
                 }));
+                this.bindEvent(this.chartState.onZoom(function() {
+                    _this.updateSegments();
+                }));
             };
             TrendGradient.prototype.getObject3D = function() {
                 return this.gradient;
             };
             TrendGradient.prototype.initGradient = function() {
                 var geometry = new Geometry();
-                for (var i = 0; i < MAX_SEGMENTS; i++) {
+                for (var i = 0; i < this.segmentsIds.length; i++) {
                     geometry.vertices.push(new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3());
                     var ind = i * 4;
                     geometry.faces.push(new THREE.Face3(ind, ind + 1, ind + 2), new THREE.Face3(ind + 3, ind, ind + 2));
@@ -4803,7 +4810,7 @@
                 var prevVisibleSegmentsCnt = this.visibleSegmentsCnt;
                 this.visibleSegmentsCnt = lastDisplayedSegmentInd - segmentInd + 1;
                 var segmentsToProcessCnt = Math.max(prevVisibleSegmentsCnt, this.visibleSegmentsCnt);
-                if (segmentsToProcessCnt > MAX_SEGMENTS) {
+                if (segmentsToProcessCnt > this.segmentsIds.length) {
                     Utils_1.Utils.error(TrendsGradientWidget.widgetName + ": MAX_SEGMENTS reached");
                 }
                 for (var i = 0; i <= segmentsToProcessCnt; i++) {
@@ -4825,7 +4832,7 @@
                 var bottomLeft = vertices[gradientSegmentInd + 1];
                 var bottomRight = vertices[gradientSegmentInd + 2];
                 var topRight = vertices[gradientSegmentInd + 3];
-                var screenHeightVal = this.chartState.pxToValueByYAxis(this.chartState.data.height);
+                var screenHeightVal = Math.max(this.chartState.pxToValueByYAxis(this.chartState.data.height), this.chartState.screen.pxToValueByYAxis(this.chartState.data.height));
                 if (segmentState) {
                     var startX = this.toLocalX(segmentState.startXVal);
                     var startY = this.toLocalY(segmentState.startYVal);
@@ -5443,7 +5450,6 @@
         var LineSegments = THREE.LineSegments;
         var Trend_1 = __webpack_require__(17);
         var Utils_1 = __webpack_require__(14);
-        var MAX_DISPLAYED_SEGMENTS = 2e3;
         var TrendsLineWidget = function(_super) {
             __extends(TrendsLineWidget, _super);
             function TrendsLineWidget() {
@@ -5493,7 +5499,7 @@
                 this.lineSegments = new LineSegments(geometry, this.material);
                 this.lineSegments.scale.set(scaleXFactor * zoomX, scaleYFactor * zoomY, 1);
                 this.lineSegments.frustumCulled = false;
-                for (var i = 0; i < MAX_DISPLAYED_SEGMENTS; i++) {
+                for (var i = 0; i < this.chartState.data.maxVisibleSegments; i++) {
                     geometry.vertices.push(new Vector3(), new Vector3());
                     this.freeSegmentsInds.push(i);
                 }

@@ -16,7 +16,6 @@ import {IScreenTransformOptions} from "../Screen";
 import { ITrendOptions, TREND_TYPE } from '../Trend';
 import { Utils } from '../Utils';
 
-const MAX_DISPLAYED_SEGMENTS = 2000;
 
 /**
  * widget for drawing trends lines
@@ -77,7 +76,7 @@ export class TrendLine extends TrendWidget {
 		this.lineSegments = new LineSegments(geometry, this.material);
 		this.lineSegments.scale.set(scaleXFactor * zoomX, scaleYFactor * zoomY, 1);
 		this.lineSegments.frustumCulled = false;
-		for (let i = 0; i < MAX_DISPLAYED_SEGMENTS; i++) {
+		for (let i = 0; i < this.chartState.data.maxVisibleSegments; i++) {
 			geometry.vertices.push(new  Vector3(), new Vector3());
 			this.freeSegmentsInds.push(i);
 		}

@@ -73,6 +73,11 @@ export interface IChartState {
 	renderer?: 'WebGLRenderer' | 'CanvasRenderer';
 
 
+	/**
+	 * buffer size for displayed segments
+	 * used by widgets
+	 */
+	maxVisibleSegments?: number;
 	autoResize?: boolean;
 	controls?: {enabled: boolean};
 	autoScroll?: boolean;
@@ -80,10 +85,6 @@ export interface IChartState {
 	backgroundColor?: number;
 	backgroundOpacity?: number;
 	computedData?: IChartStateComputedData,
-	/**
-	 * overridden settings for single setState operation
-	 */
-	operationState?: IChartState;
 	pluginsState?: {[pluginName: string]: any};
 	eventEmitterMaxListeners?: number;
 	[key: string]: any; // for "for in" loops
@@ -151,7 +152,8 @@ export class ChartState {
 		backgroundOpacity: 1,
 		showStats: false,
 		pluginsState: {},
-		eventEmitterMaxListeners: 20
+		eventEmitterMaxListeners: 20,
+		maxVisibleSegments: 1280
 	};
 	widgetsClasses: {[name: string]: typeof ChartWidget} = {};
 	plugins: {[pluginName: string]: ChartPlugin} = {};

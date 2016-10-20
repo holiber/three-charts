@@ -1,5 +1,5 @@
 {
-  "name": "three-chart",
+  "name": "three-charts",
   "version": "0.0.1",
   "description": "charts based on threejs",
   "main": "build/index.js",
@@ -27,7 +27,7 @@
     "start": "npm run rimraf -- build && webpack --watch --progress --colors",
     "build": "npm run rimraf -- build && webpack --progress --colors",
     "build-plugins": "npm run rimraf -- plugins/build && webpack  --config plugins/webpack.config.js --progress --colors",
-    "reinstall-chart": "rimraf -- node_modules/three-chart && npm cache clean && npm i",
+    "reinstall-chart": "rimraf -- node_modules/three-charts && npm cache clean && npm i",
     "postinstall": "typings install",
     "test": "echo \"Error: no test specified\" && exit 1",
     "rimraf": "rimraf"

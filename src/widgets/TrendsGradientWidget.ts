@@ -9,15 +9,13 @@ import {ChartState} from "../State";
 import Face3 = THREE.Face3;
 import Texture = THREE.Texture;
 import Vector2 = THREE.Vector2;
-import {ITrendOptions, ITrendData, Trend, ITrendItem} from "../Trend";
+import {ITrendOptions} from "../Trend";
 import {Utils} from "../Utils";
 import {TrendsWidget, TrendWidget} from "./TrendsWidget";
 import PlaneGeometry = THREE.PlaneGeometry;
 import { IScreenTransformOptions } from '../Screen';
 import { TrendSegmentsManager, ITrendSegmentState } from '../TrendSegmentsManager';
 import { ChartColor } from '../Color';
-
-const MAX_SEGMENTS = 2000;
 
 export class TrendsGradientWidget extends TrendsWidget<TrendGradient> {
 	static widgetName = "TrendsGradient";
@@ -27,11 +25,10 @@ export class TrendsGradientWidget extends TrendsWidget<TrendGradient> {
 }
 
 
-
 export class TrendGradient extends TrendWidget {
 	private gradient: Mesh;
 	private visibleSegmentsCnt = 0;
-	private segmentsIds = new Uint16Array(MAX_SEGMENTS);
+	private segmentsIds: Uint16Array;
 	
 	static widgetIsEnabled(trendOptions: ITrendOptions) {
 		return trendOptions.enabled && trendOptions.hasBackground;
@@ -40,9 +37,11 @@ export class TrendGradient extends TrendWidget {
 	constructor (chartState: ChartState, trendName: string) {
 		super(chartState, trendName);
 		this.trend = chartState.trendsManager.getTrend(trendName);
+		this.segmentsIds = new Uint16Array(chartState.data.maxVisibleSegments)
 		this.initGradient();
 		this.updateSegments();
 	}
+
 
 	protected bindEvents() {
 		super.bindEvents();
@@ -54,18 +53,22 @@ export class TrendGradient extends TrendWidget {
 			// TODO: optimize updateSegments for onDisplayedRangeChanged
 			this.updateSegments();
 		}));
+		this.bindEvent(this.chartState.onZoom(() => {
+			this.updateSegments();
+		}));
 	}
+
 
 	getObject3D(): Object3D {
 		return this.gradient;
 	}
 
+
 	initGradient() {
 		let geometry = new Geometry();
 
-		for (let i = 0; i < MAX_SEGMENTS; i++) {
-			geometry.vertices.push(
-				new THREE.Vector3(),
+		for (let i = 0; i < this.segmentsIds.length; i++) {
+			geometry.vertices.push(new THREE.Vector3(),
 				new THREE.Vector3(),
 				new THREE.Vector3(),
 				new THREE.Vector3()
@@ -75,7 +78,6 @@ export class TrendGradient extends TrendWidget {
 				new THREE.Face3( ind, ind + 1, ind + 2 ),
 				new THREE.Face3( ind + 3, ind, ind + 2 )
 			);
-
 		}
 
 		let color = new ChartColor(this.trend.getOptions().backgroundColor);
@@ -90,6 +92,7 @@ export class TrendGradient extends TrendWidget {
 		this.gradient.frustumCulled = false;
 	}
 
+
 	protected onZoomFrame(options: IScreenTransformOptions) {
 		let state = this.chartState.data;
 		let scaleXFactor = state.xAxis.range.scaleFactor;
@@ -98,6 +101,7 @@ export class TrendGradient extends TrendWidget {
 		if (options.zoomX) currentScale.setX(scaleXFactor * options.zoomX);
 		if (options.zoomY) currentScale.setY(scaleYFactor * options.zoomY);
 	}
+
 
 	protected onSegmentsAnimate(trendSegmentsManager: TrendSegmentsManager) {
 		let animatedSegmentsIds = trendSegmentsManager.animatedSegmentsIds;
@@ -108,6 +112,7 @@ export class TrendGradient extends TrendWidget {
 		}
 		(this.gradient.geometry as PlaneGeometry).verticesNeedUpdate = true;
 	}
+
 
 	private updateSegments() {
 		let geometry = this.gradient.geometry as PlaneGeometry;
@@ -120,7 +125,7 @@ export class TrendGradient extends TrendWidget {
 		this.visibleSegmentsCnt = lastDisplayedSegmentInd - segmentInd + 1;
 		let segmentsToProcessCnt = Math.max(prevVisibleSegmentsCnt, this.visibleSegmentsCnt);
 
-		if (segmentsToProcessCnt > MAX_SEGMENTS) {
+		if (segmentsToProcessCnt > this.segmentsIds.length) {
 			Utils.error(TrendsGradientWidget.widgetName + ': MAX_SEGMENTS reached');
 		}
 
@@ -151,7 +156,10 @@ export class TrendGradient extends TrendWidget {
 		let	bottomLeft = vertices[gradientSegmentInd + 1];
 		let	bottomRight = vertices[gradientSegmentInd + 2];
 		let	topRight = vertices[gradientSegmentInd + 3];
-		let screenHeightVal = this.chartState.pxToValueByYAxis(this.chartState.data.height);
+		let screenHeightVal = Math.max(
+			this.chartState.pxToValueByYAxis(this.chartState.data.height),
+			this.chartState.screen.pxToValueByYAxis(this.chartState.data.height)
+		);
 
 		if (segmentState) {
 			let startX = this.toLocalX(segmentState.startXVal);
@@ -175,9 +183,9 @@ export class TrendGradient extends TrendWidget {
 		return xVal - this.chartState.data.xAxis.range.zeroVal;
 	}
 
+
 	private toLocalY(yVal: number): number {
 		return yVal - this.chartState.data.yAxis.range.zeroVal;
 	}
 
-	
 }

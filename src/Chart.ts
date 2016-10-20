@@ -24,6 +24,7 @@ import { TrendsLineWidget } from "./widgets/TrendsLineWidget";
 import { TrendsCandlesWidget } from './widgets/TrendsCandleWidget';
 import { TrendsBeaconWidget } from "./widgets/TrendsBeaconWidget";
 import { ResizeSensor, ResizeSensorType } from './deps';
+import OrthographicCamera = THREE.OrthographicCamera;
 
 
 export class Chart {
