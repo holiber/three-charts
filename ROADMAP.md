@@ -3,6 +3,7 @@
 ##v0.1
 - remove TweenLight dependency
 - safe CPU when no data changed
+- test multiple trends
 - plugins and widgets system
 - only necessary build-in widgets
 - convert TREND_TYPE to string
@@ -10,7 +11,7 @@
 - refactor TrendsSegmentsManager
 - refactor TrendsLineWidget and TrendsCandleWidget
 - rename TrendsGradientWidget -> TrendsBackgroundWidget
-- test multiple trends
+- simplify chart create
 
 ---------------------------------------------------------
 
@@ -19,11 +20,13 @@
 - add gradient support
 - extract candle charts to plugin
 - remove stats dependency
+- preinstall plugins and widgets 
 
 ##v0.3
 - typedoc
 - tslint
 - documentation!
+- usage with jquery documentation
 
 ##v0.4
 - Unit tests
@@ -32,6 +35,7 @@
 ##v0.5
 - plugins examples
 - mobile browsers optimisation
+- angular2 component
 
 ##v0.6
 - NodeJS rendering

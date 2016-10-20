@@ -2177,7 +2177,7 @@
                         trendChangeSpeed: .5,
                         trendChangeEase: void 0,
                         zoomSpeed: .25,
-                        zoomEase: Linear.easeNone,
+                        zoomEase: void 0,
                         scrollSpeed: .5,
                         scrollEase: Linear.easeNone,
                         autoScrollSpeed: 1,
