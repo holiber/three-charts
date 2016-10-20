@@ -1,4 +1,4 @@
-import { ChartPlugin, ChartWidget, TrendSegment, ChartState } from 'three-chart';
+import { ChartPlugin, ChartWidget, TrendSegment, ChartState } from 'three-charts';
 export declare enum TREND_MARK_SIDE {
     TOP = 0,
     BOTTOM = 1,

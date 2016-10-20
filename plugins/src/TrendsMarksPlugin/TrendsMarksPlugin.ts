@@ -1,6 +1,6 @@
 
 import Vector3 = THREE.Vector3;
-import { ChartPlugin, ChartWidget, TrendSegment, TREND_TYPE, Utils, ChartState } from 'three-chart';
+import { ChartPlugin, ChartWidget, TrendSegment, TREND_TYPE, Utils, ChartState } from 'three-charts';
 import { TrendsMarksWidget } from './TrendsMarksWidget';
 
 export enum TREND_MARK_SIDE {TOP, BOTTOM}
@@ -196,7 +196,7 @@ export class TrendsMarksPlugin extends ChartPlugin {
 			}
 			marksArr.sort((a, b) => a.options.value - b.options.value);
 			let trend = chartState.getTrend(trendName);
-			let points = trend.segments.getSegmentsForXValues(xVals.sort((a, b) => a - b));
+			let points = trend.segmentsManager.getSegmentsForXValues(xVals.sort((a, b) => a - b));
 			for (let markInd = 0; markInd < marksArr.length; markInd++) {
 				marksArr[markInd]._setSegment(points[markInd]);
 			}

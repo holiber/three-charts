@@ -1,4 +1,4 @@
-import { ChartState, TrendsWidget, TrendWidget } from 'three-chart';
+import { ChartState, TrendsWidget, TrendWidget } from 'three-charts';
 import Object3D = THREE.Object3D;
 /**
  * widget for drawing trends marks for all trends

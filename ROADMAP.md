@@ -15,8 +15,10 @@
 ---------------------------------------------------------
 
 ##v0.2
+- add text description for files
 - add gradient support
 - extract candle charts to plugin
+- remove stats dependency
 
 ##v0.3
 - typedoc
