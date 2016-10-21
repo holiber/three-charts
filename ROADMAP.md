@@ -11,16 +11,23 @@
 - refactor TrendsSegmentsManager
 - refactor TrendsLineWidget and TrendsCandleWidget
 - rename TrendsGradientWidget -> TrendsBackgroundWidget
+- allowSubpixelRendering flag
 - simplify chart create
+- example how to upload new data
+- example hot to change current data
+- example how to find point on chart
+- add z-index to widgets
 
 ---------------------------------------------------------
 
 ##v0.2
 - add text description for files
 - add gradient support
+- fix grid widget blinking
 - extract candle charts to plugin
 - remove stats dependency
-- preinstall plugins and widgets 
+- preinstall plugins and widgets
+- examples with line smoothing
 
 ##v0.3
 - typedoc

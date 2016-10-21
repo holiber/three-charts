@@ -1,5 +1,5 @@
 import Vector3 = THREE.Vector3;
-import {ITrendOptions, Trend, ITrendData} from "./Trend";
+import { ITrendOptions, Trend, ITrendData, TREND_TYPE } from "./Trend";
 import {EventEmitter} from './EventEmmiter';
 import {Utils} from './Utils';
 import {IChartWidgetOptions, ChartWidget} from "./Widget";
@@ -54,6 +54,7 @@ export interface IChartState {
 	yAxis?: IAxisOptions,
 	animations?: IAnimationsOptions,
 	trends?: ITrendsOptions,
+	trendDefaultState?: ITrendOptions;
 	widgets?: {[widgetName: string]: IChartWidgetOptions},
 	cursor?: {
 		dragMode?: boolean,
@@ -143,6 +144,27 @@ export class ChartState {
 		renderer: 'WebGLRenderer',
 		autoScroll: true,
 		controls: {enabled: true},
+		trendDefaultState: {
+			enabled: true,
+			type: TREND_TYPE.LINE,
+			data: [],
+			maxSegmentLength: 1000,
+			lineWidth: 2,
+			lineColor: 0xFFFFFF,
+			hasBackground: false,
+			backgroundColor: 'rgba(#5273BD, 0.15)',
+			hasBeacon: false,
+			settingsForTypes: {
+				CANDLE: {
+					minSegmentLengthInPx: 20,
+					maxSegmentLengthInPx: 40,
+				},
+				LINE: {
+					minSegmentLengthInPx: 2,
+					maxSegmentLengthInPx: 10,
+				}
+			}
+		},
 		cursor: {
 			dragMode: false,
 			x: 0,

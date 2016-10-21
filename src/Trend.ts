@@ -39,28 +39,6 @@ export interface ITrendOptions {
 	}
 }
 
-const DEFAULT_OPTIONS: ITrendOptions = {
-	enabled: true,
-	type: TREND_TYPE.LINE,
-	data: [],
-	maxSegmentLength: 1000,
-	lineWidth: 2,
-	lineColor: 0xFFFFFF,
-	hasBackground: false,
-	backgroundColor: 'rgba(#5273BD, 0.15)',
-	hasBeacon: false,
-	settingsForTypes: {
-		CANDLE: {
-			minSegmentLengthInPx: 20,
-			maxSegmentLengthInPx: 40,
-		},
-		LINE: {
-			minSegmentLengthInPx: 2,
-			maxSegmentLengthInPx: 10,
-		}
-	}
-};
-
 export class Trend {
 	name: string;
 	segmentsManager: TrendSegmentsManager;
@@ -77,7 +55,7 @@ export class Trend {
 		var options = initialState.trends[trendName];
 		this.name = trendName;
 		this.chartState = chartState;
-		this.calculatedOptions = Utils.deepMerge(DEFAULT_OPTIONS, options);
+		this.calculatedOptions = Utils.deepMerge(this.chartState.data.trendDefaultState, options);
 		this.calculatedOptions.name = trendName;
 		if (options.dataset) this.calculatedOptions.data = Trend.prepareData(options.dataset);
 		this.calculatedOptions.dataset = [];

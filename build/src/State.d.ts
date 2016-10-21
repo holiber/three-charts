@@ -27,6 +27,7 @@ export interface IChartState {
     yAxis?: IAxisOptions;
     animations?: IAnimationsOptions;
     trends?: ITrendsOptions;
+    trendDefaultState?: ITrendOptions;
     widgets?: {
         [widgetName: string]: IChartWidgetOptions;
     };
