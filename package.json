@@ -1,7 +1,7 @@
 {
   "name": "three-charts",
   "version": "0.0.1",
-  "description": "charts based on threejs",
+  "description": "WebGL accelerated charts based on Threejs",
   "main": "build/index.js",
   "dependencies": {
     "createjs-tweenjs": "^0.6.0",
@@ -13,7 +13,7 @@
     "three": "^0.81"
   },
   "devDependencies": {
-    "three-charts": "https://github.com/holiber/three-chart.git",
+    "three-charts": "https://github.com/holiber/three-charts.git",
     "awesome-typescript-loader": "^1.1.1",
     "copy-webpack-plugin": "^3.0.1",
     "on-build-webpack": "^0.1.0",
