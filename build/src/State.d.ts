@@ -66,7 +66,6 @@ export interface IChartState {
         [pluginName: string]: any;
     };
     eventEmitterMaxListeners?: number;
-    [key: string]: any;
 }
 /**
  *  class for manage chart state, all state changes caused only by State.setState method

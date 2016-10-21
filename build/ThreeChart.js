@@ -1100,7 +1100,7 @@
                 objects: [],
                 lights: [],
                 elements: []
-            }, _vector3 = new THREE.Vector3(), _vector4 = new THREE.Vector4(), _clipBox = new THREE.Box3(new THREE.Vector3(-1, -1, -1), new THREE.Vector3(1, 1, 1)), _boundingBox = new THREE.Box3(), _points3 = new Array(3), _points4 = new Array(4), _viewMatrix = new THREE.Matrix4(), _viewProjectionMatrix = new THREE.Matrix4(), _modelMatrix, _modelViewProjectionMatrix = new THREE.Matrix4(), _normalMatrix = new THREE.Matrix3(), _frustum = new THREE.Frustum(), _clippedVertex1PositionScreen = new THREE.Vector4(), _clippedVertex2PositionScreen = new THREE.Vector4();
+            }, _vector3 = new THREE.Vector3(), _vector4 = new THREE.Vector4(), _clipBox = new THREE.Box3(new THREE.Vector3((-1), (-1), (-1)), new THREE.Vector3(1, 1, 1)), _boundingBox = new THREE.Box3(), _points3 = new Array(3), _points4 = new Array(4), _viewMatrix = new THREE.Matrix4(), _viewProjectionMatrix = new THREE.Matrix4(), _modelMatrix, _modelViewProjectionMatrix = new THREE.Matrix4(), _normalMatrix = new THREE.Matrix3(), _frustum = new THREE.Frustum(), _clippedVertex1PositionScreen = new THREE.Vector4(), _clippedVertex2PositionScreen = new THREE.Vector4();
             this.projectVector = function(vector, camera) {
                 console.warn("THREE.Projector: .projectVector() is now vector.project().");
                 vector.project(camera);
@@ -2131,7 +2131,6 @@
                 }
                 this.data = {
                     prevState: {},
-                    $el: null,
                     zoom: 0,
                     xAxis: {
                         range: {
@@ -2295,10 +2294,11 @@
                     silent = false;
                 }
                 var stateData = this.data;
+                var newStateObj = newState;
                 var changedProps = {};
-                for (var key in newState) {
-                    if (stateData[key] !== newState[key]) {
-                        changedProps[key] = newState[key];
+                for (var key in newStateObj) {
+                    if (stateData[key] !== newStateObj[key]) {
+                        changedProps[key] = newStateObj[key];
                     }
                 }
                 this.savePrevState(changedProps);

@@ -67,13 +67,24 @@ export class TrendGradient extends TrendWidget {
 	initGradient() {
 		let geometry = new Geometry();
 
+
 		for (let i = 0; i < this.segmentsIds.length; i++) {
-			geometry.vertices.push(new THREE.Vector3(),
+			geometry.vertices.push(
+				new THREE.Vector3(),
 				new THREE.Vector3(),
 				new THREE.Vector3(),
 				new THREE.Vector3()
 			);
 			let ind = i * 4;
+
+			// gradient segment scheme
+			//
+			// vert0 +---+ vert3
+			//       |\  |
+			// face1 | \ | face2
+			// 	     |  \|
+			// vert1 +---+ vert2
+
 			geometry.faces.push(
 				new THREE.Face3( ind, ind + 1, ind + 2 ),
 				new THREE.Face3( ind + 3, ind, ind + 2 )

@@ -88,7 +88,6 @@ export interface IChartState {
 	computedData?: IChartStateComputedData,
 	pluginsState?: {[pluginName: string]: any};
 	eventEmitterMaxListeners?: number;
-	[key: string]: any; // for "for in" loops
 }
 
 /**
@@ -98,7 +97,6 @@ export class ChartState {
 
 	data: IChartState = {
 		prevState: {},
-		$el: null,
 		zoom: 0,
 		xAxis: {
 			range: {
@@ -279,16 +277,17 @@ export class ChartState {
 	}
 
 	setState(newState: IChartState, eventData?: any, silent = false) {
-		var stateData = this.data;
+		let stateData = this.data as {[key: string]: any};
+		let newStateObj = newState as {[key: string]: any};
 
-		var changedProps: IChartState = {};
-		for (let key in newState) {
-			if ((<any>stateData)[key] !== newState[key]) {
-				changedProps[key] = newState[key];
+		var changedProps: {[key: string]: any} = {};
+		for (let key in newStateObj) {
+			if (stateData[key] !== newStateObj[key]) {
+				changedProps[key] = newStateObj[key] as any;
 			}
 		}
 
-		this.savePrevState(changedProps);
+		this.savePrevState(changedProps as IChartState);
 
 
 		// temporary remove trends data from newState by performance reasons
@@ -428,7 +427,7 @@ export class ChartState {
 
 		// emit event for each changed state property
 		for (let key in changedProps) {
-			this.ee.emit(key + 'Change', changedProps[key], eventData);
+			this.ee.emit(key + 'Change', (changedProps as {[key: string]: any})[key], eventData);
 		}
 
 		if (!this.isReady) return;
