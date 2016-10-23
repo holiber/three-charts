@@ -1,17 +1,20 @@
-
 import Object3D = THREE.Object3D;
-import {ChartState} from "../State";
-import {Utils} from "../Utils";
 import Mesh = THREE.Mesh;
 import PlaneBufferGeometry = THREE.PlaneBufferGeometry;
 import MeshBasicMaterial = THREE.MeshBasicMaterial;
 import Vector3 = THREE.Vector3;
-import {TrendWidget, TrendsWidget} from "./TrendsWidget";
-import {ITrendOptions} from "../Trend";
 import PlaneGeometry = THREE.PlaneGeometry;
 import Color = THREE.Color;
-import {TrendSegmentsManager, TrendSegment} from "../TrendSegmentsManager";
-import { ChartColor } from '../Color';
+import {
+	TrendSegmentsManager,
+	TrendSegment,
+	ChartColor,
+	ChartState,
+	Utils,
+	TrendWidget,
+	TrendsWidget,
+	ITrendOptions
+} from "three-charts";
 
 const CANVAS_WIDTH = 128;
 const CANVAS_HEIGHT = 64;
@@ -19,6 +22,7 @@ const OFFSET_X = 15;
 
 export class TrendsIndicatorWidget extends TrendsWidget<TrendIndicator> {
 	static widgetName = 'TrendsIndicator';
+
 	protected getTrendWidgetClass() {
 		return TrendIndicator;
 	}
@@ -65,7 +69,7 @@ export class TrendIndicator extends TrendWidget {
 			ctx.strokeStyle = "rgba(255,255,255,0.95)";
 		});
 
-		var material = new THREE.MeshBasicMaterial( {map: texture, side: THREE.FrontSide} );
+		var material = new THREE.MeshBasicMaterial({map: texture, side: THREE.FrontSide});
 		material.transparent = true;
 
 		this.mesh = new Mesh(
@@ -93,7 +97,7 @@ export class TrendIndicator extends TrendWidget {
 		var screenWidth = state.data.width;
 		var x = endPointVector.x + OFFSET_X;
 		var y = endPointVector.y;
-		
+
 		var screenX = state.screen.getScreenXByPoint(endPointVector.x);
 		var indicatorIsOutOfScreen = screenX < 0 || screenX > screenWidth;
 		if (indicatorIsOutOfScreen) {
@@ -101,8 +105,8 @@ export class TrendIndicator extends TrendWidget {
 			if (screenX > screenWidth) x = state.screen.getPointByScreenX(screenWidth) - CANVAS_WIDTH / 2 - 10;
 			y -= 25;
 		}
-		this.mesh.position.set(x + CANVAS_WIDTH / 2, y + CANVAS_HEIGHT / 2  - 30, 0.1);
+		this.mesh.position.set(x + CANVAS_WIDTH / 2, y + CANVAS_HEIGHT / 2 - 30, 0.1);
 	}
 
-	
+
 }

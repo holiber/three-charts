@@ -1,15 +1,20 @@
-
 import Object3D = THREE.Object3D;
-import { ChartState, IChartState } from "../State";
-import {Utils} from "../Utils";
 import Mesh = THREE.Mesh;
 import PlaneBufferGeometry = THREE.PlaneBufferGeometry;
 import MeshBasicMaterial = THREE.MeshBasicMaterial;
 import Vector3 = THREE.Vector3;
-import {TrendWidget, TrendsWidget} from "./TrendsWidget";
-import { ITrendOptions, TREND_TYPE } from "../Trend";
-import {TrendSegmentsManager, TrendSegment} from "../TrendSegmentsManager";
-import chartreuse = THREE.ColorKeywords.chartreuse;
+
+import {
+	Utils,
+	ChartState,
+	IChartState,
+	TrendsWidget,
+	TrendWidget,
+	TrendSegment,
+	TrendSegmentsManager,
+	ITrendOptions,
+	TREND_TYPE
+} from 'three-charts';
 
 /**
  * widget adds blinking beacon on trends end
@@ -17,6 +22,7 @@ import chartreuse = THREE.ColorKeywords.chartreuse;
  */
 export class TrendsBeaconWidget extends TrendsWidget<TrendBeacon> {
 	static widgetName = 'TrendsBeacon';
+
 	protected getTrendWidgetClass() {
 		return TrendBeacon;
 	}
@@ -58,7 +64,7 @@ export class TrendBeacon extends TrendWidget {
 	}
 
 	private initObject() {
-		
+
 		// add beacon
 		let light = this.mesh = new Mesh(
 			new PlaneBufferGeometry(32, 32),
@@ -101,7 +107,7 @@ export class TrendBeacon extends TrendWidget {
 				this.animation && animation.restart();
 			});
 		}, 500);
-	
+
 	}
 
 	private stopAnimation() {
@@ -143,7 +149,7 @@ export class TrendBeacon extends TrendWidget {
 	private updatePosition() {
 		var state = this.chartState;
 		var xVal: number, yVal: number;
-		var currentAnimationState =  this.segment.currentAnimationState;
+		var currentAnimationState = this.segment.currentAnimationState;
 		if (this.trend.getOptions().type == TREND_TYPE.LINE) {
 			xVal = currentAnimationState.endXVal;
 			yVal = currentAnimationState.endYVal;

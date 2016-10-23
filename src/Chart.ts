@@ -16,13 +16,8 @@ import { IScreenTransformOptions } from "./Screen";
 import { AxisWidget } from "./widgets/AxisWidget";
 import { GridWidget } from "./widgets/GridWidget";
 import { TrendsGradientWidget } from "./widgets/TrendsGradientWidget";
-import { TrendsLoadingWidget } from "./widgets/TrendsLoadingWidget";
-import { AxisMarksWidget } from "./widgets/AxisMarksWidget";
-import { BorderWidget } from "./widgets/BorderWidget";
-import { TrendsIndicatorWidget } from "./widgets/TrendsIndicatorWidget";
 import { TrendsLineWidget } from "./widgets/TrendsLineWidget";
 import { TrendsCandlesWidget } from './widgets/TrendsCandleWidget';
-import { TrendsBeaconWidget } from "./widgets/TrendsBeaconWidget";
 import { ResizeSensor, ResizeSensorType } from './deps';
 import OrthographicCamera = THREE.OrthographicCamera;
 
