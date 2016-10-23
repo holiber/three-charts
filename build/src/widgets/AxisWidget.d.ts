@@ -1,6 +1,5 @@
 import Object3D = THREE.Object3D;
 import { ChartWidget } from "../Widget";
-import { ChartState } from "../State";
 import { IGridParamsForAxis } from "./GridWidget";
 /**
  * widget for drawing axis
@@ -12,7 +11,7 @@ export declare class AxisWidget extends ChartWidget {
     private axisXObject;
     private axisYObject;
     private updateAxisXRequest;
-    constructor(state: ChartState);
+    onReadyHandler(): void;
     bindEvents(): void;
     private onDestroy();
     private onScrollChange(x, y);

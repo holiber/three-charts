@@ -17,7 +17,7 @@ export declare abstract class TrendsWidget<TrendWidgetType extends TrendWidget> 
     protected widgets: {
         [trendName: string]: TrendWidgetType;
     };
-    constructor(state: ChartState);
+    onReadyHandler(): void;
     protected bindEvents(): void;
     protected onTrendsChange(): void;
     private onTrendChange(trendName, changedOptions, newData);
@@ -32,7 +32,7 @@ export declare abstract class TrendWidget {
     protected chartState: ChartState;
     protected trendName: string;
     protected trend: Trend;
-    private unsubscribers;
+    protected unbindList: Function[];
     constructor(chartState: ChartState, trendName: string);
     abstract getObject3D(): Object3D;
     static widgetIsEnabled(trendOptions: ITrendOptions, chartState: ChartState): boolean;
@@ -45,5 +45,5 @@ export declare abstract class TrendWidget {
     protected onTransformationFrame(options: IScreenTransformOptions): void;
     protected onZoom(): void;
     protected bindEvents(): void;
-    protected bindEvent(unsubscriber: Function): void;
+    protected bindEvent(unbind: Function): void;
 }

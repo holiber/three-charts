@@ -91,6 +91,11 @@ window.onload = function () {
 	var dsBlue = new DataSourse();
 	var now = Date.now();
 
+
+	// Chart.installWidget(TrendsLoadingWidget);
+	// Chart.installWidget(TrendsBeaconWidget);
+	// Chart.installWidget(TrendsIndicatorWidget);
+
 	chart = new Chart({
 		yAxis: {
 			marks: [
@@ -137,16 +142,13 @@ window.onload = function () {
 		showStats: true,
 		// autoRender: {fps: 100},
 		// animations: {enabled: false},
-		widgets: {
-			BorderWidget: {enabled: true},
-			//Grid: {enabled: false},
-			//Axis: {enabled: false},
-			// TrendsGradient: {enabled: false},
-			//TrendsBeacon: {enabled: false},
-			//TrendsIndicator: {enabled: false},
-			// TrendsMarks: {enabled: false},
-			// TrendsLoading: {enabled: false},
-			// AxisMarks: {enabled: false}
+
+		trendDefaultState: {
+			settingsForTypes: {
+				LINE: {
+					minSegmentLengthInPx: 10
+				}
+			}
 		}
 	},
 	document.querySelector('.chart')

@@ -1,9 +1,8 @@
 import { ChartState } from "./State";
 import Object3D = THREE.Object3D;
 export interface IChartWidgetConstructor {
-    new (chartState: ChartState): ChartWidget;
+    new (): ChartWidget;
     widgetName: string;
-    getDefaultOptions(): IChartWidgetOptions;
 }
 /**
  * base class for all widgets
@@ -12,14 +11,10 @@ export interface IChartWidgetConstructor {
 export declare abstract class ChartWidget {
     static widgetName: string;
     protected chartState: ChartState;
-    private unsubscribers;
-    constructor(chartState: ChartState);
+    private unbindList;
+    setupChartState(chartState: ChartState): void;
+    abstract onReadyHandler(): any;
     abstract getObject3D(): Object3D;
-    protected bindEvents(): void;
     protected bindEvent(...args: Array<Function | Function[]>): void;
     protected unbindEvents(): void;
-    static getDefaultOptions(): IChartWidgetOptions;
-}
-export interface IChartWidgetOptions {
-    enabled: boolean;
 }

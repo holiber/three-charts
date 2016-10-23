@@ -133,9 +133,11 @@
                     }
                 },
                 showStats: true,
-                widgets: {
-                    BorderWidget: {
-                        enabled: true
+                trendDefaultState: {
+                    settingsForTypes: {
+                        LINE: {
+                            minSegmentLengthInPx: 10
+                        }
                     }
                 }
             }, document.querySelector(".chart"));
@@ -268,36 +270,32 @@
         __export(__webpack_require__(21));
         __export(__webpack_require__(20));
         __export(__webpack_require__(19));
-        __export(__webpack_require__(12));
-        __export(__webpack_require__(13));
         __export(__webpack_require__(15));
-        __export(__webpack_require__(18));
-        __export(__webpack_require__(14));
+        __export(__webpack_require__(16));
         __export(__webpack_require__(17));
-        __export(__webpack_require__(35));
-        __export(__webpack_require__(25));
+        __export(__webpack_require__(18));
+        __export(__webpack_require__(4));
+        __export(__webpack_require__(22));
+        __export(__webpack_require__(3));
+        __export(__webpack_require__(26));
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        __webpack_require__(3);
+        var Plugin_1 = __webpack_require__(3);
+        __webpack_require__(5);
         var PerspectiveCamera = THREE.PerspectiveCamera;
-        var State_1 = __webpack_require__(12);
-        var Utils_1 = __webpack_require__(14);
-        var AxisWidget_1 = __webpack_require__(22);
-        var GridWidget_1 = __webpack_require__(23);
-        var TrendsGradientWidget_1 = __webpack_require__(24);
-        var TrendsLoadingWidget_1 = __webpack_require__(27);
-        var AxisMarksWidget_1 = __webpack_require__(28);
-        var BorderWidget_1 = __webpack_require__(29);
-        var TrendsIndicatorWidget_1 = __webpack_require__(30);
-        var TrendsLineWidget_1 = __webpack_require__(31);
-        var TrendsCandleWidget_1 = __webpack_require__(32);
-        var TrendsBeaconWidget_1 = __webpack_require__(33);
-        var deps_1 = __webpack_require__(34);
+        var State_1 = __webpack_require__(15);
+        var Widget_1 = __webpack_require__(22);
+        var Utils_1 = __webpack_require__(4);
+        var AxisWidget_1 = __webpack_require__(23);
+        var GridWidget_1 = __webpack_require__(24);
+        var TrendsGradientWidget_1 = __webpack_require__(25);
+        var TrendsLineWidget_1 = __webpack_require__(28);
+        var TrendsCandleWidget_1 = __webpack_require__(29);
         var Chart = function() {
-            function Chart(state, $container, plugins) {
+            function Chart(state, $container, pluginsAndWidgets) {
                 var _this = this;
-                if (plugins === void 0) {
-                    plugins = [];
+                if (pluginsAndWidgets === void 0) {
+                    pluginsAndWidgets = [];
                 }
                 this.widgets = [];
                 if (!THREE || !THREE.REVISION) Utils_1.Utils.error("three.js not found");
@@ -307,7 +305,11 @@
                 var style = getComputedStyle($container);
                 state.width = parseInt(style.width);
                 state.height = parseInt(style.height);
-                this.state = new State_1.ChartState(state, Chart.installedWidgets, plugins);
+                var plugins = pluginsAndWidgets.filter(function(pluginOrWidget) {
+                    return pluginOrWidget instanceof Plugin_1.ChartPlugin;
+                });
+                this.state = new State_1.ChartState(state, plugins);
+                this.pluginsAndWidgets = pluginsAndWidgets;
                 this.zoomThrottled = Utils_1.Utils.throttle(function(zoomValue, origin) {
                     return _this.zoom(zoomValue, origin);
                 }, 200);
@@ -315,10 +317,8 @@
                 this.init($container);
             }
             Chart.installWidget = function(Widget) {
-                if (!Widget.widgetName) {
-                    Utils_1.Utils.error("unnamed widget");
-                }
-                this.installedWidgets[Widget.widgetName] = Widget;
+                if (!Widget.widgetName) Utils_1.Utils.error("unnamed widget");
+                this.preinstalledWidgets.push(Widget);
             };
             Chart.prototype.init = function($container) {
                 var state = this.state;
@@ -329,9 +329,9 @@
                     antialias: true,
                     alpha: true
                 });
+                renderer.setSize(w, h);
                 renderer.setPixelRatio(Chart.devicePixelRatio);
                 renderer.setClearColor(state.data.backgroundColor, state.data.backgroundOpacity);
-                renderer.setSize(w, h);
                 $container.appendChild(renderer.domElement);
                 this.$el = renderer.domElement;
                 this.$el.style.display = "block";
@@ -340,17 +340,31 @@
                     $container.appendChild(this.stats.domElement);
                 }
                 this.setupCamera();
-                var widgetsClasses = this.state.widgetsClasses;
-                for (var widgetName in widgetsClasses) {
-                    var widgetOptions = this.state.data.widgets[widgetName];
-                    if (!widgetOptions.enabled) continue;
-                    var WidgetConstructor = widgetsClasses[widgetName];
-                    var widget = new WidgetConstructor(this.state);
-                    this.scene.add(widget.getObject3D());
-                    this.widgets.push(widget);
-                }
+                this.initWidgets();
                 this.bindEvents();
                 this.renderLoop();
+            };
+            Chart.prototype.initWidgets = function() {
+                var _this = this;
+                var preinstalledWidgetsClasses = this.constructor.preinstalledWidgets;
+                var customWidgets = [];
+                this.pluginsAndWidgets.forEach(function(pluginOrWidget) {
+                    if (pluginOrWidget instanceof Widget_1.ChartWidget) {
+                        customWidgets.push(pluginOrWidget);
+                        return;
+                    }
+                    if (!(pluginOrWidget instanceof Plugin_1.ChartPlugin)) return;
+                    var pluginWidgetClasses = pluginOrWidget.constructor.providedWidgets;
+                    preinstalledWidgetsClasses.push.apply(preinstalledWidgetsClasses, pluginWidgetClasses);
+                });
+                this.widgets = customWidgets.concat(preinstalledWidgetsClasses.map(function(WidgetClass) {
+                    return new WidgetClass();
+                }));
+                this.widgets.forEach(function(widget) {
+                    widget.setupChartState(_this.state);
+                    widget.onReadyHandler();
+                    _this.scene.add(widget.getObject3D());
+                });
             };
             Chart.prototype.renderLoop = function() {
                 var _this = this;
@@ -427,11 +441,7 @@
                         _this.onTouchEnd(ev);
                     });
                 }
-                if (this.state.data.autoResize) {
-                    this.resizeSensor = new deps_1.ResizeSensor(this.$container, function() {
-                        _this.onChartContainerResizeHandler(_this.$container.clientWidth, _this.$container.clientHeight);
-                    });
-                }
+                if (this.state.data.autoResize) {}
                 this.unsubscribers = [ this.state.onTrendsChange(function() {
                     return _this.autoscroll();
                 }), this.state.screen.onTransformationFrame(function(options) {
@@ -575,28 +585,8 @@
                     });
                 });
             };
-            Chart.createPreviewChart = function(userOptions, $el) {
-                var previewChartOptions = {
-                    animations: {
-                        enabled: false
-                    },
-                    widgets: {
-                        Grid: {
-                            enabled: false
-                        },
-                        Axis: {
-                            enabled: false
-                        },
-                        TrendsGradient: {
-                            enabled: false
-                        }
-                    }
-                };
-                var options = Utils_1.Utils.deepMerge(userOptions, previewChartOptions);
-                return new Chart(options, $el);
-            };
             Chart.devicePixelRatio = window.devicePixelRatio;
-            Chart.installedWidgets = {};
+            Chart.preinstalledWidgets = [];
             Chart.renderers = {
                 CanvasRenderer: THREE.CanvasRenderer,
                 WebGLRenderer: THREE.WebGLRenderer
@@ -608,23 +598,259 @@
         Chart.installWidget(TrendsCandleWidget_1.TrendsCandlesWidget);
         Chart.installWidget(AxisWidget_1.AxisWidget);
         Chart.installWidget(GridWidget_1.GridWidget);
-        Chart.installWidget(TrendsBeaconWidget_1.TrendsBeaconWidget);
-        Chart.installWidget(TrendsIndicatorWidget_1.TrendsIndicatorWidget);
         Chart.installWidget(TrendsGradientWidget_1.TrendsGradientWidget);
-        Chart.installWidget(TrendsLoadingWidget_1.TrendsLoadingWidget);
-        Chart.installWidget(AxisMarksWidget_1.AxisMarksWidget);
-        Chart.installWidget(BorderWidget_1.BorderWidget);
+    }, function(module, exports, __webpack_require__) {
+        "use strict";
+        var Utils_1 = __webpack_require__(4);
+        var EventEmmiter_1 = __webpack_require__(14);
+        exports.DEFAULT_CONFIG = {
+            installPluginWidgets: true
+        };
+        var ChartPlugin = function() {
+            function ChartPlugin(options, config) {
+                if (config === void 0) {
+                    config = {};
+                }
+                this.unsubscribers = [];
+                this.initialState = options;
+                this.config = Utils_1.Utils.deepMerge(exports.DEFAULT_CONFIG, config);
+                this.name = this.constructor.NAME;
+                if (!this.name) Utils_1.Utils.error("Unnamed plugin detected");
+            }
+            ChartPlugin.prototype.setupChartState = function(chartState) {
+                var _this = this;
+                this.chartState = chartState;
+                this.ee = new EventEmmiter_1.EventEmitter();
+                this.bindEvent(this.chartState.onInitialStateApplied(function(initialState) {
+                    return _this.onInitialStateAppliedHandler(initialState);
+                }), this.chartState.onReady(function() {
+                    return _this.onReadyHandler();
+                }), this.chartState.onDestroy(function() {
+                    return _this.onDestroyHandler();
+                }), this.chartState.onPluginsStateChange(function(changedPluginsStates) {
+                    return changedPluginsStates[_this.name] && _this.onStateChanged(changedPluginsStates[_this.name]);
+                }));
+            };
+            ChartPlugin.prototype.getOptions = function() {
+                return this.chartState.data.pluginsState[this.name];
+            };
+            ChartPlugin.prototype.onInitialStateAppliedHandler = function(initialState) {};
+            ChartPlugin.prototype.onReadyHandler = function() {};
+            ChartPlugin.prototype.onStateChanged = function(changedState) {};
+            ChartPlugin.prototype.onDestroyHandler = function() {
+                this.ee.removeAllListeners();
+            };
+            ChartPlugin.prototype.bindEvent = function() {
+                var args = [];
+                for (var _i = 0; _i < arguments.length; _i++) {
+                    args[_i - 0] = arguments[_i];
+                }
+                var unsubscribers = [];
+                if (!Array.isArray(args[0])) {
+                    unsubscribers.push(args[0]);
+                } else {
+                    unsubscribers.push.apply(unsubscribers, args);
+                }
+                (_a = this.unsubscribers).push.apply(_a, unsubscribers);
+                var _a;
+            };
+            ChartPlugin.prototype.unbindEvents = function() {
+                this.unsubscribers.forEach(function(unsubscriber) {
+                    return unsubscriber();
+                });
+                this.unsubscribers.length = 0;
+            };
+            ChartPlugin.NAME = "";
+            ChartPlugin.providedWidgets = [];
+            return ChartPlugin;
+        }();
+        exports.ChartPlugin = ChartPlugin;
+    }, function(module, exports, __webpack_require__) {
+        "use strict";
+        var deps_1 = __webpack_require__(5);
+        function deepmerge(target, src, mergeArrays) {
+            if (mergeArrays === void 0) {
+                mergeArrays = true;
+            }
+            var array = Array.isArray(src);
+            var dst = array && [] || {};
+            if (array) {
+                target = target || [];
+                if (mergeArrays) {
+                    dst = dst.concat(target);
+                }
+                src.forEach(function(e, i) {
+                    if (typeof dst[i] === "undefined") {
+                        dst[i] = e;
+                    } else if (typeof e === "object") {
+                        dst[i] = deepmerge(target[i], e, mergeArrays);
+                    } else {
+                        if (target.indexOf(e) === -1) {
+                            dst.push(e);
+                        }
+                    }
+                });
+            } else {
+                if (target && typeof target === "object") {
+                    Object.keys(target).forEach(function(key) {
+                        dst[key] = target[key];
+                    });
+                }
+                Object.keys(src).forEach(function(key) {
+                    if (typeof src[key] !== "object" || !src[key]) {
+                        dst[key] = src[key];
+                    } else {
+                        if (!target[key]) {
+                            dst[key] = src[key];
+                        } else {
+                            dst[key] = deepmerge(target[key], src[key], mergeArrays);
+                        }
+                    }
+                });
+            }
+            return dst;
+        }
+        var Utils = function() {
+            function Utils() {}
+            Utils.deepMerge = function(obj1, obj2, mergeArrays) {
+                return deepmerge(obj1, obj2, mergeArrays);
+            };
+            Utils.deepCopy = function(obj) {
+                return JSON.parse(JSON.stringify(obj));
+            };
+            Utils.toFixed = function(num, digitsCount) {
+                var maxDigits = 15;
+                var result = "";
+                var intVal = Math.floor(num);
+                var intStr = intVal.toString();
+                var lengthDiff = digitsCount - intStr.length;
+                if (lengthDiff > 0) {
+                    result = "0".repeat(lengthDiff) + intStr;
+                } else {
+                    result = intStr;
+                }
+                var afterPointDigitsCount = maxDigits - intStr.length;
+                var afterPointStr = num.toString().split(".")[1];
+                if (afterPointStr) {
+                    result += "." + afterPointStr.substr(0, afterPointDigitsCount);
+                }
+                return result;
+            };
+            Utils.bindEvent = function() {};
+            Utils.createTexture = function(width, height, fn) {
+                var canvas = document.createElement("canvas");
+                canvas.width = width;
+                canvas.height = height;
+                var ctx = canvas.getContext("2d");
+                fn(ctx);
+                var texture = new THREE.Texture(canvas);
+                texture.needsUpdate = true;
+                return texture;
+            };
+            Utils.createPixelPerfectTexture = function(width, height, fn) {
+                var texture = this.createTexture(width, height, fn);
+                texture.minFilter = THREE.NearestFilter;
+                return texture;
+            };
+            Utils.error = function(msg) {
+                console.error("Chart error: " + msg);
+                throw "Chart: " + msg;
+            };
+            Utils.warn = function(msg) {
+                console.warn("Chart warning: " + msg);
+            };
+            Utils.getUid = function() {
+                return this.currentId++;
+            };
+            Utils.getDistance = function(num1, num2) {
+                return Math.max(num1, num2) - Math.min(num1, num2);
+            };
+            Utils.binarySearchClosestInd = function(arr, num, key) {
+                var mid;
+                var lo = 0;
+                var hi = arr.length - 1;
+                while (hi - lo > 1) {
+                    mid = Math.floor((lo + hi) / 2);
+                    if (arr[mid][key] < num) {
+                        lo = mid;
+                    } else {
+                        hi = mid;
+                    }
+                }
+                if (num - arr[lo][key] <= arr[hi][key] - num) {
+                    return lo;
+                }
+                return hi;
+            };
+            Utils.binarySearchClosest = function(arr, num, key) {
+                var ind = this.binarySearchClosestInd(arr, num, key);
+                return arr[ind];
+            };
+            Utils.rectsIntersect = function(r1, r2) {
+                var left1 = r1[0], top1 = r1[1], width1 = r1[2], height1 = r1[3];
+                var left2 = r2[0], top2 = r2[1], width2 = r2[2], height2 = r2[3];
+                var _a = [ left1 + width1, left2 + width2, top1 + height1, top2 + height2 ], right1 = _a[0], right2 = _a[1], bottom1 = _a[2], bottom2 = _a[3];
+                return !(left2 > right1 || right2 < left1 || top2 > bottom1 || bottom2 < top1);
+            };
+            Utils.throttle = function(func, ms) {
+                var isThrottled = false, savedArgs, savedThis;
+                function wrapper() {
+                    if (isThrottled) {
+                        savedArgs = arguments;
+                        savedThis = this;
+                        return;
+                    }
+                    func.apply(this, arguments);
+                    isThrottled = true;
+                    setTimeout(function() {
+                        isThrottled = false;
+                        if (savedArgs) {
+                            wrapper.apply(savedThis, savedArgs);
+                            savedArgs = savedThis = null;
+                        }
+                    }, ms);
+                }
+                return wrapper;
+            };
+            Utils.msToTimeString = function(timestamp) {
+                var h = Math.floor(timestamp / 36e4);
+                var m = Math.floor(timestamp / 6e4);
+                var s = Math.floor(timestamp / 1e3);
+                return h + ":" + m + ":" + s;
+            };
+            Utils.getRandomItem = function(arr) {
+                var ind = Math.floor(Math.random() * arr.length);
+                return arr[ind];
+            };
+            Utils.copyProps = function(srcObject, dstObject, props, excludeProps) {
+                if (excludeProps === void 0) {
+                    excludeProps = [];
+                }
+                for (var key in props) {
+                    if (excludeProps.indexOf(key) !== -1) continue;
+                    if (srcObject[key] == void 0) continue;
+                    if (deps_1.isPlainObject(props[key]) && dstObject[key] !== void 0) {
+                        this.copyProps(srcObject[key], dstObject[key], props[key]);
+                    } else {
+                        dstObject[key] = this.deepCopy(srcObject[key]);
+                    }
+                }
+            };
+            Utils.currentId = 1;
+            return Utils;
+        }();
+        exports.Utils = Utils;
     }, function(module, exports, __webpack_require__) {
         "use strict";
         window.TweenLite = TweenMax;
-        window.Stats = __webpack_require__(4);
-        __webpack_require__(5);
-        __webpack_require__(6);
-        exports.isPlainObject = __webpack_require__(7);
-        exports.EE2 = __webpack_require__(9);
-        var es6_promise_1 = __webpack_require__(10);
+        window.Stats = __webpack_require__(6);
+        __webpack_require__(7);
+        __webpack_require__(8);
+        exports.isPlainObject = __webpack_require__(9);
+        exports.EE2 = __webpack_require__(11);
+        var es6_promise_1 = __webpack_require__(12);
         exports.Promise = es6_promise_1.Promise;
-        exports.ResizeSensor = __webpack_require__(11);
+        exports.ResizeSensor = __webpack_require__(13);
     }, function(module, exports) {
         var Stats = function() {
             function h(a) {
@@ -1777,7 +2003,7 @@
 	 * Licensed under the MIT License.
 	 */
         "use strict";
-        var isObject = __webpack_require__(8);
+        var isObject = __webpack_require__(10);
         function isObjectObject(o) {
             return isObject(o) === true && Object.prototype.toString.call(o) === "[object Object]";
         }
@@ -2333,16 +2559,52 @@
         })();
     }, function(module, exports, __webpack_require__) {
         "use strict";
+        var deps_1 = __webpack_require__(5);
+        var EventEmitter = function() {
+            function EventEmitter() {
+                this.ee = new deps_1.EE2();
+            }
+            EventEmitter.prototype.emit = function(eventName) {
+                var args = [];
+                for (var _i = 1; _i < arguments.length; _i++) {
+                    args[_i - 1] = arguments[_i];
+                }
+                (_a = this.ee).emit.apply(_a, [ eventName ].concat(args));
+                var _a;
+            };
+            EventEmitter.prototype.on = function(eventName, callback) {
+                return this.ee.on(eventName, callback);
+            };
+            EventEmitter.prototype.off = function(eventName, callback) {
+                return this.ee.off(eventName, callback);
+            };
+            EventEmitter.prototype.subscribe = function(eventName, callback) {
+                var _this = this;
+                this.on(eventName, callback);
+                return function() {
+                    return _this.off(eventName, callback);
+                };
+            };
+            EventEmitter.prototype.setMaxListeners = function(listenersCount) {
+                this.ee.setMaxListeners(listenersCount);
+            };
+            EventEmitter.prototype.removeAllListeners = function(eventName) {
+                this.ee.removeAllListeners(eventName);
+            };
+            return EventEmitter;
+        }();
+        exports.EventEmitter = EventEmitter;
+    }, function(module, exports, __webpack_require__) {
+        "use strict";
         var Vector3 = THREE.Vector3;
-        var Trend_1 = __webpack_require__(13);
-        var EventEmmiter_1 = __webpack_require__(16);
-        var Utils_1 = __webpack_require__(14);
-        var Widget_1 = __webpack_require__(17);
+        var Trend_1 = __webpack_require__(16);
+        var EventEmmiter_1 = __webpack_require__(14);
+        var Utils_1 = __webpack_require__(4);
         var TrendsManager_1 = __webpack_require__(18);
         var Screen_1 = __webpack_require__(19);
         var AxisMarks_1 = __webpack_require__(20);
         var interfaces_1 = __webpack_require__(21);
-        var deps_1 = __webpack_require__(3);
+        var deps_1 = __webpack_require__(5);
         var CHART_STATE_EVENTS = {
             INITIAL_STATE_APPLIED: "initialStateApplied",
             READY: "ready",
@@ -2357,10 +2619,7 @@
             PLUGINS_STATE_CHANGED: "pluginsStateChanged"
         };
         var ChartState = function() {
-            function ChartState(initialState, widgetsClasses, plugins) {
-                if (widgetsClasses === void 0) {
-                    widgetsClasses = {};
-                }
+            function ChartState(initialState, plugins) {
                 if (plugins === void 0) {
                     plugins = [];
                 }
@@ -2384,7 +2643,10 @@
                             }
                         },
                         dataType: interfaces_1.AXIS_DATA_TYPE.NUMBER,
-                        gridMinSize: 100,
+                        grid: {
+                            enabled: true,
+                            minSizePx: 100
+                        },
                         autoScroll: true,
                         marks: []
                     },
@@ -2403,8 +2665,11 @@
                                 end: 5
                             }
                         },
+                        grid: {
+                            enabled: true,
+                            minSizePx: 50
+                        },
                         dataType: interfaces_1.AXIS_DATA_TYPE.NUMBER,
-                        gridMinSize: 50,
                         marks: []
                     },
                     animations: {
@@ -2461,12 +2726,11 @@
                     eventEmitterMaxListeners: 20,
                     maxVisibleSegments: 1280
                 };
-                this.widgetsClasses = {};
                 this.plugins = {};
                 this.isReady = false;
                 this.ee = new EventEmmiter_1.EventEmitter();
                 this.ee.setMaxListeners(initialState.eventEmitterMaxListeners || this.data.eventEmitterMaxListeners);
-                this.widgetsClasses = widgetsClasses;
+                this.data = Utils_1.Utils.deepMerge(this.data, initialState);
                 this.trendsManager = new TrendsManager_1.TrendsManager(this, initialState);
                 initialState.trends = this.trendsManager.calculatedOptions;
                 initialState = this.installPlugins(plugins, initialState);
@@ -2557,16 +2821,6 @@
                 var data = this.data;
                 var patch = {};
                 var actualData = Utils_1.Utils.deepMerge({}, data);
-                if (changedProps.widgets || !data.widgets) {
-                    patch.widgets = {};
-                    var widgetsOptions = data.widgets || {};
-                    for (var widgetName in this.widgetsClasses) {
-                        var WidgetClass = this.widgetsClasses[widgetName];
-                        var userOptions = widgetsOptions[widgetName] || {};
-                        var defaultOptions = WidgetClass.getDefaultOptions() || Widget_1.ChartWidget.getDefaultOptions();
-                        patch.widgets[widgetName] = Utils_1.Utils.deepMerge(defaultOptions, userOptions);
-                    }
-                }
                 var cursorOptions = changedProps.cursor;
                 var isMouseDrag = cursorOptions && data.cursor.dragMode && data.prevState.cursor.dragMode;
                 if (isMouseDrag) {
@@ -2660,9 +2914,6 @@
                 plugins.forEach(function(plugin) {
                     var PluginClass = plugin.constructor;
                     var pluginName = PluginClass.NAME;
-                    PluginClass.pluginWidgets.forEach(function(PluginWidget) {
-                        return _this.widgetsClasses[PluginWidget.widgetName] = PluginWidget;
-                    });
                     initialState.pluginsState[pluginName] = Utils_1.Utils.deepMerge({}, plugin.initialState);
                     _this.plugins[pluginName] = plugin;
                     plugin.setupChartState(_this);
@@ -2919,10 +3170,10 @@
         exports.ChartState = ChartState;
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var Utils_1 = __webpack_require__(14);
-        var TrendSegmentsManager_1 = __webpack_require__(15);
-        var EventEmmiter_1 = __webpack_require__(16);
-        var deps_1 = __webpack_require__(3);
+        var Utils_1 = __webpack_require__(4);
+        var TrendSegmentsManager_1 = __webpack_require__(17);
+        var EventEmmiter_1 = __webpack_require__(14);
+        var deps_1 = __webpack_require__(5);
         var EVENTS = {
             CHANGE: "Change",
             PREPEND_REQUEST: "prependRequest"
@@ -3111,185 +3362,10 @@
         exports.Trend = Trend;
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var deps_1 = __webpack_require__(3);
-        function deepmerge(target, src, mergeArrays) {
-            if (mergeArrays === void 0) {
-                mergeArrays = true;
-            }
-            var array = Array.isArray(src);
-            var dst = array && [] || {};
-            if (array) {
-                target = target || [];
-                if (mergeArrays) {
-                    dst = dst.concat(target);
-                }
-                src.forEach(function(e, i) {
-                    if (typeof dst[i] === "undefined") {
-                        dst[i] = e;
-                    } else if (typeof e === "object") {
-                        dst[i] = deepmerge(target[i], e, mergeArrays);
-                    } else {
-                        if (target.indexOf(e) === -1) {
-                            dst.push(e);
-                        }
-                    }
-                });
-            } else {
-                if (target && typeof target === "object") {
-                    Object.keys(target).forEach(function(key) {
-                        dst[key] = target[key];
-                    });
-                }
-                Object.keys(src).forEach(function(key) {
-                    if (typeof src[key] !== "object" || !src[key]) {
-                        dst[key] = src[key];
-                    } else {
-                        if (!target[key]) {
-                            dst[key] = src[key];
-                        } else {
-                            dst[key] = deepmerge(target[key], src[key], mergeArrays);
-                        }
-                    }
-                });
-            }
-            return dst;
-        }
-        var Utils = function() {
-            function Utils() {}
-            Utils.deepMerge = function(obj1, obj2, mergeArrays) {
-                return deepmerge(obj1, obj2, mergeArrays);
-            };
-            Utils.deepCopy = function(obj) {
-                return JSON.parse(JSON.stringify(obj));
-            };
-            Utils.toFixed = function(num, digitsCount) {
-                var maxDigits = 15;
-                var result = "";
-                var intVal = Math.floor(num);
-                var intStr = intVal.toString();
-                var lengthDiff = digitsCount - intStr.length;
-                if (lengthDiff > 0) {
-                    result = "0".repeat(lengthDiff) + intStr;
-                } else {
-                    result = intStr;
-                }
-                var afterPointDigitsCount = maxDigits - intStr.length;
-                var afterPointStr = num.toString().split(".")[1];
-                if (afterPointStr) {
-                    result += "." + afterPointStr.substr(0, afterPointDigitsCount);
-                }
-                return result;
-            };
-            Utils.bindEvent = function() {};
-            Utils.createTexture = function(width, height, fn) {
-                var canvas = document.createElement("canvas");
-                canvas.width = width;
-                canvas.height = height;
-                var ctx = canvas.getContext("2d");
-                fn(ctx);
-                var texture = new THREE.Texture(canvas);
-                texture.needsUpdate = true;
-                return texture;
-            };
-            Utils.createPixelPerfectTexture = function(width, height, fn) {
-                var texture = this.createTexture(width, height, fn);
-                texture.minFilter = THREE.NearestFilter;
-                return texture;
-            };
-            Utils.error = function(msg) {
-                console.error("Chart error: " + msg);
-                throw "Chart: " + msg;
-            };
-            Utils.warn = function(msg) {
-                console.warn("Chart warning: " + msg);
-            };
-            Utils.getUid = function() {
-                return this.currentId++;
-            };
-            Utils.getDistance = function(num1, num2) {
-                return Math.max(num1, num2) - Math.min(num1, num2);
-            };
-            Utils.binarySearchClosestInd = function(arr, num, key) {
-                var mid;
-                var lo = 0;
-                var hi = arr.length - 1;
-                while (hi - lo > 1) {
-                    mid = Math.floor((lo + hi) / 2);
-                    if (arr[mid][key] < num) {
-                        lo = mid;
-                    } else {
-                        hi = mid;
-                    }
-                }
-                if (num - arr[lo][key] <= arr[hi][key] - num) {
-                    return lo;
-                }
-                return hi;
-            };
-            Utils.binarySearchClosest = function(arr, num, key) {
-                var ind = this.binarySearchClosestInd(arr, num, key);
-                return arr[ind];
-            };
-            Utils.rectsIntersect = function(r1, r2) {
-                var left1 = r1[0], top1 = r1[1], width1 = r1[2], height1 = r1[3];
-                var left2 = r2[0], top2 = r2[1], width2 = r2[2], height2 = r2[3];
-                var _a = [ left1 + width1, left2 + width2, top1 + height1, top2 + height2 ], right1 = _a[0], right2 = _a[1], bottom1 = _a[2], bottom2 = _a[3];
-                return !(left2 > right1 || right2 < left1 || top2 > bottom1 || bottom2 < top1);
-            };
-            Utils.throttle = function(func, ms) {
-                var isThrottled = false, savedArgs, savedThis;
-                function wrapper() {
-                    if (isThrottled) {
-                        savedArgs = arguments;
-                        savedThis = this;
-                        return;
-                    }
-                    func.apply(this, arguments);
-                    isThrottled = true;
-                    setTimeout(function() {
-                        isThrottled = false;
-                        if (savedArgs) {
-                            wrapper.apply(savedThis, savedArgs);
-                            savedArgs = savedThis = null;
-                        }
-                    }, ms);
-                }
-                return wrapper;
-            };
-            Utils.msToTimeString = function(timestamp) {
-                var h = Math.floor(timestamp / 36e4);
-                var m = Math.floor(timestamp / 6e4);
-                var s = Math.floor(timestamp / 1e3);
-                return h + ":" + m + ":" + s;
-            };
-            Utils.getRandomItem = function(arr) {
-                var ind = Math.floor(Math.random() * arr.length);
-                return arr[ind];
-            };
-            Utils.copyProps = function(srcObject, dstObject, props, excludeProps) {
-                if (excludeProps === void 0) {
-                    excludeProps = [];
-                }
-                for (var key in props) {
-                    if (excludeProps.indexOf(key) !== -1) continue;
-                    if (srcObject[key] == void 0) continue;
-                    if (deps_1.isPlainObject(props[key]) && dstObject[key] !== void 0) {
-                        this.copyProps(srcObject[key], dstObject[key], props[key]);
-                    } else {
-                        dstObject[key] = this.deepCopy(srcObject[key]);
-                    }
-                }
-            };
-            Utils.currentId = 1;
-            return Utils;
-        }();
-        exports.Utils = Utils;
-    }, function(module, exports, __webpack_require__) {
-        "use strict";
-        var EventEmmiter_1 = __webpack_require__(16);
+        var EventEmmiter_1 = __webpack_require__(14);
         var Vector3 = THREE.Vector3;
-        var Trend_1 = __webpack_require__(13);
-        var Utils_1 = __webpack_require__(14);
+        var Trend_1 = __webpack_require__(16);
+        var Utils_1 = __webpack_require__(4);
         var MAX_ANIMATED_SEGMENTS = 100;
         var EVENTS = {
             REBUILD: "rebuild",
@@ -3741,83 +3817,8 @@
         exports.TrendSegment = TrendSegment;
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var deps_1 = __webpack_require__(3);
-        var EventEmitter = function() {
-            function EventEmitter() {
-                this.ee = new deps_1.EE2();
-            }
-            EventEmitter.prototype.emit = function(eventName) {
-                var args = [];
-                for (var _i = 1; _i < arguments.length; _i++) {
-                    args[_i - 1] = arguments[_i];
-                }
-                (_a = this.ee).emit.apply(_a, [ eventName ].concat(args));
-                var _a;
-            };
-            EventEmitter.prototype.on = function(eventName, callback) {
-                return this.ee.on(eventName, callback);
-            };
-            EventEmitter.prototype.off = function(eventName, callback) {
-                return this.ee.off(eventName, callback);
-            };
-            EventEmitter.prototype.subscribe = function(eventName, callback) {
-                var _this = this;
-                this.on(eventName, callback);
-                return function() {
-                    return _this.off(eventName, callback);
-                };
-            };
-            EventEmitter.prototype.setMaxListeners = function(listenersCount) {
-                this.ee.setMaxListeners(listenersCount);
-            };
-            EventEmitter.prototype.removeAllListeners = function(eventName) {
-                this.ee.removeAllListeners(eventName);
-            };
-            return EventEmitter;
-        }();
-        exports.EventEmitter = EventEmitter;
-    }, function(module, exports) {
-        "use strict";
-        var ChartWidget = function() {
-            function ChartWidget(chartState) {
-                this.unsubscribers = [];
-                this.chartState = chartState;
-                this.bindEvents();
-            }
-            ChartWidget.prototype.bindEvents = function() {};
-            ChartWidget.prototype.bindEvent = function() {
-                var args = [];
-                for (var _i = 0; _i < arguments.length; _i++) {
-                    args[_i - 0] = arguments[_i];
-                }
-                var unsubscribers = [];
-                if (!Array.isArray(args[0])) {
-                    unsubscribers.push(args[0]);
-                } else {
-                    unsubscribers.push.apply(unsubscribers, args);
-                }
-                (_a = this.unsubscribers).push.apply(_a, unsubscribers);
-                var _a;
-            };
-            ChartWidget.prototype.unbindEvents = function() {
-                this.unsubscribers.forEach(function(unsubscriber) {
-                    return unsubscriber();
-                });
-                this.unsubscribers.length = 0;
-            };
-            ChartWidget.getDefaultOptions = function() {
-                return {
-                    enabled: true
-                };
-            };
-            ChartWidget.widgetName = "";
-            return ChartWidget;
-        }();
-        exports.ChartWidget = ChartWidget;
-    }, function(module, exports, __webpack_require__) {
-        "use strict";
-        var Trend_1 = __webpack_require__(13);
-        var EventEmmiter_1 = __webpack_require__(16);
+        var Trend_1 = __webpack_require__(16);
+        var EventEmmiter_1 = __webpack_require__(14);
         var EVENTS = {
             SEGMENTS_REBUILDED: "segmentsRebuilded"
         };
@@ -3915,7 +3916,7 @@
     }, function(module, exports, __webpack_require__) {
         "use strict";
         var Vector3 = THREE.Vector3;
-        var EventEmmiter_1 = __webpack_require__(16);
+        var EventEmmiter_1 = __webpack_require__(14);
         var Screen = function() {
             function Screen(chartState) {
                 this.options = {
@@ -4222,9 +4223,9 @@
             }
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
-        var Utils_1 = __webpack_require__(14);
+        var Utils_1 = __webpack_require__(4);
         var interfaces_1 = __webpack_require__(21);
-        var EventEmmiter_1 = __webpack_require__(16);
+        var EventEmmiter_1 = __webpack_require__(14);
         var AXIS_MARK_DEFAULT_OPTIONS = {
             type: "simple",
             lineWidth: 1,
@@ -4377,6 +4378,39 @@
             AXIS_DATA_TYPE[AXIS_DATA_TYPE["DATE"] = 1] = "DATE";
         })(exports.AXIS_DATA_TYPE || (exports.AXIS_DATA_TYPE = {}));
         var AXIS_DATA_TYPE = exports.AXIS_DATA_TYPE;
+    }, function(module, exports) {
+        "use strict";
+        var ChartWidget = function() {
+            function ChartWidget() {
+                this.unbindList = [];
+            }
+            ChartWidget.prototype.setupChartState = function(chartState) {
+                this.chartState = chartState;
+            };
+            ChartWidget.prototype.bindEvent = function() {
+                var args = [];
+                for (var _i = 0; _i < arguments.length; _i++) {
+                    args[_i - 0] = arguments[_i];
+                }
+                var unbindList = [];
+                if (!Array.isArray(args[0])) {
+                    unbindList.push(args[0]);
+                } else {
+                    unbindList.push.apply(unbindList, args);
+                }
+                (_a = this.unbindList).push.apply(_a, unbindList);
+                var _a;
+            };
+            ChartWidget.prototype.unbindEvents = function() {
+                this.unbindList.forEach(function(unbindEvent) {
+                    return unbindEvent();
+                });
+                this.unbindList.length = 0;
+            };
+            ChartWidget.widgetName = "";
+            return ChartWidget;
+        }();
+        exports.ChartWidget = ChartWidget;
     }, function(module, exports, __webpack_require__) {
         "use strict";
         var __extends = this && this.__extends || function(d, b) {
@@ -4388,16 +4422,18 @@
         };
         var Mesh = THREE.Mesh;
         var Object3D = THREE.Object3D;
-        var Widget_1 = __webpack_require__(17);
-        var GridWidget_1 = __webpack_require__(23);
-        var Utils_1 = __webpack_require__(14);
+        var Widget_1 = __webpack_require__(22);
+        var GridWidget_1 = __webpack_require__(24);
+        var Utils_1 = __webpack_require__(4);
         var interfaces_1 = __webpack_require__(21);
         var AxisWidget = function(_super) {
             __extends(AxisWidget, _super);
-            function AxisWidget(state) {
-                var _this = this;
-                _super.call(this, state);
+            function AxisWidget() {
+                _super.apply(this, arguments);
                 this.isDestroyed = false;
+            }
+            AxisWidget.prototype.onReadyHandler = function() {
+                var _this = this;
                 this.object3D = new Object3D();
                 this.axisXObject = new Object3D();
                 this.axisYObject = new Object3D();
@@ -4408,8 +4444,9 @@
                 this.updateAxisXRequest = Utils_1.Utils.throttle(function() {
                     return _this.updateAxis(interfaces_1.AXIS_TYPE.X);
                 }, 1e3);
-                this.onScrollChange(state.screen.options.scrollX, state.screen.options.scrollY);
-            }
+                this.onScrollChange(this.chartState.screen.options.scrollX, this.chartState.screen.options.scrollY);
+                this.bindEvents();
+            };
             AxisWidget.prototype.bindEvents = function() {
                 var _this = this;
                 var state = this.chartState;
@@ -4570,20 +4607,23 @@
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
         var Vector3 = THREE.Vector3;
-        var Widget_1 = __webpack_require__(17);
+        var Widget_1 = __webpack_require__(22);
         var LineSegments = THREE.LineSegments;
-        var Utils_1 = __webpack_require__(14);
+        var Utils_1 = __webpack_require__(4);
         var GridWidget = function(_super) {
             __extends(GridWidget, _super);
-            function GridWidget(chartState) {
-                _super.call(this, chartState);
+            function GridWidget() {
+                _super.apply(this, arguments);
                 this.isDestroyed = false;
-                var _a = chartState.data, width = _a.width, height = _a.height, xAxis = _a.xAxis, yAxis = _a.yAxis;
-                this.gridSizeH = Math.floor(width / xAxis.gridMinSize) * 3;
-                this.gridSizeV = Math.floor(height / yAxis.gridMinSize) * 3;
+            }
+            GridWidget.prototype.onReadyHandler = function() {
+                var _a = this.chartState.data, width = _a.width, height = _a.height, xAxis = _a.xAxis, yAxis = _a.yAxis;
+                this.gridSizeH = Math.floor(width / xAxis.grid.minSizePx) * 3;
+                this.gridSizeV = Math.floor(height / yAxis.grid.minSizePx) * 3;
                 this.initGrid();
                 this.updateGrid();
-            }
+                this.bindEvents();
+            };
             GridWidget.prototype.bindEvents = function() {
                 var _this = this;
                 var updateGridThrottled = Utils_1.Utils.throttle(function() {
@@ -4671,7 +4711,7 @@
                 var axisLength = to - from;
                 var gridStep = 0;
                 var gridStepInPixels = 0;
-                var minGridStepInPixels = axisOptions.gridMinSize;
+                var minGridStepInPixels = axisOptions.grid.minSizePx;
                 var axisLengthStr = String(axisLength);
                 var axisLengthPointPosition = axisLengthStr.indexOf(".");
                 var intPartLength = axisLengthPointPosition !== -1 ? axisLengthPointPosition : axisLengthStr.length;
@@ -4726,9 +4766,9 @@
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
         var Geometry = THREE.Geometry;
-        var Utils_1 = __webpack_require__(14);
-        var TrendsWidget_1 = __webpack_require__(25);
-        var Color_1 = __webpack_require__(26);
+        var Utils_1 = __webpack_require__(4);
+        var TrendsWidget_1 = __webpack_require__(26);
+        var Color_1 = __webpack_require__(27);
         var TrendsGradientWidget = function(_super) {
             __extends(TrendsGradientWidget, _super);
             function TrendsGradientWidget() {
@@ -4868,16 +4908,19 @@
             }
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
-        var Widget_1 = __webpack_require__(17);
+        var Widget_1 = __webpack_require__(22);
         var Object3D = THREE.Object3D;
         var TrendsWidget = function(_super) {
             __extends(TrendsWidget, _super);
-            function TrendsWidget(state) {
-                _super.call(this, state);
+            function TrendsWidget() {
+                _super.apply(this, arguments);
                 this.widgets = {};
+            }
+            TrendsWidget.prototype.onReadyHandler = function() {
                 this.object3D = new Object3D();
                 this.onTrendsChange();
-            }
+                this.bindEvents();
+            };
             TrendsWidget.prototype.bindEvents = function() {
                 var _this = this;
                 var state = this.chartState;
@@ -4935,7 +4978,7 @@
             function TrendWidget(chartState, trendName) {
                 this.chartState = chartState;
                 this.trendName = trendName;
-                this.unsubscribers = [];
+                this.unbindList = [];
                 this.trend = chartState.trendsManager.getTrend(trendName);
                 this.chartState = chartState;
                 this.bindEvents();
@@ -4947,7 +4990,7 @@
             TrendWidget.prototype.prependData = function(newData) {};
             TrendWidget.prototype.onTrendChange = function(changedOptions) {};
             TrendWidget.prototype.onDestroy = function() {
-                for (var _i = 0, _a = this.unsubscribers; _i < _a.length; _i++) {
+                for (var _i = 0, _a = this.unbindList; _i < _a.length; _i++) {
                     var unsubscriber = _a[_i];
                     unsubscriber();
                 }
@@ -4971,8 +5014,8 @@
                     return _this.onZoom();
                 }));
             };
-            TrendWidget.prototype.bindEvent = function(unsubscriber) {
-                this.unsubscribers.push(unsubscriber);
+            TrendWidget.prototype.bindEvent = function(unbind) {
+                this.unbindList.push(unbind);
             };
             return TrendWidget;
         }();
@@ -5018,439 +5061,13 @@
             }
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
-        var Utils_1 = __webpack_require__(14);
-        var Mesh = THREE.Mesh;
-        var PlaneBufferGeometry = THREE.PlaneBufferGeometry;
-        var MeshBasicMaterial = THREE.MeshBasicMaterial;
-        var TrendsWidget_1 = __webpack_require__(25);
-        var Trend_1 = __webpack_require__(13);
-        var TrendsLoadingWidget = function(_super) {
-            __extends(TrendsLoadingWidget, _super);
-            function TrendsLoadingWidget() {
-                _super.apply(this, arguments);
-            }
-            TrendsLoadingWidget.prototype.getTrendWidgetClass = function() {
-                return TrendLoading;
-            };
-            TrendsLoadingWidget.widgetName = "TrendsLoading";
-            return TrendsLoadingWidget;
-        }(TrendsWidget_1.TrendsWidget);
-        exports.TrendsLoadingWidget = TrendsLoadingWidget;
-        var TrendLoading = function(_super) {
-            __extends(TrendLoading, _super);
-            function TrendLoading(state, trendName) {
-                _super.call(this, state, trendName);
-                this.isActive = false;
-                this.mesh = new Mesh(new PlaneBufferGeometry(32, 32), new MeshBasicMaterial({
-                    map: TrendLoading.createTexture(),
-                    transparent: true
-                }));
-                this.deactivate();
-            }
-            TrendLoading.widgetIsEnabled = function(trendOptions, chartState) {
-                return trendOptions.enabled && chartState.data.animations.enabled;
-            };
-            TrendLoading.prototype.getObject3D = function() {
-                return this.mesh;
-            };
-            TrendLoading.prototype.bindEvents = function() {
-                var _this = this;
-                _super.prototype.bindEvents.call(this);
-                this.bindEvent(this.trend.onPrependRequest(function() {
-                    return _this.activate();
-                }));
-            };
-            TrendLoading.prototype.prependData = function() {
-                this.deactivate();
-            };
-            TrendLoading.prototype.activate = function() {
-                var mesh = this.mesh;
-                mesh.material.opacity = 1;
-                mesh.rotation.z = 0;
-                var animation = TweenLite.to(this.mesh.rotation, .5, {
-                    z: Math.PI * 2
-                });
-                animation.eventCallback("onComplete", function() {
-                    animation.restart();
-                });
-                this.animation = animation;
-                this.isActive = true;
-                this.updatePosition();
-            };
-            TrendLoading.prototype.deactivate = function() {
-                this.animation && this.animation.kill();
-                this.mesh.material.opacity = 0;
-                this.isActive = false;
-            };
-            TrendLoading.createTexture = function() {
-                var h = 64, w = 64;
-                return Utils_1.Utils.createTexture(h, w, function(ctx) {
-                    ctx.strokeStyle = "rgba(255,255,255,0.95)";
-                    ctx.lineWidth = 5;
-                    var center = h / 2;
-                    ctx.beginPath();
-                    ctx.arc(center, center, 22, 0, Math.PI / 2);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.arc(center, center, 22, Math.PI, Math.PI + Math.PI / 2);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.arc(center, center, 3, 0, Math.PI * 2);
-                    ctx.stroke();
-                });
-            };
-            TrendLoading.prototype.onZoomFrame = function() {
-                this.updatePosition();
-            };
-            TrendLoading.prototype.updatePosition = function() {
-                if (!this.isActive) return;
-                var trend = this.trend;
-                var segment = trend.segmentsManager.getStartSegment();
-                var x, y;
-                if (trend.getOptions().type == Trend_1.TREND_TYPE.LINE) {
-                    x = segment.currentAnimationState.startXVal;
-                    y = segment.currentAnimationState.startYVal;
-                } else {
-                    x = segment.currentAnimationState.xVal - segment.maxLength;
-                    y = segment.currentAnimationState.yVal;
-                }
-                var pointVector = this.chartState.screen.getPointOnChart(x, y);
-                this.mesh.position.set(pointVector.x, pointVector.y, 0);
-            };
-            return TrendLoading;
-        }(TrendsWidget_1.TrendWidget);
-        exports.TrendLoading = TrendLoading;
-    }, function(module, exports, __webpack_require__) {
-        "use strict";
-        var __extends = this && this.__extends || function(d, b) {
-            for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-            function __() {
-                this.constructor = d;
-            }
-            d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-        };
-        var Widget_1 = __webpack_require__(17);
-        var Object3D = THREE.Object3D;
         var Geometry = THREE.Geometry;
         var LineBasicMaterial = THREE.LineBasicMaterial;
         var Vector3 = THREE.Vector3;
-        var Utils_1 = __webpack_require__(14);
-        var Line = THREE.Line;
-        var Mesh = THREE.Mesh;
-        var interfaces_1 = __webpack_require__(21);
-        var Color_1 = __webpack_require__(26);
-        var AxisMarksWidget = function(_super) {
-            __extends(AxisMarksWidget, _super);
-            function AxisMarksWidget(chartState) {
-                _super.call(this, chartState);
-                this.axisMarksWidgets = [];
-                this.object3D = new Object3D();
-                var xAxisMarks = chartState.xAxisMarks, yAxisMarks = chartState.yAxisMarks;
-                var items = xAxisMarks.getItems();
-                for (var markName in items) {
-                    this.createAxisMark(items[markName]);
-                }
-                items = yAxisMarks.getItems();
-                for (var markName in items) {
-                    this.createAxisMark(items[markName]);
-                }
-            }
-            AxisMarksWidget.prototype.createAxisMark = function(axisMark) {
-                var axisMarkWidget = new AxisMarkWidget(this.chartState, axisMark);
-                this.axisMarksWidgets.push(axisMarkWidget);
-                this.object3D.add(axisMarkWidget.getObject3D());
-            };
-            AxisMarksWidget.prototype.bindEvents = function() {
-                var _this = this;
-                this.bindEvent(this.chartState.screen.onTransformationFrame(function() {
-                    return _this.updateMarksPositions();
-                }), this.chartState.onResize(function() {
-                    return _this.updateMarksPositions();
-                }));
-            };
-            AxisMarksWidget.prototype.updateMarksPositions = function() {
-                for (var _i = 0, _a = this.axisMarksWidgets; _i < _a.length; _i++) {
-                    var widget = _a[_i];
-                    widget.updatePosition();
-                }
-            };
-            AxisMarksWidget.prototype.getObject3D = function() {
-                return this.object3D;
-            };
-            AxisMarksWidget.widgetName = "AxisMarks";
-            return AxisMarksWidget;
-        }(Widget_1.ChartWidget);
-        exports.AxisMarksWidget = AxisMarksWidget;
-        var DEFAULT_INDICATOR_RENDER_FUNCTION = function(axisMarkWidget, ctx) {
-            var axisMark = axisMarkWidget.axisMark;
-            ctx.fillStyle = axisMark.options.lineColor;
-            ctx.clearRect(0, 0, axisMarkWidget.indicatorWidth, axisMarkWidget.indicatorHeight);
-            var xCoord = 15;
-            if (axisMark.axisType == interfaces_1.AXIS_TYPE.Y) {
-                ctx.textAlign = "end";
-                xCoord = axisMarkWidget.indicatorWidth;
-            }
-            ctx.fillText(axisMark.options.title, xCoord, 20);
-            if (!axisMark.options.showValue) return;
-            ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-            ctx.fillText(axisMark.getDisplayedVal(), 16, 34);
-        };
-        var INDICATOR_POS_Z = .1;
-        var AxisMarkWidget = function() {
-            function AxisMarkWidget(chartState, axisMark) {
-                this.indicatorWidth = 128;
-                this.indicatorHeight = 64;
-                this.indicatorRenderFunction = DEFAULT_INDICATOR_RENDER_FUNCTION;
-                this.chartState = chartState;
-                this.axisMark = axisMark;
-                this.axisType = axisMark.axisType;
-                this.frameValue = axisMark.options.value;
-                this.object3D = new Object3D();
-                this.object3D.position.setZ(-.1);
-                this.line = this.createLine();
-                this.object3D.add(this.line);
-                this.indicator = this.createIndicator();
-                this.object3D.add(this.indicator);
-                this.renderIndicator();
-                this.updatePosition();
-                this.bindEvents();
-            }
-            AxisMarkWidget.prototype.getObject3D = function() {
-                return this.object3D;
-            };
-            AxisMarkWidget.prototype.createLine = function() {
-                var _a = this.axisMark.options, lineWidth = _a.lineWidth, lineColor = _a.lineColor;
-                var lineGeometry = new Geometry();
-                lineGeometry.vertices.push(new Vector3(0, 0, 0), new Vector3(0, 0, 0));
-                return new Line(lineGeometry, new LineBasicMaterial({
-                    color: new Color_1.ChartColor(lineColor).value,
-                    linewidth: lineWidth
-                }));
-            };
-            AxisMarkWidget.prototype.createIndicator = function() {
-                var _a = this, width = _a.indicatorWidth, height = _a.indicatorHeight;
-                var texture = Utils_1.Utils.createPixelPerfectTexture(width, height, function(ctx) {
-                    ctx.beginPath();
-                    ctx.font = "10px Arial";
-                });
-                var material = new THREE.MeshBasicMaterial({
-                    map: texture,
-                    side: THREE.FrontSide
-                });
-                material.transparent = true;
-                return new Mesh(new THREE.PlaneGeometry(width, height), material);
-            };
-            AxisMarkWidget.prototype.renderIndicator = function() {
-                var texture = this.indicator.material.map;
-                var ctx = texture.image.getContext("2d");
-                DEFAULT_INDICATOR_RENDER_FUNCTION(this, ctx);
-                texture.needsUpdate = true;
-            };
-            AxisMarkWidget.prototype.bindEvents = function() {
-                var _this = this;
-                this.axisMark.onDisplayedValueChange(function() {
-                    return _this.renderIndicator();
-                });
-                this.axisMark.onValueChange(function() {
-                    return _this.onValueChangeHandler();
-                });
-            };
-            AxisMarkWidget.prototype.onValueChangeHandler = function() {
-                var _this = this;
-                if (this.moveAnimation) this.moveAnimation.kill();
-                var animations = this.chartState.data.animations;
-                var targetValue = this.axisMark.options.value;
-                var cb = function() {
-                    _this.updatePosition();
-                };
-                if (animations.enabled) {
-                    this.moveAnimation = TweenLite.to(this, animations.trendChangeSpeed, {
-                        frameValue: targetValue,
-                        ease: animations.trendChangeEase
-                    });
-                    this.moveAnimation.eventCallback("onUpdate", cb);
-                } else {
-                    this.frameValue = targetValue;
-                    cb();
-                }
-            };
-            AxisMarkWidget.prototype.updatePosition = function() {
-                var chartState = this.chartState;
-                var screen = chartState.screen;
-                var isXAxis = this.axisType == interfaces_1.AXIS_TYPE.X;
-                var lineGeometry = this.line.geometry;
-                var hasStickMode = this.axisMark.options.stickToEdges;
-                var _a = this.chartState.data, width = _a.width, height = _a.height;
-                if (isXAxis) {
-                    this.object3D.position.x = screen.getPointOnXAxis(this.frameValue);
-                    this.object3D.position.y = screen.getBottom();
-                    lineGeometry.vertices[1].setY(height);
-                    this.indicator.position.set(this.indicatorWidth / 2, chartState.data.height - this.indicatorHeight / 2, INDICATOR_POS_Z);
-                } else {
-                    var val = this.frameValue;
-                    var bottomVal = screen.getBottomVal();
-                    var topVal = screen.getTopVal();
-                    var needToStickOnTop = hasStickMode && val > topVal;
-                    var needToStickOnBottom = hasStickMode && val < bottomVal;
-                    var centerYVal = screen.getCenterYVal();
-                    this.object3D.position.x = screen.getLeft();
-                    if (needToStickOnTop) {
-                        this.object3D.position.y = screen.getTop();
-                    } else if (needToStickOnBottom) {
-                        this.object3D.position.y = screen.getBottom();
-                    } else {
-                        this.object3D.position.y = screen.getPointOnYAxis(this.frameValue);
-                    }
-                    lineGeometry.vertices[1].setX(width);
-                    var indicatorPosY = val > centerYVal ? -35 : 10;
-                    this.indicator.position.set(width - this.indicatorWidth / 2 - 50, indicatorPosY, INDICATOR_POS_Z);
-                }
-                lineGeometry.verticesNeedUpdate = true;
-            };
-            AxisMarkWidget.typeName = "simple";
-            return AxisMarkWidget;
-        }();
-    }, function(module, exports, __webpack_require__) {
-        "use strict";
-        var __extends = this && this.__extends || function(d, b) {
-            for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-            function __() {
-                this.constructor = d;
-            }
-            d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-        };
-        var Widget_1 = __webpack_require__(17);
+        var TrendsWidget_1 = __webpack_require__(26);
         var LineSegments = THREE.LineSegments;
-        var Vector3 = THREE.Vector3;
-        var BorderWidget = function(_super) {
-            __extends(BorderWidget, _super);
-            function BorderWidget(chartState) {
-                _super.call(this, chartState);
-                var _a = chartState.data, width = _a.width, height = _a.height;
-                var geometry = new THREE.Geometry();
-                var material = new THREE.LineBasicMaterial({
-                    linewidth: 1,
-                    opacity: 0,
-                    transparent: true
-                });
-                geometry.vertices.push(new Vector3(0, 0, 0), new Vector3(0, height, 0), new Vector3(0, height, 0), new Vector3(width, height, 0), new Vector3(width, height, 0), new Vector3(width, 0, 0), new Vector3(width, 0, 0), new Vector3(0, 0, 0), new Vector3(width / 2, height, 0), new Vector3(width / 2, 0, 0));
-                this.lineSegments = new LineSegments(geometry, material);
-            }
-            BorderWidget.prototype.getObject3D = function() {
-                return this.lineSegments;
-            };
-            BorderWidget.widgetName = "Border";
-            return BorderWidget;
-        }(Widget_1.ChartWidget);
-        exports.BorderWidget = BorderWidget;
-    }, function(module, exports, __webpack_require__) {
-        "use strict";
-        var __extends = this && this.__extends || function(d, b) {
-            for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-            function __() {
-                this.constructor = d;
-            }
-            d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-        };
-        var Utils_1 = __webpack_require__(14);
-        var Mesh = THREE.Mesh;
-        var TrendsWidget_1 = __webpack_require__(25);
-        var Color_1 = __webpack_require__(26);
-        var CANVAS_WIDTH = 128;
-        var CANVAS_HEIGHT = 64;
-        var OFFSET_X = 15;
-        var TrendsIndicatorWidget = function(_super) {
-            __extends(TrendsIndicatorWidget, _super);
-            function TrendsIndicatorWidget() {
-                _super.apply(this, arguments);
-            }
-            TrendsIndicatorWidget.prototype.getTrendWidgetClass = function() {
-                return TrendIndicator;
-            };
-            TrendsIndicatorWidget.widgetName = "TrendsIndicator";
-            return TrendsIndicatorWidget;
-        }(TrendsWidget_1.TrendsWidget);
-        exports.TrendsIndicatorWidget = TrendsIndicatorWidget;
-        var TrendIndicator = function(_super) {
-            __extends(TrendIndicator, _super);
-            function TrendIndicator(state, trendName) {
-                _super.call(this, state, trendName);
-                this.initObject();
-                this.onTrendChange();
-            }
-            TrendIndicator.widgetIsEnabled = function(trendOptions) {
-                return trendOptions.enabled && trendOptions.hasIndicator;
-            };
-            TrendIndicator.prototype.getObject3D = function() {
-                return this.mesh;
-            };
-            TrendIndicator.prototype.onTrendChange = function() {
-                var trendData = this.trend.getData();
-                var lastItem = trendData[trendData.length - 1];
-                var texture = this.mesh.material.map;
-                var ctx = texture.image.getContext("2d");
-                ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-                ctx.fillText(lastItem.yVal.toFixed(4), 0, 15);
-                texture.needsUpdate = true;
-            };
-            TrendIndicator.prototype.initObject = function() {
-                var color = new Color_1.ChartColor(this.trend.getOptions().lineColor);
-                var texture = Utils_1.Utils.createPixelPerfectTexture(CANVAS_WIDTH, CANVAS_HEIGHT, function(ctx) {
-                    ctx.beginPath();
-                    ctx.font = "15px Arial";
-                    ctx.fillStyle = color.rgbaStr;
-                    ctx.strokeStyle = "rgba(255,255,255,0.95)";
-                });
-                var material = new THREE.MeshBasicMaterial({
-                    map: texture,
-                    side: THREE.FrontSide
-                });
-                material.transparent = true;
-                this.mesh = new Mesh(new THREE.PlaneGeometry(CANVAS_WIDTH, CANVAS_HEIGHT), material);
-            };
-            TrendIndicator.prototype.onTransformationFrame = function() {
-                this.segment = this.trend.segmentsManager.getEndSegment();
-                this.updatePosition();
-            };
-            TrendIndicator.prototype.onSegmentsAnimate = function(segments) {
-                this.segment = segments.getEndSegment();
-                this.updatePosition();
-            };
-            TrendIndicator.prototype.updatePosition = function() {
-                var state = this.chartState;
-                var _a = this.segment.currentAnimationState, segmentEndXVal = _a.endXVal, segmentEndYVal = _a.endYVal;
-                var endPointVector = state.screen.getPointOnChart(segmentEndXVal, segmentEndYVal);
-                var screenWidth = state.data.width;
-                var x = endPointVector.x + OFFSET_X;
-                var y = endPointVector.y;
-                var screenX = state.screen.getScreenXByPoint(endPointVector.x);
-                var indicatorIsOutOfScreen = screenX < 0 || screenX > screenWidth;
-                if (indicatorIsOutOfScreen) {
-                    if (screenX < 0) x = state.screen.getPointByScreenX(0) + 20;
-                    if (screenX > screenWidth) x = state.screen.getPointByScreenX(screenWidth) - CANVAS_WIDTH / 2 - 10;
-                    y -= 25;
-                }
-                this.mesh.position.set(x + CANVAS_WIDTH / 2, y + CANVAS_HEIGHT / 2 - 30, .1);
-            };
-            return TrendIndicator;
-        }(TrendsWidget_1.TrendWidget);
-        exports.TrendIndicator = TrendIndicator;
-    }, function(module, exports, __webpack_require__) {
-        "use strict";
-        var __extends = this && this.__extends || function(d, b) {
-            for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-            function __() {
-                this.constructor = d;
-            }
-            d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-        };
-        var Geometry = THREE.Geometry;
-        var LineBasicMaterial = THREE.LineBasicMaterial;
-        var Vector3 = THREE.Vector3;
-        var TrendsWidget_1 = __webpack_require__(25);
-        var LineSegments = THREE.LineSegments;
-        var Trend_1 = __webpack_require__(13);
-        var Utils_1 = __webpack_require__(14);
+        var Trend_1 = __webpack_require__(16);
+        var Utils_1 = __webpack_require__(4);
         var TrendsLineWidget = function(_super) {
             __extends(TrendsLineWidget, _super);
             function TrendsLineWidget() {
@@ -5589,7 +5206,7 @@
             }
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
-        var TrendsWidget_1 = __webpack_require__(25);
+        var TrendsWidget_1 = __webpack_require__(26);
         var Object3D = THREE.Object3D;
         var Geometry = THREE.Geometry;
         var Vector3 = THREE.Vector3;
@@ -5597,9 +5214,9 @@
         var Line = THREE.Line;
         var MeshBasicMaterial = THREE.MeshBasicMaterial;
         var PlaneGeometry = THREE.PlaneGeometry;
-        var Trend_1 = __webpack_require__(13);
+        var Trend_1 = __webpack_require__(16);
         var LineBasicMaterial = THREE.LineBasicMaterial;
-        var Utils_1 = __webpack_require__(14);
+        var Utils_1 = __webpack_require__(4);
         var RISE_COLOR = 2927680;
         var FALL_COLOR = 15619379;
         var MARGIN_PERCENT = .3;
@@ -5773,223 +5390,6 @@
             };
             return CandleWidget;
         }();
-    }, function(module, exports, __webpack_require__) {
-        "use strict";
-        var __extends = this && this.__extends || function(d, b) {
-            for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-            function __() {
-                this.constructor = d;
-            }
-            d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-        };
-        var Utils_1 = __webpack_require__(14);
-        var Mesh = THREE.Mesh;
-        var PlaneBufferGeometry = THREE.PlaneBufferGeometry;
-        var MeshBasicMaterial = THREE.MeshBasicMaterial;
-        var TrendsWidget_1 = __webpack_require__(25);
-        var Trend_1 = __webpack_require__(13);
-        var TrendsBeaconWidget = function(_super) {
-            __extends(TrendsBeaconWidget, _super);
-            function TrendsBeaconWidget() {
-                _super.apply(this, arguments);
-            }
-            TrendsBeaconWidget.prototype.getTrendWidgetClass = function() {
-                return TrendBeacon;
-            };
-            TrendsBeaconWidget.widgetName = "TrendsBeacon";
-            return TrendsBeaconWidget;
-        }(TrendsWidget_1.TrendsWidget);
-        exports.TrendsBeaconWidget = TrendsBeaconWidget;
-        var TrendBeacon = function(_super) {
-            __extends(TrendBeacon, _super);
-            function TrendBeacon(state, trendName) {
-                _super.call(this, state, trendName);
-                this.initObject();
-                if (state.data.animations.enabled) {
-                    this.animate();
-                }
-                this.updatePosition();
-            }
-            TrendBeacon.widgetIsEnabled = function(trendOptions) {
-                return trendOptions.enabled && trendOptions.hasBeacon && trendOptions.type == Trend_1.TREND_TYPE.LINE;
-            };
-            TrendBeacon.prototype.getObject3D = function() {
-                return this.mesh;
-            };
-            TrendBeacon.prototype.onTrendChange = function() {
-                this.updatePosition();
-            };
-            TrendBeacon.prototype.bindEvents = function() {
-                var _this = this;
-                _super.prototype.bindEvents.call(this);
-                this.bindEvent(this.chartState.onScroll(function() {
-                    return _this.updatePosition();
-                }));
-                this.bindEvent(this.chartState.onChange(function(changedProps) {
-                    return _this.onStateChange(changedProps);
-                }));
-                this.bindEvent(this.chartState.onDestroy(function() {
-                    return _this.stopAnimation();
-                }));
-            };
-            TrendBeacon.prototype.initObject = function() {
-                var light = this.mesh = new Mesh(new PlaneBufferGeometry(32, 32), new MeshBasicMaterial({
-                    map: TrendBeacon.createTexture(),
-                    transparent: true
-                }));
-                light.scale.set(.2, .2, 1);
-                light.add(new Mesh(new PlaneBufferGeometry(5, 5), new MeshBasicMaterial({
-                    map: TrendBeacon.createTexture()
-                })));
-                this.segment = this.trend.segmentsManager.getEndSegment();
-            };
-            TrendBeacon.prototype.animate = function() {
-                var _this = this;
-                this.animated = true;
-                var object = this.mesh;
-                var animationObject = {
-                    scale: object.scale.x,
-                    opacity: object.material.opacity
-                };
-                this.mesh.scale.set(.1, .1, 1);
-                setTimeout(function() {
-                    var animation = _this.animation = TweenLite.to(animationObject, 1, {
-                        scale: 1,
-                        opacity: 0
-                    });
-                    animation.eventCallback("onUpdate", function() {
-                        object.scale.set(animationObject.scale, animationObject.scale, 1);
-                        object.material.opacity = animationObject.opacity;
-                    }).eventCallback("onComplete", function() {
-                        _this.animation && animation.restart();
-                    });
-                }, 500);
-            };
-            TrendBeacon.prototype.stopAnimation = function() {
-                this.animated = false;
-                this.animation && this.animation.kill();
-                this.animation = null;
-            };
-            TrendBeacon.createTexture = function() {
-                var h = 32, w = 32;
-                return Utils_1.Utils.createTexture(h, w, function(ctx) {
-                    ctx.beginPath();
-                    ctx.arc(w / 2, h / 2, w / 2, 0, 2 * Math.PI, false);
-                    ctx.fillStyle = "white";
-                    ctx.fill();
-                });
-            };
-            TrendBeacon.prototype.onTransformationFrame = function() {
-                this.segment = this.trend.segmentsManager.getEndSegment();
-                this.updatePosition();
-            };
-            TrendBeacon.prototype.onSegmentsAnimate = function(trendsSegments) {
-                this.segment = trendsSegments.getEndSegment();
-                this.updatePosition();
-            };
-            TrendBeacon.prototype.onStateChange = function(changedProps) {
-                if (!changedProps.animations) return;
-                if (changedProps.animations.enabled == void 0 || changedProps.animations.enabled == this.animated) return;
-                if (changedProps.animations.enabled) {
-                    this.animate();
-                } else {
-                    this.stopAnimation();
-                }
-            };
-            TrendBeacon.prototype.updatePosition = function() {
-                var state = this.chartState;
-                var xVal, yVal;
-                var currentAnimationState = this.segment.currentAnimationState;
-                if (this.trend.getOptions().type == Trend_1.TREND_TYPE.LINE) {
-                    xVal = currentAnimationState.endXVal;
-                    yVal = currentAnimationState.endYVal;
-                } else {
-                    xVal = currentAnimationState.xVal;
-                    yVal = currentAnimationState.endYVal;
-                }
-                var endPointVector = state.screen.getPointOnChart(xVal, yVal);
-                var screenWidth = state.data.width;
-                var x = endPointVector.x;
-                var screenX = state.screen.getScreenXByPoint(endPointVector.x);
-                if (screenX < 0) x = state.screen.getPointByScreenX(0);
-                if (screenX > screenWidth) x = state.screen.getPointByScreenX(screenWidth);
-                this.mesh.position.set(x, endPointVector.y, .1);
-            };
-            return TrendBeacon;
-        }(TrendsWidget_1.TrendWidget);
-        exports.TrendBeacon = TrendBeacon;
-    }, function(module, exports, __webpack_require__) {
-        "use strict";
-        function __export(m) {
-            for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
-        }
-        __export(__webpack_require__(3));
-    }, function(module, exports, __webpack_require__) {
-        "use strict";
-        var Utils_1 = __webpack_require__(14);
-        var EventEmmiter_1 = __webpack_require__(16);
-        exports.DEFAULT_CONFIG = {
-            installPluginWidgets: true
-        };
-        var ChartPlugin = function() {
-            function ChartPlugin(options, config) {
-                if (config === void 0) {
-                    config = {};
-                }
-                this.unsubscribers = [];
-                this.initialState = options;
-                this.config = Utils_1.Utils.deepMerge(exports.DEFAULT_CONFIG, config);
-                this.name = this.constructor.NAME;
-                if (!this.name) Utils_1.Utils.error("Unnamed plugin detected");
-            }
-            ChartPlugin.prototype.setupChartState = function(chartState) {
-                var _this = this;
-                this.chartState = chartState;
-                this.ee = new EventEmmiter_1.EventEmitter();
-                this.bindEvent(this.chartState.onInitialStateApplied(function(initialState) {
-                    return _this.onInitialStateAppliedHandler(initialState);
-                }), this.chartState.onReady(function() {
-                    return _this.onChartReadyHandler();
-                }), this.chartState.onDestroy(function() {
-                    return _this.onDestroyHandler();
-                }), this.chartState.onPluginsStateChange(function(changedPluginsStates) {
-                    return changedPluginsStates[_this.name] && _this.onStateChanged(changedPluginsStates[_this.name]);
-                }));
-            };
-            ChartPlugin.prototype.getOptions = function() {
-                return this.chartState.data.pluginsState[this.name];
-            };
-            ChartPlugin.prototype.onInitialStateAppliedHandler = function(initialState) {};
-            ChartPlugin.prototype.onChartReadyHandler = function() {};
-            ChartPlugin.prototype.onStateChanged = function(changedState) {};
-            ChartPlugin.prototype.onDestroyHandler = function() {
-                this.ee.removeAllListeners();
-            };
-            ChartPlugin.prototype.bindEvent = function() {
-                var args = [];
-                for (var _i = 0; _i < arguments.length; _i++) {
-                    args[_i - 0] = arguments[_i];
-                }
-                var unsubscribers = [];
-                if (!Array.isArray(args[0])) {
-                    unsubscribers.push(args[0]);
-                } else {
-                    unsubscribers.push.apply(unsubscribers, args);
-                }
-                (_a = this.unsubscribers).push.apply(_a, unsubscribers);
-                var _a;
-            };
-            ChartPlugin.prototype.unbindEvents = function() {
-                this.unsubscribers.forEach(function(unsubscriber) {
-                    return unsubscriber();
-                });
-                this.unsubscribers.length = 0;
-            };
-            ChartPlugin.NAME = "";
-            ChartPlugin.pluginWidgets = [];
-            return ChartPlugin;
-        }();
-        exports.ChartPlugin = ChartPlugin;
     } ]);
 });
 

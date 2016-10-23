@@ -22,10 +22,10 @@ export abstract class TrendsWidget<TrendWidgetType extends TrendWidget> extends 
 	protected object3D: Object3D;
 	protected widgets: {[trendName: string]: TrendWidgetType} = {};
 
-	constructor (state: ChartState) {
-		super(state);
+	onReadyHandler() {
 		this.object3D = new Object3D();
 		this.onTrendsChange();
+		this.bindEvents();
 	}
 
 	protected bindEvents() {
@@ -87,7 +87,7 @@ export abstract class TrendsWidget<TrendWidgetType extends TrendWidget> extends 
  */
 export abstract class TrendWidget {
 	protected trend: Trend;
-	private unsubscribers: Function[] = [];
+	protected unbindList: Function[] = [];
 
 	constructor (protected chartState: ChartState, protected trendName: string) {
 		this.trend = chartState.trendsManager.getTrend(trendName);
@@ -102,7 +102,7 @@ export abstract class TrendWidget {
 	prependData(newData: ITrendData) {};
 	onTrendChange(changedOptions?: ITrendOptions) {}
 	onDestroy() {
-		for (let unsubscriber of this.unsubscribers) {
+		for (let unsubscriber of this.unbindList) {
 			unsubscriber();
 		}
 	}
@@ -133,8 +133,8 @@ export abstract class TrendWidget {
 		this.bindEvent(this.chartState.onZoom(() => this.onZoom()));
 	};
 
-	protected bindEvent(unsubscriber: Function) {
-		this.unsubscribers.push(unsubscriber);
+	protected bindEvent(unbind: Function) {
+		this.unbindList.push(unbind);
 	}
 
 

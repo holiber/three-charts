@@ -1,6 +1,5 @@
 
 import {ChartWidget} from "../Widget";
-import {ChartState} from "../State";
 import LineSegments = THREE.LineSegments;
 import Vector3 = THREE.Vector3;
 /**
@@ -11,9 +10,8 @@ export class BorderWidget extends ChartWidget {
 	private lineSegments: LineSegments;
 
 
-	constructor (chartState: ChartState) {
-		super(chartState);
-		var {width, height} = chartState.data;
+	onReadyHandler() {
+		var {width, height} = this.chartState.data;
 		var geometry = new THREE.Geometry();
 		var material = new THREE.LineBasicMaterial( { linewidth: 1, opacity: 0.0, transparent: true} );
 
@@ -26,6 +24,7 @@ export class BorderWidget extends ChartWidget {
 		);
 		this.lineSegments = new LineSegments(geometry, material);
 	}
+
 	getObject3D() {
 		return this.lineSegments;
 	}

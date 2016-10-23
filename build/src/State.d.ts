@@ -1,6 +1,5 @@
 import Vector3 = THREE.Vector3;
 import { ITrendOptions, Trend, ITrendData } from "./Trend";
-import { IChartWidgetOptions, ChartWidget } from "./Widget";
 import { TrendsManager, ITrendsOptions } from "./TrendsManager";
 import { Screen } from "./Screen";
 import { AxisMarks } from "./AxisMarks";
@@ -28,9 +27,6 @@ export interface IChartState {
     animations?: IAnimationsOptions;
     trends?: ITrendsOptions;
     trendDefaultState?: ITrendOptions;
-    widgets?: {
-        [widgetName: string]: IChartWidgetOptions;
-    };
     cursor?: {
         dragMode?: boolean;
         x?: number;
@@ -72,9 +68,6 @@ export interface IChartState {
  */
 export declare class ChartState {
     data: IChartState;
-    widgetsClasses: {
-        [name: string]: typeof ChartWidget;
-    };
     plugins: {
         [pluginName: string]: ChartPlugin;
     };
@@ -87,9 +80,7 @@ export declare class ChartState {
      */
     isReady: boolean;
     private ee;
-    constructor(initialState: IChartState, widgetsClasses?: {
-        [name: string]: typeof ChartWidget;
-    }, plugins?: ChartPlugin[]);
+    constructor(initialState: IChartState, plugins?: ChartPlugin[]);
     /**
      * destroy state, use Chart.destroy to completely destroy chart
      */

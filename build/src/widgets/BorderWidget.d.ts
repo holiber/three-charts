@@ -1,5 +1,4 @@
 import { ChartWidget } from "../Widget";
-import { ChartState } from "../State";
 import LineSegments = THREE.LineSegments;
 /**
  * widget for drawing chart grid
@@ -7,6 +6,6 @@ import LineSegments = THREE.LineSegments;
 export declare class BorderWidget extends ChartWidget {
     static widgetName: string;
     private lineSegments;
-    constructor(chartState: ChartState);
+    onReadyHandler(): void;
     getObject3D(): LineSegments;
 }

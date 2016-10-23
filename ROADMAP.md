@@ -28,6 +28,7 @@
 - remove stats dependency
 - preinstall plugins and widgets
 - examples with line smoothing
+- examples how to create custom ChartView
 
 ##v0.3
 - typedoc

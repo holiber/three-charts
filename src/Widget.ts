@@ -2,9 +2,8 @@ import {ChartState} from "./State";
 import Object3D = THREE.Object3D;
 
 export interface IChartWidgetConstructor {
-	new (chartState: ChartState): ChartWidget;
+	new (): ChartWidget;
 	widgetName: string;
-	getDefaultOptions(): IChartWidgetOptions;
 }
 
 /**
@@ -14,38 +13,28 @@ export interface IChartWidgetConstructor {
 export abstract class ChartWidget {
 	static widgetName = '';
 	protected chartState: ChartState;
-	private unsubscribers: Function[] = [];
+	private unbindList: Function[] = [];
 
-	constructor (chartState: ChartState) {
+
+	setupChartState(chartState: ChartState) {
 		this.chartState = chartState;
-		this.bindEvents();
 	}
 
-	
+	abstract onReadyHandler(): any;
 	abstract getObject3D(): Object3D;
-	
-	protected bindEvents() {}
+
 
 	protected bindEvent(...args: Array<Function | Function[]>): void {
-		let unsubscribers: Function[] = [];
+		let unbindList: Function[] = [];
 		if (!Array.isArray(args[0])) {
-			unsubscribers.push(args[0] as Function);
+			unbindList.push(args[0] as Function);
 		} else {
-			unsubscribers.push(...args as Function[]);
+			unbindList.push(...args as Function[]);
 		}
-		this.unsubscribers.push(...unsubscribers);
+		this.unbindList.push(...unbindList);
 	}
 	protected unbindEvents() {
-		this.unsubscribers.forEach(unsubscriber => unsubscriber());
-		this.unsubscribers.length = 0;
-	}
-	
-	static getDefaultOptions(): IChartWidgetOptions {
-		return {enabled: true}
+		this.unbindList.forEach(unbindEvent => unbindEvent());
+		this.unbindList.length = 0;
 	}
 }
-
-export interface IChartWidgetOptions {
-	enabled: boolean
-}
-

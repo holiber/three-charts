@@ -26,10 +26,9 @@ export class AxisMarksWidget extends ChartWidget {
 	private object3D: Object3D;
 	private axisMarksWidgets: AxisMarkWidget[] = [];
 
-	constructor(chartState: ChartState) {
-		super(chartState);
+	onReadyHandler() {
 		this.object3D = new Object3D();
-		let {xAxisMarks, yAxisMarks} = chartState;
+		let {xAxisMarks, yAxisMarks} = this.chartState;
 
 		let items = xAxisMarks.getItems();
 		for (var markName in items) {

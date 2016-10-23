@@ -28,6 +28,14 @@ import OrthographicCamera = THREE.OrthographicCamera;
 
 
 export class Chart {
+
+	static devicePixelRatio = window.devicePixelRatio;
+	static preinstalledWidgets: typeof ChartWidget[] = [];
+	static renderers: {[rendererName: string]: any} = {
+		CanvasRenderer: (THREE as any).CanvasRenderer,
+		WebGLRenderer: THREE.WebGLRenderer
+	};
+
 	state: ChartState;
 	isStopped: boolean;
 	isDestroyed: boolean;
@@ -42,15 +50,9 @@ export class Chart {
 	private zoomThrottled: Function;
 	private unsubscribers: Function[];
 	private resizeSensor: ResizeSensorType;
+	private pluginsAndWidgets: Array<ChartPlugin | ChartWidget>;
 
-	static devicePixelRatio = window.devicePixelRatio;
-	static installedWidgets: {[name: string]: typeof ChartWidget} = {};
-	static renderers: {[rendererName: string]: any} = {
-		CanvasRenderer: (THREE as any).CanvasRenderer,
-		WebGLRenderer: THREE.WebGLRenderer
-	};
-
-	constructor(state: IChartState, $container: Element, plugins: ChartPlugin[] = []) {
+	constructor(state: IChartState, $container: Element, pluginsAndWidgets: Array<ChartPlugin | ChartWidget> = []) {
 
 		if (!THREE || !THREE.REVISION) Utils.error('three.js not found');
 
@@ -62,17 +64,18 @@ export class Chart {
 		state.width = parseInt(style.width);
 		state.height = parseInt(style.height);
 
-		this.state = new ChartState(state, Chart.installedWidgets, plugins);
+		let plugins = pluginsAndWidgets.filter(pluginOrWidget => pluginOrWidget instanceof ChartPlugin) as ChartPlugin[];
+
+		this.state = new ChartState(state, plugins);
+		this.pluginsAndWidgets = pluginsAndWidgets;
 		this.zoomThrottled = Utils.throttle((zoomValue: number, origin: number) => this.zoom(zoomValue, origin), 200);
 		this.$container = $container;
 		this.init($container);
 	};
 
 	static installWidget<WidgetClass extends typeof ChartWidget>(Widget: WidgetClass) {
-		if (!Widget.widgetName) {
-			Utils.error('unnamed widget');
-		}
-		this.installedWidgets[Widget.widgetName] = Widget;
+		if (!Widget.widgetName) Utils.error('unnamed widget');
+		this.preinstalledWidgets.push(Widget);
 	}
 
 	private init($container: Element) {
@@ -85,9 +88,9 @@ export class Chart {
 			antialias: true,
 			alpha: true
 		});
+		renderer.setSize(w, h);
 		renderer.setPixelRatio(Chart.devicePixelRatio);
 		renderer.setClearColor(state.data.backgroundColor, state.data.backgroundOpacity);
-		renderer.setSize(w, h);
 		$container.appendChild(renderer.domElement);
 		this.$el = renderer.domElement;
 		this.$el.style.display = 'block';
@@ -98,20 +101,37 @@ export class Chart {
 		}
 
 		this.setupCamera();
-
-		// init widgets
-		let widgetsClasses = this.state.widgetsClasses;
-		for (let widgetName in widgetsClasses) {
-			let widgetOptions = this.state.data.widgets[widgetName];
-			if (!widgetOptions.enabled) continue;
-			let WidgetConstructor = widgetsClasses[widgetName] as IChartWidgetConstructor;
-			let widget = new WidgetConstructor(this.state);
-			this.scene.add(widget.getObject3D());
-			this.widgets.push(widget);
-		}
-
+		this.initWidgets();
 		this.bindEvents();
 		this.renderLoop();
+	}
+
+	/**
+	 * collect and init widgets from preinstalled widgets, plugins widgets and custom widgets
+	 */
+	private initWidgets() {
+		let preinstalledWidgetsClasses = (this.constructor as typeof Chart).preinstalledWidgets;
+		let customWidgets: ChartWidget[] = [];
+
+		this.pluginsAndWidgets.forEach(pluginOrWidget => {
+			if (pluginOrWidget instanceof ChartWidget) {
+				customWidgets.push(pluginOrWidget);
+				return;
+			}
+			if (!(pluginOrWidget instanceof ChartPlugin)) return;
+			let pluginWidgetClasses = (pluginOrWidget.constructor as typeof ChartPlugin).providedWidgets;
+			preinstalledWidgetsClasses.push(...pluginWidgetClasses);
+		});
+
+		this.widgets = customWidgets.concat(
+			preinstalledWidgetsClasses.map((WidgetClass: IChartWidgetConstructor) => new WidgetClass())
+		);
+
+		this.widgets.forEach(widget => {
+			widget.setupChartState(this.state);
+			widget.onReadyHandler();
+			this.scene.add(widget.getObject3D());
+		});
 	}
 
 	private renderLoop() {
@@ -200,9 +220,9 @@ export class Chart {
 			});
 		}
 		if (this.state.data.autoResize) {
-			this.resizeSensor = new ResizeSensor(this.$container, () => {
-				this.onChartContainerResizeHandler(this.$container.clientWidth, this.$container.clientHeight);
-			});
+			// this.resizeSensor = new ResizeSensor(this.$container, () => {
+			// 	this.onChartContainerResizeHandler(this.$container.clientWidth, this.$container.clientHeight);
+			// });
 		}
 
 		this.unsubscribers = [
@@ -331,22 +351,6 @@ export class Chart {
 		});
 	}
 
-	/**
-	 * creates simple chart without animations and minimal widgets set
-	 */
-	static createPreviewChart(userOptions: IChartState, $el: Element): Chart {
-		var previewChartOptions: IChartState = {
-			animations: {enabled: false},
-			widgets: {
-				Grid: {enabled: false},
-				Axis: {enabled: false},
-				TrendsGradient: {enabled: false}
-			}
-		};
-		var options = Utils.deepMerge(userOptions, previewChartOptions);
-		return new Chart(options, $el);
-	}
-
 
 }
 
@@ -355,9 +359,4 @@ Chart.installWidget(TrendsLineWidget);
 Chart.installWidget(TrendsCandlesWidget);
 Chart.installWidget(AxisWidget);
 Chart.installWidget(GridWidget);
-Chart.installWidget(TrendsBeaconWidget);
-Chart.installWidget(TrendsIndicatorWidget);
 Chart.installWidget(TrendsGradientWidget);
-Chart.installWidget(TrendsLoadingWidget);
-Chart.installWidget(AxisMarksWidget);
-Chart.installWidget(BorderWidget);

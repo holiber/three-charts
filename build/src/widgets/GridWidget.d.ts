@@ -1,6 +1,5 @@
 import { ChartWidget } from "../Widget";
 import LineSegments = THREE.LineSegments;
-import { ChartState } from "../State";
 import { IAxisOptions } from "../interfaces";
 export interface IGridParamsForAxis {
     start: number;
@@ -19,7 +18,7 @@ export declare class GridWidget extends ChartWidget {
     private gridSizeH;
     private gridSizeV;
     private isDestroyed;
-    constructor(chartState: ChartState);
+    onReadyHandler(): void;
     bindEvents(): void;
     private initGrid();
     private updateGrid();

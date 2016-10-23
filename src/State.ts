@@ -2,15 +2,13 @@ import Vector3 = THREE.Vector3;
 import { ITrendOptions, Trend, ITrendData, TREND_TYPE } from "./Trend";
 import {EventEmitter} from './EventEmmiter';
 import {Utils} from './Utils';
-import {IChartWidgetOptions, ChartWidget} from "./Widget";
 import {TrendsManager, ITrendsOptions} from "./TrendsManager";
 import {Screen} from "./Screen";
 import {AxisMarks} from "./AxisMarks";
 import {
 	AXIS_TYPE, AXIS_DATA_TYPE, IAxisOptions, IAnimationsOptions, AXIS_RANGE_TYPE
 } from "./interfaces";
-import {Chart} from "./Chart";
-import {Promise} from './deps/deps';
+import { Promise } from './deps/deps';
 import { ChartPlugin } from './Plugin';
 
 
@@ -55,7 +53,6 @@ export interface IChartState {
 	animations?: IAnimationsOptions,
 	trends?: ITrendsOptions,
 	trendDefaultState?: ITrendOptions;
-	widgets?: {[widgetName: string]: IChartWidgetOptions},
 	cursor?: {
 		dragMode?: boolean,
 		x?: number,
@@ -109,7 +106,7 @@ export class ChartState {
 				margin: {start: 0, end: 5}
 			},
 			dataType: AXIS_DATA_TYPE.NUMBER,
-			gridMinSize: 100,
+			grid: {enabled: true, minSizePx:  100},
 			autoScroll: true,
 			marks: [],
 		},
@@ -120,10 +117,10 @@ export class ChartState {
 				to: 0,
 				zoom: 1,
 				padding: {start: 5, end: 5},
-				margin: {start: 5, end: 5}
+				margin: {start: 5, end: 5},
 			},
+			grid: {enabled: true, minSizePx:  50},
 			dataType: AXIS_DATA_TYPE.NUMBER,
-			gridMinSize: 50,
 			marks: []
 		},
 		animations: {
@@ -175,7 +172,6 @@ export class ChartState {
 		eventEmitterMaxListeners: 20,
 		maxVisibleSegments: 1280
 	};
-	widgetsClasses: {[name: string]: typeof ChartWidget} = {};
 	plugins: {[pluginName: string]: ChartPlugin} = {};
 	trendsManager: TrendsManager;
 	screen: Screen;
@@ -192,13 +188,12 @@ export class ChartState {
 
 	constructor(
 		initialState: IChartState,
-		widgetsClasses: {[name: string]: typeof ChartWidget} = {},
 		plugins: ChartPlugin[] = []
 	) {
 		this.ee = new EventEmitter();
 		this.ee.setMaxListeners(initialState.eventEmitterMaxListeners || this.data.eventEmitterMaxListeners);
 
-		this.widgetsClasses = widgetsClasses;
+		this.data = Utils.deepMerge(this.data, initialState);
 		this.trendsManager = new TrendsManager(this, initialState);
 		initialState.trends = this.trendsManager.calculatedOptions;
 		initialState = this.installPlugins(plugins, initialState);
@@ -325,18 +320,6 @@ export class ChartState {
 		var patch: IChartState = {};
 		var actualData = Utils.deepMerge({}, data);
 
-		// recalculate widgets
-		if (changedProps.widgets || !data.widgets) {
-			patch.widgets = {};
-			let widgetsOptions = data.widgets || {};
-			for (let widgetName in this.widgetsClasses) {
-				let WidgetClass =  this.widgetsClasses[widgetName];
-				let userOptions = widgetsOptions[widgetName] || {};
-				let defaultOptions = WidgetClass.getDefaultOptions() || ChartWidget.getDefaultOptions();
-				patch.widgets[widgetName] = Utils.deepMerge(defaultOptions, userOptions) as IChartWidgetOptions;
-			}
-		}
-
 		// recalculate scroll position by changed cursor options
 		var cursorOptions = changedProps.cursor;
 		var isMouseDrag = cursorOptions && data.cursor.dragMode && data.prevState.cursor.dragMode;
@@ -410,7 +393,6 @@ export class ChartState {
 	}
 
 	private savePrevState(changedProps?: IChartState) {
-		// var propsToSave = changedProps ? Object.keys(changedProps) : Object.keys(this.data);
 		if (!changedProps) changedProps = this.data;
 		var prevState = this.data.prevState;
 
@@ -469,9 +451,6 @@ export class ChartState {
 		plugins.forEach(plugin => {
 			let PluginClass = plugin.constructor as typeof ChartPlugin;
 			let pluginName = PluginClass.NAME;
-			PluginClass.pluginWidgets.forEach(
-				PluginWidget => this.widgetsClasses[PluginWidget.widgetName] = PluginWidget
-			);
 			initialState.pluginsState[pluginName] = Utils.deepMerge({}, plugin.initialState);
 			this.plugins[pluginName] = plugin;
 			plugin.setupChartState(this);

@@ -20,7 +20,7 @@ export const DEFAULT_CONFIG: IChartPluginConfig = {
  */
 export abstract class ChartPlugin {
 	static NAME: string = '';
-	static pluginWidgets: typeof ChartWidget[] = [];
+	static providedWidgets: typeof ChartWidget[] = [];
 
 	initialState: IChartPluginState;
 	config: IChartPluginConfig;
@@ -41,7 +41,7 @@ export abstract class ChartPlugin {
 		this.ee = new EventEmitter();
 		this.bindEvent(
 			this.chartState.onInitialStateApplied(initialState => this.onInitialStateAppliedHandler(initialState)),
-			this.chartState.onReady(() => this.onChartReadyHandler()),
+			this.chartState.onReady(() => this.onReadyHandler()),
 			this.chartState.onDestroy(() => this.onDestroyHandler()),
 			this.chartState.onPluginsStateChange(changedPluginsStates => changedPluginsStates[this.name] && this.onStateChanged(changedPluginsStates[this.name]))
 		)
@@ -54,7 +54,7 @@ export abstract class ChartPlugin {
 	protected onInitialStateAppliedHandler(initialState: IChartState) {
 	}
 
-	protected onChartReadyHandler() {
+	protected onReadyHandler() {
 	}
 
 	protected onStateChanged(changedState: IChartPluginState) {

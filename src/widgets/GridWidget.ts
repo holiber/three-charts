@@ -6,7 +6,6 @@ import Vector3 = THREE.Vector3;
 import Line = THREE.Line;
 import {ChartWidget} from "../Widget";
 import LineSegments = THREE.LineSegments;
-import {ChartState} from "../State";
 import {Utils} from "../Utils";
 import {IScreenTransformOptions} from "../Screen";
 import {IAxisOptions} from "../interfaces";
@@ -30,13 +29,13 @@ export class GridWidget extends ChartWidget{
 	private gridSizeV: number;
 	private isDestroyed = false;
 
-	constructor (chartState: ChartState) {
-		super(chartState);
-		var {width, height, xAxis, yAxis} = chartState.data;
-		this.gridSizeH = Math.floor(width / xAxis.gridMinSize) * 3;
-		this.gridSizeV = Math.floor(height / yAxis.gridMinSize) * 3;
+	onReadyHandler() {
+		var {width, height, xAxis, yAxis} = this.chartState.data;
+		this.gridSizeH = Math.floor(width / xAxis.grid.minSizePx) * 3;
+		this.gridSizeV = Math.floor(height / yAxis.grid.minSizePx) * 3;
 		this.initGrid();
 		this.updateGrid();
+		this.bindEvents();
 	}
 
 	bindEvents() {
@@ -139,19 +138,19 @@ export class GridWidget extends ChartWidget{
 
 	// TODO: move this code to core
 	static getGridParamsForAxis(axisOptions: IAxisOptions, axisWidth: number, zoom: number): IGridParamsForAxis {
-		var axisRange = axisOptions.range;
-		var from = axisRange.from; //var from = axisOptions.range.zeroVal + scroll;
-		var to = axisRange.to;  //var to = from + axisWidth / (axisRange.scaleFactor * zoom);
-		var axisLength = to - from;
-		var gridStep = 0;
-		var gridStepInPixels = 0;
-		var minGridStepInPixels = axisOptions.gridMinSize;
-		var axisLengthStr = String(axisLength);
-		var axisLengthPointPosition = axisLengthStr.indexOf('.');
-		var intPartLength = axisLengthPointPosition !== -1 ? axisLengthPointPosition : axisLengthStr.length;
+		let axisRange = axisOptions.range;
+		let from = axisRange.from;
+		let to = axisRange.to;
+		let axisLength = to - from;
+		let gridStep = 0;
+		let gridStepInPixels = 0;
+		let minGridStepInPixels = axisOptions.grid.minSizePx;
+		let axisLengthStr = String(axisLength);
+		let axisLengthPointPosition = axisLengthStr.indexOf('.');
+		let intPartLength = axisLengthPointPosition !== -1 ? axisLengthPointPosition : axisLengthStr.length;
 
-		var gridStepFound = false;
-		var digitPos = 0;
+		let gridStepFound = false;
+		let digitPos = 0;
 		while (!gridStepFound) {
 
 			let power = intPartLength - digitPos - 1;

@@ -52,7 +52,7 @@ export interface IAxisRange {
      */
     zeroVal?: number;
     /**
-     * ratio between 1 pixel and 1 value when zoom = 1
+     * ratio between 1 pixel and 1 value for zoom = 1
      */
     scaleFactor?: number;
 }
@@ -63,9 +63,13 @@ export declare enum AXIS_DATA_TYPE {
 export interface IAxisOptions {
     range?: IAxisRange;
     dataType?: AXIS_DATA_TYPE;
-    gridMinSize?: number;
     autoScroll?: boolean;
     marks?: IAxisMarkOptions[];
+    grid?: IGridOptions;
+}
+export interface IGridOptions {
+    enabled: boolean;
+    minSizePx?: number;
 }
 export interface IAnimationsOptions {
     enabled?: boolean;

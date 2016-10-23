@@ -3,6 +3,11 @@ import { Trend } from "./Trend";
 import { ChartState, IChartState } from "./State";
 import { ChartWidget } from "./Widget";
 export declare class Chart {
+    static devicePixelRatio: number;
+    static preinstalledWidgets: typeof ChartWidget[];
+    static renderers: {
+        [rendererName: string]: any;
+    };
     state: ChartState;
     isStopped: boolean;
     isDestroyed: boolean;
@@ -17,16 +22,14 @@ export declare class Chart {
     private zoomThrottled;
     private unsubscribers;
     private resizeSensor;
-    static devicePixelRatio: number;
-    static installedWidgets: {
-        [name: string]: typeof ChartWidget;
-    };
-    static renderers: {
-        [rendererName: string]: any;
-    };
-    constructor(state: IChartState, $container: Element, plugins?: ChartPlugin[]);
+    private pluginsAndWidgets;
+    constructor(state: IChartState, $container: Element, pluginsAndWidgets?: Array<ChartPlugin | ChartWidget>);
     static installWidget<WidgetClass extends typeof ChartWidget>(Widget: WidgetClass): void;
     private init($container);
+    /**
+     * collect and init widgets from preinstalled widgets, plugins widgets and custom widgets
+     */
+    private initWidgets();
     private renderLoop();
     render(): void;
     stop(): void;
@@ -59,8 +62,4 @@ export declare class Chart {
     private onChartContainerResizeHandler(width, height);
     private onChartResize();
     private zoom(zoomValue, zoomOrigin);
-    /**
-     * creates simple chart without animations and minimal widgets set
-     */
-    static createPreviewChart(userOptions: IChartState, $el: Element): Chart;
 }

@@ -28,8 +28,7 @@ export class AxisWidget extends ChartWidget {
 	private axisYObject: Object3D;
 	private updateAxisXRequest: () => void;
 
-	constructor (state: ChartState) {
-		super(state);
+	onReadyHandler() {
 		this.object3D = new Object3D();
 		this.axisXObject = new Object3D();
 		this.axisYObject = new Object3D();
@@ -41,8 +40,11 @@ export class AxisWidget extends ChartWidget {
 		// canvas drawing is expensive operation, so when we scroll, redraw must be called only once per second
 		this.updateAxisXRequest = Utils.throttle(() => this.updateAxis(AXIS_TYPE.X), 1000);
 
-
-		this.onScrollChange(state.screen.options.scrollX, state.screen.options.scrollY);
+		this.onScrollChange(
+			this.chartState.screen.options.scrollX,
+			this.chartState.screen.options.scrollY
+		);
+		this.bindEvents();
 	}
 
 	bindEvents() {

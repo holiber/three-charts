@@ -13,7 +13,7 @@ export declare const DEFAULT_CONFIG: IChartPluginConfig;
  */
 export declare abstract class ChartPlugin {
     static NAME: string;
-    static pluginWidgets: typeof ChartWidget[];
+    static providedWidgets: typeof ChartWidget[];
     initialState: IChartPluginState;
     config: IChartPluginConfig;
     name: string;
@@ -24,7 +24,7 @@ export declare abstract class ChartPlugin {
     setupChartState(chartState: ChartState): void;
     getOptions(): IChartPluginState;
     protected onInitialStateAppliedHandler(initialState: IChartState): void;
-    protected onChartReadyHandler(): void;
+    protected onReadyHandler(): void;
     protected onStateChanged(changedState: IChartPluginState): void;
     protected onDestroyHandler(): void;
     protected bindEvent(...args: Array<Function | Function[]>): void;
