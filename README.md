@@ -1,2 +1,2 @@
-# ThreeChart
+# ThreeCharts
 chart based on threejs
