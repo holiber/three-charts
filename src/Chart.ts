@@ -68,11 +68,6 @@ export class Chart {
 		this.init($container);
 	};
 
-	static installWidget<WidgetClass extends typeof ChartWidget>(Widget: WidgetClass) {
-		if (!Widget.widgetName) Utils.error('unnamed widget');
-		this.preinstalledWidgets.push(Widget);
-	}
-
 	private init($container: Element) {
 		var state = this.state;
 		var {width: w, height: h, showStats, autoRender} = state.data;
@@ -215,9 +210,9 @@ export class Chart {
 			});
 		}
 		if (this.state.data.autoResize) {
-			// this.resizeSensor = new ResizeSensor(this.$container, () => {
-			// 	this.onChartContainerResizeHandler(this.$container.clientWidth, this.$container.clientHeight);
-			// });
+			this.resizeSensor = new ResizeSensor(this.$container, () => {
+				this.onChartContainerResizeHandler(this.$container.clientWidth, this.$container.clientHeight);
+			});
 		}
 
 		this.unsubscribers = [
@@ -350,8 +345,10 @@ export class Chart {
 }
 
 // install built-in widgets
-Chart.installWidget(TrendsLineWidget);
-Chart.installWidget(TrendsCandlesWidget);
-Chart.installWidget(AxisWidget);
-Chart.installWidget(GridWidget);
-Chart.installWidget(TrendsGradientWidget);
+Chart.preinstalledWidgets = [
+	TrendsLineWidget,
+	TrendsCandlesWidget,
+	AxisWidget,
+	GridWidget,
+	TrendsGradientWidget
+];

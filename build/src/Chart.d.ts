@@ -24,7 +24,6 @@ export declare class Chart {
     private resizeSensor;
     private pluginsAndWidgets;
     constructor(state: IChartState, $container: Element, pluginsAndWidgets?: Array<ChartPlugin | ChartWidget>);
-    static installWidget<WidgetClass extends typeof ChartWidget>(Widget: WidgetClass): void;
     private init($container);
     /**
      * collect and init widgets from preinstalled widgets, plugins widgets and custom widgets

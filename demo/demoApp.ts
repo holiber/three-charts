@@ -1,7 +1,9 @@
 import { Chart, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE } from 'three-charts';
 //import { Chart, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE } from '../src';
 // import { TREND_MARK_SIDE, ITrendMarkOptions, TrendsMarksPlugin } from '../plugins/build/TrendsMarksPlugin';
-// import { TrendsBeaconWidget } from '../plugins/build/TrendsBeaconWidget';
+import { TrendsBeaconWidget } from '../plugins/build/TrendsBeaconWidget';
+import { TrendsLoadingWidget } from '../plugins/build/TrendsLoadingWidget';
+import { TrendsIndicatorWidget } from '../plugins/build/TrendsIndicatorWidget';
 
 var chart: Chart;
 
@@ -93,9 +95,9 @@ window.onload = function () {
 	var now = Date.now();
 
 
-	// Chart.installWidget(TrendsLoadingWidget);
-	// Chart.installWidget(TrendsBeaconWidget);
-	// Chart.installWidget(TrendsIndicatorWidget);
+	Chart.installWidget(TrendsLoadingWidget);
+	Chart.installWidget(TrendsBeaconWidget);
+	Chart.installWidget(TrendsIndicatorWidget);
 
 	chart = new Chart({
 		yAxis: {

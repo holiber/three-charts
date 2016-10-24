@@ -14,7 +14,7 @@
   },
   "devDependencies": {
     "three-charts": "https://github.com/holiber/three-charts.git",
-    "awesome-typescript-loader": "^1.1.1",
+    "awesome-typescript-loader": "^2.2.4",
     "copy-webpack-plugin": "^3.0.1",
     "on-build-webpack": "^0.1.0",
     "rimraf": "^2.5.2",
@@ -25,9 +25,9 @@
   "typings": "./build/index.d.ts",
   "scripts": {
     "start": "npm run rimraf -- build && webpack --watch --progress --colors",
-    "build": "npm run rimraf -- build && webpack --progress --colors",
-    "build-plugins": "npm run rimraf -- plugins/build && webpack  --config plugins/webpack.config.js --progress --colors",
-    "reinstall-chart": "rimraf -- node_modules/three-charts && npm cache clean && npm i",
+    "build": "rimraf -- build && webpack --progress --colors",
+    "build-plugins": "npm run rimraf -- plugins/build && npm run rimraf -- plugins/build-tmp && webpack  --config config/webpack.plugins.js --progress --colors ",
+    "reinstall-charts": "rimraf -- node_modules/three-charts && npm cache clean && npm i",
     "postinstall": "typings install",
     "test": "echo \"Error: no test specified\" && exit 1",
     "rimraf": "rimraf"
