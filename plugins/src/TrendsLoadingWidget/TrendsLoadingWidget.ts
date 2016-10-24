@@ -3,7 +3,7 @@ import Mesh = THREE.Mesh;
 import PlaneBufferGeometry = THREE.PlaneBufferGeometry;
 import MeshBasicMaterial = THREE.MeshBasicMaterial;
 import Vector3 = THREE.Vector3;
-import { TrendWidget, TrendsWidget, ITrendOptions, TREND_TYPE, ChartState, Utils } from 'three-charts';
+import { TrendWidget, TrendsWidget, ITrendOptions, TREND_TYPE, Chart, Utils } from 'three-charts';
 
 /**
  * widget adds loading indicator
@@ -22,12 +22,12 @@ export class TrendLoading extends TrendWidget {
 	private animation: TweenLite;
 	private isActive = false;
 
-	static widgetIsEnabled(trendOptions: ITrendOptions, chartState: ChartState) {
-		return trendOptions.enabled && chartState.data.animations.enabled;
+	static widgetIsEnabled(trendOptions: ITrendOptions, chart: Chart) {
+		return trendOptions.enabled && chart.data.animations.enabled;
 	}
 
-	constructor(state: ChartState, trendName: string) {
-		super(state, trendName);
+	constructor(chart: Chart, trendName: string) {
+		super(chart, trendName);
 		// add beacon
 		this.mesh = new Mesh(
 			new PlaneBufferGeometry(32, 32),
@@ -105,7 +105,7 @@ export class TrendLoading extends TrendWidget {
 			x = segment.currentAnimationState.xVal - segment.maxLength;
 			y = segment.currentAnimationState.yVal
 		}
-		let pointVector = this.chartState.screen.getPointOnChart(x, y);
+		let pointVector = this.chart.screen.getPointOnChart(x, y);
 		this.mesh.position.set(pointVector.x, pointVector.y, 0);
 	}
 }

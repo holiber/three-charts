@@ -86,7 +86,7 @@
             TrendsMarksPlugin.prototype.createMark = function(options) {
                 var marksOptions = this.getOptions().items;
                 var newMarkOptions = marksOptions.concat([ options ]);
-                this.chartState.setState({
+                this.chart.setState({
                     pluginsState: (_a = {}, _a[this.name] = {
                         items: newMarkOptions
                     }, _a)
@@ -98,10 +98,10 @@
             };
             TrendsMarksPlugin.prototype.bindEvents = function() {
                 var _this = this;
-                this.chartState.trendsManager.onSegmentsRebuilded(function() {
+                this.chart.trendsManager.onSegmentsRebuilded(function() {
                     return _this.updateMarksSegments();
                 });
-                this.chartState.screen.onZoomFrame(function() {
+                this.chart.screen.onZoomFrame(function() {
                     return _this.calclulateMarksPositions();
                 });
             };
@@ -123,7 +123,7 @@
                         continue;
                     }
                     options = three_charts_1.Utils.deepMerge(AXIS_MARK_DEFAULT_OPTIONS, options);
-                    var mark = new TrendMark(this.chartState, options);
+                    var mark = new TrendMark(this.chart, options);
                     marks[options.name] = mark;
                 }
                 for (var markName in this.items) {
@@ -141,11 +141,11 @@
             };
             TrendsMarksPlugin.prototype.createMarkRect = function(mark) {
                 if (!mark.segment) return;
-                var state = this.chartState;
+                var chart = this.chart;
                 var options = mark.options;
                 var width = options.width, height = options.height, offset = options.offset, name = options.name;
-                var left = state.getPointOnXAxis(mark.xVal) - width / 2;
-                var top = state.getPointOnYAxis(mark.yVal);
+                var left = chart.getPointOnXAxis(mark.xVal) - width / 2;
+                var top = chart.getPointOnYAxis(mark.yVal);
                 var isTopSideMark = options.orientation == TREND_MARK_SIDE.TOP;
                 var newOffset;
                 var row = 0;
@@ -171,17 +171,17 @@
                     }
                 } while (hasIntersection);
                 if (isTopSideMark) {
-                    newOffset = markRect[1] - markRect[3] - state.getPointOnYAxis(mark.yVal);
+                    newOffset = markRect[1] - markRect[3] - chart.getPointOnYAxis(mark.yVal);
                 } else {
-                    newOffset = state.getPointOnYAxis(mark.yVal) - markRect[1];
+                    newOffset = chart.getPointOnYAxis(mark.yVal) - markRect[1];
                 }
                 mark._setOffset(newOffset);
                 mark._setRow(row);
                 this.rects[name] = markRect;
             };
             TrendsMarksPlugin.prototype.updateMarksSegments = function() {
-                var chartState = this.chartState;
-                var trends = chartState.trendsManager.trends;
+                var chart = this.chart;
+                var trends = chart.trendsManager.trends;
                 for (var trendName in trends) {
                     var marks = this.getTrendMarks(trendName);
                     var marksArr = [];
@@ -195,7 +195,7 @@
                     marksArr.sort(function(a, b) {
                         return a.options.value - b.options.value;
                     });
-                    var trend = chartState.getTrend(trendName);
+                    var trend = chart.getTrend(trendName);
                     var points = trend.segmentsManager.getSegmentsForXValues(xVals.sort(function(a, b) {
                         return a - b;
                     }));
@@ -219,15 +219,15 @@
         }(three_charts_1.ChartPlugin);
         exports.TrendsMarksPlugin = TrendsMarksPlugin;
         var TrendMark = function() {
-            function TrendMark(chartState, options) {
+            function TrendMark(chart, options) {
                 this.row = 0;
                 this.options = options;
-                this.chartState = chartState;
+                this.chart = chart;
             }
             TrendMark.prototype._setSegment = function(segment) {
                 this.segment = segment;
                 if (!segment) return;
-                var trend = this.chartState.getTrend(this.options.trendName);
+                var trend = this.chart.getTrend(this.options.trendName);
                 if (trend.getOptions().type == three_charts_1.TREND_TYPE.LINE) {
                     this.xVal = segment.endXVal;
                     this.yVal = segment.endYVal;
@@ -277,8 +277,8 @@
         exports.TrendsMarksWidget = TrendsMarksWidget;
         var TrendMarksWidget = function(_super) {
             __extends(TrendMarksWidget, _super);
-            function TrendMarksWidget(chartState, trendName) {
-                _super.call(this, chartState, trendName);
+            function TrendMarksWidget(chart, trendName) {
+                _super.call(this, chart, trendName);
                 this.marksWidgets = {};
                 this.object3D = new Object3D();
                 this.onMarksChange();
@@ -294,7 +294,7 @@
                 });
             };
             TrendMarksWidget.prototype.getTrendsMarksPlugin = function() {
-                return this.chartState.getPlugin(TrendsMarksPlugin_1.TrendsMarksPlugin.NAME);
+                return this.chart.getPlugin(TrendsMarksPlugin_1.TrendsMarksPlugin.NAME);
             };
             TrendMarksWidget.prototype.onMarksChange = function() {
                 var marksItems = this.getTrendsMarksPlugin().getItems();
@@ -311,7 +311,7 @@
             };
             TrendMarksWidget.prototype.createMarkWidget = function(mark) {
                 if (!mark.segment) return;
-                var markWidget = new TrendMarkWidget(this.chartState, mark);
+                var markWidget = new TrendMarkWidget(this.chart, mark);
                 this.marksWidgets[mark.options.name] = markWidget;
                 this.object3D.add(markWidget.getObject3D());
             };
@@ -335,7 +335,7 @@
         }(three_charts_1.TrendWidget);
         exports.TrendMarksWidget = TrendMarksWidget;
         var TrendMarkWidget = function() {
-            function TrendMarkWidget(chartState, trendMark) {
+            function TrendMarkWidget(chart, trendMark) {
                 this.markHeight = 74;
                 this.markWidth = 150;
                 this.position = {
@@ -343,7 +343,7 @@
                     x: 0,
                     y: 0
                 };
-                this.chartState = chartState;
+                this.chart = chart;
                 this.mark = trendMark;
                 this.initObject();
                 this.show();
@@ -424,7 +424,7 @@
                     meshMaterial.opacity = 1;
                     lineMaterial.opacity = 1;
                 }
-                var screen = this.chartState.screen;
+                var screen = this.chart.screen;
                 var posX = screen.getPointOnXAxis(mark.xVal);
                 var posY = screen.getPointOnYAxis(mark.yVal);
                 var lineGeometry = this.line.geometry;
@@ -443,7 +443,7 @@
             TrendMarkWidget.prototype.show = function() {
                 if (!this.mark.segment) return;
                 this.updatePosition();
-                var animations = this.chartState.data.animations;
+                var animations = this.chart.data.animations;
                 var time = animations.enabled ? 1 : 0;
                 this.object3D.scale.set(.01, .01, 1);
                 TweenLite.to(this.object3D.scale, time, {

@@ -146,7 +146,7 @@ export class TrendSegmentsManager {
 	}
 	
 	private recalculateDisplayedRange(segmentsAreRebuilded = false) {
-		var {from, to} = this.chartState.data.xAxis.range;
+		var {from, to} = this.chartState.state.xAxis.range;
 		var {firstDisplayedSegment, lastDisplayedSegment} = this;
 		var displayedRange = to - from;
 
@@ -309,7 +309,7 @@ export class TrendSegmentsManager {
 
 		}
 
-		var animationsOptions = this.chartState.data.animations;
+		var animationsOptions = this.chartState.state.animations;
 		var time = animationsOptions.enabled ? animationsOptions.trendChangeSpeed : 0;
 
 		// var t2 = performance.now();
@@ -377,7 +377,7 @@ export class TrendSegmentsManager {
 
 		}
 
-		var animationsOptions = this.chartState.data.animations;
+		var animationsOptions = this.chartState.state.animations;
 		var time = animationsOptions.enabled ? animationsOptions.trendChangeSpeed : 0;
 
 		if (this.animatedSegmentsForPrepend.length > MAX_ANIMATED_SEGMENTS) time = 0;
@@ -395,7 +395,7 @@ export class TrendSegmentsManager {
 			animatedSegmentsIds.length = 0;
 			return;
 		}
-		var animationsOptions = this.chartState.data.animations;
+		var animationsOptions = this.chartState.state.animations;
 		var ease = animationsOptions.trendChangeEase;
 		var objectToAnimate = {animationValue: 0};
 		animation = TweenLite.to(objectToAnimate, time, {animationValue: 1, ease});

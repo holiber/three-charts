@@ -58,9 +58,9 @@ export class TrendBeacon extends TrendWidget {
 
 	protected bindEvents() {
 		super.bindEvents();
-		this.bindEvent(this.chartState.onScroll(() => this.updatePosition()));
-		this.bindEvent(this.chartState.onChange(changedProps => this.onStateChange(changedProps)));
-		this.bindEvent(this.chartState.onDestroy(() => this.stopAnimation()));
+		this.bindEvent(this.chart.onScroll(() => this.updatePosition()));
+		this.bindEvent(this.chart.onChange(changedProps => this.onStateChange(changedProps)));
+		this.bindEvent(this.chart.onDestroy(() => this.stopAnimation()));
 	}
 
 	private initObject() {
@@ -147,7 +147,7 @@ export class TrendBeacon extends TrendWidget {
 	}
 
 	private updatePosition() {
-		var state = this.chartState;
+		var chart = this.chart;
 		var xVal: number, yVal: number;
 		var currentAnimationState = this.segment.currentAnimationState;
 		if (this.trend.getOptions().type == TREND_TYPE.LINE) {
@@ -157,12 +157,12 @@ export class TrendBeacon extends TrendWidget {
 			xVal = currentAnimationState.xVal;
 			yVal = currentAnimationState.endYVal;
 		}
-		var endPointVector = state.screen.getPointOnChart(xVal, yVal);
-		var screenWidth = state.data.width;
+		var endPointVector = chart.screen.getPointOnChart(xVal, yVal);
+		var screenWidth = chart.data.width;
 		var x = endPointVector.x;
-		var screenX = state.screen.getScreenXByPoint(endPointVector.x);
-		if (screenX < 0) x = state.screen.getPointByScreenX(0);
-		if (screenX > screenWidth) x = state.screen.getPointByScreenX(screenWidth);
+		var screenX = chart.screen.getScreenXByPoint(endPointVector.x);
+		if (screenX < 0) x = chart.screen.getPointByScreenX(0);
+		if (screenX > screenWidth) x = chart.screen.getPointByScreenX(screenWidth);
 		this.mesh.position.set(x, endPointVector.y, 0.1);
 	}
 }

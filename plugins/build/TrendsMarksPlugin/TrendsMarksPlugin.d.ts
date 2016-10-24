@@ -1,4 +1,4 @@
-import { ChartPlugin, ChartWidget, TrendSegment, ChartState } from 'three-charts';
+import { ChartPlugin, ChartWidget, TrendSegment, Chart } from 'three-charts';
 export declare enum TREND_MARK_SIDE {
     TOP = 0,
     BOTTOM = 1,
@@ -60,8 +60,8 @@ export declare class TrendMark {
     yVal: number;
     offset: number;
     row: number;
-    protected chartState: ChartState;
-    constructor(chartState: ChartState, options: ITrendMarkOptions);
+    protected chart: Chart;
+    constructor(chart: Chart, options: ITrendMarkOptions);
     /**
      * only for internal usage
      */

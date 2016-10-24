@@ -1,4 +1,4 @@
-import {ChartState, Utils, TrendsWidget, TrendWidget } from 'three-charts';
+import {Chart, Utils, TrendsWidget, TrendWidget } from 'three-charts';
 import Geometry = THREE.Geometry;
 import Mesh = THREE.Mesh;
 import LineBasicMaterial = THREE.LineBasicMaterial;
@@ -36,8 +36,8 @@ export class TrendMarksWidget extends TrendWidget {
 	private object3D: Object3D;
 	private marksWidgets: {[name: string]: TrendMarkWidget} = {};
 
-	constructor (chartState: ChartState, trendName: string) {
-		super(chartState, trendName);
+	constructor (chart: Chart, trendName: string) {
+		super(chart, trendName);
 		this.object3D = new Object3D();
 		this.onMarksChange();
 	}
@@ -52,7 +52,7 @@ export class TrendMarksWidget extends TrendWidget {
 	}
 
 	private getTrendsMarksPlugin(): TrendsMarksPlugin {
-		return this.chartState.getPlugin(TrendsMarksPlugin.NAME) as TrendsMarksPlugin;
+		return this.chart.getPlugin(TrendsMarksPlugin.NAME) as TrendsMarksPlugin;
 	}
 
 	private onMarksChange() {
@@ -72,7 +72,7 @@ export class TrendMarksWidget extends TrendWidget {
 	
 	private createMarkWidget(mark: TrendMark) {
 		if (!mark.segment) return;
-		let markWidget = new TrendMarkWidget(this.chartState, mark);
+		let markWidget = new TrendMarkWidget(this.chart, mark);
 		this.marksWidgets[mark.options.name] = markWidget;
 		this.object3D.add(markWidget.getObject3D());
 	}
@@ -101,7 +101,7 @@ export class TrendMarksWidget extends TrendWidget {
  * widget for drawing one trend mark
  */
 class TrendMarkWidget {
-	private chartState: ChartState;
+	private chart: Chart;
 	private mark: TrendMark;
 	private object3D: Object3D;
 	private line: Line;
@@ -110,8 +110,8 @@ class TrendMarkWidget {
 	private markWidth = 150;
 	private position = {lineHeight: 30, x: 0, y: 0};
 
-	constructor(chartState: ChartState, trendMark: TrendMark) {
-		this.chartState = chartState;
+	constructor(chart: Chart, trendMark: TrendMark) {
+		this.chart = chart;
 		this.mark = trendMark;
 		this.initObject();
 		this.show();
@@ -209,7 +209,7 @@ class TrendMarkWidget {
 			lineMaterial.opacity = 1;
 		}
 
-		let screen = this.chartState.screen;
+		let screen = this.chart.screen;
 		let posX = screen.getPointOnXAxis(mark.xVal);
 		let posY = screen.getPointOnYAxis(mark.yVal);
 		let lineGeometry = this.line.geometry as Geometry;
@@ -230,7 +230,7 @@ class TrendMarkWidget {
 	private show() {
 		if (!this.mark.segment) return;
 		this.updatePosition();
-		var animations = this.chartState.data.animations;
+		var animations = this.chart.data.animations;
 		var time = animations.enabled ? 1 : 0;
 		this.object3D.scale.set(0.01, 0.01, 1);
 		TweenLite.to(this.object3D.scale, time, {x: 1, y: 1, ease: Elastic.easeOut});

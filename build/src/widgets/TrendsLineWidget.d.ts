@@ -18,7 +18,7 @@ export declare class TrendLine extends TrendWidget {
     private freeSegmentsInds;
     private displayedSegments;
     static widgetIsEnabled(trendOptions: ITrendOptions): boolean;
-    constructor(chartState: Chart, trendName: string);
+    constructor(chart: Chart, trendName: string);
     getObject3D(): LineSegments;
     protected bindEvents(): void;
     private initLine();

@@ -8,7 +8,7 @@ export declare class ChartView {
     static renderers: {
         [rendererName: string]: any;
     };
-    state: Chart;
+    chart: Chart;
     isStopped: boolean;
     isDestroyed: boolean;
     private $container;
@@ -39,11 +39,11 @@ export declare class ChartView {
     destroy(): void;
     getState(): IChartState;
     /**
-     * shortcut for ChartView.state.getTrend
+     * shortcut for ChartView.chart.getTrend
      */
     getTrend(trendName: string): Trend;
     /**
-     * shortcut for ChartView.state.setState
+     * shortcut for ChartView.chart.setState
      */
     setState(state: IChartState): void;
     private bindEvents();

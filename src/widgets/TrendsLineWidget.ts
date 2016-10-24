@@ -47,8 +47,8 @@ export class TrendLine extends TrendWidget {
 		return trendOptions.enabled && trendOptions.type == TREND_TYPE.LINE;
 	}
 	
-	constructor (chartState: Chart, trendName: string) {
-		super(chartState, trendName);
+	constructor (chart: Chart, trendName: string) {
+		super(chart, trendName);
 		var options = this.trend.getOptions();
 		this.material = new LineBasicMaterial( { color: options.lineColor, linewidth: options.lineWidth } );
 		this.initLine();
@@ -71,12 +71,12 @@ export class TrendLine extends TrendWidget {
 	
 	private initLine() {
 		let geometry = new Geometry();
-		let {scaleFactor: scaleXFactor, zoom: zoomX} = this.chart.data.xAxis.range;
-		let {scaleFactor: scaleYFactor, zoom: zoomY} = this.chart.data.yAxis.range;
+		let {scaleFactor: scaleXFactor, zoom: zoomX} = this.chart.state.xAxis.range;
+		let {scaleFactor: scaleYFactor, zoom: zoomY} = this.chart.state.yAxis.range;
 		this.lineSegments = new LineSegments(geometry, this.material);
 		this.lineSegments.scale.set(scaleXFactor * zoomX, scaleYFactor * zoomY, 1);
 		this.lineSegments.frustumCulled = false;
-		for (let i = 0; i < this.chart.data.maxVisibleSegments; i++) {
+		for (let i = 0; i < this.chart.state.maxVisibleSegments; i++) {
 			geometry.vertices.push(new  Vector3(), new Vector3());
 			this.freeSegmentsInds.push(i);
 		}
@@ -139,7 +139,7 @@ export class TrendLine extends TrendWidget {
 
 	protected onZoomFrame(options: IScreenTransformOptions) {
 		var currentScale = this.lineSegments.scale;
-		let state = this.chart.data;
+		let state = this.chart.state;
 		let scaleXFactor = state.xAxis.range.scaleFactor;
 		let scaleYFactor = state.yAxis.range.scaleFactor;
 		if (options.zoomX) currentScale.setX(scaleXFactor * options.zoomX);
@@ -158,11 +158,11 @@ export class TrendLine extends TrendWidget {
 
 
 	private toLocalX(xVal: number): number {
-		return xVal - this.chart.data.xAxis.range.zeroVal;
+		return xVal - this.chart.state.xAxis.range.zeroVal;
 	}
 
 	private toLocalY(yVal: number): number {
-		return yVal - this.chart.data.yAxis.range.zeroVal;
+		return yVal - this.chart.state.yAxis.range.zeroVal;
 	}
 
 	private toLocalVec(vec: Vector3): Vector3 {

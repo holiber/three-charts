@@ -20,6 +20,7 @@ import { TrendsLineWidget } from "./widgets/TrendsLineWidget";
 import { TrendsCandlesWidget } from './widgets/TrendsCandleWidget';
 import { ResizeSensor, ResizeSensorType } from './deps';
 import OrthographicCamera = THREE.OrthographicCamera;
+import {ChartColor} from "./Color";
 
 
 export class ChartView {
@@ -31,7 +32,7 @@ export class ChartView {
 		WebGLRenderer: THREE.WebGLRenderer
 	};
 
-	state: Chart;
+	chart: Chart;
 	isStopped: boolean;
 	isDestroyed: boolean;
 	private $container: Element;
@@ -61,7 +62,7 @@ export class ChartView {
 
 		let plugins = pluginsAndWidgets.filter(pluginOrWidget => pluginOrWidget instanceof ChartPlugin) as ChartPlugin[];
 
-		this.state = new Chart(state, plugins);
+		this.chart = new Chart(state, plugins);
 		this.pluginsAndWidgets = pluginsAndWidgets;
 		this.zoomThrottled = Utils.throttle((zoomValue: number, origin: number) => this.zoom(zoomValue, origin), 200);
 		this.$container = $container;
@@ -69,18 +70,19 @@ export class ChartView {
 	};
 
 	private init($container: Element) {
-		var state = this.state;
-		var {width: w, height: h, showStats, autoRender} = state.data;
+		var chart = this.chart;
+		var {width: w, height: h, showStats, autoRender} = chart.state;
 		this.scene = new THREE.Scene();
 		this.isStopped = !autoRender.enabled;
 
-		var renderer = this.renderer = new (ChartView.renderers[this.state.data.renderer] as any)({
+		var renderer = this.renderer = new (ChartView.renderers[this.chart.state.renderer] as any)({
 			antialias: true,
 			alpha: true
 		});
+		let backgroundColor = new ChartColor(chart.state.backgroundColor);
 		renderer.setSize(w, h);
 		renderer.setPixelRatio(ChartView.devicePixelRatio);
-		renderer.setClearColor(state.data.backgroundColor, state.data.backgroundOpacity);
+		renderer.setClearColor(backgroundColor.value, backgroundColor.a);
 		$container.appendChild(renderer.domElement);
 		this.$el = renderer.domElement;
 		this.$el.style.display = 'block';
@@ -118,7 +120,7 @@ export class ChartView {
 		);
 
 		this.widgets.forEach(widget => {
-			widget.setupChartState(this.state);
+			widget.setupChartState(this.chart);
 			widget.onReadyHandler();
 			this.scene.add(widget.getObject3D());
 		});
@@ -129,7 +131,7 @@ export class ChartView {
 		this.stats && this.stats.begin();
 		this.render();
 		if (this.isStopped) return;
-		var fpsLimit = this.state.data.autoRender.fps;
+		var fpsLimit = this.chart.state.autoRender.fps;
 
 		if (fpsLimit) {
 			let delay = 1000 / fpsLimit;
@@ -159,7 +161,7 @@ export class ChartView {
 	destroy() {
 		this.isDestroyed = true;
 		this.stop();
-		this.state.destroy();
+		this.chart.destroy();
 		this.unbindEvents();
 		// WARNING! undocumented method for free webgl context
 		try {
@@ -173,27 +175,27 @@ export class ChartView {
 	}
 
 	getState(): IChartState {
-		return this.state.data
+		return this.chart.state
 	}
 
 	/**
-	 * shortcut for ChartView.state.getTrend
+	 * shortcut for ChartView.chart.getTrend
 	 */
 	getTrend(trendName: string): Trend {
-		return this.state.getTrend(trendName);
+		return this.chart.getTrend(trendName);
 	}
 
 	/**
-	 * shortcut for ChartView.state.setState
+	 * shortcut for ChartView.chart.setState
 	 */
 	setState(state: IChartState) {
-		return this.state.setState(state);
+		return this.chart.setState(state);
 	}
 
 
 	private bindEvents() {
 		var $el = this.$el;
-		if (this.state.data.controls.enabled) {
+		if (this.chart.state.controls.enabled) {
 			$el.addEventListener('mousewheel', (ev: MouseWheelEvent) => {
 				this.onMouseWheel(ev)
 			});
@@ -209,16 +211,16 @@ export class ChartView {
 				this.onTouchEnd(ev)
 			});
 		}
-		if (this.state.data.autoResize) {
+		if (this.chart.state.autoResize) {
 			this.resizeSensor = new ResizeSensor(this.$container, () => {
 				this.onChartContainerResizeHandler(this.$container.clientWidth, this.$container.clientHeight);
 			});
 		}
 
 		this.unsubscribers = [
-			this.state.onTrendsChange(() => this.autoscroll()),
-			this.state.screen.onTransformationFrame((options) => this.onScreenTransformHandler(options)),
-			this.state.onResize((options) => this.onChartResize())
+			this.chart.onTrendsChange(() => this.autoscroll()),
+			this.chart.screen.onTransformationFrame((options) => this.onScreenTransformHandler(options)),
+			this.chart.onResize((options) => this.onChartResize())
 		];
 	}
 
@@ -235,7 +237,7 @@ export class ChartView {
 	}
 
 	private setupCamera() {
-		let camSettings = this.state.screen.getCameraSettings();
+		let camSettings = this.chart.screen.getCameraSettings();
 		if (!this.camera) {
 			this.camera = new PerspectiveCamera(camSettings.FOV, camSettings.aspect, camSettings.near, camSettings.far);
 			this.scene.add(this.camera);
@@ -248,7 +250,7 @@ export class ChartView {
 		}
 		this.camera.position.set(camSettings.x, camSettings.y, camSettings.z);
 		this.cameraInitialPosition = this.camera.position.clone();
-		this.onScreenTransformHandler(this.state.screen.options);
+		this.onScreenTransformHandler(this.chart.screen.options);
 	}
 
 	private onScreenTransformHandler(options: IScreenTransformOptions) {
@@ -265,14 +267,14 @@ export class ChartView {
 	}
 
 	private autoscroll() {
-		var state = this.state;
-		if (!state.data.autoScroll) return;
-		var oldTrendsMaxX = state.data.prevState.computedData.trends.maxXVal;
-		var trendsMaxXDelta = state.data.computedData.trends.maxXVal - oldTrendsMaxX;
+		var state = this.chart;
+		if (!state.state.autoScroll) return;
+		var oldTrendsMaxX = state.state.prevState.computedData.trends.maxXVal;
+		var trendsMaxXDelta = state.state.computedData.trends.maxXVal - oldTrendsMaxX;
 		if (trendsMaxXDelta > 0) {
-			var maxVisibleX = this.state.screen.getScreenRightVal();
-			var paddingRightX = this.state.getPaddingRight();
-			var currentScroll = state.data.xAxis.range.scroll;
+			var maxVisibleX = this.chart.screen.getScreenRightVal();
+			var paddingRightX = this.chart.getPaddingRight();
+			var currentScroll = state.state.xAxis.range.scroll;
 			if (oldTrendsMaxX < paddingRightX || oldTrendsMaxX > maxVisibleX) {
 				return;
 			}
@@ -282,10 +284,10 @@ export class ChartView {
 	}
 
 	private onScrollStop() {
-		// var tendsXMax = this.state.data.computedData.trends.maxX;
-		// var paddingRightX = this.state.getPaddingRight();
+		// var tendsXMax = this.chart.state.computedData.trends.maxX;
+		// var paddingRightX = this.chart.getPaddingRight();
 		// if (tendsXMax < paddingRightX) {
-		// 	this.state.scrollToEnd();
+		// 	this.chart.scrollToEnd();
 		// }
 	}
 
@@ -298,7 +300,7 @@ export class ChartView {
 	}
 
 	private onMouseMove(ev: MouseEvent) {
-		if (this.state.data.cursor.dragMode) {
+		if (this.chart.state.cursor.dragMode) {
 			this.setState({cursor: {dragMode: true, x: ev.clientX, y: ev.clientY}});
 		}
 	}
@@ -306,7 +308,7 @@ export class ChartView {
 	private onMouseWheel(ev: MouseWheelEvent) {
 		ev.stopPropagation();
 		ev.preventDefault();
-		let zoomOrigin = ev.layerX / this.state.data.width;
+		let zoomOrigin = ev.layerX / this.chart.state.width;
 		let zoomValue = 1 + ev.wheelDeltaY * 0.001;
 		this.zoom(zoomValue, zoomOrigin);
 	}
@@ -324,7 +326,7 @@ export class ChartView {
 	}
 
 	private onChartResize() {
-		let {width, height} = this.state.data;
+		let {width, height} = this.chart.state;
 		this.renderer.setSize(width, height);
 		this.setupCamera();
 	}
@@ -334,9 +336,9 @@ export class ChartView {
 		const MIN_ZOOM_VALUE = 0.7;
 		zoomValue = Math.min(zoomValue, MAX_ZOOM_VALUE);
 		zoomValue = Math.max(zoomValue, MIN_ZOOM_VALUE);
-		let autoScrollIsEnabled = this.state.data.autoScroll;
-		if (autoScrollIsEnabled) this.state.setState({autoScroll: false});
-		this.state.zoom(zoomValue, zoomOrigin).then(() => {
+		let autoScrollIsEnabled = this.chart.state.autoScroll;
+		if (autoScrollIsEnabled) this.chart.setState({autoScroll: false});
+		this.chart.zoom(zoomValue, zoomOrigin).then(() => {
 			if (autoScrollIsEnabled) this.setState({autoScroll: true});
 		});
 	}

@@ -10,4 +10,4 @@ export * from './Utils';
 export * from './Widget';
 export * from './Plugin';
 export * from './Color';
-export * from './widgets/TrendsWidget';
+export * from './widgets';

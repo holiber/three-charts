@@ -72,6 +72,7 @@ export interface IAxisOptions {
 export interface IGridOptions {
     enabled: boolean;
     minSizePx?: number;
+    color?: TChartColor;
 }
 export interface IAnimationsOptions {
     enabled?: boolean;

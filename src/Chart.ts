@@ -10,6 +10,7 @@ import {
 } from "./interfaces";
 import { Promise } from './deps/deps';
 import { ChartPlugin } from './Plugin';
+import {TChartColor} from "./Color";
 
 
 interface IRecalculatedStateResult {
@@ -32,7 +33,7 @@ const CHART_STATE_EVENTS = {
 };
 
 /**
- * readonly computed state data
+ * readonly computed chart state
  * calculated after recalculateState() call
  * contains cached values
  */
@@ -81,19 +82,20 @@ export interface IChartState {
 	controls?: {enabled: boolean};
 	autoScroll?: boolean;
 	showStats?: boolean;
-	backgroundColor?: number;
-	backgroundOpacity?: number;
+	backgroundColor?: TChartColor;
 	computedData?: IChartStateComputedData,
 	pluginsState?: {[pluginName: string]: any};
 	eventEmitterMaxListeners?: number;
 }
 
+const LIGHT_BLUE = '#5273bd';
+
 /**
- *  all state changes caused only by Chart.setState method
+ *  all chart changes caused only by Chart.setState method
  */
 export class Chart {
 
-	data: IChartState = {
+	state: IChartState = {
 		prevState: {},
 		zoom: 0,
 		xAxis: {
@@ -107,10 +109,10 @@ export class Chart {
 				margin: {start: 0, end: 5}
 			},
 			dataType: AXIS_DATA_TYPE.NUMBER,
-			grid: {enabled: true, minSizePx:  100},
+			grid: {enabled: true, minSizePx:  100, color: `rgba(${LIGHT_BLUE}, 0.12)`},
 			autoScroll: true,
 			marks: [],
-			color: '#5273bd'
+			color: LIGHT_BLUE
 		},
 		yAxis: {
 			range: {
@@ -121,10 +123,10 @@ export class Chart {
 				padding: {start: 5, end: 5},
 				margin: {start: 5, end: 5},
 			},
-			grid: {enabled: true, minSizePx:  50},
+			grid: {enabled: true, minSizePx:  50, color: `rgba(${LIGHT_BLUE}, 0.12)`},
 			dataType: AXIS_DATA_TYPE.NUMBER,
 			marks: [],
-			color: '#5273bd'
+			color: LIGHT_BLUE
 		},
 		animations: {
 			enabled: true,
@@ -149,8 +151,8 @@ export class Chart {
 			maxSegmentLength: 1000,
 			lineWidth: 2,
 			lineColor: 0xFFFFFF,
-			hasBackground: false,
-			backgroundColor: 'rgba(#5273BD, 0.15)',
+			hasBackground: true,
+			backgroundColor: 'rgba(#FFFFFF, 0.07)',
 			hasBeacon: false,
 			settingsForTypes: {
 				CANDLE: {
@@ -173,8 +175,7 @@ export class Chart {
 			m: '12px Arial',
 			l: '13px Arial'
 		},
-		backgroundColor: 0x000000,
-		backgroundOpacity: 1,
+		backgroundColor: 0x000c2a,
 		showStats: false,
 		pluginsState: {},
 		eventEmitterMaxListeners: 20,
@@ -199,9 +200,9 @@ export class Chart {
 		plugins: ChartPlugin[] = []
 	) {
 		this.ee = new EventEmitter();
-		this.ee.setMaxListeners(initialState.eventEmitterMaxListeners || this.data.eventEmitterMaxListeners);
+		this.ee.setMaxListeners(initialState.eventEmitterMaxListeners || this.state.eventEmitterMaxListeners);
 
-		this.data = Utils.deepMerge(this.data, initialState);
+		this.state = Utils.deepMerge(this.state, initialState);
 		this.trendsManager = new TrendsManager(this, initialState);
 		initialState.trends = this.trendsManager.calculatedOptions;
 		initialState = this.installPlugins(plugins, initialState);
@@ -214,7 +215,7 @@ export class Chart {
 		this.yAxisMarks = new AxisMarks(this, AXIS_TYPE.Y);
 		this.initListeners();
 		
-		// message to other modules that Chart.data is ready for use
+		// message to other modules that Chart.state is ready for use
 		this.ee.emit(CHART_STATE_EVENTS.INITIAL_STATE_APPLIED, initialState);
 
 		// message to other modules that Chart is ready for use
@@ -223,12 +224,12 @@ export class Chart {
 	}
 
 	/**
-	 * destroy state, use ChartView.destroy to completely destroy chart
+	 * destroy chart, use ChartView.destroy to completely destroy chart
 	 */
 	destroy() {
 		this.ee.emit(CHART_STATE_EVENTS.DESTROY);
 		this.ee.removeAllListeners();
-		this.data = {};
+		this.state = {};
 	}
 
 	onDestroy(cb: Function) {
@@ -280,7 +281,7 @@ export class Chart {
 	}
 
 	setState(newState: IChartState, eventData?: any, silent = false) {
-		let stateData = this.data as {[key: string]: any};
+		let stateData = this.state as {[key: string]: any};
 		let newStateObj = newState as {[key: string]: any};
 
 		var changedProps: {[key: string]: any} = {};
@@ -293,7 +294,7 @@ export class Chart {
 		this.savePrevState(changedProps as IChartState);
 
 
-		// temporary remove trends data from newState by performance reasons
+		// temporary remove trends state from newState by performance reasons
 		let trendsData: {[trendName: string]: ITrendData} = {};
 		if (newState.trends) for (let trendName in newState.trends) {
 			let trendOptions = newState.trends[trendName];
@@ -303,16 +304,16 @@ export class Chart {
 		let newStateContainsData = Object.keys(trendsData).length > 0;
 		
 
-		this.data = Utils.deepMerge(this.data, newState, false);
+		this.state = Utils.deepMerge(this.state, newState, false);
 
-		// return data to state
+		// return state to chart
 		if (newStateContainsData) for (let trendName in trendsData) {
-			this.data.trends[trendName].data = trendsData[trendName];
+			this.state.trends[trendName].data = trendsData[trendName];
 		}
 
 		if (silent) return;
 
-		// recalculate all dynamic state props
+		// recalculate all dynamic chart props
 		var recalculateResult = this.recalculateState(changedProps);
 		changedProps = recalculateResult.changedProps;
 		
@@ -321,10 +322,10 @@ export class Chart {
 	}
 
 	/**
-	 * recalculate all computed state props
+	 * recalculate all computed chart props
 	 */
 	private recalculateState(changedProps?: IChartState): IRecalculatedStateResult {
-		var data = this.data;
+		var data = this.state;
 		var patch: IChartState = {};
 		var actualData = Utils.deepMerge({}, data);
 
@@ -347,7 +348,7 @@ export class Chart {
 			isMouseDrag ||
 			chartWasResized ||
 			(changedProps.xAxis && (changedProps.xAxis.range)) ||
-			this.data.xAxis.range.zeroVal == void 0
+			this.state.xAxis.range.zeroVal == void 0
 		);
 		if (needToRecalculateXAxis) {
 			let xAxisPatch = this.recalculateXAxis(actualData, changedProps);
@@ -369,7 +370,7 @@ export class Chart {
 				data.yAxis.range.isMirrorMode
 			) &&
 			(scrollXChanged || changedProps.trends || changedProps.yAxis) ||
-			this.data.yAxis.range.zeroVal == void 0
+			this.state.yAxis.range.zeroVal == void 0
 		);
 		if (needToRecalculateYAxis){
 			let yAxisPatch = this.recalculateYAxis(actualData);
@@ -383,7 +384,7 @@ export class Chart {
 		let allChangedProps = Utils.deepMerge(changedProps, patch);
 		patch.computedData = this.getComputedData(allChangedProps);
 		this.savePrevState(patch);
-		this.data = Utils.deepMerge(this.data, patch);
+		this.state = Utils.deepMerge(this.state, patch);
 		return {changedProps: allChangedProps, patch: patch}
 	}
 
@@ -401,28 +402,28 @@ export class Chart {
 	}
 
 	private savePrevState(changedProps?: IChartState) {
-		if (!changedProps) changedProps = this.data;
-		var prevState = this.data.prevState;
+		if (!changedProps) changedProps = this.state;
+		var prevState = this.state.prevState;
 
-		// prevent to store prev trend data by performance reasons
-		Utils.copyProps(this.data, prevState, changedProps, ['trends']);
+		// prevent to store prev trend state by performance reasons
+		Utils.copyProps(this.state, prevState, changedProps, ['trends']);
 
 	}
 
 	private emitChangedStateEvents(changedProps: IChartState, eventData: any) {
-		var prevState = this.data.prevState;
+		var prevState = this.state.prevState;
 
 		// emit common change event
 		this.ee.emit(CHART_STATE_EVENTS.CHANGE, changedProps, eventData);
 
-		// emit event for each changed state property
+		// emit event for each changed chart property
 		for (let key in changedProps) {
 			this.ee.emit(key + 'Change', (changedProps as {[key: string]: any})[key], eventData);
 		}
 
 		if (!this.isReady) return;
 
-		// emit special events based on changed state
+		// emit special events based on changed chart
 		let scrollStopEventNeeded = (
 			changedProps.cursor &&
 			changedProps.cursor.dragMode === false &&
@@ -627,7 +628,7 @@ export class Chart {
 		scroll = fromVal - zeroVal;
 		zoom = (actualData.height / (toVal - fromVal)) / scaleFactor ;
 
-		var currentAxisRange = this.data.yAxis.range;
+		var currentAxisRange = this.state.yAxis.range;
 		if (currentAxisRange.from !== fromVal) patch.range.from = fromVal;
 		if (currentAxisRange.to !== toVal) patch.range.to = toVal;
 		if (currentAxisRange.scroll !== scroll) patch.range.scroll = scroll;
@@ -637,32 +638,32 @@ export class Chart {
 	}
 
 	zoom(zoomValue: number, origin = 0.5): Promise<void> {
-		let {zoom, scroll, scaleFactor} = this.data.xAxis.range;
+		let {zoom, scroll, scaleFactor} = this.state.xAxis.range;
 		let newZoom = zoom * zoomValue;
-		let currentRange = this.data.width / (scaleFactor * zoom);
-		let nextRange = this.data.width / (scaleFactor * newZoom);
+		let currentRange = this.state.width / (scaleFactor * zoom);
+		let nextRange = this.state.width / (scaleFactor * newZoom);
 		let newScroll = scroll + (currentRange - nextRange) * origin;
 		this.setState({xAxis: {range: {zoom: newZoom, scroll: newScroll}}});
 		return new Promise<void>((resolve) => {
-			let animationTime = this.data.animations.enabled ? this.data.animations.zoomSpeed : 0;
+			let animationTime = this.state.animations.enabled ? this.state.animations.zoomSpeed : 0;
 			setTimeout(resolve, animationTime * 1000);
 		});
 	}
 	
 	zoomToRange(range: number, origin?: number): Promise<void> {
-		var {scaleFactor, zoom} = this.data.xAxis.range;
-		let currentRange = this.data.width / (scaleFactor * zoom);
+		var {scaleFactor, zoom} = this.state.xAxis.range;
+		let currentRange = this.state.width / (scaleFactor * zoom);
 		return this.zoom(currentRange / range, origin);
 	}
 
 	scrollToEnd(): Promise<void> {
-		let state = this.data;
+		let state = this.state;
 		let endXVal = this.trendsManager.getEndXVal();
 		let range = state.xAxis.range;
 		var scroll = endXVal - this.pxToValueByXAxis(state.width) + this.pxToValueByXAxis(range.padding.end) - range.zeroVal;
 		this.setState({xAxis: {range: {scroll: scroll}}});
 		return new Promise<void>((resolve) => {
-			let animationTime = this.data.animations.enabled ? this.data.animations.scrollSpeed : 0;
+			let animationTime = this.state.animations.enabled ? this.state.animations.scrollSpeed : 0;
 			setTimeout(resolve, animationTime * 1000);
 		});
 	}
@@ -671,7 +672,7 @@ export class Chart {
 	 *  returns offset in pixels from xAxis.range.zeroVal to xVal
 	 */
 	getPointOnXAxis(xVal: number): number {
-		var {scaleFactor, zoom, zeroVal} = this.data.xAxis.range;
+		var {scaleFactor, zoom, zeroVal} = this.state.xAxis.range;
 		return (xVal - zeroVal) * scaleFactor * zoom;
 	}
 
@@ -679,7 +680,7 @@ export class Chart {
 	 *  returns offset in pixels from yAxis.range.zeroVal to yVal
 	 */
 	getPointOnYAxis(yVal: number): number {
-		var {scaleFactor, zoom, zeroVal} = this.data.yAxis.range;
+		var {scaleFactor, zoom, zeroVal} = this.state.yAxis.range;
 		return (yVal - zeroVal) * scaleFactor * zoom;
 	}
 
@@ -687,7 +688,7 @@ export class Chart {
 	 * returns value by offset in pixels from xAxis.range.zeroVal
 	 */
 	getValueOnXAxis(x: number): number {
-		return this.data.xAxis.range.zeroVal + this.pxToValueByXAxis(x);
+		return this.state.xAxis.range.zeroVal + this.pxToValueByXAxis(x);
 	}
 
 
@@ -695,7 +696,7 @@ export class Chart {
 	 *  convert value to pixels by using settings from xAxis.range
 	 */
 	valueToPxByXAxis(xVal: number) {
-		return xVal * this.data.xAxis.range.scaleFactor * this.data.xAxis.range.zoom;
+		return xVal * this.state.xAxis.range.scaleFactor * this.state.xAxis.range.zoom;
 	}
 
 
@@ -703,14 +704,14 @@ export class Chart {
 	 *  convert value to pixels by using settings from yAxis.range
 	 */
 	valueToPxByYAxis(yVal: number) {
-		return yVal * this.data.yAxis.range.scaleFactor * this.data.yAxis.range.zoom;
+		return yVal * this.state.yAxis.range.scaleFactor * this.state.yAxis.range.zoom;
 	}
 
 	/**
 	 *  convert pixels to value by using settings from xAxis.range
 	 */
 	pxToValueByXAxis(xVal: number) {
-		return xVal / this.data.xAxis.range.scaleFactor / this.data.xAxis.range.zoom;
+		return xVal / this.state.xAxis.range.scaleFactor / this.state.xAxis.range.zoom;
 	}
 
 
@@ -718,7 +719,7 @@ export class Chart {
 	 *  convert pixels to value by using settings from yAxis.range
 	 */
 	pxToValueByYAxis(yVal: number) {
-		return yVal / this.data.yAxis.range.scaleFactor / this.data.yAxis.range.zoom;
+		return yVal / this.state.yAxis.range.scaleFactor / this.state.yAxis.range.zoom;
 	}
 
 
@@ -726,7 +727,7 @@ export class Chart {
 	 *  returns x value by screen x coordinate
 	 */
 	getValueByScreenX(x: number): number {
-		var {zeroVal, scroll} = this.data.xAxis.range;
+		var {zeroVal, scroll} = this.state.xAxis.range;
 		return zeroVal + scroll + this.pxToValueByXAxis(x);
 	}
 
@@ -735,7 +736,7 @@ export class Chart {
 	 *  returns y value by screen y coordinate
 	 */
 	getValueByScreenY(y: number): number {
-		var {zeroVal, scroll} = this.data.yAxis.range;
+		var {zeroVal, scroll} = this.state.yAxis.range;
 		return zeroVal + scroll + this.pxToValueByYAxis(y);
 	}
 
@@ -744,7 +745,7 @@ export class Chart {
 	 *  returns screen x value by screen y coordinate
 	 */
 	getScreenXByValue(xVal: number): number {
-		var {scroll, zeroVal} = this.data.xAxis.range;
+		var {scroll, zeroVal} = this.state.xAxis.range;
 		return this.valueToPxByXAxis(xVal - zeroVal - scroll)
 	}
 
@@ -752,7 +753,7 @@ export class Chart {
 	 *  returns screen y value by screen y coordinate
 	 */
 	getScreenYByValue(yVal: number): number {
-		var {scroll, zeroVal} = this.data.yAxis.range;
+		var {scroll, zeroVal} = this.state.yAxis.range;
 		return this.valueToPxByYAxis(yVal - zeroVal - scroll)
 	}
 
@@ -784,12 +785,12 @@ export class Chart {
 
 
 	getScreenRightVal() {
-		return this.getValueByScreenX(this.data.width);
+		return this.getValueByScreenX(this.state.width);
 	}
 
 
 	getPaddingRight(): number {
-		return this.getValueByScreenX(this.data.width - this.data.xAxis.range.padding.end);
+		return this.getValueByScreenX(this.state.width - this.state.xAxis.range.padding.end);
 	}
 
 }

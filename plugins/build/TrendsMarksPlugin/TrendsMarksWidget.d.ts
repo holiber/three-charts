@@ -1,4 +1,4 @@
-import { ChartState, TrendsWidget, TrendWidget } from 'three-charts';
+import { Chart, TrendsWidget, TrendWidget } from 'three-charts';
 import Object3D = THREE.Object3D;
 /**
  * widget for drawing trends marks for all trends
@@ -14,7 +14,7 @@ export declare class TrendMarksWidget extends TrendWidget {
     private trendsMarksPlugin;
     private object3D;
     private marksWidgets;
-    constructor(chartState: ChartState, trendName: string);
+    constructor(chart: Chart, trendName: string);
     getObject3D(): Object3D;
     protected bindEvents(): void;
     private getTrendsMarksPlugin();

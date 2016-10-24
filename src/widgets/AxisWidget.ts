@@ -16,6 +16,7 @@ import MeshBasicMaterial = THREE.MeshBasicMaterial;
 import OrthographicCamera = THREE.OrthographicCamera;
 import {IScreenTransformOptions} from "../Screen";
 import {AXIS_TYPE, AXIS_DATA_TYPE, IAxisOptions} from "../interfaces";
+import { ChartColor } from "../Color";
 
 /**
  * widget for drawing axis
@@ -87,25 +88,29 @@ export class AxisWidget extends ChartWidget {
 	private setupAxis(orientation: AXIS_TYPE) {
 
 		let isXAxis = orientation == AXIS_TYPE.X;
-		let {width: visibleWidth, height: visibleHeight} = this.chart.data;
+		let {width: visibleWidth, height: visibleHeight} = this.chart.state;
 		let canvasWidth = 0, canvasHeight = 0;
+		let axisOptions: IAxisOptions;
 
 		// clean meshes
 		if (isXAxis) {
 			this.axisXObject.traverse(obj => this.axisXObject.remove(obj));
 			canvasWidth = visibleWidth * 3;
 			canvasHeight = 50;
+			axisOptions = this.chart.state.xAxis;
 		} else {
 			this.axisYObject.traverse(obj => this.axisYObject.remove(obj));
 			canvasWidth = 50;
 			canvasHeight = visibleHeight * 3;
+			axisOptions = this.chart.state.yAxis;
 		}
 
 		var texture = Utils.createPixelPerfectTexture(canvasWidth, canvasHeight, (ctx) => {
+			let color = new ChartColor(axisOptions.color);
 			ctx.beginPath();
-			ctx.font = "10px Arial";
-			ctx.fillStyle = "rgba(255,255,255,0.5)";
-			ctx.strokeStyle = "rgba(255,255,255,0.1)";
+			ctx.font = this.chart.state.font.m;
+			ctx.fillStyle = color.rgbaStr;
+			ctx.strokeStyle = color.rgbaStr;
 		});
 
 
@@ -136,7 +141,7 @@ export class AxisWidget extends ChartWidget {
 	private updateAxis(orientation: AXIS_TYPE) {
 		if (this.isDestroyed) return;
 		var isXAxis = orientation == AXIS_TYPE.X;
-		var {width: visibleWidth, height: visibleHeight} = this.chart.data;
+		var {width: visibleWidth, height: visibleHeight} = this.chart.state;
 		var {scrollX, scrollY, zoomX, zoomY} = this.chart.screen.options;
 		var axisOptions: IAxisOptions;
 		var axisMesh: Mesh;
@@ -144,11 +149,11 @@ export class AxisWidget extends ChartWidget {
 
 		if (isXAxis) {
 			axisMesh = this.axisXObject.children[0] as Mesh;
-			axisOptions = this.chart.data.xAxis;
+			axisOptions = this.chart.state.xAxis;
 			axisGridParams = GridWidget.getGridParamsForAxis(axisOptions, visibleWidth, zoomX);
 		} else {
 			axisMesh = this.axisYObject.children[0] as Mesh;
-			axisOptions = this.chart.data.yAxis;
+			axisOptions = this.chart.state.yAxis;
 			axisGridParams = GridWidget.getGridParamsForAxis(axisOptions, visibleHeight, zoomY);
 		}
 

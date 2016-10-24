@@ -54,8 +54,8 @@
         exports.TrendsLoadingWidget = TrendsLoadingWidget;
         var TrendLoading = function(_super) {
             __extends(TrendLoading, _super);
-            function TrendLoading(state, trendName) {
-                _super.call(this, state, trendName);
+            function TrendLoading(chart, trendName) {
+                _super.call(this, chart, trendName);
                 this.isActive = false;
                 this.mesh = new Mesh(new PlaneBufferGeometry(32, 32), new MeshBasicMaterial({
                     map: TrendLoading.createTexture(),
@@ -63,8 +63,8 @@
                 }));
                 this.deactivate();
             }
-            TrendLoading.widgetIsEnabled = function(trendOptions, chartState) {
-                return trendOptions.enabled && chartState.data.animations.enabled;
+            TrendLoading.widgetIsEnabled = function(trendOptions, chart) {
+                return trendOptions.enabled && chart.data.animations.enabled;
             };
             TrendLoading.prototype.getObject3D = function() {
                 return this.mesh;
@@ -130,7 +130,7 @@
                     x = segment.currentAnimationState.xVal - segment.maxLength;
                     y = segment.currentAnimationState.yVal;
                 }
-                var pointVector = this.chartState.screen.getPointOnChart(x, y);
+                var pointVector = this.chart.screen.getPointOnChart(x, y);
                 this.mesh.position.set(pointVector.x, pointVector.y, 0);
             };
             return TrendLoading;

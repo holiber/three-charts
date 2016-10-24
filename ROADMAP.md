@@ -30,6 +30,7 @@
 - preinstall plugins and widgets
 - examples with line smoothing
 - examples how to create custom ChartView
+- examples with different colors on axis/background/grid
 
 ##v0.3
 - typedoc

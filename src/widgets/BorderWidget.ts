@@ -11,7 +11,7 @@ export class BorderWidget extends ChartWidget {
 
 
 	onReadyHandler() {
-		var {width, height} = this.chart.data;
+		var {width, height} = this.chart.state;
 		var geometry = new THREE.Geometry();
 		var material = new THREE.LineBasicMaterial( { linewidth: 1, opacity: 0.0, transparent: true} );
 

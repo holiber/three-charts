@@ -1,13 +1,12 @@
-// import { Chart, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE } from 'three-charts';
+
 import { ChartView, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE } from '../src';
+
+// import { ChartView, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE } from 'three-charts';
 // import { TREND_MARK_SIDE, ITrendMarkOptions, TrendsMarksPlugin } from '../plugins/build/TrendsMarksPlugin';
 // import { TrendsBeaconWidget } from '../plugins/build/TrendsBeaconWidget';
 // import { TrendsLoadingWidget } from '../plugins/build/TrendsLoadingWidget';
 // import { TrendsIndicatorWidget } from '../plugins/build/TrendsIndicatorWidget';
-//
-//
-//
-// Chart.preinstalledWidgets.push(TrendsLoadingWidget, TrendsBeaconWidget, TrendsIndicatorWidget);
+// ChartView.preinstalledWidgets.push(TrendsLoadingWidget, TrendsBeaconWidget, TrendsIndicatorWidget);
 
 var chart: ChartView;
 
@@ -140,8 +139,8 @@ window.onload = function () {
 				hasIndicator: true,
 				hasBackground: true,
 			},
-			// 'red': {dataset: dsRed.data, lineColor: 0xFF2222, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
-			// 'blue': {dataset: dsBlue.data, lineColor: 0x2222FF, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
+			// 'red': {dataset: dsRed.state, lineColor: 0xFF2222, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
+			// 'blue': {dataset: dsBlue.state, lineColor: 0x2222FF, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
 		},
 		showStats: true,
 		// autoRender: {fps: 100},
@@ -168,8 +167,8 @@ window.onload = function () {
 	(<any>window)['chart'] = chart;
 
 	var mainTrend = chart.getTrend('main');
-	var deadlineMark = chart.state.xAxisMarks.getItem('deadline');
-	var closeMark = chart.state.xAxisMarks.getItem('close');
+	var deadlineMark = chart.chart.xAxisMarks.getItem('deadline');
+	var closeMark = chart.chart.xAxisMarks.getItem('close');
 
 	mainTrend.onDataChange(() => {
 		var closeValue = closeMark.options.value;
@@ -194,7 +193,7 @@ window.onload = function () {
 	// 		range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 100}
 	// 	},
 	// 	trends: {
-	// 		'main': {dataset: dsMain.data, hasBeacon: true}
+	// 		'main': {dataset: dsMain.state, hasBeacon: true}
 	// 	}
 	// });
 	//
@@ -207,7 +206,7 @@ window.onload = function () {
 	// 		range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 200}
 	// 	},
 	// 	trends: {
-	// 		'main': {dataset: dsMain.data, hasBeacon: true}
+	// 		'main': {dataset: dsMain.state, hasBeacon: true}
 	// 	},
 	//
 	// });
@@ -221,8 +220,8 @@ window.onload = function () {
 	// 		range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 80}
 	// 	},
 	// 	trends: {
-	// 		'main': {dataset: dsMain.data, hasBeacon: true},
-	// 		'red': {dataset: dsRed.data, lineColor: 0xFF2222},
+	// 		'main': {dataset: dsMain.state, hasBeacon: true},
+	// 		'red': {dataset: dsRed.state, lineColor: 0xFF2222},
 	// 	}
 	// });
 	//
@@ -259,7 +258,7 @@ window.onload = function () {
 		
 		// previewChart1.appendData(dataToAppend1);
 		//
-		// var chartData2 = previewChart2.state.data.trends[0].data;
+		// var chartData2 = previewChart2.state.state.trends[0].state;
 		// var lastItem2 = chartData2[chartData.length - 1];
 		// var dataToAppend2 = [
 		// 	{xVal: lastItem2.xVal + 1, yVal: lastItem2.yVal + Math.random() * 14 - 7 },
@@ -295,12 +294,12 @@ function initListeners() {
 	});
 
 	document.querySelector('[name="move-left"]').addEventListener('click', () => {
-		let currentRange = chart.state.data.xAxis.range;
+		let currentRange = chart.chart.state.xAxis.range;
 		chart.setState({xAxis: {range: {from: currentRange.from - 2000}}});
 	});
 
 	document.querySelector('[name="move-right"]').addEventListener('click', () => {
-		let currentRange = chart.state.data.xAxis.range;
+		let currentRange = chart.chart.state.xAxis.range;
 		chart.setState({xAxis: {range: {to: currentRange.to + 2000}}});
 	});
 	
@@ -311,10 +310,10 @@ function initListeners() {
 			var segmentLength = Number(this.getAttribute('data-segment-length'));
 
 
-			chart.state.setState({autoScroll: false});
-			chart.state.zoomToRange(range);
-			chart.state.scrollToEnd().then(() => {
-				chart.state.setState({autoScroll: true});
+			chart.chart.setState({autoScroll: false});
+			chart.chart.zoomToRange(range);
+			chart.chart.scrollToEnd().then(() => {
+				chart.chart.setState({autoScroll: true});
 			});
 		});
 	}

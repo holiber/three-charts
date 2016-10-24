@@ -9,6 +9,8 @@ import LineSegments = THREE.LineSegments;
 import {Utils} from "../Utils";
 import {IScreenTransformOptions} from "../Screen";
 import {IAxisOptions} from "../interfaces";
+import Color = THREE.Color;
+import {ChartColor} from "../Color";
 
 export interface IGridParamsForAxis {
 	start: number,
@@ -30,7 +32,7 @@ export class GridWidget extends ChartWidget{
 	private isDestroyed = false;
 
 	onReadyHandler() {
-		var {width, height, xAxis, yAxis} = this.chart.data;
+		var {width, height, xAxis, yAxis} = this.chart.state;
 		this.gridSizeH = Math.floor(width / xAxis.grid.minSizePx) * 3;
 		this.gridSizeV = Math.floor(height / yAxis.grid.minSizePx) * 3;
 		this.initGrid();
@@ -58,10 +60,11 @@ export class GridWidget extends ChartWidget{
 	}
 
 	private initGrid() {
-		var geometry = new THREE.Geometry();
-		var material = new THREE.LineBasicMaterial( { linewidth: 1, opacity: 0.1, transparent: true});
-		var xLinesCount = this.gridSizeH;
-		var yLinesCount = this.gridSizeV;
+		let color = new ChartColor(this.chart.state.xAxis.grid.color);
+		let geometry = new THREE.Geometry();
+		let material = new THREE.LineBasicMaterial({linewidth: 1, color: color.value, opacity: color.a, transparent: true});
+		let xLinesCount = this.gridSizeH;
+		let yLinesCount = this.gridSizeV;
 		while (xLinesCount--) geometry.vertices.push(new Vector3(), new Vector3());
 		while (yLinesCount--) geometry.vertices.push(new Vector3(), new Vector3());
 		this.lineSegments = new LineSegments(geometry, material);
@@ -71,7 +74,7 @@ export class GridWidget extends ChartWidget{
 
 	private updateGrid() {
 		if (this.isDestroyed) return;
-		var {yAxis, xAxis, width, height} = this.chart.data;
+		var {yAxis, xAxis, width, height} = this.chart.state;
 		var axisXGrid = GridWidget.getGridParamsForAxis(xAxis, width, xAxis.range.zoom);
 		var axisYGrid = GridWidget.getGridParamsForAxis(yAxis, height, yAxis.range.zoom);
 		var scrollXInSegments = Math.ceil(xAxis.range.scroll / axisXGrid.step);
@@ -111,8 +114,8 @@ export class GridWidget extends ChartWidget{
 
 	private getHorizontalLineSegment(yVal: number, scrollXVal: number, scrollYVal: number): Vector3[] {
 		var chartState = this.chart;
-		var localYVal = yVal - chartState.data.yAxis.range.zeroVal - scrollYVal;
-		var widthVal = chartState.pxToValueByXAxis(chartState.data.width);
+		var localYVal = yVal - chartState.state.yAxis.range.zeroVal - scrollYVal;
+		var widthVal = chartState.pxToValueByXAxis(chartState.state.width);
 		return [
 			new THREE.Vector3(widthVal * 2 + scrollXVal, localYVal, 0 ),
 			new THREE.Vector3( -widthVal + scrollXVal, localYVal, 0 )
@@ -121,8 +124,8 @@ export class GridWidget extends ChartWidget{
 
 	private getVerticalLineSegment(xVal: number, scrollXVal: number, scrollYVal: number): Vector3[] {
 		var chartState = this.chart;
-		var localXVal = xVal - chartState.data.xAxis.range.zeroVal - scrollXVal;
-		var heightVal = chartState.pxToValueByYAxis(chartState.data.height);
+		var localXVal = xVal - chartState.state.xAxis.range.zeroVal - scrollXVal;
+		var heightVal = chartState.pxToValueByYAxis(chartState.state.height);
 		return [
 			new THREE.Vector3(localXVal, heightVal * 2 + scrollYVal, 0 ),
 			new THREE.Vector3(localXVal, -heightVal + scrollYVal, 0 )
@@ -130,7 +133,7 @@ export class GridWidget extends ChartWidget{
 	}
 
 	private onZoomFrame(options: IScreenTransformOptions) {
-		var {xAxis, yAxis} = this.chart.data;
+		var {xAxis, yAxis} = this.chart.state;
 		if (options.zoomX) this.lineSegments.scale.setX(xAxis.range.scaleFactor * options.zoomX);
 		if (options.zoomY) this.lineSegments.scale.setY(yAxis.range.scaleFactor * options.zoomY);
 	}

@@ -55,8 +55,8 @@
         exports.TrendsIndicatorWidget = TrendsIndicatorWidget;
         var TrendIndicator = function(_super) {
             __extends(TrendIndicator, _super);
-            function TrendIndicator(state, trendName) {
-                _super.call(this, state, trendName);
+            function TrendIndicator(chart, trendName) {
+                _super.call(this, chart, trendName);
                 this.initObject();
                 this.onTrendChange();
             }
@@ -99,17 +99,17 @@
                 this.updatePosition();
             };
             TrendIndicator.prototype.updatePosition = function() {
-                var state = this.chartState;
+                var chart = this.chart;
                 var _a = this.segment.currentAnimationState, segmentEndXVal = _a.endXVal, segmentEndYVal = _a.endYVal;
-                var endPointVector = state.screen.getPointOnChart(segmentEndXVal, segmentEndYVal);
-                var screenWidth = state.data.width;
+                var endPointVector = chart.screen.getPointOnChart(segmentEndXVal, segmentEndYVal);
+                var screenWidth = chart.data.width;
                 var x = endPointVector.x + OFFSET_X;
                 var y = endPointVector.y;
-                var screenX = state.screen.getScreenXByPoint(endPointVector.x);
+                var screenX = chart.screen.getScreenXByPoint(endPointVector.x);
                 var indicatorIsOutOfScreen = screenX < 0 || screenX > screenWidth;
                 if (indicatorIsOutOfScreen) {
-                    if (screenX < 0) x = state.screen.getPointByScreenX(0) + 20;
-                    if (screenX > screenWidth) x = state.screen.getPointByScreenX(screenWidth) - CANVAS_WIDTH / 2 - 10;
+                    if (screenX < 0) x = chart.screen.getPointByScreenX(0) + 20;
+                    if (screenX > screenWidth) x = chart.screen.getPointByScreenX(screenWidth) - CANVAS_WIDTH / 2 - 10;
                     y -= 25;
                 }
                 this.mesh.position.set(x + CANVAS_WIDTH / 2, y + CANVAS_HEIGHT / 2 - 30, .1);

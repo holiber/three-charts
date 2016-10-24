@@ -72,13 +72,13 @@
             TrendBeacon.prototype.bindEvents = function() {
                 var _this = this;
                 _super.prototype.bindEvents.call(this);
-                this.bindEvent(this.chartState.onScroll(function() {
+                this.bindEvent(this.chart.onScroll(function() {
                     return _this.updatePosition();
                 }));
-                this.bindEvent(this.chartState.onChange(function(changedProps) {
+                this.bindEvent(this.chart.onChange(function(changedProps) {
                     return _this.onStateChange(changedProps);
                 }));
-                this.bindEvent(this.chartState.onDestroy(function() {
+                this.bindEvent(this.chart.onDestroy(function() {
                     return _this.stopAnimation();
                 }));
             };
@@ -147,7 +147,7 @@
                 }
             };
             TrendBeacon.prototype.updatePosition = function() {
-                var state = this.chartState;
+                var chart = this.chart;
                 var xVal, yVal;
                 var currentAnimationState = this.segment.currentAnimationState;
                 if (this.trend.getOptions().type == three_charts_1.TREND_TYPE.LINE) {
@@ -157,12 +157,12 @@
                     xVal = currentAnimationState.xVal;
                     yVal = currentAnimationState.endYVal;
                 }
-                var endPointVector = state.screen.getPointOnChart(xVal, yVal);
-                var screenWidth = state.data.width;
+                var endPointVector = chart.screen.getPointOnChart(xVal, yVal);
+                var screenWidth = chart.data.width;
                 var x = endPointVector.x;
-                var screenX = state.screen.getScreenXByPoint(endPointVector.x);
-                if (screenX < 0) x = state.screen.getPointByScreenX(0);
-                if (screenX > screenWidth) x = state.screen.getPointByScreenX(screenWidth);
+                var screenX = chart.screen.getScreenXByPoint(endPointVector.x);
+                if (screenX < 0) x = chart.screen.getPointByScreenX(0);
+                if (screenX > screenWidth) x = chart.screen.getPointByScreenX(screenWidth);
                 this.mesh.position.set(x, endPointVector.y, .1);
             };
             return TrendBeacon;

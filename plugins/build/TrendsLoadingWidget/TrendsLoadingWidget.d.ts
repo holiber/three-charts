@@ -1,5 +1,5 @@
 import Mesh = THREE.Mesh;
-import { TrendWidget, TrendsWidget, ITrendOptions, ChartState } from 'three-charts';
+import { TrendWidget, TrendsWidget, ITrendOptions, Chart } from 'three-charts';
 /**
  * widget adds loading indicator
  * activated when animations enabled
@@ -12,8 +12,8 @@ export declare class TrendLoading extends TrendWidget {
     private mesh;
     private animation;
     private isActive;
-    static widgetIsEnabled(trendOptions: ITrendOptions, chartState: ChartState): any;
-    constructor(state: ChartState, trendName: string);
+    static widgetIsEnabled(trendOptions: ITrendOptions, chart: Chart): boolean;
+    constructor(chart: Chart, trendName: string);
     getObject3D(): Mesh;
     bindEvents(): void;
     prependData(): void;

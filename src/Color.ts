@@ -68,7 +68,10 @@ export class ChartColor {
 	}
 
 	set(color: TChartColor) {
-		if (typeof color == 'number') color = '#' + (color as number).toString(16);
+		if (typeof color == 'number') {
+			color = (color as number).toString(16);
+			color = '#' + '0'.repeat(6 - color.length) + color;
+		}
 		let colorStr = color as string;
 		let rgba = ChartColor.parseColor(colorStr);
 		this.r = rgba[0];
