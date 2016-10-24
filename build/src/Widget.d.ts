@@ -12,7 +12,7 @@ export declare abstract class ChartWidget {
     static widgetName: string;
     protected chart: Chart;
     private unbindList;
-    setupChartState(chartState: Chart): void;
+    setupChart(chart: Chart): void;
     abstract onReadyHandler(): any;
     abstract getObject3D(): Object3D;
     protected bindEvent(...args: Array<Function | Function[]>): void;

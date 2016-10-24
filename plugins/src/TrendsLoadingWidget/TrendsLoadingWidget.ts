@@ -23,7 +23,7 @@ export class TrendLoading extends TrendWidget {
 	private isActive = false;
 
 	static widgetIsEnabled(trendOptions: ITrendOptions, chart: Chart) {
-		return trendOptions.enabled && chart.data.animations.enabled;
+		return trendOptions.enabled && chart.state.animations.enabled;
 	}
 
 	constructor(chart: Chart, trendName: string) {

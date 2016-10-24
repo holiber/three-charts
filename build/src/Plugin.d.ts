@@ -17,11 +17,11 @@ export declare abstract class ChartPlugin {
     initialState: IChartPluginState;
     config: IChartPluginConfig;
     name: string;
-    protected chartState: Chart;
+    protected chart: Chart;
     protected unsubscribers: Function[];
     protected ee: EventEmitter;
     constructor(options?: IChartPluginState, config?: IChartPluginConfig);
-    setupChartState(chartState: Chart): void;
+    setupChart(chart: Chart): void;
     getOptions(): IChartPluginState;
     protected onInitialStateAppliedHandler(initialState: IChartState): void;
     protected onReadyHandler(): void;

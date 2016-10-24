@@ -71,15 +71,15 @@ export class ChartView {
 
 	private init($container: Element) {
 		var chart = this.chart;
-		var {width: w, height: h, showStats, autoRender} = chart.state;
+		var {width: w, height: h, showStats, autoRender} = chart.chart;
 		this.scene = new THREE.Scene();
 		this.isStopped = !autoRender.enabled;
 
-		var renderer = this.renderer = new (ChartView.renderers[this.chart.state.renderer] as any)({
+		var renderer = this.renderer = new (ChartView.renderers[this.chart.chart.renderer] as any)({
 			antialias: true,
 			alpha: true
 		});
-		let backgroundColor = new ChartColor(chart.state.backgroundColor);
+		let backgroundColor = new ChartColor(chart.chart.backgroundColor);
 		renderer.setSize(w, h);
 		renderer.setPixelRatio(ChartView.devicePixelRatio);
 		renderer.setClearColor(backgroundColor.value, backgroundColor.a);
@@ -120,7 +120,7 @@ export class ChartView {
 		);
 
 		this.widgets.forEach(widget => {
-			widget.setupChartState(this.chart);
+			widget.setupChart(this.chart);
 			widget.onReadyHandler();
 			this.scene.add(widget.getObject3D());
 		});
@@ -131,7 +131,7 @@ export class ChartView {
 		this.stats && this.stats.begin();
 		this.render();
 		if (this.isStopped) return;
-		var fpsLimit = this.chart.state.autoRender.fps;
+		var fpsLimit = this.chart.chart.autoRender.fps;
 
 		if (fpsLimit) {
 			let delay = 1000 / fpsLimit;
@@ -175,7 +175,7 @@ export class ChartView {
 	}
 
 	getState(): IChartState {
-		return this.chart.state
+		return this.chart.chart
 	}
 
 	/**
@@ -195,7 +195,7 @@ export class ChartView {
 
 	private bindEvents() {
 		var $el = this.$el;
-		if (this.chart.state.controls.enabled) {
+		if (this.chart.chart.controls.enabled) {
 			$el.addEventListener('mousewheel', (ev: MouseWheelEvent) => {
 				this.onMouseWheel(ev)
 			});
@@ -211,7 +211,7 @@ export class ChartView {
 				this.onTouchEnd(ev)
 			});
 		}
-		if (this.chart.state.autoResize) {
+		if (this.chart.chart.autoResize) {
 			this.resizeSensor = new ResizeSensor(this.$container, () => {
 				this.onChartContainerResizeHandler(this.$container.clientWidth, this.$container.clientHeight);
 			});
@@ -268,13 +268,13 @@ export class ChartView {
 
 	private autoscroll() {
 		var state = this.chart;
-		if (!state.state.autoScroll) return;
-		var oldTrendsMaxX = state.state.prevState.computedData.trends.maxXVal;
-		var trendsMaxXDelta = state.state.computedData.trends.maxXVal - oldTrendsMaxX;
+		if (!state.chart.autoScroll) return;
+		var oldTrendsMaxX = state.chart.prevState.computedData.trends.maxXVal;
+		var trendsMaxXDelta = state.chart.computedData.trends.maxXVal - oldTrendsMaxX;
 		if (trendsMaxXDelta > 0) {
 			var maxVisibleX = this.chart.screen.getScreenRightVal();
 			var paddingRightX = this.chart.getPaddingRight();
-			var currentScroll = state.state.xAxis.range.scroll;
+			var currentScroll = state.chart.xAxis.range.scroll;
 			if (oldTrendsMaxX < paddingRightX || oldTrendsMaxX > maxVisibleX) {
 				return;
 			}
@@ -284,7 +284,7 @@ export class ChartView {
 	}
 
 	private onScrollStop() {
-		// var tendsXMax = this.chart.state.computedData.trends.maxX;
+		// var tendsXMax = this.chart.chart.computedData.trends.maxX;
 		// var paddingRightX = this.chart.getPaddingRight();
 		// if (tendsXMax < paddingRightX) {
 		// 	this.chart.scrollToEnd();
@@ -300,7 +300,7 @@ export class ChartView {
 	}
 
 	private onMouseMove(ev: MouseEvent) {
-		if (this.chart.state.cursor.dragMode) {
+		if (this.chart.chart.cursor.dragMode) {
 			this.setState({cursor: {dragMode: true, x: ev.clientX, y: ev.clientY}});
 		}
 	}
@@ -308,7 +308,7 @@ export class ChartView {
 	private onMouseWheel(ev: MouseWheelEvent) {
 		ev.stopPropagation();
 		ev.preventDefault();
-		let zoomOrigin = ev.layerX / this.chart.state.width;
+		let zoomOrigin = ev.layerX / this.chart.chart.width;
 		let zoomValue = 1 + ev.wheelDeltaY * 0.001;
 		this.zoom(zoomValue, zoomOrigin);
 	}
@@ -326,7 +326,7 @@ export class ChartView {
 	}
 
 	private onChartResize() {
-		let {width, height} = this.chart.state;
+		let {width, height} = this.chart.chart;
 		this.renderer.setSize(width, height);
 		this.setupCamera();
 	}
@@ -336,7 +336,7 @@ export class ChartView {
 		const MIN_ZOOM_VALUE = 0.7;
 		zoomValue = Math.min(zoomValue, MAX_ZOOM_VALUE);
 		zoomValue = Math.max(zoomValue, MIN_ZOOM_VALUE);
-		let autoScrollIsEnabled = this.chart.state.autoScroll;
+		let autoScrollIsEnabled = this.chart.chart.autoScroll;
 		if (autoScrollIsEnabled) this.chart.setState({autoScroll: false});
 		this.chart.zoom(zoomValue, zoomOrigin).then(() => {
 			if (autoScrollIsEnabled) this.setState({autoScroll: true});

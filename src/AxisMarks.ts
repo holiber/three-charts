@@ -41,7 +41,7 @@ export class AxisMarks {
 		this.ee = new EventEmitter();
 		this.axisType = axisType;
 		var marks = this.items;
-		var axisMarksOptions = axisType == AXIS_TYPE.X ? chartState.state.xAxis.marks : chartState.state.yAxis.marks;
+		var axisMarksOptions = axisType == AXIS_TYPE.X ? chartState.chart.xAxis.marks : chartState.chart.yAxis.marks;
 		
 		for (let options of axisMarksOptions) {
 			let axisMark: AxisMark;
@@ -152,7 +152,7 @@ export class AxisTimeleftMark extends AxisMark {
 	
 	getDisplayedVal(): string {
 		var markVal = this.options.value;
-		var maxXVal = this.chartState.state.computedData.trends.maxXVal;
+		var maxXVal = this.chartState.chart.computedData.trends.maxXVal;
 		var time = markVal - maxXVal;
 		if (time < 0) time = 0;
 		return Utils.msToTimeString(time);

@@ -139,8 +139,8 @@ window.onload = function () {
 				hasIndicator: true,
 				hasBackground: true,
 			},
-			// 'red': {dataset: dsRed.state, lineColor: 0xFF2222, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
-			// 'blue': {dataset: dsBlue.state, lineColor: 0x2222FF, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
+			// 'red': {dataset: dsRed.chart, lineColor: 0xFF2222, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
+			// 'blue': {dataset: dsBlue.chart, lineColor: 0x2222FF, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
 		},
 		showStats: true,
 		// autoRender: {fps: 100},
@@ -178,7 +178,7 @@ window.onload = function () {
 		}
 		// var markOptions = MarksSource.getNext(mainTrend.getLastItem().xVal);
 		// if (markOptions) setTimeout(() => {
-		// 	let trendsMarks = chart.state.getPlugin(TrendsMarksPlugin.NAME) as TrendsMarksPlugin;
+		// 	let trendsMarks = chart.chart.getPlugin(TrendsMarksPlugin.NAME) as TrendsMarksPlugin;
 		// 	trendsMarks.createMark(markOptions);
 		// }, 500);
 	});
@@ -193,7 +193,7 @@ window.onload = function () {
 	// 		range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 100}
 	// 	},
 	// 	trends: {
-	// 		'main': {dataset: dsMain.state, hasBeacon: true}
+	// 		'main': {dataset: dsMain.chart, hasBeacon: true}
 	// 	}
 	// });
 	//
@@ -206,7 +206,7 @@ window.onload = function () {
 	// 		range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 200}
 	// 	},
 	// 	trends: {
-	// 		'main': {dataset: dsMain.state, hasBeacon: true}
+	// 		'main': {dataset: dsMain.chart, hasBeacon: true}
 	// 	},
 	//
 	// });
@@ -220,8 +220,8 @@ window.onload = function () {
 	// 		range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 80}
 	// 	},
 	// 	trends: {
-	// 		'main': {dataset: dsMain.state, hasBeacon: true},
-	// 		'red': {dataset: dsRed.state, lineColor: 0xFF2222},
+	// 		'main': {dataset: dsMain.chart, hasBeacon: true},
+	// 		'red': {dataset: dsRed.chart, lineColor: 0xFF2222},
 	// 	}
 	// });
 	//
@@ -258,7 +258,7 @@ window.onload = function () {
 		
 		// previewChart1.appendData(dataToAppend1);
 		//
-		// var chartData2 = previewChart2.state.state.trends[0].state;
+		// var chartData2 = previewChart2.chart.chart.trends[0].chart;
 		// var lastItem2 = chartData2[chartData.length - 1];
 		// var dataToAppend2 = [
 		// 	{xVal: lastItem2.xVal + 1, yVal: lastItem2.yVal + Math.random() * 14 - 7 },
@@ -294,12 +294,12 @@ function initListeners() {
 	});
 
 	document.querySelector('[name="move-left"]').addEventListener('click', () => {
-		let currentRange = chart.chart.state.xAxis.range;
+		let currentRange = chart.chart.chart.xAxis.range;
 		chart.setState({xAxis: {range: {from: currentRange.from - 2000}}});
 	});
 
 	document.querySelector('[name="move-right"]').addEventListener('click', () => {
-		let currentRange = chart.chart.state.xAxis.range;
+		let currentRange = chart.chart.chart.xAxis.range;
 		chart.setState({xAxis: {range: {to: currentRange.to + 2000}}});
 	});
 	

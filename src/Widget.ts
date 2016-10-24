@@ -16,8 +16,8 @@ export abstract class ChartWidget {
 	private unbindList: Function[] = [];
 
 
-	setupChartState(chartState: Chart) {
-		this.chart = chartState;
+	setupChart(chart: Chart) {
+		this.chart = chart;
 	}
 
 	abstract onReadyHandler(): any;

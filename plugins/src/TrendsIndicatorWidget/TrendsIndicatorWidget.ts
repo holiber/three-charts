@@ -94,7 +94,7 @@ export class TrendIndicator extends TrendWidget {
 		var chart = this.chart;
 		var {endXVal: segmentEndXVal, endYVal: segmentEndYVal} = this.segment.currentAnimationState;
 		var endPointVector = chart.screen.getPointOnChart(segmentEndXVal, segmentEndYVal);
-		var screenWidth = chart.data.width;
+		var screenWidth = chart.state.width;
 		var x = endPointVector.x + OFFSET_X;
 		var y = endPointVector.y;
 

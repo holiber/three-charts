@@ -25,7 +25,7 @@ export abstract class ChartPlugin {
 	initialState: IChartPluginState;
 	config: IChartPluginConfig;
 	name: string;
-	protected chartState: Chart;
+	protected chart: Chart;
 	protected unsubscribers: Function[] = [];
 	protected ee: EventEmitter;
 
@@ -36,19 +36,19 @@ export abstract class ChartPlugin {
 		if (!this.name) Utils.error('Unnamed plugin detected');
 	}
 
-	setupChartState(chartState: Chart) {
-		this.chartState = chartState;
+	setupChart(chart: Chart) {
+		this.chart = chart;
 		this.ee = new EventEmitter();
 		this.bindEvent(
-			this.chartState.onInitialStateApplied(initialState => this.onInitialStateAppliedHandler(initialState)),
-			this.chartState.onReady(() => this.onReadyHandler()),
-			this.chartState.onDestroy(() => this.onDestroyHandler()),
-			this.chartState.onPluginsStateChange(changedPluginsStates => changedPluginsStates[this.name] && this.onStateChanged(changedPluginsStates[this.name]))
+			this.chart.onInitialStateApplied(initialState => this.onInitialStateAppliedHandler(initialState)),
+			this.chart.onReady(() => this.onReadyHandler()),
+			this.chart.onDestroy(() => this.onDestroyHandler()),
+			this.chart.onPluginsStateChange(changedPluginsStates => changedPluginsStates[this.name] && this.onStateChanged(changedPluginsStates[this.name]))
 		)
 	}
 
 	getOptions(): IChartPluginState {
-		return this.chartState.state.pluginsState[this.name];
+		return this.chart.chart.pluginsState[this.name];
 	}
 
 	protected onInitialStateAppliedHandler(initialState: IChartState) {

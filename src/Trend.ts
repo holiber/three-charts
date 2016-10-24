@@ -55,7 +55,7 @@ export class Trend {
 		var options = initialState.trends[trendName];
 		this.name = trendName;
 		this.chartState = chartState;
-		this.calculatedOptions = Utils.deepMerge(this.chartState.state.trendDefaultState, options);
+		this.calculatedOptions = Utils.deepMerge(this.chartState.chart.trendDefaultState, options);
 		this.calculatedOptions.name = trendName;
 		if (options.dataset) this.calculatedOptions.data = Trend.prepareData(options.dataset);
 		this.calculatedOptions.dataset = [];
@@ -131,7 +131,7 @@ export class Trend {
 	}
 
 	getOptions() {
-		return this.chartState.state.trends[this.name]
+		return this.chartState.chart.trends[this.name]
 	}
 
 	setOptions(options: ITrendOptions) {
@@ -166,10 +166,10 @@ export class Trend {
 	private checkForPrependRequest() {
 		if (this.prependRequest) return;
 		var chartState = this.chartState;
-		var minXVal = chartState.state.computedData.trends.minXVal;
+		var minXVal = chartState.chart.computedData.trends.minXVal;
 		var minScreenX = chartState.getScreenXByValue(minXVal);
 		var needToRequest = minScreenX > 0;
-		var {from, to} = chartState.state.xAxis.range;
+		var {from, to} = chartState.chart.xAxis.range;
 		var requestedDataLength = to - from;
 		if (!needToRequest) return;
 		

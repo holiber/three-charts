@@ -48,6 +48,7 @@ module.exports = {
         new WebpackOnBuildPlugin(function(stats) {
             var fs = require('fs');
             fs.writeFileSync(helpers.root('build') + '/index.js', 'module.exports = require("./ThreeChart")');
+
         })
 
     ]

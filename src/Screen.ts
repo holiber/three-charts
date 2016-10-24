@@ -31,10 +31,10 @@ export class Screen {
 
 	constructor(chartState: Chart) {
 		this.chartState = chartState;
-		var {width: w, height: h} = chartState.state;
+		var {width: w, height: h} = chartState.chart;
 		this.ee = new EventEmitter();
 		this.transform({
-			scrollY: this.valueToPxByYAxis(this.chartState.state.yAxis.range.scroll),
+			scrollY: this.valueToPxByYAxis(this.chartState.chart.yAxis.range.scroll),
 			zoomY: 1
 		});
 		this.bindEvents();
@@ -44,7 +44,7 @@ export class Screen {
 	
 	getCameraSettings() {
 
-		var {width: w, height: h} = this.chartState.state;
+		var {width: w, height: h} = this.chartState.chart;
 
 		// settings for pixel-perfect camera
 		var FOV = 75;
@@ -153,16 +153,16 @@ export class Screen {
 
 	private onScrollXHandler(changedProps: IChartState) {
 		var state = this.chartState;
-		var isDragMode = state.state.cursor.dragMode;
-		var animations =  state.state.animations;
+		var isDragMode = state.chart.cursor.dragMode;
+		var animations =  state.chart.animations;
 		var canAnimate = animations.enabled && !isDragMode;
 		var zoomXChanged = changedProps.xAxis.range.zoom;
-		var isAutoscroll = state.state.autoScroll && !isDragMode && !zoomXChanged;
+		var isAutoscroll = state.chart.autoScroll && !isDragMode && !zoomXChanged;
 		var time = isAutoscroll ? animations.autoScrollSpeed : animations.zoomSpeed;
 		var ease = isAutoscroll ? animations.autoScrollEase : animations.zoomEase;
 		if (this.scrollXAnimation) this.scrollXAnimation.pause();
 
-		var range = state.state.xAxis.range;
+		var range = state.chart.xAxis.range;
 		var targetX = range.scroll * range.scaleFactor * range.zoom;
 		this.currentScrollX.x = this.options.scrollX;
 
@@ -184,11 +184,11 @@ export class Screen {
 
 	private onScrollYHandler() {
 		var state = this.chartState;
-		var animations =  state.state.animations;
+		var animations =  state.chart.animations;
 		var canAnimate = animations.enabled;
 		var time = animations.zoomSpeed;
 		if (this.scrollYAnimation) this.scrollYAnimation.pause();
-		var range = state.state.yAxis.range;
+		var range = state.chart.yAxis.range;
 		var targetY = range.scroll * range.scaleFactor * range.zoom;
 
 		this.currentScrollY.y = this.options.scrollY;
@@ -210,10 +210,10 @@ export class Screen {
 
 	private onZoomXHandler() {
 		var state = this.chartState;
-		var animations =  state.state.animations;
+		var animations =  state.chart.animations;
 		var canAnimate = animations.enabled;
 		var time = animations.zoomSpeed;
-		var targetZoom = state.state.xAxis.range.zoom;
+		var targetZoom = state.chart.xAxis.range.zoom;
 		if (this.zoomXAnimation) this.zoomXAnimation.pause();
 
 		var cb = () => {
@@ -233,10 +233,10 @@ export class Screen {
 
 	private onZoomYHandler() {
 		var state = this.chartState;
-		var animations =  state.state.animations;
+		var animations =  state.chart.animations;
 		var canAnimate = animations.enabled;
 		var time = animations.zoomSpeed;
-		var targetZoom = state.state.yAxis.range.zoom;
+		var targetZoom = state.chart.yAxis.range.zoom;
 		if (this.zoomYAnimation) this.zoomYAnimation.pause();
 
 		var cb = () => {
@@ -259,7 +259,7 @@ export class Screen {
 	 *  returns offset in pixels from xAxis.range.zeroVal to scrollXVal
 	 */
 	getPointOnXAxis(xVal: number): number {
-		var {scaleFactor, zeroVal} = this.chartState.state.xAxis.range;
+		var {scaleFactor, zeroVal} = this.chartState.chart.xAxis.range;
 		var zoom = this.options.zoomX;
 		return (xVal - zeroVal) * scaleFactor * zoom;
 	}
@@ -268,7 +268,7 @@ export class Screen {
 	 *  returns offset in pixels from yAxis.range.zeroVal to scrollYVal
 	 */
 	getPointOnYAxis(yVal: number): number {
-		var {scaleFactor, zeroVal} =  this.chartState.state.yAxis.range;
+		var {scaleFactor, zeroVal} =  this.chartState.chart.yAxis.range;
 		var zoom = this.options.zoomY;
 		return (yVal - zeroVal) * scaleFactor * zoom;
 	}
@@ -284,7 +284,7 @@ export class Screen {
 	 * returns value by offset in pixels from xAxis.range.zeroVal
 	 */
 	getValueOnXAxis(x: number): number {
-		return this.chartState.state.xAxis.range.zeroVal + this.pxToValueByXAxis(x);
+		return this.chartState.chart.xAxis.range.zeroVal + this.pxToValueByXAxis(x);
 	}
 
 
@@ -292,7 +292,7 @@ export class Screen {
 	 *  convert value to pixels by using settings from xAxis.range
 	 */
 	valueToPxByXAxis(xVal: number) {
-		return xVal * this.chartState.state.xAxis.range.scaleFactor * this.options.zoomX;
+		return xVal * this.chartState.chart.xAxis.range.scaleFactor * this.options.zoomX;
 	}
 
 
@@ -300,14 +300,14 @@ export class Screen {
 	 *  convert value to pixels by using settings from yAxis.range
 	 */
 	valueToPxByYAxis(yVal: number) {
-		return yVal * this.chartState.state.yAxis.range.scaleFactor * this.options.zoomY;
+		return yVal * this.chartState.chart.yAxis.range.scaleFactor * this.options.zoomY;
 	}
 	
 	/**
 	 *  convert pixels to value by using settings from xAxis.range
 	 */
 	pxToValueByXAxis(xVal: number) {
-		return xVal / this.chartState.state.xAxis.range.scaleFactor / this.options.zoomX;
+		return xVal / this.chartState.chart.xAxis.range.scaleFactor / this.options.zoomX;
 	}
 
 
@@ -315,7 +315,7 @@ export class Screen {
 	 *  convert pixels to value by using settings from yAxis.range
 	 */
 	pxToValueByYAxis(yVal: number) {
-		return yVal / this.chartState.state.yAxis.range.scaleFactor / this.options.zoomY;
+		return yVal / this.chartState.chart.yAxis.range.scaleFactor / this.options.zoomY;
 	}
 
 
@@ -323,7 +323,7 @@ export class Screen {
 	 *  returns scrollX value by screen scrollX coordinate
 	 */
 	getValueByScreenX(x: number): number {
-		return this.chartState.state.xAxis.range.zeroVal + this.options.scrollXVal + this.pxToValueByXAxis(x);
+		return this.chartState.chart.xAxis.range.zeroVal + this.options.scrollXVal + this.pxToValueByXAxis(x);
 	}
 	
 	
@@ -331,7 +331,7 @@ export class Screen {
 	 *  returns scrollY value by screen scrollY coordinate
 	 */
 	getValueByScreenY(y: number): number {
-		return this.chartState.state.yAxis.range.zeroVal + this.options.scrollYVal + this.pxToValueByYAxis(y);
+		return this.chartState.chart.yAxis.range.zeroVal + this.options.scrollYVal + this.pxToValueByYAxis(y);
 	}
 	
 	//
@@ -339,7 +339,7 @@ export class Screen {
 	 *  returns screen scrollX value by screen scrollY coordinate
 	 */
 	getScreenXByValue(xVal: number): number {
-		var {scroll, zeroVal} = this.chartState.state.xAxis.range;
+		var {scroll, zeroVal} = this.chartState.chart.xAxis.range;
 		return this.valueToPxByXAxis(xVal - zeroVal - scroll)
 	}
 
@@ -347,7 +347,7 @@ export class Screen {
 	//  *  returns screen scrollY value by screen scrollY coordinate
 	//  */
 	// getScreenYByValue(scrollYVal: number): number {
-	// 	var {scroll, zeroVal} = this.state.yAxis.range;
+	// 	var {scroll, zeroVal} = this.chart.yAxis.range;
 	// 	return this.valueToPxByYAxis(scrollYVal - zeroVal - scroll)
 	// }
 	//
@@ -375,7 +375,7 @@ export class Screen {
 	}
 
 	getTop(): number {
-		return this.getPointByScreenY(this.chartState.state.height);
+		return this.getPointByScreenY(this.chartState.chart.height);
 	}
 	
 	getBottom(): number {
@@ -387,11 +387,11 @@ export class Screen {
 	}
 
 	getScreenRightVal() {
-		return this.getValueByScreenX(this.chartState.state.width);
+		return this.getValueByScreenX(this.chartState.chart.width);
 	}
 
 	getTopVal() {
-		return this.getValueByScreenY(this.chartState.state.height);
+		return this.getValueByScreenY(this.chartState.chart.height);
 	}
 	
 	getBottomVal() {
@@ -399,7 +399,7 @@ export class Screen {
 	}
 
 	getCenterYVal() {
-		return this.getValueByScreenY(this.chartState.state.height / 2);
+		return this.getValueByScreenY(this.chartState.chart.height / 2);
 	}
 
 }

@@ -163,7 +163,7 @@ class AxisMarkWidget {
 	private onValueChangeHandler() {
 		// move mark to new position with animation
 		if (this.moveAnimation) this.moveAnimation.kill();
-		var animations = this.chartState.state.animations;
+		var animations = this.chartState.chart.animations;
 		var targetValue = this.axisMark.options.value;
 		var cb = () => {
 			this.updatePosition();
@@ -186,7 +186,7 @@ class AxisMarkWidget {
 		let isXAxis = this.axisType == AXIS_TYPE.X;
 		let lineGeometry = (this.line.geometry as Geometry);
 		let hasStickMode = this.axisMark.options.stickToEdges;
-		let {width, height} = this.chartState.state;
+		let {width, height} = this.chartState.chart;
 
 		if (isXAxis) {
 			// TODO: make stickToEdges mode for AXIS_TYPE.X 
@@ -195,7 +195,7 @@ class AxisMarkWidget {
 			lineGeometry.vertices[1].setY(height);
 			this.indicator.position.set(
 				this.indicatorWidth / 2,
-				chartState.state.height - this.indicatorHeight / 2,
+				chartState.chart.height - this.indicatorHeight / 2,
 				INDICATOR_POS_Z
 			);
 		} else {

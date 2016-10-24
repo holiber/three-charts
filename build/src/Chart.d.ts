@@ -8,7 +8,7 @@ import { Promise } from './deps/deps';
 import { ChartPlugin } from './Plugin';
 import { TChartColor } from "./Color";
 /**
- * readonly computed chart state
+ * readonly computed chart chart
  * calculated after recalculateState() call
  * contains cached values
  */
@@ -72,7 +72,7 @@ export interface IChartState {
  *  all chart changes caused only by Chart.setState method
  */
 export declare class Chart {
-    state: IChartState;
+    chart: IChartState;
     plugins: {
         [pluginName: string]: ChartPlugin;
     };
