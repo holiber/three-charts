@@ -12,7 +12,7 @@ export declare class TrendLoading extends TrendWidget {
     private mesh;
     private animation;
     private isActive;
-    static widgetIsEnabled(trendOptions: ITrendOptions, chart: Chart): any;
+    static widgetIsEnabled(trendOptions: ITrendOptions, chart: Chart): boolean;
     constructor(chart: Chart, trendName: string);
     getObject3D(): Mesh;
     bindEvents(): void;

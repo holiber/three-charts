@@ -230,7 +230,7 @@ class TrendMarkWidget {
 	private show() {
 		if (!this.mark.segment) return;
 		this.updatePosition();
-		var animations = this.chart.data.animations;
+		var animations = this.chart.state.animations;
 		var time = animations.enabled ? 1 : 0;
 		this.object3D.scale.set(0.01, 0.01, 1);
 		TweenLite.to(this.object3D.scale, time, {x: 1, y: 1, ease: Elastic.easeOut});
