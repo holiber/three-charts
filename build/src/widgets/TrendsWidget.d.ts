@@ -5,8 +5,8 @@ import { ITrendOptions, ITrendData, Trend } from "../Trend";
 import { TrendSegmentsManager } from "../TrendSegmentsManager";
 import { IScreenTransformOptions } from "../Screen";
 export interface ITrendWidgetClass<TrendWidgetType> {
-    new (chartState: Chart, trendName: string): TrendWidgetType;
-    widgetIsEnabled(trendOptions: ITrendOptions, chartState: Chart): boolean;
+    new (chart: Chart, trendName: string): TrendWidgetType;
+    widgetIsEnabled(trendOptions: ITrendOptions, chart: Chart): boolean;
 }
 /**
  * abstract manager class for all trends widgets
@@ -29,13 +29,13 @@ export declare abstract class TrendsWidget<TrendWidgetType extends TrendWidget> 
  * based class for all trends widgets
  */
 export declare abstract class TrendWidget {
-    protected chartState: Chart;
+    protected chart: Chart;
     protected trendName: string;
     protected trend: Trend;
     protected unbindList: Function[];
-    constructor(chartState: Chart, trendName: string);
+    constructor(chart: Chart, trendName: string);
     abstract getObject3D(): Object3D;
-    static widgetIsEnabled(trendOptions: ITrendOptions, chartState: Chart): boolean;
+    static widgetIsEnabled(trendOptions: ITrendOptions, chart: Chart): boolean;
     appendData(newData: ITrendData): void;
     prependData(newData: ITrendData): void;
     onTrendChange(changedOptions?: ITrendOptions): void;

@@ -10,7 +10,7 @@ export interface IChartWidgetConstructor {
  */
 export declare abstract class ChartWidget {
     static widgetName: string;
-    protected chartState: Chart;
+    protected chart: Chart;
     private unbindList;
     setupChartState(chartState: Chart): void;
     abstract onReadyHandler(): any;

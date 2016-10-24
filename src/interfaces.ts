@@ -9,6 +9,7 @@
  *
  */
 import {IAxisMarkOptions} from "./AxisMarks";
+import {TChartColor} from "./Color";
 export enum AXIS_RANGE_TYPE {
 	FIXED,
 	RELATIVE_END,
@@ -69,7 +70,8 @@ export interface IAxisOptions {
 	dataType?: AXIS_DATA_TYPE;
 	autoScroll?: boolean;
 	marks?: IAxisMarkOptions[];
-	grid?: IGridOptions
+	grid?: IGridOptions;
+	color?: TChartColor;
 }
 
 export interface IGridOptions {
@@ -87,8 +89,4 @@ export interface IAnimationsOptions {
 	autoScrollEase?: TEase,
 	zoomSpeed?: number,
 	zoomEase?: TEase,
-}
-
-export interface PromiseExecutor<T> {
-	(resolve: (data: T) => void, reject: (data: T) => void): void;
 }

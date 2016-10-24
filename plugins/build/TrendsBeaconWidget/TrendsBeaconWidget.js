@@ -52,10 +52,10 @@
         exports.TrendsBeaconWidget = TrendsBeaconWidget;
         var TrendBeacon = function(_super) {
             __extends(TrendBeacon, _super);
-            function TrendBeacon(state, trendName) {
-                _super.call(this, state, trendName);
+            function TrendBeacon(chart, trendName) {
+                _super.call(this, chart, trendName);
                 this.initObject();
-                if (state.data.animations.enabled) {
+                if (chart.data.animations.enabled) {
                     this.animate();
                 }
                 this.updatePosition();

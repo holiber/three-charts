@@ -44,6 +44,11 @@ export interface IChartState {
      * also available 'CanvasRenderer'
      */
     renderer?: 'WebGLRenderer' | 'CanvasRenderer';
+    font?: {
+        s?: string;
+        m?: string;
+        l?: string;
+    };
     /**
      * buffer size for displayed segments
      * used by widgets
@@ -76,7 +81,7 @@ export declare class Chart {
     xAxisMarks: AxisMarks;
     yAxisMarks: AxisMarks;
     /**
-     * true then chartState was initialized and ready to use
+     * true then chart was initialized and ready to use
      */
     isReady: boolean;
     private ee;

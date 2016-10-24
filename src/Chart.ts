@@ -69,6 +69,7 @@ export interface IChartState {
 	 * also available 'CanvasRenderer'
 	 */
 	renderer?: 'WebGLRenderer' | 'CanvasRenderer';
+	font?: {s?: string, m?: string, l?:string}
 
 
 	/**
@@ -109,6 +110,7 @@ export class Chart {
 			grid: {enabled: true, minSizePx:  100},
 			autoScroll: true,
 			marks: [],
+			color: '#5273bd'
 		},
 		yAxis: {
 			range: {
@@ -121,7 +123,8 @@ export class Chart {
 			},
 			grid: {enabled: true, minSizePx:  50},
 			dataType: AXIS_DATA_TYPE.NUMBER,
-			marks: []
+			marks: [],
+			color: '#5273bd'
 		},
 		animations: {
 			enabled: true,
@@ -165,6 +168,11 @@ export class Chart {
 			x: 0,
 			y: 0
 		},
+		font: {
+			s: '11px Arial',
+			m: '12px Arial',
+			l: '13px Arial'
+		},
 		backgroundColor: 0x000000,
 		backgroundOpacity: 1,
 		showStats: false,
@@ -179,7 +187,7 @@ export class Chart {
 	yAxisMarks: AxisMarks;
 
 	/**
-	 * true then chartState was initialized and ready to use
+	 * true then chart was initialized and ready to use
 	 */
 	isReady = false;
 

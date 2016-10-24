@@ -12,12 +12,12 @@ export interface IChartWidgetConstructor {
  */
 export abstract class ChartWidget {
 	static widgetName = '';
-	protected chartState: Chart;
+	protected chart: Chart;
 	private unbindList: Function[] = [];
 
 
 	setupChartState(chartState: Chart) {
-		this.chartState = chartState;
+		this.chart = chartState;
 	}
 
 	abstract onReadyHandler(): any;

@@ -6,7 +6,7 @@ import Vector3 = THREE.Vector3;
 
 import {
 	Utils,
-	ChartState,
+	Chart,
 	IChartState,
 	TrendsWidget,
 	TrendWidget,
@@ -38,11 +38,11 @@ export class TrendBeacon extends TrendWidget {
 		return trendOptions.enabled && trendOptions.hasBeacon && trendOptions.type == TREND_TYPE.LINE;
 	}
 
-	constructor(state: ChartState, trendName: string) {
-		super(state, trendName);
+	constructor(chart: Chart, trendName: string) {
+		super(chart, trendName);
 
 		this.initObject();
-		if (state.data.animations.enabled) {
+		if (chart.data.animations.enabled) {
 			this.animate();
 		}
 		this.updatePosition();

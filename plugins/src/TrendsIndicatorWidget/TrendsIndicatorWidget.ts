@@ -9,7 +9,7 @@ import {
 	TrendSegmentsManager,
 	TrendSegment,
 	ChartColor,
-	ChartState,
+	Chart,
 	Utils,
 	TrendWidget,
 	TrendsWidget,
@@ -36,8 +36,8 @@ export class TrendIndicator extends TrendWidget {
 		return trendOptions.enabled && trendOptions.hasIndicator;
 	}
 
-	constructor(state: ChartState, trendName: string) {
-		super(state, trendName);
+	constructor(chart: Chart, trendName: string) {
+		super(chart, trendName);
 		this.initObject();
 		this.onTrendChange();
 	}

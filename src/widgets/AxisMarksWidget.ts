@@ -28,7 +28,7 @@ export class AxisMarksWidget extends ChartWidget {
 
 	onReadyHandler() {
 		this.object3D = new Object3D();
-		let {xAxisMarks, yAxisMarks} = this.chartState;
+		let {xAxisMarks, yAxisMarks} = this.chart;
 
 		let items = xAxisMarks.getItems();
 		for (var markName in items) {
@@ -41,15 +41,15 @@ export class AxisMarksWidget extends ChartWidget {
 	}
 
 	private createAxisMark(axisMark: AxisMark) {
-		var axisMarkWidget = new AxisMarkWidget(this.chartState, axisMark);
+		var axisMarkWidget = new AxisMarkWidget(this.chart, axisMark);
 		this.axisMarksWidgets.push(axisMarkWidget);
 		this.object3D.add(axisMarkWidget.getObject3D());
 	}
 
 	protected bindEvents() {
 		this.bindEvent(
-			this.chartState.screen.onTransformationFrame(() => this.updateMarksPositions()),
-			this.chartState.onResize(() => this.updateMarksPositions())
+			this.chart.screen.onTransformationFrame(() => this.updateMarksPositions()),
+			this.chart.onResize(() => this.updateMarksPositions())
 		);
 	}
 

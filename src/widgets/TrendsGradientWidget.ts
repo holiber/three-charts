@@ -53,7 +53,7 @@ export class TrendGradient extends TrendWidget {
 			// TODO: optimize updateSegments for onDisplayedRangeChanged
 			this.updateSegments();
 		}));
-		this.bindEvent(this.chartState.onZoom(() => {
+		this.bindEvent(this.chart.onZoom(() => {
 			this.updateSegments();
 		}));
 	}
@@ -97,15 +97,15 @@ export class TrendGradient extends TrendWidget {
 			new THREE.MeshBasicMaterial( {color: color.value, transparent: true, opacity: color.a} )
 		);
 
-		let {scaleFactor: scaleXFactor, zoom: zoomX} = this.chartState.data.xAxis.range;
-		let {scaleFactor: scaleYFactor, zoom: zoomY} = this.chartState.data.yAxis.range;
+		let {scaleFactor: scaleXFactor, zoom: zoomX} = this.chart.data.xAxis.range;
+		let {scaleFactor: scaleYFactor, zoom: zoomY} = this.chart.data.yAxis.range;
 		this.gradient.scale.set(scaleXFactor * zoomX, scaleYFactor * zoomY, 1);
 		this.gradient.frustumCulled = false;
 	}
 
 
 	protected onZoomFrame(options: IScreenTransformOptions) {
-		let state = this.chartState.data;
+		let state = this.chart.data;
 		let scaleXFactor = state.xAxis.range.scaleFactor;
 		let scaleYFactor = state.yAxis.range.scaleFactor;
 		var currentScale = this.gradient.scale;
@@ -168,8 +168,8 @@ export class TrendGradient extends TrendWidget {
 		let	bottomRight = vertices[gradientSegmentInd + 2];
 		let	topRight = vertices[gradientSegmentInd + 3];
 		let screenHeightVal = Math.max(
-			this.chartState.pxToValueByYAxis(this.chartState.data.height),
-			this.chartState.screen.pxToValueByYAxis(this.chartState.data.height)
+			this.chart.pxToValueByYAxis(this.chart.data.height),
+			this.chart.screen.pxToValueByYAxis(this.chart.data.height)
 		);
 
 		if (segmentState) {
@@ -191,12 +191,12 @@ export class TrendGradient extends TrendWidget {
 	}
 
 	private toLocalX(xVal: number): number {
-		return xVal - this.chartState.data.xAxis.range.zeroVal;
+		return xVal - this.chart.data.xAxis.range.zeroVal;
 	}
 
 
 	private toLocalY(yVal: number): number {
-		return yVal - this.chartState.data.yAxis.range.zeroVal;
+		return yVal - this.chart.data.yAxis.range.zeroVal;
 	}
 
 }

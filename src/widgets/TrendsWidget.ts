@@ -10,8 +10,8 @@ import {IScreenTransformOptions} from "../Screen";
 
 
 export interface ITrendWidgetClass<TrendWidgetType> {
-	new (chartState: Chart, trendName: string): TrendWidgetType;
-	widgetIsEnabled(trendOptions: ITrendOptions, chartState: Chart): boolean;
+	new (chart: Chart, trendName: string): TrendWidgetType;
+	widgetIsEnabled(trendOptions: ITrendOptions, chart: Chart): boolean;
 }
 
 /**
@@ -29,7 +29,7 @@ export abstract class TrendsWidget<TrendWidgetType extends TrendWidget> extends 
 	}
 
 	protected bindEvents() {
-		var state = this.chartState;
+		var state = this.chart;
 		state.onTrendsChange(() => this.onTrendsChange());
 		state.onTrendChange((trendName: string, changedOptions: ITrendOptions, newData: ITrendData) => {
 			this.onTrendChange(trendName, changedOptions, newData)
@@ -37,11 +37,11 @@ export abstract class TrendsWidget<TrendWidgetType extends TrendWidget> extends 
 	}
 
 	protected onTrendsChange() {
-		var trendsOptions = this.chartState.data.trends;
+		var trendsOptions = this.chart.data.trends;
 		var TrendWidgetClass = this.getTrendWidgetClass();
 		for (let trendName in trendsOptions) {
 			let trendOptions = trendsOptions[trendName];
-			let widgetCanBeEnabled = TrendWidgetClass.widgetIsEnabled(trendOptions, this.chartState);
+			let widgetCanBeEnabled = TrendWidgetClass.widgetIsEnabled(trendOptions, this.chart);
 			if (widgetCanBeEnabled && !this.widgets[trendName]) {
 				this.createTrendWidget(trendName);
 			} else if (!widgetCanBeEnabled && this.widgets[trendName]){
@@ -55,7 +55,7 @@ export abstract class TrendsWidget<TrendWidgetType extends TrendWidget> extends 
 		if (!widget) return;
 		widget.onTrendChange(changedOptions);
 		if (newData) {
-			var data = this.chartState.getTrend(trendName).getData();
+			var data = this.chart.getTrend(trendName).getData();
 			var isAppend = (!data.length || data[0].xVal < newData[0].xVal);
 			isAppend ? widget.appendData(newData) : widget.prependData(newData);
 		}
@@ -67,7 +67,7 @@ export abstract class TrendsWidget<TrendWidgetType extends TrendWidget> extends 
 
 	private createTrendWidget(trendName: string) {
 		var WidgetConstructor = this.getTrendWidgetClass();
-		var widget = new WidgetConstructor(this.chartState, trendName);
+		var widget = new WidgetConstructor(this.chart, trendName);
 		this.widgets[trendName] = widget;
 		var widgetObject = widget.getObject3D();
 		widgetObject.name = trendName;
@@ -89,13 +89,13 @@ export abstract class TrendWidget {
 	protected trend: Trend;
 	protected unbindList: Function[] = [];
 
-	constructor (protected chartState: Chart, protected trendName: string) {
-		this.trend = chartState.trendsManager.getTrend(trendName);
-		this.chartState = chartState;
+	constructor (protected chart: Chart, protected trendName: string) {
+		this.trend = chart.trendsManager.getTrend(trendName);
+		this.chart = chart;
 		this.bindEvents();
 	}
 	abstract getObject3D(): Object3D;
-	static widgetIsEnabled(trendOptions: ITrendOptions, chartState: Chart) {
+	static widgetIsEnabled(trendOptions: ITrendOptions, chart: Chart) {
 		return trendOptions.enabled;
 	}
 	appendData(newData: ITrendData) {};
@@ -122,15 +122,15 @@ export abstract class TrendWidget {
 			(trendPoints: TrendSegmentsManager) => this.onSegmentsAnimate(trendPoints)
 		));
 
-		this.bindEvent(this.chartState.screen.onTransformationFrame(
+		this.bindEvent(this.chart.screen.onTransformationFrame(
 			(options) => this.onTransformationFrame(options)
 		));
 		
-		this.bindEvent(this.chartState.screen.onZoomFrame(
+		this.bindEvent(this.chart.screen.onZoomFrame(
 			(options) => this.onZoomFrame(options)
 		));
 
-		this.bindEvent(this.chartState.onZoom(() => this.onZoom()));
+		this.bindEvent(this.chart.onZoom(() => this.onZoom()));
 	};
 
 	protected bindEvent(unbind: Function) {

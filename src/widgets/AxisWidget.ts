@@ -41,14 +41,14 @@ export class AxisWidget extends ChartWidget {
 		this.updateAxisXRequest = Utils.throttle(() => this.updateAxis(AXIS_TYPE.X), 1000);
 
 		this.onScrollChange(
-			this.chartState.screen.options.scrollX,
-			this.chartState.screen.options.scrollY
+			this.chart.screen.options.scrollX,
+			this.chart.screen.options.scrollY
 		);
 		this.bindEvents();
 	}
 
 	bindEvents() {
-		var state = this.chartState;
+		var state = this.chart;
 
 		this.bindEvent(
 			state.screen.onTransformationFrame((options) => {
@@ -87,7 +87,7 @@ export class AxisWidget extends ChartWidget {
 	private setupAxis(orientation: AXIS_TYPE) {
 
 		let isXAxis = orientation == AXIS_TYPE.X;
-		let {width: visibleWidth, height: visibleHeight} = this.chartState.data;
+		let {width: visibleWidth, height: visibleHeight} = this.chart.data;
 		let canvasWidth = 0, canvasHeight = 0;
 
 		// clean meshes
@@ -136,19 +136,19 @@ export class AxisWidget extends ChartWidget {
 	private updateAxis(orientation: AXIS_TYPE) {
 		if (this.isDestroyed) return;
 		var isXAxis = orientation == AXIS_TYPE.X;
-		var {width: visibleWidth, height: visibleHeight} = this.chartState.data;
-		var {scrollX, scrollY, zoomX, zoomY} = this.chartState.screen.options;
+		var {width: visibleWidth, height: visibleHeight} = this.chart.data;
+		var {scrollX, scrollY, zoomX, zoomY} = this.chart.screen.options;
 		var axisOptions: IAxisOptions;
 		var axisMesh: Mesh;
 		var axisGridParams: IGridParamsForAxis;
 
 		if (isXAxis) {
 			axisMesh = this.axisXObject.children[0] as Mesh;
-			axisOptions = this.chartState.data.xAxis;
+			axisOptions = this.chart.data.xAxis;
 			axisGridParams = GridWidget.getGridParamsForAxis(axisOptions, visibleWidth, zoomX);
 		} else {
 			axisMesh = this.axisYObject.children[0] as Mesh;
-			axisOptions = this.chartState.data.yAxis;
+			axisOptions = this.chart.data.yAxis;
 			axisGridParams = GridWidget.getGridParamsForAxis(axisOptions, visibleHeight, zoomY);
 		}
 
@@ -173,7 +173,7 @@ export class AxisWidget extends ChartWidget {
 		for (let val = startVal; val <= endVal; val += axisGridParams.step) {
 			let displayedValue = '';
 			if (isXAxis) {
-				let pxVal = this.chartState.screen.getPointOnXAxis(val) - scrollX + visibleWidth;
+				let pxVal = this.chart.screen.getPointOnXAxis(val) - scrollX + visibleWidth;
 				ctx.textAlign = "center";
 				// uncomment for dots
 				// ctx.moveTo(pxVal + 0.5, canvasHeight);
@@ -186,7 +186,7 @@ export class AxisWidget extends ChartWidget {
 
 				ctx.fillText(displayedValue, pxVal, canvasHeight - 10);
 			} else {
-				let pxVal = canvasHeight - this.chartState.screen.getPointOnYAxis(val) + scrollY;
+				let pxVal = canvasHeight - this.chart.screen.getPointOnYAxis(val) + scrollY;
 				ctx.textAlign = "right";
 				// uncomment for dots
 				// ctx.moveTo(canvasWidth, pxVal + 0.5);

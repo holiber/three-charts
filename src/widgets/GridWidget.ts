@@ -30,7 +30,7 @@ export class GridWidget extends ChartWidget{
 	private isDestroyed = false;
 
 	onReadyHandler() {
-		var {width, height, xAxis, yAxis} = this.chartState.data;
+		var {width, height, xAxis, yAxis} = this.chart.data;
 		this.gridSizeH = Math.floor(width / xAxis.grid.minSizePx) * 3;
 		this.gridSizeV = Math.floor(height / yAxis.grid.minSizePx) * 3;
 		this.initGrid();
@@ -41,16 +41,16 @@ export class GridWidget extends ChartWidget{
 	bindEvents() {
 		// grid is bigger then screen, so it's no need to update it on each scroll event
 		let updateGridThrottled = Utils.throttle(() => this.updateGrid(), 1000);
-		this.bindEvent(this.chartState.onScroll(() => updateGridThrottled()),
-			this.chartState.screen.onZoomFrame((options) => {
+		this.bindEvent(this.chart.onScroll(() => updateGridThrottled()),
+			this.chart.screen.onZoomFrame((options) => {
 				updateGridThrottled();
 				this.onZoomFrame(options);
 			}),
-			this.chartState.onDestroy(() => {
+			this.chart.onDestroy(() => {
 				this.isDestroyed = true;
 				this.unbindEvents();
 			}),
-			this.chartState.onResize(() => {
+			this.chart.onResize(() => {
 				this.updateGrid();
 			})
 		);
@@ -71,7 +71,7 @@ export class GridWidget extends ChartWidget{
 
 	private updateGrid() {
 		if (this.isDestroyed) return;
-		var {yAxis, xAxis, width, height} = this.chartState.data;
+		var {yAxis, xAxis, width, height} = this.chart.data;
 		var axisXGrid = GridWidget.getGridParamsForAxis(xAxis, width, xAxis.range.zoom);
 		var axisYGrid = GridWidget.getGridParamsForAxis(yAxis, height, yAxis.range.zoom);
 		var scrollXInSegments = Math.ceil(xAxis.range.scroll / axisXGrid.step);
@@ -110,7 +110,7 @@ export class GridWidget extends ChartWidget{
 	}
 
 	private getHorizontalLineSegment(yVal: number, scrollXVal: number, scrollYVal: number): Vector3[] {
-		var chartState = this.chartState;
+		var chartState = this.chart;
 		var localYVal = yVal - chartState.data.yAxis.range.zeroVal - scrollYVal;
 		var widthVal = chartState.pxToValueByXAxis(chartState.data.width);
 		return [
@@ -120,7 +120,7 @@ export class GridWidget extends ChartWidget{
 	}
 
 	private getVerticalLineSegment(xVal: number, scrollXVal: number, scrollYVal: number): Vector3[] {
-		var chartState = this.chartState;
+		var chartState = this.chart;
 		var localXVal = xVal - chartState.data.xAxis.range.zeroVal - scrollXVal;
 		var heightVal = chartState.pxToValueByYAxis(chartState.data.height);
 		return [
@@ -130,7 +130,7 @@ export class GridWidget extends ChartWidget{
 	}
 
 	private onZoomFrame(options: IScreenTransformOptions) {
-		var {xAxis, yAxis} = this.chartState.data;
+		var {xAxis, yAxis} = this.chart.data;
 		if (options.zoomX) this.lineSegments.scale.setX(xAxis.range.scaleFactor * options.zoomX);
 		if (options.zoomY) this.lineSegments.scale.setY(yAxis.range.scaleFactor * options.zoomY);
 	}
