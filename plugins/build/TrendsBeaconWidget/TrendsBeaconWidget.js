@@ -55,7 +55,7 @@
             function TrendBeacon(chart, trendName) {
                 _super.call(this, chart, trendName);
                 this.initObject();
-                if (chart.data.animations.enabled) {
+                if (chart.state.animations.enabled) {
                     this.animate();
                 }
                 this.updatePosition();
@@ -158,7 +158,7 @@
                     yVal = currentAnimationState.endYVal;
                 }
                 var endPointVector = chart.screen.getPointOnChart(xVal, yVal);
-                var screenWidth = chart.data.width;
+                var screenWidth = chart.state.width;
                 var x = endPointVector.x;
                 var screenX = chart.screen.getScreenXByPoint(endPointVector.x);
                 if (screenX < 0) x = chart.screen.getPointByScreenX(0);

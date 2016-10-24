@@ -139,8 +139,8 @@ window.onload = function () {
 				hasIndicator: true,
 				hasBackground: true,
 			},
-			// 'red': {dataset: dsRed.chart, lineColor: 0xFF2222, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
-			// 'blue': {dataset: dsBlue.chart, lineColor: 0x2222FF, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
+			// 'red': {dataset: dsRed.state, lineColor: 0xFF2222, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
+			// 'blue': {dataset: dsBlue.state, lineColor: 0x2222FF, lineWidth: 2, hasGradient: false, hasIndicator: true, enabled: false},
 		},
 		showStats: true,
 		// autoRender: {fps: 100},
@@ -178,14 +178,14 @@ window.onload = function () {
 		}
 		// var markOptions = MarksSource.getNext(mainTrend.getLastItem().xVal);
 		// if (markOptions) setTimeout(() => {
-		// 	let trendsMarks = chart.chart.getPlugin(TrendsMarksPlugin.NAME) as TrendsMarksPlugin;
+		// 	let trendsMarks = state.state.getPlugin(TrendsMarksPlugin.NAME) as TrendsMarksPlugin;
 		// 	trendsMarks.createMark(markOptions);
 		// }, 500);
 	});
 
 
 	// var previewChart1 = ChartView.createPreviewChart({
-	// 	$el: document.querySelectorAll('.preview-chart')[0],
+	// 	$el: document.querySelectorAll('.preview-state')[0],
 	// 	yAxis: {
 	// 		range: {type: AXIS_RANGE_TYPE.FIXED, from: 20, to: 150}
 	// 	},
@@ -193,12 +193,12 @@ window.onload = function () {
 	// 		range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 100}
 	// 	},
 	// 	trends: {
-	// 		'main': {dataset: dsMain.chart, hasBeacon: true}
+	// 		'main': {dataset: dsMain.state, hasBeacon: true}
 	// 	}
 	// });
 	//
 	// var previewChart2 = ChartView.createPreviewChart({
-	// 	$el: document.querySelectorAll('.preview-chart')[1],
+	// 	$el: document.querySelectorAll('.preview-state')[1],
 	// 	yAxis: {
 	// 		range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 200}
 	// 	},
@@ -206,13 +206,13 @@ window.onload = function () {
 	// 		range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 200}
 	// 	},
 	// 	trends: {
-	// 		'main': {dataset: dsMain.chart, hasBeacon: true}
+	// 		'main': {dataset: dsMain.state, hasBeacon: true}
 	// 	},
 	//
 	// });
 	//
 	// var previewChart3 = ChartView.createPreviewChart({
-	// 	$el: document.querySelectorAll('.preview-chart')[2],
+	// 	$el: document.querySelectorAll('.preview-state')[2],
 	// 	yAxis: {
 	// 		range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 100}
 	// 	},
@@ -220,8 +220,8 @@ window.onload = function () {
 	// 		range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 80}
 	// 	},
 	// 	trends: {
-	// 		'main': {dataset: dsMain.chart, hasBeacon: true},
-	// 		'red': {dataset: dsRed.chart, lineColor: 0xFF2222},
+	// 		'main': {dataset: dsMain.state, hasBeacon: true},
+	// 		'red': {dataset: dsRed.state, lineColor: 0xFF2222},
 	// 	}
 	// });
 	//
@@ -244,11 +244,11 @@ window.onload = function () {
 		// [i % 2 ? 10 : 20]
 
 		 chart.getTrend('main').appendData([val]);
-		// chart.getTrend('main').prependData([dsMain.getPrev(), dsMain.getPrev()].reverse());
-		// chart.getTrend('main').appendData([val, dsMain.getNext(), dsMain.getNext(), dsMain.getNext(), dsMain.getNext()]);
-		// chart.getTrend('main').prependData([val, dsMain.getNext(), dsMain.getNext(), dsMain.getNext()]);
-		// chart.getTrend('red').appendData([val + 10 + Math.random() * 20]);
-		// chart.getTrend('blue').appendData([val + 20 + Math.random() * 20]);
+		// state.getTrend('main').prependData([dsMain.getPrev(), dsMain.getPrev()].reverse());
+		// state.getTrend('main').appendData([val, dsMain.getNext(), dsMain.getNext(), dsMain.getNext(), dsMain.getNext()]);
+		// state.getTrend('main').prependData([val, dsMain.getNext(), dsMain.getNext(), dsMain.getNext()]);
+		// state.getTrend('red').appendData([val + 10 + Math.random() * 20]);
+		// state.getTrend('blue').appendData([val + 20 + Math.random() * 20]);
 
 
 
@@ -258,7 +258,7 @@ window.onload = function () {
 		
 		// previewChart1.appendData(dataToAppend1);
 		//
-		// var chartData2 = previewChart2.chart.chart.trends[0].chart;
+		// var chartData2 = previewChart2.state.state.trends[0].state;
 		// var lastItem2 = chartData2[chartData.length - 1];
 		// var dataToAppend2 = [
 		// 	{xVal: lastItem2.xVal + 1, yVal: lastItem2.yVal + Math.random() * 14 - 7 },
@@ -294,12 +294,12 @@ function initListeners() {
 	});
 
 	document.querySelector('[name="move-left"]').addEventListener('click', () => {
-		let currentRange = chart.chart.chart.xAxis.range;
+		let currentRange = chart.chart.state.xAxis.range;
 		chart.setState({xAxis: {range: {from: currentRange.from - 2000}}});
 	});
 
 	document.querySelector('[name="move-right"]').addEventListener('click', () => {
-		let currentRange = chart.chart.chart.xAxis.range;
+		let currentRange = chart.chart.state.xAxis.range;
 		chart.setState({xAxis: {range: {to: currentRange.to + 2000}}});
 	});
 	

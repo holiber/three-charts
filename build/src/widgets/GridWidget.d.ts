@@ -10,7 +10,7 @@ export interface IGridParamsForAxis {
     segmentsCount: number;
 }
 /**
- * widget for drawing chart grid
+ * widget for drawing state grid
  */
 export declare class GridWidget extends ChartWidget {
     static widgetName: string;

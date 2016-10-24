@@ -8,7 +8,7 @@ import { Promise } from './deps/deps';
 import { ChartPlugin } from './Plugin';
 import { TChartColor } from "./Color";
 /**
- * readonly computed chart chart
+ * readonly computed state state
  * calculated after recalculateState() call
  * contains cached values
  */
@@ -69,10 +69,10 @@ export interface IChartState {
     eventEmitterMaxListeners?: number;
 }
 /**
- *  all chart changes caused only by Chart.setState method
+ *  all state changes caused only by Chart.setState method
  */
 export declare class Chart {
-    chart: IChartState;
+    state: IChartState;
     plugins: {
         [pluginName: string]: ChartPlugin;
     };
@@ -81,13 +81,13 @@ export declare class Chart {
     xAxisMarks: AxisMarks;
     yAxisMarks: AxisMarks;
     /**
-     * true then chart was initialized and ready to use
+     * true then state was initialized and ready to use
      */
     isReady: boolean;
     private ee;
     constructor(initialState: IChartState, plugins?: ChartPlugin[]);
     /**
-     * destroy chart, use ChartView.destroy to completely destroy chart
+     * destroy state, use ChartView.destroy to completely destroy state
      */
     destroy(): void;
     onDestroy(cb: Function): Function;
@@ -108,7 +108,7 @@ export declare class Chart {
     getTrend(trendName: string): Trend;
     setState(newState: IChartState, eventData?: any, silent?: boolean): void;
     /**
-     * recalculate all computed chart props
+     * recalculate all computed state props
      */
     private recalculateState(changedProps?);
     private getComputedData(changedProps?);

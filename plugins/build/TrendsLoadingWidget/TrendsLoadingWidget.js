@@ -64,7 +64,7 @@
                 this.deactivate();
             }
             TrendLoading.widgetIsEnabled = function(trendOptions, chart) {
-                return trendOptions.enabled && chart.data.animations.enabled;
+                return trendOptions.enabled && chart.state.animations.enabled;
             };
             TrendLoading.prototype.getObject3D = function() {
                 return this.mesh;

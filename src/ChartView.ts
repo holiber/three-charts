@@ -55,7 +55,7 @@ export class ChartView {
 		if (!$container) {
 			Utils.error('$el must be set');
 		}
-		// calculate chart size
+		// calculate state size
 		let style = getComputedStyle($container);
 		state.width = parseInt(style.width);
 		state.height = parseInt(style.height);
@@ -71,15 +71,15 @@ export class ChartView {
 
 	private init($container: Element) {
 		var chart = this.chart;
-		var {width: w, height: h, showStats, autoRender} = chart.chart;
+		var {width: w, height: h, showStats, autoRender} = chart.state;
 		this.scene = new THREE.Scene();
 		this.isStopped = !autoRender.enabled;
 
-		var renderer = this.renderer = new (ChartView.renderers[this.chart.chart.renderer] as any)({
+		var renderer = this.renderer = new (ChartView.renderers[this.chart.state.renderer] as any)({
 			antialias: true,
 			alpha: true
 		});
-		let backgroundColor = new ChartColor(chart.chart.backgroundColor);
+		let backgroundColor = new ChartColor(chart.state.backgroundColor);
 		renderer.setSize(w, h);
 		renderer.setPixelRatio(ChartView.devicePixelRatio);
 		renderer.setClearColor(backgroundColor.value, backgroundColor.a);
@@ -131,7 +131,7 @@ export class ChartView {
 		this.stats && this.stats.begin();
 		this.render();
 		if (this.isStopped) return;
-		var fpsLimit = this.chart.chart.autoRender.fps;
+		var fpsLimit = this.chart.state.autoRender.fps;
 
 		if (fpsLimit) {
 			let delay = 1000 / fpsLimit;
@@ -156,7 +156,7 @@ export class ChartView {
 	}
 
 	/**
-	 * call to destroy chart an init garbage collection
+	 * call to destroy state an init garbage collection
 	 */
 	destroy() {
 		this.isDestroyed = true;
@@ -167,7 +167,7 @@ export class ChartView {
 		try {
 			(this.renderer as any).forceContextLoss();
 		} catch (wtf) {
-			// sometimes with many chart instances forceContextLoss not working
+			// sometimes with many state instances forceContextLoss not working
 		}
 		(this.renderer as any).context = null;
 		this.renderer.domElement = null;
@@ -175,18 +175,18 @@ export class ChartView {
 	}
 
 	getState(): IChartState {
-		return this.chart.chart
+		return this.chart.state
 	}
 
 	/**
-	 * shortcut for ChartView.chart.getTrend
+	 * shortcut for ChartView.state.getTrend
 	 */
 	getTrend(trendName: string): Trend {
 		return this.chart.getTrend(trendName);
 	}
 
 	/**
-	 * shortcut for ChartView.chart.setState
+	 * shortcut for ChartView.state.setState
 	 */
 	setState(state: IChartState) {
 		return this.chart.setState(state);
@@ -195,7 +195,7 @@ export class ChartView {
 
 	private bindEvents() {
 		var $el = this.$el;
-		if (this.chart.chart.controls.enabled) {
+		if (this.chart.state.controls.enabled) {
 			$el.addEventListener('mousewheel', (ev: MouseWheelEvent) => {
 				this.onMouseWheel(ev)
 			});
@@ -211,7 +211,7 @@ export class ChartView {
 				this.onTouchEnd(ev)
 			});
 		}
-		if (this.chart.chart.autoResize) {
+		if (this.chart.state.autoResize) {
 			this.resizeSensor = new ResizeSensor(this.$container, () => {
 				this.onChartContainerResizeHandler(this.$container.clientWidth, this.$container.clientHeight);
 			});
@@ -268,13 +268,13 @@ export class ChartView {
 
 	private autoscroll() {
 		var state = this.chart;
-		if (!state.chart.autoScroll) return;
-		var oldTrendsMaxX = state.chart.prevState.computedData.trends.maxXVal;
-		var trendsMaxXDelta = state.chart.computedData.trends.maxXVal - oldTrendsMaxX;
+		if (!state.state.autoScroll) return;
+		var oldTrendsMaxX = state.state.prevState.computedData.trends.maxXVal;
+		var trendsMaxXDelta = state.state.computedData.trends.maxXVal - oldTrendsMaxX;
 		if (trendsMaxXDelta > 0) {
 			var maxVisibleX = this.chart.screen.getScreenRightVal();
 			var paddingRightX = this.chart.getPaddingRight();
-			var currentScroll = state.chart.xAxis.range.scroll;
+			var currentScroll = state.state.xAxis.range.scroll;
 			if (oldTrendsMaxX < paddingRightX || oldTrendsMaxX > maxVisibleX) {
 				return;
 			}
@@ -284,10 +284,10 @@ export class ChartView {
 	}
 
 	private onScrollStop() {
-		// var tendsXMax = this.chart.chart.computedData.trends.maxX;
-		// var paddingRightX = this.chart.getPaddingRight();
+		// var tendsXMax = this.state.state.computedData.trends.maxX;
+		// var paddingRightX = this.state.getPaddingRight();
 		// if (tendsXMax < paddingRightX) {
-		// 	this.chart.scrollToEnd();
+		// 	this.state.scrollToEnd();
 		// }
 	}
 
@@ -300,7 +300,7 @@ export class ChartView {
 	}
 
 	private onMouseMove(ev: MouseEvent) {
-		if (this.chart.chart.cursor.dragMode) {
+		if (this.chart.state.cursor.dragMode) {
 			this.setState({cursor: {dragMode: true, x: ev.clientX, y: ev.clientY}});
 		}
 	}
@@ -308,7 +308,7 @@ export class ChartView {
 	private onMouseWheel(ev: MouseWheelEvent) {
 		ev.stopPropagation();
 		ev.preventDefault();
-		let zoomOrigin = ev.layerX / this.chart.chart.width;
+		let zoomOrigin = ev.layerX / this.chart.state.width;
 		let zoomValue = 1 + ev.wheelDeltaY * 0.001;
 		this.zoom(zoomValue, zoomOrigin);
 	}
@@ -326,7 +326,7 @@ export class ChartView {
 	}
 
 	private onChartResize() {
-		let {width, height} = this.chart.chart;
+		let {width, height} = this.chart.state;
 		this.renderer.setSize(width, height);
 		this.setupCamera();
 	}
@@ -336,7 +336,7 @@ export class ChartView {
 		const MIN_ZOOM_VALUE = 0.7;
 		zoomValue = Math.min(zoomValue, MAX_ZOOM_VALUE);
 		zoomValue = Math.max(zoomValue, MIN_ZOOM_VALUE);
-		let autoScrollIsEnabled = this.chart.chart.autoScroll;
+		let autoScrollIsEnabled = this.chart.state.autoScroll;
 		if (autoScrollIsEnabled) this.chart.setState({autoScroll: false});
 		this.chart.zoom(zoomValue, zoomOrigin).then(() => {
 			if (autoScrollIsEnabled) this.setState({autoScroll: true});

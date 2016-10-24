@@ -88,7 +88,7 @@ export class AxisWidget extends ChartWidget {
 	private setupAxis(orientation: AXIS_TYPE) {
 
 		let isXAxis = orientation == AXIS_TYPE.X;
-		let {width: visibleWidth, height: visibleHeight} = this.chart.chart;
+		let {width: visibleWidth, height: visibleHeight} = this.chart.state;
 		let canvasWidth = 0, canvasHeight = 0;
 		let axisOptions: IAxisOptions;
 
@@ -97,18 +97,18 @@ export class AxisWidget extends ChartWidget {
 			this.axisXObject.traverse(obj => this.axisXObject.remove(obj));
 			canvasWidth = visibleWidth * 3;
 			canvasHeight = 50;
-			axisOptions = this.chart.chart.xAxis;
+			axisOptions = this.chart.state.xAxis;
 		} else {
 			this.axisYObject.traverse(obj => this.axisYObject.remove(obj));
 			canvasWidth = 50;
 			canvasHeight = visibleHeight * 3;
-			axisOptions = this.chart.chart.yAxis;
+			axisOptions = this.chart.state.yAxis;
 		}
 
 		var texture = Utils.createPixelPerfectTexture(canvasWidth, canvasHeight, (ctx) => {
 			let color = new ChartColor(axisOptions.color);
 			ctx.beginPath();
-			ctx.font = this.chart.chart.font.m;
+			ctx.font = this.chart.state.font.m;
 			ctx.fillStyle = color.rgbaStr;
 			ctx.strokeStyle = color.rgbaStr;
 		});
@@ -141,7 +141,7 @@ export class AxisWidget extends ChartWidget {
 	private updateAxis(orientation: AXIS_TYPE) {
 		if (this.isDestroyed) return;
 		var isXAxis = orientation == AXIS_TYPE.X;
-		var {width: visibleWidth, height: visibleHeight} = this.chart.chart;
+		var {width: visibleWidth, height: visibleHeight} = this.chart.state;
 		var {scrollX, scrollY, zoomX, zoomY} = this.chart.screen.options;
 		var axisOptions: IAxisOptions;
 		var axisMesh: Mesh;
@@ -149,11 +149,11 @@ export class AxisWidget extends ChartWidget {
 
 		if (isXAxis) {
 			axisMesh = this.axisXObject.children[0] as Mesh;
-			axisOptions = this.chart.chart.xAxis;
+			axisOptions = this.chart.state.xAxis;
 			axisGridParams = GridWidget.getGridParamsForAxis(axisOptions, visibleWidth, zoomX);
 		} else {
 			axisMesh = this.axisYObject.children[0] as Mesh;
-			axisOptions = this.chart.chart.yAxis;
+			axisOptions = this.chart.state.yAxis;
 			axisGridParams = GridWidget.getGridParamsForAxis(axisOptions, visibleHeight, zoomY);
 		}
 

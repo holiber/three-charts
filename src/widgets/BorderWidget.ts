@@ -3,7 +3,7 @@ import {ChartWidget} from "../Widget";
 import LineSegments = THREE.LineSegments;
 import Vector3 = THREE.Vector3;
 /**
- * widget for drawing chart grid
+ * widget for drawing state grid
  */
 export class BorderWidget extends ChartWidget {
 	static widgetName = 'Border';
@@ -11,7 +11,7 @@ export class BorderWidget extends ChartWidget {
 
 
 	onReadyHandler() {
-		var {width, height} = this.chart.chart;
+		var {width, height} = this.chart.state;
 		var geometry = new THREE.Geometry();
 		var material = new THREE.LineBasicMaterial( { linewidth: 1, opacity: 0.0, transparent: true} );
 

@@ -22,7 +22,7 @@ export interface IGridParamsForAxis {
 }
 
 /**
- * widget for drawing chart grid
+ * widget for drawing state grid
  */
 export class GridWidget extends ChartWidget{
 	static widgetName = 'Grid';
@@ -32,7 +32,7 @@ export class GridWidget extends ChartWidget{
 	private isDestroyed = false;
 
 	onReadyHandler() {
-		var {width, height, xAxis, yAxis} = this.chart.chart;
+		var {width, height, xAxis, yAxis} = this.chart.state;
 		this.gridSizeH = Math.floor(width / xAxis.grid.minSizePx) * 3;
 		this.gridSizeV = Math.floor(height / yAxis.grid.minSizePx) * 3;
 		this.initGrid();
@@ -60,7 +60,7 @@ export class GridWidget extends ChartWidget{
 	}
 
 	private initGrid() {
-		let color = new ChartColor(this.chart.chart.xAxis.grid.color);
+		let color = new ChartColor(this.chart.state.xAxis.grid.color);
 		let geometry = new THREE.Geometry();
 		let material = new THREE.LineBasicMaterial({linewidth: 1, color: color.value, opacity: color.a, transparent: true});
 		let xLinesCount = this.gridSizeH;
@@ -74,7 +74,7 @@ export class GridWidget extends ChartWidget{
 
 	private updateGrid() {
 		if (this.isDestroyed) return;
-		var {yAxis, xAxis, width, height} = this.chart.chart;
+		var {yAxis, xAxis, width, height} = this.chart.state;
 		var axisXGrid = GridWidget.getGridParamsForAxis(xAxis, width, xAxis.range.zoom);
 		var axisYGrid = GridWidget.getGridParamsForAxis(yAxis, height, yAxis.range.zoom);
 		var scrollXInSegments = Math.ceil(xAxis.range.scroll / axisXGrid.step);
@@ -114,8 +114,8 @@ export class GridWidget extends ChartWidget{
 
 	private getHorizontalLineSegment(yVal: number, scrollXVal: number, scrollYVal: number): Vector3[] {
 		var chartState = this.chart;
-		var localYVal = yVal - chartState.chart.yAxis.range.zeroVal - scrollYVal;
-		var widthVal = chartState.pxToValueByXAxis(chartState.chart.width);
+		var localYVal = yVal - chartState.state.yAxis.range.zeroVal - scrollYVal;
+		var widthVal = chartState.pxToValueByXAxis(chartState.state.width);
 		return [
 			new THREE.Vector3(widthVal * 2 + scrollXVal, localYVal, 0 ),
 			new THREE.Vector3( -widthVal + scrollXVal, localYVal, 0 )
@@ -124,8 +124,8 @@ export class GridWidget extends ChartWidget{
 
 	private getVerticalLineSegment(xVal: number, scrollXVal: number, scrollYVal: number): Vector3[] {
 		var chartState = this.chart;
-		var localXVal = xVal - chartState.chart.xAxis.range.zeroVal - scrollXVal;
-		var heightVal = chartState.pxToValueByYAxis(chartState.chart.height);
+		var localXVal = xVal - chartState.state.xAxis.range.zeroVal - scrollXVal;
+		var heightVal = chartState.pxToValueByYAxis(chartState.state.height);
 		return [
 			new THREE.Vector3(localXVal, heightVal * 2 + scrollYVal, 0 ),
 			new THREE.Vector3(localXVal, -heightVal + scrollYVal, 0 )
@@ -133,7 +133,7 @@ export class GridWidget extends ChartWidget{
 	}
 
 	private onZoomFrame(options: IScreenTransformOptions) {
-		var {xAxis, yAxis} = this.chart.chart;
+		var {xAxis, yAxis} = this.chart.state;
 		if (options.zoomX) this.lineSegments.scale.setX(xAxis.range.scaleFactor * options.zoomX);
 		if (options.zoomY) this.lineSegments.scale.setY(yAxis.range.scaleFactor * options.zoomY);
 	}

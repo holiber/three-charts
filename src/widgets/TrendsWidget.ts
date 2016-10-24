@@ -37,7 +37,7 @@ export abstract class TrendsWidget<TrendWidgetType extends TrendWidget> extends 
 	}
 
 	protected onTrendsChange() {
-		var trendsOptions = this.chart.chart.trends;
+		var trendsOptions = this.chart.state.trends;
 		var TrendWidgetClass = this.getTrendWidgetClass();
 		for (let trendName in trendsOptions) {
 			let trendOptions = trendsOptions[trendName];

@@ -70,7 +70,7 @@ export class TrendCandlesWidget extends TrendWidget {
 	}
 	
 	private initObject() {
-		let stateData = this.chart.chart;
+		let stateData = this.chart.state;
 		let {scaleFactor: scaleXFactor, zoom: zoomX} = stateData.xAxis.range;
 		let {scaleFactor: scaleYFactor, zoom: zoomY} = stateData.yAxis.range;
 		this.scaleXFactor = scaleXFactor;
@@ -148,11 +148,11 @@ export class TrendCandlesWidget extends TrendWidget {
 	}
 
 	toLocalX(xVal: number): number {
-		return xVal - this.chart.chart.xAxis.range.zeroVal;
+		return xVal - this.chart.state.xAxis.range.zeroVal;
 	}
 
 	toLocalY(yVal: number): number {
-		return yVal - this.chart.chart.yAxis.range.zeroVal;
+		return yVal - this.chart.state.yAxis.range.zeroVal;
 	}
 
 	toLocalVec(vec: Vector3): Vector3 {

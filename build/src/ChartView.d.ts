@@ -34,16 +34,16 @@ export declare class ChartView {
     stop(): void;
     run(): void;
     /**
-     * call to destroy chart an init garbage collection
+     * call to destroy state an init garbage collection
      */
     destroy(): void;
     getState(): IChartState;
     /**
-     * shortcut for ChartView.chart.getTrend
+     * shortcut for ChartView.state.getTrend
      */
     getTrend(trendName: string): Trend;
     /**
-     * shortcut for ChartView.chart.setState
+     * shortcut for ChartView.state.setState
      */
     setState(state: IChartState): void;
     private bindEvents();

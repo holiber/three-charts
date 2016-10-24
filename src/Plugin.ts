@@ -48,7 +48,7 @@ export abstract class ChartPlugin {
 	}
 
 	getOptions(): IChartPluginState {
-		return this.chart.chart.pluginsState[this.name];
+		return this.chart.state.pluginsState[this.name];
 	}
 
 	protected onInitialStateAppliedHandler(initialState: IChartState) {

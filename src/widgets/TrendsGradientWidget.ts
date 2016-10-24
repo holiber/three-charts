@@ -37,7 +37,7 @@ export class TrendGradient extends TrendWidget {
 	constructor (chartState: Chart, trendName: string) {
 		super(chartState, trendName);
 		this.trend = chartState.trendsManager.getTrend(trendName);
-		this.segmentsIds = new Uint16Array(chartState.chart.maxVisibleSegments)
+		this.segmentsIds = new Uint16Array(chartState.state.maxVisibleSegments)
 		this.initGradient();
 		this.updateSegments();
 	}
@@ -97,15 +97,15 @@ export class TrendGradient extends TrendWidget {
 			new THREE.MeshBasicMaterial( {color: color.value, transparent: true, opacity: color.a} )
 		);
 
-		let {scaleFactor: scaleXFactor, zoom: zoomX} = this.chart.chart.xAxis.range;
-		let {scaleFactor: scaleYFactor, zoom: zoomY} = this.chart.chart.yAxis.range;
+		let {scaleFactor: scaleXFactor, zoom: zoomX} = this.chart.state.xAxis.range;
+		let {scaleFactor: scaleYFactor, zoom: zoomY} = this.chart.state.yAxis.range;
 		this.gradient.scale.set(scaleXFactor * zoomX, scaleYFactor * zoomY, 1);
 		this.gradient.frustumCulled = false;
 	}
 
 
 	protected onZoomFrame(options: IScreenTransformOptions) {
-		let state = this.chart.chart;
+		let state = this.chart.state;
 		let scaleXFactor = state.xAxis.range.scaleFactor;
 		let scaleYFactor = state.yAxis.range.scaleFactor;
 		var currentScale = this.gradient.scale;
@@ -168,8 +168,8 @@ export class TrendGradient extends TrendWidget {
 		let	bottomRight = vertices[gradientSegmentInd + 2];
 		let	topRight = vertices[gradientSegmentInd + 3];
 		let screenHeightVal = Math.max(
-			this.chart.pxToValueByYAxis(this.chart.chart.height),
-			this.chart.screen.pxToValueByYAxis(this.chart.chart.height)
+			this.chart.pxToValueByYAxis(this.chart.state.height),
+			this.chart.screen.pxToValueByYAxis(this.chart.state.height)
 		);
 
 		if (segmentState) {
@@ -191,12 +191,12 @@ export class TrendGradient extends TrendWidget {
 	}
 
 	private toLocalX(xVal: number): number {
-		return xVal - this.chart.chart.xAxis.range.zeroVal;
+		return xVal - this.chart.state.xAxis.range.zeroVal;
 	}
 
 
 	private toLocalY(yVal: number): number {
-		return yVal - this.chart.chart.yAxis.range.zeroVal;
+		return yVal - this.chart.state.yAxis.range.zeroVal;
 	}
 
 }

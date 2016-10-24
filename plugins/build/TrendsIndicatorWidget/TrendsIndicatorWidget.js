@@ -102,7 +102,7 @@
                 var chart = this.chart;
                 var _a = this.segment.currentAnimationState, segmentEndXVal = _a.endXVal, segmentEndYVal = _a.endYVal;
                 var endPointVector = chart.screen.getPointOnChart(segmentEndXVal, segmentEndYVal);
-                var screenWidth = chart.data.width;
+                var screenWidth = chart.state.width;
                 var x = endPointVector.x + OFFSET_X;
                 var y = endPointVector.y;
                 var screenX = chart.screen.getScreenXByPoint(endPointVector.x);
