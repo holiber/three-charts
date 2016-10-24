@@ -1,4 +1,4 @@
-import { ChartState, IChartState } from "./State";
+import { Chart, IChartState } from "./Chart";
 import { TrendSegmentsManager } from "./TrendSegmentsManager";
 import { TChartColor } from './Color';
 export interface IPrependPromiseExecutor {
@@ -49,7 +49,7 @@ export declare class Trend {
     private calculatedOptions;
     private prependRequest;
     private ee;
-    constructor(chartState: ChartState, trendName: string, initialState: IChartState);
+    constructor(chartState: Chart, trendName: string, initialState: IChartState);
     private onInitialStateApplied();
     private bindEvents();
     getCalculatedOptions(): ITrendOptions;
@@ -63,7 +63,7 @@ export declare class Trend {
     setOptions(options: ITrendOptions): void;
     onPrependRequest(cb: IPrependPromiseExecutor): Function;
     /**
-     * shortcut for ChartState.onTrendChange
+     * shortcut for Chart.onTrendChange
      */
     onChange(cb: (changedOptions: ITrendOptions, newData: ITrendData) => void): Function;
     onDataChange(cb: (newData: ITrendData) => void): Function;

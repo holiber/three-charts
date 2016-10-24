@@ -17,6 +17,7 @@
 - example hot to change current data
 - example how to find point on chart
 - add z-index to widgets
+- test UMD builds
 
 ---------------------------------------------------------
 

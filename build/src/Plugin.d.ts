@@ -1,4 +1,4 @@
-import { ChartState, IChartState } from "./State";
+import { Chart, IChartState } from "./Chart";
 import { EventEmitter } from './EventEmmiter';
 import { ChartWidget } from './Widget';
 export interface IChartPluginState {
@@ -17,11 +17,11 @@ export declare abstract class ChartPlugin {
     initialState: IChartPluginState;
     config: IChartPluginConfig;
     name: string;
-    protected chartState: ChartState;
+    protected chartState: Chart;
     protected unsubscribers: Function[];
     protected ee: EventEmitter;
     constructor(options?: IChartPluginState, config?: IChartPluginConfig);
-    setupChartState(chartState: ChartState): void;
+    setupChartState(chartState: Chart): void;
     getOptions(): IChartPluginState;
     protected onInitialStateAppliedHandler(initialState: IChartState): void;
     protected onReadyHandler(): void;

@@ -1,6 +1,6 @@
 import PerspectiveCamera = THREE.PerspectiveCamera;
 import Vector3 = THREE.Vector3;
-import {ChartState, IChartState} from "./State";
+import {Chart, IChartState} from "./Chart";
 import forestgreen = THREE.ColorKeywords.forestgreen;
 import {EventEmitter} from './EventEmmiter';
 
@@ -18,7 +18,7 @@ export interface IScreenTransformOptions {
  */
 export class Screen {
 	options: IScreenTransformOptions = {scrollXVal: 0, scrollX: 0, scrollYVal: 0, scrollY: 0, zoomX: 1, zoomY: 1};
-	private chartState: ChartState;
+	private chartState: Chart;
 	private scrollXAnimation: TweenLite;
 	private scrollYAnimation: TweenLite;
 	private zoomXAnimation: TweenLite;
@@ -29,7 +29,7 @@ export class Screen {
 	private currentZoomY = {val: 1};
 	private ee: EventEmitter;
 
-	constructor(chartState: ChartState) {
+	constructor(chartState: Chart) {
 		this.chartState = chartState;
 		var {width: w, height: h} = chartState.data;
 		this.ee = new EventEmitter();

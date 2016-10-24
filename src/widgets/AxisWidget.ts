@@ -8,7 +8,7 @@ import Object3D = THREE.Object3D;
 import UVMapping = THREE.UVMapping;
 import GridHelper = THREE.GridHelper;
 import {ChartWidget} from "../Widget";
-import {ChartState} from "../State";
+import {Chart} from "../Chart";
 import {GridWidget, IGridParamsForAxis} from "./GridWidget";
 import {Utils} from "../Utils";
 import PlaneGeometry = THREE.PlaneGeometry;

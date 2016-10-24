@@ -1,6 +1,6 @@
 import { IIteralable } from "./interfaces";
 import { EventEmitter } from './EventEmmiter';
-import { ChartState } from "./State";
+import { Chart } from "./Chart";
 import Vector3 = THREE.Vector3;
 import { ITrendData, ITrendOptions, ITrendItem, Trend, TREND_TYPE, ITrendTypeSettings } from "./Trend";
 import { Utils } from "./Utils";
@@ -18,7 +18,7 @@ const EVENTS = {
 export class TrendSegmentsManager {
 	segmentsById: {[id: string]: TrendSegment} = {};
 	segments: TrendSegment[] = [];
-	chartState: ChartState;
+	chartState: Chart;
 	animatedSegmentsIds: number[] = [];
 	maxSegmentLength: number;
 	segmentsLength = 0;
@@ -36,7 +36,7 @@ export class TrendSegmentsManager {
 	private trend: Trend;
 	private ee: EventEmitter;
 
-	constructor (chartState: ChartState, trend: Trend) {
+	constructor (chartState: Chart, trend: Trend) {
 		this.chartState = chartState;
 		this.ee = new EventEmitter();
 		this.trend = trend;

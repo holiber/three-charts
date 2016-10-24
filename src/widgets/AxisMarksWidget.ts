@@ -1,6 +1,6 @@
 
 import {ChartWidget} from "../Widget";
-import {ChartState} from "../State";
+import {Chart} from "../Chart";
 import Object3D = THREE.Object3D;
 import Geometry = THREE.Geometry;
 import LineBasicMaterial = THREE.LineBasicMaterial;
@@ -91,7 +91,7 @@ class AxisMarkWidget {
 	indicatorWidth = 128;
 	indicatorHeight = 64;
 	protected indicatorRenderFunction = DEFAULT_INDICATOR_RENDER_FUNCTION;
-	protected chartState: ChartState;
+	protected chartState: Chart;
 	protected axisType: AXIS_TYPE;
 	protected object3D: Object3D;
 	protected line: Line;
@@ -100,7 +100,7 @@ class AxisMarkWidget {
 	protected frameValue: number;
 	
 
-	constructor(chartState: ChartState, axisMark: AxisMark) {
+	constructor(chartState: Chart, axisMark: AxisMark) {
 		this.chartState = chartState;
 		this.axisMark = axisMark;
 		this.axisType = axisMark.axisType;

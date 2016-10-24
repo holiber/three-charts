@@ -1,5 +1,5 @@
 import { TrendsWidget, TrendWidget } from './TrendsWidget';
-import { ChartState } from '../State';
+import { Chart } from '../Chart';
 import Object3D = THREE.Object3D;
 import { IScreenTransformOptions } from '../Screen';
 import { TrendSegmentsManager } from '../TrendSegmentsManager';
@@ -20,7 +20,7 @@ export declare class TrendCandlesWidget extends TrendWidget {
     private candlesPool;
     private candles;
     static widgetIsEnabled(trendOptions: ITrendOptions): boolean;
-    constructor(chartState: ChartState, trendName: string);
+    constructor(chartState: Chart, trendName: string);
     getObject3D(): Object3D;
     protected bindEvents(): void;
     private initObject();

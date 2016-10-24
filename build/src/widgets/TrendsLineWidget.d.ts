@@ -1,4 +1,4 @@
-import { ChartState } from "../State";
+import { Chart } from "../Chart";
 import { TrendsWidget, TrendWidget } from "./TrendsWidget";
 import { TrendSegmentsManager } from "../TrendSegmentsManager";
 import LineSegments = THREE.LineSegments;
@@ -18,7 +18,7 @@ export declare class TrendLine extends TrendWidget {
     private freeSegmentsInds;
     private displayedSegments;
     static widgetIsEnabled(trendOptions: ITrendOptions): boolean;
-    constructor(chartState: ChartState, trendName: string);
+    constructor(chartState: Chart, trendName: string);
     getObject3D(): LineSegments;
     protected bindEvents(): void;
     private initLine();

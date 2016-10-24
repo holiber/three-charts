@@ -1,4 +1,4 @@
-import {ChartState} from "./State";
+import {Chart} from "./Chart";
 import Object3D = THREE.Object3D;
 
 export interface IChartWidgetConstructor {
@@ -12,11 +12,11 @@ export interface IChartWidgetConstructor {
  */
 export abstract class ChartWidget {
 	static widgetName = '';
-	protected chartState: ChartState;
+	protected chartState: Chart;
 	private unbindList: Function[] = [];
 
 
-	setupChartState(chartState: ChartState) {
+	setupChartState(chartState: Chart) {
 		this.chartState = chartState;
 	}
 

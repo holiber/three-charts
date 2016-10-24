@@ -1,7 +1,7 @@
 
 
 import { TrendsWidget, TrendWidget } from './TrendsWidget';
-import { ChartState } from '../State';
+import { Chart } from '../Chart';
 import Object3D = THREE.Object3D;
 import Geometry = THREE.Geometry;
 import { IScreenTransformOptions } from '../Screen';
@@ -48,7 +48,7 @@ export class TrendCandlesWidget extends TrendWidget {
 		return trendOptions.enabled && trendOptions.type == TREND_TYPE.CANDLE;
 	}
 
-	constructor (chartState: ChartState, trendName: string) {
+	constructor (chartState: Chart, trendName: string) {
 		super(chartState, trendName);
 		this.initObject();
 	}

@@ -1,12 +1,12 @@
 import { ChartWidget } from "../Widget";
 import Object3D = THREE.Object3D;
-import { ChartState } from "../State";
+import { Chart } from "../Chart";
 import { ITrendOptions, ITrendData, Trend } from "../Trend";
 import { TrendSegmentsManager } from "../TrendSegmentsManager";
 import { IScreenTransformOptions } from "../Screen";
 export interface ITrendWidgetClass<TrendWidgetType> {
-    new (chartState: ChartState, trendName: string): TrendWidgetType;
-    widgetIsEnabled(trendOptions: ITrendOptions, chartState: ChartState): boolean;
+    new (chartState: Chart, trendName: string): TrendWidgetType;
+    widgetIsEnabled(trendOptions: ITrendOptions, chartState: Chart): boolean;
 }
 /**
  * abstract manager class for all trends widgets
@@ -29,13 +29,13 @@ export declare abstract class TrendsWidget<TrendWidgetType extends TrendWidget> 
  * based class for all trends widgets
  */
 export declare abstract class TrendWidget {
-    protected chartState: ChartState;
+    protected chartState: Chart;
     protected trendName: string;
     protected trend: Trend;
     protected unbindList: Function[];
-    constructor(chartState: ChartState, trendName: string);
+    constructor(chartState: Chart, trendName: string);
     abstract getObject3D(): Object3D;
-    static widgetIsEnabled(trendOptions: ITrendOptions, chartState: ChartState): boolean;
+    static widgetIsEnabled(trendOptions: ITrendOptions, chartState: Chart): boolean;
     appendData(newData: ITrendData): void;
     prependData(newData: ITrendData): void;
     onTrendChange(changedOptions?: ITrendOptions): void;

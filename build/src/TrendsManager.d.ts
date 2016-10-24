@@ -1,5 +1,5 @@
 import { Trend, ITrendOptions } from "./Trend";
-import { ChartState, IChartState } from "./State";
+import { Chart, IChartState } from "./Chart";
 export interface ITrendsOptions {
     [trendName: string]: ITrendOptions;
 }
@@ -13,7 +13,7 @@ export declare class TrendsManager {
     calculatedOptions: ITrendsOptions;
     private ee;
     private chartState;
-    constructor(state: ChartState, initialState: IChartState);
+    constructor(state: Chart, initialState: IChartState);
     getTrend(trendName: string): Trend;
     getEnabledTrends(): Trend[];
     getStartXVal(): number;

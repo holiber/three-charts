@@ -1,5 +1,5 @@
 import Vector3 = THREE.Vector3;
-import { ChartState } from "./State";
+import { Chart } from "./Chart";
 export interface IScreenTransformOptions {
     scrollXVal?: number;
     scrollYVal?: number;
@@ -23,7 +23,7 @@ export declare class Screen {
     private currentZoomX;
     private currentZoomY;
     private ee;
-    constructor(chartState: ChartState);
+    constructor(chartState: Chart);
     getCameraSettings(): {
         FOV: number;
         aspect: number;

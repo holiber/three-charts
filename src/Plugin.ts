@@ -1,4 +1,4 @@
-import { ChartState, IChartState } from "./State";
+import { Chart, IChartState } from "./Chart";
 import { Utils } from './Utils';
 import { EventEmitter } from './EventEmmiter';
 import { ChartWidget } from './Widget';
@@ -25,7 +25,7 @@ export abstract class ChartPlugin {
 	initialState: IChartPluginState;
 	config: IChartPluginConfig;
 	name: string;
-	protected chartState: ChartState;
+	protected chartState: Chart;
 	protected unsubscribers: Function[] = [];
 	protected ee: EventEmitter;
 
@@ -36,7 +36,7 @@ export abstract class ChartPlugin {
 		if (!this.name) Utils.error('Unnamed plugin detected');
 	}
 
-	setupChartState(chartState: ChartState) {
+	setupChartState(chartState: Chart) {
 		this.chartState = chartState;
 		this.ee = new EventEmitter();
 		this.bindEvent(

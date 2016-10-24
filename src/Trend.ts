@@ -1,4 +1,4 @@
-import {ChartState, IChartState} from "./State";
+import {Chart, IChartState} from "./Chart";
 import {Utils} from "./Utils";
 import {TrendSegmentsManager} from "./TrendSegmentsManager";
 import {EventEmitter} from './EventEmmiter';
@@ -46,12 +46,12 @@ export class Trend {
 	minYVal = Infinity;
 	maxXVal = -Infinity;
 	maxYVal = -Infinity;
-	private chartState: ChartState;
+	private chartState: Chart;
 	private calculatedOptions: ITrendOptions;
 	private prependRequest: Promise<TTrendRawData>;
 	private ee: EventEmitter;
 	
-	constructor(chartState: ChartState, trendName: string, initialState: IChartState) {
+	constructor(chartState: Chart, trendName: string, initialState: IChartState) {
 		var options = initialState.trends[trendName];
 		this.name = trendName;
 		this.chartState = chartState;
@@ -146,7 +146,7 @@ export class Trend {
 	}
 
 	/**
-	 * shortcut for ChartState.onTrendChange
+	 * shortcut for Chart.onTrendChange
 	 */
 	onChange(cb: (changedOptions: ITrendOptions, newData: ITrendData) => void): Function {
 		this.ee.on(EVENTS.CHANGE, cb);

@@ -5,7 +5,7 @@ import Material = THREE.Material;
 import Vector3 = THREE.Vector3;
 import Line = THREE.Line;
 import Object3D = THREE.Object3D;
-import {ChartState} from "../State";
+import {Chart} from "../Chart";
 import Face3 = THREE.Face3;
 import Texture = THREE.Texture;
 import Vector2 = THREE.Vector2;
@@ -47,7 +47,7 @@ export class TrendLine extends TrendWidget {
 		return trendOptions.enabled && trendOptions.type == TREND_TYPE.LINE;
 	}
 	
-	constructor (chartState: ChartState, trendName: string) {
+	constructor (chartState: Chart, trendName: string) {
 		super(chartState, trendName);
 		var options = this.trend.getOptions();
 		this.material = new LineBasicMaterial( { color: options.lineColor, linewidth: options.lineWidth } );

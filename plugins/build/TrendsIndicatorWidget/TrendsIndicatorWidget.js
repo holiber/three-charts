@@ -1,5 +1,6 @@
 (function webpackUniversalModuleDefinition(root, factory) {
-    if (typeof exports === "object" && typeof module === "object") module.exports = factory(require("three-charts")); else if (typeof define === "function" && define.amd) define([ "three-charts" ], factory); else if (typeof exports === "object") exports["THREE_CHARTS"] = factory(require("three-charts")); else root["THREE_CHARTS"] = factory(root["three-charts"]);
+    if (typeof exports === "object" && typeof module === "object") module.exports = factory(require("three-charts")); else if (typeof define === "function" && define.amd) define([ "three-charts" ], factory); else if (typeof exports === "object") exports["TrendsIndicatorWidget"] = factory(require("three-charts")); else root["THREE_CHARTS"] = root["THREE_CHARTS"] || {}, 
+    root["THREE_CHARTS"]["TrendsIndicatorWidget"] = factory(root["three-charts"]);
 })(this, function(__WEBPACK_EXTERNAL_MODULE_2__) {
     return function(modules) {
         var installedModules = {};

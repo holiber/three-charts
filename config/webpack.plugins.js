@@ -26,19 +26,17 @@ module.exports = {
         var pluginsList = getPluginsNames();
         var entry = {};
         pluginsList.forEach((pluginName) => entry[pluginName] = sourcePath + pluginName + '/index.ts');
-        // console.log('entry:', entry);
         return entry;
 
     }(),
     output: {
         path: pluginsPath + '/build',
         filename: 'plugins/src/[name]/[name].js',
-        library: 'THREE_CHARTS',
+        library: ['THREE_CHARTS', '[name]'],
         libraryTarget: "umd"
     },
     resolve: {
         // Add `.ts` and `.tsx` as a resolvable extension.
-        // root: root('./src'),
         extensions: ['', '.webpack.js', '.web.js', '.ts', '.tsx', '.js']
     },
     externals: {

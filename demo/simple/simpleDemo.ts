@@ -1,7 +1,7 @@
-import { Chart, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE } from '../../src';
+import { ChartView, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE } from '../../src';
 import { TREND_TYPE } from '../../src/Trend';
 
-var chart: Chart;
+var chart: ChartView;
 
 class DataSourse {
 	data: ITrendItem[] = [];
@@ -63,7 +63,7 @@ window.onload = function () {
 	
 	var dsMain = new DataSourse();
 
-	chart = new Chart({
+	chart = new ChartView({
 		xAxis: {
 			dataType: AXIS_DATA_TYPE.DATE,
 			range: {

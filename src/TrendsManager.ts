@@ -1,6 +1,6 @@
 
 import {Trend, ITrendOptions} from "./Trend";
-import {ChartState, IChartState} from "./State";
+import {Chart, IChartState} from "./Chart";
 import { EventEmitter } from './EventEmmiter';
 
 export interface ITrendsOptions {
@@ -18,9 +18,9 @@ export class TrendsManager {
 	trends: {[name: string]: Trend} = {};
 	calculatedOptions: ITrendsOptions;
 	private ee = new EventEmitter();
-	private chartState: ChartState;
+	private chartState: Chart;
 	
-	constructor(state: ChartState, initialState: IChartState) {
+	constructor(state: Chart, initialState: IChartState) {
 		this.chartState = state;
 		var trendsCalculatedOptions: ITrendsOptions = {};
 		for (let trendName in initialState.trends) {
@@ -96,7 +96,7 @@ export class TrendsManager {
 		}
 	}
 
-	private createTrend(state: ChartState, trendName: string, initialState: IChartState): Trend {
+	private createTrend(state: Chart, trendName: string, initialState: IChartState): Trend {
 		let trend = new Trend(state, trendName, initialState);
 		this.trends[trendName] = trend;
 		return trend;

@@ -1,5 +1,5 @@
 
-import {ChartState} from "./State";
+import {Chart} from "./Chart";
 import {Utils} from "./Utils";
 import {AXIS_TYPE} from "./interfaces";
 import {ITrendData, ITrendOptions} from "./Trend";
@@ -31,12 +31,12 @@ const AXIS_MARK_DEFAULT_OPTIONS: IAxisMarkOptions = {
 };
 
 export class AxisMarks {
-	private chartState: ChartState;
+	private chartState: Chart;
 	private axisType: AXIS_TYPE;
 	private ee: EventEmitter;
 	private items: {[name: string]: AxisMark} = {};
 
-	constructor(chartState: ChartState, axisType: AXIS_TYPE) {
+	constructor(chartState: Chart, axisType: AXIS_TYPE) {
 		this.chartState = chartState;
 		this.ee = new EventEmitter();
 		this.axisType = axisType;
@@ -98,11 +98,11 @@ export class AxisMark {
 	static typeName = 'simple';
 	options: IAxisMarkOptions;
 	axisType: AXIS_TYPE;
-	protected chartState: ChartState;
+	protected chartState: Chart;
 	protected renderOnTrendsChange = false;
 	protected ee: EventEmitter;
 
-	constructor(chartState: ChartState, axisType: AXIS_TYPE, options: IAxisMarkOptions) {
+	constructor(chartState: Chart, axisType: AXIS_TYPE, options: IAxisMarkOptions) {
 		this.ee = new EventEmitter();
 		this.options = options;
 		this.axisType = axisType;

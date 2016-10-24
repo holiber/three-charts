@@ -1,5 +1,5 @@
 import { IIteralable } from "./interfaces";
-import { ChartState } from "./State";
+import { Chart } from "./Chart";
 import Vector3 = THREE.Vector3;
 import { ITrendItem, Trend } from "./Trend";
 /**
@@ -10,7 +10,7 @@ export declare class TrendSegmentsManager {
         [id: string]: TrendSegment;
     };
     segments: TrendSegment[];
-    chartState: ChartState;
+    chartState: Chart;
     animatedSegmentsIds: number[];
     maxSegmentLength: number;
     segmentsLength: number;
@@ -27,7 +27,7 @@ export declare class TrendSegmentsManager {
     private endSegmentId;
     private trend;
     private ee;
-    constructor(chartState: ChartState, trend: Trend);
+    constructor(chartState: Chart, trend: Trend);
     protected bindEvents(): void;
     private onDestroyHandler();
     private onZoomHandler();

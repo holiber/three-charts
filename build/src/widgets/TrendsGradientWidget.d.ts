@@ -1,5 +1,5 @@
 import Object3D = THREE.Object3D;
-import { ChartState } from "../State";
+import { Chart } from "../Chart";
 import { ITrendOptions } from "../Trend";
 import { TrendsWidget, TrendWidget } from "./TrendsWidget";
 import { IScreenTransformOptions } from '../Screen';
@@ -13,7 +13,7 @@ export declare class TrendGradient extends TrendWidget {
     private visibleSegmentsCnt;
     private segmentsIds;
     static widgetIsEnabled(trendOptions: ITrendOptions): boolean;
-    constructor(chartState: ChartState, trendName: string);
+    constructor(chartState: Chart, trendName: string);
     protected bindEvents(): void;
     getObject3D(): Object3D;
     initGradient(): void;

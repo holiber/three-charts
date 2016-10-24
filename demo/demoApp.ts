@@ -1,11 +1,15 @@
-import { Chart, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE } from 'three-charts';
-//import { Chart, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE } from '../src';
+// import { Chart, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE } from 'three-charts';
+git import { ChartView, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE } from '../src';
 // import { TREND_MARK_SIDE, ITrendMarkOptions, TrendsMarksPlugin } from '../plugins/build/TrendsMarksPlugin';
-import { TrendsBeaconWidget } from '../plugins/build/TrendsBeaconWidget';
-import { TrendsLoadingWidget } from '../plugins/build/TrendsLoadingWidget';
-import { TrendsIndicatorWidget } from '../plugins/build/TrendsIndicatorWidget';
+// import { TrendsBeaconWidget } from '../plugins/build/TrendsBeaconWidget';
+// import { TrendsLoadingWidget } from '../plugins/build/TrendsLoadingWidget';
+// import { TrendsIndicatorWidget } from '../plugins/build/TrendsIndicatorWidget';
+//
+//
+//
+// Chart.preinstalledWidgets.push(TrendsLoadingWidget, TrendsBeaconWidget, TrendsIndicatorWidget);
 
-var chart: Chart;
+var chart: ChartView;
 
 class DataSourse {
 	data: ITrendItem[] = [];
@@ -95,11 +99,8 @@ window.onload = function () {
 	var now = Date.now();
 
 
-	Chart.installWidget(TrendsLoadingWidget);
-	Chart.installWidget(TrendsBeaconWidget);
-	Chart.installWidget(TrendsIndicatorWidget);
 
-	chart = new Chart({
+	chart = new ChartView({
 		yAxis: {
 			marks: [
 				{value: dsMain.data[0].yVal, name: 'openprice', title: 'OPEN PRICE', lineColor: '#29874b', stickToEdges: true},
@@ -184,7 +185,7 @@ window.onload = function () {
 	});
 
 
-	// var previewChart1 = Chart.createPreviewChart({
+	// var previewChart1 = ChartView.createPreviewChart({
 	// 	$el: document.querySelectorAll('.preview-chart')[0],
 	// 	yAxis: {
 	// 		range: {type: AXIS_RANGE_TYPE.FIXED, from: 20, to: 150}
@@ -197,7 +198,7 @@ window.onload = function () {
 	// 	}
 	// });
 	//
-	// var previewChart2 = Chart.createPreviewChart({
+	// var previewChart2 = ChartView.createPreviewChart({
 	// 	$el: document.querySelectorAll('.preview-chart')[1],
 	// 	yAxis: {
 	// 		range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 200}
@@ -211,7 +212,7 @@ window.onload = function () {
 	//
 	// });
 	//
-	// var previewChart3 = Chart.createPreviewChart({
+	// var previewChart3 = ChartView.createPreviewChart({
 	// 	$el: document.querySelectorAll('.preview-chart')[2],
 	// 	yAxis: {
 	// 		range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 100}

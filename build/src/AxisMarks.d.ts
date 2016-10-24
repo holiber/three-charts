@@ -1,4 +1,4 @@
-import { ChartState } from "./State";
+import { Chart } from "./Chart";
 import { AXIS_TYPE } from "./interfaces";
 import { ITrendData } from "./Trend";
 import { EventEmitter } from './EventEmmiter';
@@ -20,7 +20,7 @@ export declare class AxisMarks {
     private axisType;
     private ee;
     private items;
-    constructor(chartState: ChartState, axisType: AXIS_TYPE);
+    constructor(chartState: Chart, axisType: AXIS_TYPE);
     protected bindEvents(): void;
     private onTrendChange(trendName, newData);
     getItems(): {
@@ -32,10 +32,10 @@ export declare class AxisMark {
     static typeName: string;
     options: IAxisMarkOptions;
     axisType: AXIS_TYPE;
-    protected chartState: ChartState;
+    protected chartState: Chart;
     protected renderOnTrendsChange: boolean;
     protected ee: EventEmitter;
-    constructor(chartState: ChartState, axisType: AXIS_TYPE, options: IAxisMarkOptions);
+    constructor(chartState: Chart, axisType: AXIS_TYPE, options: IAxisMarkOptions);
     protected bindEvents(): void;
     setOptions(newOptions: IAxisMarkUpdateOptions): void;
     getDisplayedVal(): string;
