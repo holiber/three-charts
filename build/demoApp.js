@@ -278,7 +278,7 @@
         __export(__webpack_require__(20));
         __export(__webpack_require__(3));
         __export(__webpack_require__(23));
-        __export(__webpack_require__(29));
+        __export(__webpack_require__(30));
     }, function(module, exports, __webpack_require__) {
         "use strict";
         var __extends = this && this.__extends || function(d, b) {
@@ -301,6 +301,7 @@
         var TrendsCandleWidget_1 = __webpack_require__(27);
         var deps_1 = __webpack_require__(28);
         var Color_1 = __webpack_require__(23);
+        var AxisMarksWidget_1 = __webpack_require__(29);
         var ChartBlankView = function() {
             function ChartBlankView(state, $container, pluginsAndWidgets) {
                 var _this = this;
@@ -610,7 +611,7 @@
             function ChartView() {
                 _super.apply(this, arguments);
             }
-            ChartView.preinstalledWidgets = [ TrendsLineWidget_1.TrendsLineWidget, TrendsCandleWidget_1.TrendsCandlesWidget, AxisWidget_1.AxisWidget, GridWidget_1.GridWidget, TrendsGradientWidget_1.TrendsGradientWidget ];
+            ChartView.preinstalledWidgets = [ TrendsLineWidget_1.TrendsLineWidget, TrendsCandleWidget_1.TrendsCandlesWidget, AxisWidget_1.AxisWidget, GridWidget_1.GridWidget, TrendsGradientWidget_1.TrendsGradientWidget, AxisMarksWidget_1.AxisMarksWidget ];
             return ChartView;
         }(ChartBlankView);
         exports.ChartView = ChartView;
@@ -4366,6 +4367,198 @@
         __export(__webpack_require__(5));
     }, function(module, exports, __webpack_require__) {
         "use strict";
+        var __extends = this && this.__extends || function(d, b) {
+            for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+            function __() {
+                this.constructor = d;
+            }
+            d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+        };
+        var Widget_1 = __webpack_require__(20);
+        var Object3D = THREE.Object3D;
+        var Geometry = THREE.Geometry;
+        var LineBasicMaterial = THREE.LineBasicMaterial;
+        var Vector3 = THREE.Vector3;
+        var Utils_1 = __webpack_require__(4);
+        var Line = THREE.Line;
+        var Mesh = THREE.Mesh;
+        var interfaces_1 = __webpack_require__(19);
+        var Color_1 = __webpack_require__(23);
+        var AxisMarksWidget = function(_super) {
+            __extends(AxisMarksWidget, _super);
+            function AxisMarksWidget() {
+                _super.apply(this, arguments);
+                this.axisMarksWidgets = [];
+            }
+            AxisMarksWidget.prototype.onReadyHandler = function() {
+                this.object3D = new Object3D();
+                var _a = this.chart, xAxisMarks = _a.xAxisMarks, yAxisMarks = _a.yAxisMarks;
+                var items = xAxisMarks.getItems();
+                for (var markName in items) {
+                    this.createAxisMark(items[markName]);
+                }
+                items = yAxisMarks.getItems();
+                for (var markName in items) {
+                    this.createAxisMark(items[markName]);
+                }
+            };
+            AxisMarksWidget.prototype.createAxisMark = function(axisMark) {
+                var axisMarkWidget = new AxisMarkWidget(this.chart, axisMark);
+                this.axisMarksWidgets.push(axisMarkWidget);
+                this.object3D.add(axisMarkWidget.getObject3D());
+            };
+            AxisMarksWidget.prototype.bindEvents = function() {
+                var _this = this;
+                this.bindEvent(this.chart.screen.onTransformationFrame(function() {
+                    return _this.updateMarksPositions();
+                }), this.chart.onResize(function() {
+                    return _this.updateMarksPositions();
+                }));
+            };
+            AxisMarksWidget.prototype.updateMarksPositions = function() {
+                for (var _i = 0, _a = this.axisMarksWidgets; _i < _a.length; _i++) {
+                    var widget = _a[_i];
+                    widget.updatePosition();
+                }
+            };
+            AxisMarksWidget.prototype.getObject3D = function() {
+                return this.object3D;
+            };
+            AxisMarksWidget.widgetName = "AxisMarks";
+            return AxisMarksWidget;
+        }(Widget_1.ChartWidget);
+        exports.AxisMarksWidget = AxisMarksWidget;
+        var DEFAULT_INDICATOR_RENDER_FUNCTION = function(axisMarkWidget, ctx) {
+            var axisMark = axisMarkWidget.axisMark;
+            ctx.fillStyle = axisMark.options.lineColor;
+            ctx.clearRect(0, 0, axisMarkWidget.indicatorWidth, axisMarkWidget.indicatorHeight);
+            var xCoord = 15;
+            if (axisMark.axisType == interfaces_1.AXIS_TYPE.Y) {
+                ctx.textAlign = "end";
+                xCoord = axisMarkWidget.indicatorWidth;
+            }
+            ctx.fillText(axisMark.options.title, xCoord, 20);
+            if (!axisMark.options.showValue) return;
+            ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+            ctx.fillText(axisMark.getDisplayedVal(), 16, 34);
+        };
+        var INDICATOR_POS_Z = .1;
+        var AxisMarkWidget = function() {
+            function AxisMarkWidget(chartState, axisMark) {
+                this.indicatorWidth = 128;
+                this.indicatorHeight = 64;
+                this.indicatorRenderFunction = DEFAULT_INDICATOR_RENDER_FUNCTION;
+                this.chartState = chartState;
+                this.axisMark = axisMark;
+                this.axisType = axisMark.axisType;
+                this.frameValue = axisMark.options.value;
+                this.object3D = new Object3D();
+                this.object3D.position.setZ(-.1);
+                this.line = this.createLine();
+                this.object3D.add(this.line);
+                this.indicator = this.createIndicator();
+                this.object3D.add(this.indicator);
+                this.renderIndicator();
+                this.updatePosition();
+                this.bindEvents();
+            }
+            AxisMarkWidget.prototype.getObject3D = function() {
+                return this.object3D;
+            };
+            AxisMarkWidget.prototype.createLine = function() {
+                var _a = this.axisMark.options, lineWidth = _a.lineWidth, lineColor = _a.lineColor;
+                var lineGeometry = new Geometry();
+                lineGeometry.vertices.push(new Vector3(0, 0, 0), new Vector3(0, 0, 0));
+                return new Line(lineGeometry, new LineBasicMaterial({
+                    color: new Color_1.ChartColor(lineColor).value,
+                    linewidth: lineWidth
+                }));
+            };
+            AxisMarkWidget.prototype.createIndicator = function() {
+                var _a = this, width = _a.indicatorWidth, height = _a.indicatorHeight;
+                var texture = Utils_1.Utils.createPixelPerfectTexture(width, height, function(ctx) {
+                    ctx.beginPath();
+                    ctx.font = "10px Arial";
+                });
+                var material = new THREE.MeshBasicMaterial({
+                    map: texture,
+                    side: THREE.FrontSide
+                });
+                material.transparent = true;
+                return new Mesh(new THREE.PlaneGeometry(width, height), material);
+            };
+            AxisMarkWidget.prototype.renderIndicator = function() {
+                var texture = this.indicator.material.map;
+                var ctx = texture.image.getContext("2d");
+                DEFAULT_INDICATOR_RENDER_FUNCTION(this, ctx);
+                texture.needsUpdate = true;
+            };
+            AxisMarkWidget.prototype.bindEvents = function() {
+                var _this = this;
+                this.axisMark.onDisplayedValueChange(function() {
+                    return _this.renderIndicator();
+                });
+                this.axisMark.onValueChange(function() {
+                    return _this.onValueChangeHandler();
+                });
+            };
+            AxisMarkWidget.prototype.onValueChangeHandler = function() {
+                var _this = this;
+                if (this.moveAnimation) this.moveAnimation.kill();
+                var animations = this.chartState.state.animations;
+                var targetValue = this.axisMark.options.value;
+                var cb = function() {
+                    _this.updatePosition();
+                };
+                if (animations.enabled) {
+                    this.moveAnimation = TweenLite.to(this, animations.trendChangeSpeed, {
+                        frameValue: targetValue,
+                        ease: animations.trendChangeEase
+                    });
+                    this.moveAnimation.eventCallback("onUpdate", cb);
+                } else {
+                    this.frameValue = targetValue;
+                    cb();
+                }
+            };
+            AxisMarkWidget.prototype.updatePosition = function() {
+                var chartState = this.chartState;
+                var screen = chartState.screen;
+                var isXAxis = this.axisType == interfaces_1.AXIS_TYPE.X;
+                var lineGeometry = this.line.geometry;
+                var hasStickMode = this.axisMark.options.stickToEdges;
+                var _a = this.chartState.state, width = _a.width, height = _a.height;
+                if (isXAxis) {
+                    this.object3D.position.x = screen.getPointOnXAxis(this.frameValue);
+                    this.object3D.position.y = screen.getBottom();
+                    lineGeometry.vertices[1].setY(height);
+                    this.indicator.position.set(this.indicatorWidth / 2, chartState.state.height - this.indicatorHeight / 2, INDICATOR_POS_Z);
+                } else {
+                    var val = this.frameValue;
+                    var bottomVal = screen.getBottomVal();
+                    var topVal = screen.getTopVal();
+                    var needToStickOnTop = hasStickMode && val > topVal;
+                    var needToStickOnBottom = hasStickMode && val < bottomVal;
+                    var centerYVal = screen.getCenterYVal();
+                    this.object3D.position.x = screen.getLeft();
+                    if (needToStickOnTop) {
+                        this.object3D.position.y = screen.getTop();
+                    } else if (needToStickOnBottom) {
+                        this.object3D.position.y = screen.getBottom();
+                    } else {
+                        this.object3D.position.y = screen.getPointOnYAxis(this.frameValue);
+                    }
+                    lineGeometry.vertices[1].setX(width);
+                    var indicatorPosY = val > centerYVal ? -35 : 10;
+                    this.indicator.position.set(width - this.indicatorWidth / 2 - 50, indicatorPosY, INDICATOR_POS_Z);
+                }
+                lineGeometry.verticesNeedUpdate = true;
+            };
+            AxisMarkWidget.typeName = "simple";
+            return AxisMarkWidget;
+        }();
+    }, function(module, exports, __webpack_require__) {
+        "use strict";
         function __export(m) {
             for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
         }
@@ -4374,6 +4567,7 @@
         __export(__webpack_require__(25));
         __export(__webpack_require__(26));
         __export(__webpack_require__(24));
+        __export(__webpack_require__(29));
     } ]);
 });
 

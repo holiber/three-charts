@@ -21,6 +21,7 @@ import { TrendsCandlesWidget } from './widgets/TrendsCandleWidget';
 import { ResizeSensor, ResizeSensorType } from './deps';
 import OrthographicCamera = THREE.OrthographicCamera;
 import {ChartColor} from "./Color";
+import { AxisMarksWidget } from "./widgets/AxisMarksWidget";
 
 
 export class ChartBlankView {
@@ -353,6 +354,8 @@ export class ChartView extends ChartBlankView {
 		TrendsCandlesWidget,
 		AxisWidget,
 		GridWidget,
-		TrendsGradientWidget
+		TrendsGradientWidget,
+		// TODO: remove AxisMarksWidget from preinstalled widgets
+		AxisMarksWidget
 	]
 }

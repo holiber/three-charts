@@ -3,3 +3,4 @@ export * from './GridWidget';
 export * from './TrendsWidget';
 export * from './TrendsLineWidget';
 export * from './TrendsGradientWidget';
+export * from './AxisMarksWidget';
