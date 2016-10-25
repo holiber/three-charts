@@ -81,6 +81,8 @@ export interface IChartState {
 	autoResize?: boolean;
 	controls?: {enabled: boolean};
 	autoScroll?: boolean;
+
+	//TODO: exclude stats in plugin
 	showStats?: boolean;
 	backgroundColor?: TChartColor;
 	computedData?: IChartStateComputedData,

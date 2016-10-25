@@ -38,6 +38,7 @@ export class AxisMarksWidget extends ChartWidget {
 		for (var markName in items) {
 			this.createAxisMark(items[markName]);
 		}
+		this.bindEvents();
 	}
 
 	private createAxisMark(axisMark: AxisMark) {

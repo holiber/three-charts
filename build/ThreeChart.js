@@ -4164,6 +4164,7 @@
                 for (var markName in items) {
                     this.createAxisMark(items[markName]);
                 }
+                this.bindEvents();
             };
             AxisMarksWidget.prototype.createAxisMark = function(axisMark) {
                 var axisMarkWidget = new AxisMarkWidget(this.chart, axisMark);
