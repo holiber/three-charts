@@ -23,7 +23,7 @@ import OrthographicCamera = THREE.OrthographicCamera;
 import {ChartColor} from "./Color";
 
 
-export class ChartView {
+export class ChartBlankView {
 
 	static devicePixelRatio = window.devicePixelRatio;
 	static preinstalledWidgets: typeof ChartWidget[] = [];
@@ -346,11 +346,13 @@ export class ChartView {
 
 }
 
-// install built-in widgets
-ChartView.preinstalledWidgets = [
-	TrendsLineWidget,
-	TrendsCandlesWidget,
-	AxisWidget,
-	GridWidget,
-	TrendsGradientWidget
-];
+
+export class ChartView extends ChartBlankView {
+	static preinstalledWidgets: typeof ChartWidget[] = [
+		TrendsLineWidget,
+		TrendsCandlesWidget,
+		AxisWidget,
+		GridWidget,
+		TrendsGradientWidget
+	]
+}

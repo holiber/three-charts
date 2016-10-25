@@ -2,7 +2,7 @@ import { ChartPlugin } from './Plugin';
 import { Trend } from "./Trend";
 import { Chart, IChartState } from "./Chart";
 import { ChartWidget } from "./Widget";
-export declare class ChartView {
+export declare class ChartBlankView {
     static devicePixelRatio: number;
     static preinstalledWidgets: typeof ChartWidget[];
     static renderers: {
@@ -61,4 +61,7 @@ export declare class ChartView {
     private onChartContainerResizeHandler(width, height);
     private onChartResize();
     private zoom(zoomValue, zoomOrigin);
+}
+export declare class ChartView extends ChartBlankView {
+    static preinstalledWidgets: typeof ChartWidget[];
 }

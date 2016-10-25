@@ -44,6 +44,13 @@
         __export(__webpack_require__(29));
     }, function(module, exports, __webpack_require__) {
         "use strict";
+        var __extends = this && this.__extends || function(d, b) {
+            for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+            function __() {
+                this.constructor = d;
+            }
+            d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+        };
         var Plugin_1 = __webpack_require__(3);
         __webpack_require__(5);
         var PerspectiveCamera = THREE.PerspectiveCamera;
@@ -57,8 +64,8 @@
         var TrendsCandleWidget_1 = __webpack_require__(27);
         var deps_1 = __webpack_require__(28);
         var Color_1 = __webpack_require__(23);
-        var ChartView = function() {
-            function ChartView(state, $container, pluginsAndWidgets) {
+        var ChartBlankView = function() {
+            function ChartBlankView(state, $container, pluginsAndWidgets) {
                 var _this = this;
                 if (pluginsAndWidgets === void 0) {
                     pluginsAndWidgets = [];
@@ -82,7 +89,7 @@
                 this.$container = $container;
                 this.init($container);
             }
-            ChartView.prototype.init = function($container) {
+            ChartBlankView.prototype.init = function($container) {
                 var chart = this.chart;
                 var _a = chart.state, w = _a.width, h = _a.height, showStats = _a.showStats, autoRender = _a.autoRender;
                 this.scene = new THREE.Scene();
@@ -107,7 +114,7 @@
                 this.bindEvents();
                 this.renderLoop();
             };
-            ChartView.prototype.initWidgets = function() {
+            ChartBlankView.prototype.initWidgets = function() {
                 var _this = this;
                 var preinstalledWidgetsClasses = this.constructor.preinstalledWidgets;
                 var customWidgets = [];
@@ -129,7 +136,7 @@
                     _this.scene.add(widget.getObject3D());
                 });
             };
-            ChartView.prototype.renderLoop = function() {
+            ChartBlankView.prototype.renderLoop = function() {
                 var _this = this;
                 if (this.isDestroyed) return;
                 this.stats && this.stats.begin();
@@ -150,17 +157,17 @@
                 }
                 this.stats && this.stats.end();
             };
-            ChartView.prototype.render = function() {
+            ChartBlankView.prototype.render = function() {
                 this.renderer.render(this.scene, this.camera);
             };
-            ChartView.prototype.stop = function() {
+            ChartBlankView.prototype.stop = function() {
                 this.isStopped = true;
             };
-            ChartView.prototype.run = function() {
+            ChartBlankView.prototype.run = function() {
                 this.isStopped = false;
                 this.renderLoop();
             };
-            ChartView.prototype.destroy = function() {
+            ChartBlankView.prototype.destroy = function() {
                 this.isDestroyed = true;
                 this.stop();
                 this.chart.destroy();
@@ -172,16 +179,16 @@
                 this.renderer.domElement = null;
                 this.renderer = null;
             };
-            ChartView.prototype.getState = function() {
+            ChartBlankView.prototype.getState = function() {
                 return this.chart.state;
             };
-            ChartView.prototype.getTrend = function(trendName) {
+            ChartBlankView.prototype.getTrend = function(trendName) {
                 return this.chart.getTrend(trendName);
             };
-            ChartView.prototype.setState = function(state) {
+            ChartBlankView.prototype.setState = function(state) {
                 return this.chart.setState(state);
             };
-            ChartView.prototype.bindEvents = function() {
+            ChartBlankView.prototype.bindEvents = function() {
                 var _this = this;
                 var $el = this.$el;
                 if (this.chart.state.controls.enabled) {
@@ -217,7 +224,7 @@
                     return _this.onChartResize();
                 }) ];
             };
-            ChartView.prototype.unbindEvents = function() {
+            ChartBlankView.prototype.unbindEvents = function() {
                 try {
                     this.resizeSensor && this.resizeSensor.detach();
                 } catch (e) {}
@@ -226,7 +233,7 @@
                     return unsubscribe();
                 });
             };
-            ChartView.prototype.setupCamera = function() {
+            ChartBlankView.prototype.setupCamera = function() {
                 var camSettings = this.chart.screen.getCameraSettings();
                 if (!this.camera) {
                     this.camera = new PerspectiveCamera(camSettings.FOV, camSettings.aspect, camSettings.near, camSettings.far);
@@ -242,7 +249,7 @@
                 this.cameraInitialPosition = this.camera.position.clone();
                 this.onScreenTransformHandler(this.chart.screen.options);
             };
-            ChartView.prototype.onScreenTransformHandler = function(options) {
+            ChartBlankView.prototype.onScreenTransformHandler = function(options) {
                 if (options.scrollX != void 0) {
                     var scrollX_1 = this.cameraInitialPosition.x + options.scrollX;
                     this.camera.position.setX(scrollX_1);
@@ -252,7 +259,7 @@
                     this.camera.position.setY(scrollY_1);
                 }
             };
-            ChartView.prototype.autoscroll = function() {
+            ChartBlankView.prototype.autoscroll = function() {
                 var state = this.chart;
                 if (!state.state.autoScroll) return;
                 var oldTrendsMaxX = state.state.prevState.computedData.trends.maxXVal;
@@ -274,8 +281,8 @@
                     });
                 }
             };
-            ChartView.prototype.onScrollStop = function() {};
-            ChartView.prototype.onMouseDown = function(ev) {
+            ChartBlankView.prototype.onScrollStop = function() {};
+            ChartBlankView.prototype.onMouseDown = function(ev) {
                 this.setState({
                     cursor: {
                         dragMode: true,
@@ -284,14 +291,14 @@
                     }
                 });
             };
-            ChartView.prototype.onMouseUp = function(ev) {
+            ChartBlankView.prototype.onMouseUp = function(ev) {
                 this.setState({
                     cursor: {
                         dragMode: false
                     }
                 });
             };
-            ChartView.prototype.onMouseMove = function(ev) {
+            ChartBlankView.prototype.onMouseMove = function(ev) {
                 if (this.chart.state.cursor.dragMode) {
                     this.setState({
                         cursor: {
@@ -302,14 +309,14 @@
                     });
                 }
             };
-            ChartView.prototype.onMouseWheel = function(ev) {
+            ChartBlankView.prototype.onMouseWheel = function(ev) {
                 ev.stopPropagation();
                 ev.preventDefault();
                 var zoomOrigin = ev.layerX / this.chart.state.width;
                 var zoomValue = 1 + ev.wheelDeltaY * .001;
                 this.zoom(zoomValue, zoomOrigin);
             };
-            ChartView.prototype.onTouchMove = function(ev) {
+            ChartBlankView.prototype.onTouchMove = function(ev) {
                 this.setState({
                     cursor: {
                         dragMode: true,
@@ -318,25 +325,25 @@
                     }
                 });
             };
-            ChartView.prototype.onTouchEnd = function(ev) {
+            ChartBlankView.prototype.onTouchEnd = function(ev) {
                 this.setState({
                     cursor: {
                         dragMode: false
                     }
                 });
             };
-            ChartView.prototype.onChartContainerResizeHandler = function(width, height) {
+            ChartBlankView.prototype.onChartContainerResizeHandler = function(width, height) {
                 this.setState({
                     width: width,
                     height: height
                 });
             };
-            ChartView.prototype.onChartResize = function() {
+            ChartBlankView.prototype.onChartResize = function() {
                 var _a = this.chart.state, width = _a.width, height = _a.height;
                 this.renderer.setSize(width, height);
                 this.setupCamera();
             };
-            ChartView.prototype.zoom = function(zoomValue, zoomOrigin) {
+            ChartBlankView.prototype.zoom = function(zoomValue, zoomOrigin) {
                 var _this = this;
                 var MAX_ZOOM_VALUE = 1.5;
                 var MIN_ZOOM_VALUE = .7;
@@ -352,16 +359,24 @@
                     });
                 });
             };
-            ChartView.devicePixelRatio = window.devicePixelRatio;
-            ChartView.preinstalledWidgets = [];
-            ChartView.renderers = {
+            ChartBlankView.devicePixelRatio = window.devicePixelRatio;
+            ChartBlankView.preinstalledWidgets = [];
+            ChartBlankView.renderers = {
                 CanvasRenderer: THREE.CanvasRenderer,
                 WebGLRenderer: THREE.WebGLRenderer
             };
-            return ChartView;
+            return ChartBlankView;
         }();
+        exports.ChartBlankView = ChartBlankView;
+        var ChartView = function(_super) {
+            __extends(ChartView, _super);
+            function ChartView() {
+                _super.apply(this, arguments);
+            }
+            ChartView.preinstalledWidgets = [ TrendsLineWidget_1.TrendsLineWidget, TrendsCandleWidget_1.TrendsCandlesWidget, AxisWidget_1.AxisWidget, GridWidget_1.GridWidget, TrendsGradientWidget_1.TrendsGradientWidget ];
+            return ChartView;
+        }(ChartBlankView);
         exports.ChartView = ChartView;
-        ChartView.preinstalledWidgets = [ TrendsLineWidget_1.TrendsLineWidget, TrendsCandleWidget_1.TrendsCandlesWidget, AxisWidget_1.AxisWidget, GridWidget_1.GridWidget, TrendsGradientWidget_1.TrendsGradientWidget ];
     }, function(module, exports, __webpack_require__) {
         "use strict";
         var Utils_1 = __webpack_require__(4);
