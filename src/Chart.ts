@@ -193,6 +193,7 @@ export class Chart {
 	 * true then state was initialized and ready to use
 	 */
 	isReady = false;
+	isDestroyed = false;
 
 
 	private ee: EventEmitter;
@@ -226,12 +227,13 @@ export class Chart {
 	}
 
 	/**
-	 * destroy state, use ChartView.destroy to completely destroy state
+	 * destroy chart, use ChartView.destroy to completely destroy Chart
 	 */
 	destroy() {
 		this.ee.emit(CHART_STATE_EVENTS.DESTROY);
 		this.ee.removeAllListeners();
 		this.state = {};
+		this.isDestroyed = true;
 	}
 
 	onDestroy(cb: Function) {
@@ -283,6 +285,11 @@ export class Chart {
 	}
 
 	setState(newState: IChartState, eventData?: any, silent = false) {
+
+		if (this.isDestroyed) {
+			Utils.error('You have tried to change trend of destroyed Chart instance');
+		}
+
 		let stateData = this.state as {[key: string]: any};
 		let newStateObj = newState as {[key: string]: any};
 

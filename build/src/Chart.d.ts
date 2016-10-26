@@ -84,6 +84,7 @@ export declare class Chart {
      * true then state was initialized and ready to use
      */
     isReady: boolean;
+    isDestroyed: boolean;
     private ee;
     constructor(initialState: IChartState, plugins?: ChartPlugin[]);
     /**

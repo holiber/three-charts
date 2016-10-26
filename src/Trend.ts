@@ -46,7 +46,7 @@ export class Trend {
 	minYVal = Infinity;
 	maxXVal = -Infinity;
 	maxYVal = -Infinity;
-	private chartState: Chart;
+	private chart: Chart;
 	private calculatedOptions: ITrendOptions;
 	private prependRequest: Promise<TTrendRawData>;
 	private ee: EventEmitter;
@@ -54,8 +54,8 @@ export class Trend {
 	constructor(chartState: Chart, trendName: string, initialState: IChartState) {
 		var options = initialState.trends[trendName];
 		this.name = trendName;
-		this.chartState = chartState;
-		this.calculatedOptions = Utils.deepMerge(this.chartState.state.trendDefaultState, options);
+		this.chart = chartState;
+		this.calculatedOptions = Utils.deepMerge(this.chart.state.trendDefaultState, options);
 		this.calculatedOptions.name = trendName;
 		if (options.dataset) this.calculatedOptions.data = Trend.prepareData(options.dataset);
 		this.calculatedOptions.dataset = [];
@@ -64,11 +64,11 @@ export class Trend {
 	}
 
 	private onInitialStateApplied() {
-		this.segmentsManager = new TrendSegmentsManager(this.chartState, this);
+		this.segmentsManager = new TrendSegmentsManager(this.chart, this);
 	}
 
 	private bindEvents() {
-		var chartState = this.chartState;
+		var chartState = this.chart;
 		chartState.onInitialStateApplied(() => this.onInitialStateApplied());
 		chartState.onScrollStop(() => this.checkForPrependRequest());
 		chartState.onZoom(() => this.checkForPrependRequest());
@@ -103,7 +103,7 @@ export class Trend {
 		}
 		var options = this.getOptions();
 		var statePatch: IChartState = {trends: {[options.name]: {data: allData}}};
-		this.chartState.setState(statePatch, newData);
+		this.chart.setState(statePatch, newData);
 	}
 	
 	getData(fromX?: number, toX?: number): ITrendData {
@@ -131,11 +131,11 @@ export class Trend {
 	}
 
 	getOptions() {
-		return this.chartState.state.trends[this.name]
+		return this.chart.state.trends[this.name]
 	}
 
 	setOptions(options: ITrendOptions) {
-		this.chartState.setState({trends: {[this.name]: options}});
+		this.chart.setState({trends: {[this.name]: options}});
 	}
 
 	onPrependRequest(cb: IPrependPromiseExecutor): Function {
@@ -165,7 +165,7 @@ export class Trend {
 
 	private checkForPrependRequest() {
 		if (this.prependRequest) return;
-		var chartState = this.chartState;
+		var chartState = this.chart;
 		var minXVal = chartState.state.computedData.trends.minXVal;
 		var minScreenX = chartState.getScreenXByValue(minXVal);
 		var needToRequest = minScreenX > 0;

@@ -30,17 +30,17 @@
             for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
         }
         __export(__webpack_require__(2));
+        __export(__webpack_require__(20));
         __export(__webpack_require__(19));
         __export(__webpack_require__(18));
-        __export(__webpack_require__(17));
-        __export(__webpack_require__(13));
         __export(__webpack_require__(14));
         __export(__webpack_require__(15));
         __export(__webpack_require__(16));
+        __export(__webpack_require__(17));
         __export(__webpack_require__(4));
-        __export(__webpack_require__(20));
+        __export(__webpack_require__(21));
         __export(__webpack_require__(3));
-        __export(__webpack_require__(23));
+        __export(__webpack_require__(24));
         __export(__webpack_require__(30));
     }, function(module, exports, __webpack_require__) {
         "use strict";
@@ -54,16 +54,16 @@
         var Plugin_1 = __webpack_require__(3);
         __webpack_require__(5);
         var PerspectiveCamera = THREE.PerspectiveCamera;
-        var Chart_1 = __webpack_require__(13);
-        var Widget_1 = __webpack_require__(20);
+        var Chart_1 = __webpack_require__(14);
+        var Widget_1 = __webpack_require__(21);
         var Utils_1 = __webpack_require__(4);
-        var AxisWidget_1 = __webpack_require__(21);
-        var GridWidget_1 = __webpack_require__(22);
-        var TrendsGradientWidget_1 = __webpack_require__(24);
-        var TrendsLineWidget_1 = __webpack_require__(26);
-        var TrendsCandleWidget_1 = __webpack_require__(27);
-        var deps_1 = __webpack_require__(28);
-        var Color_1 = __webpack_require__(23);
+        var AxisWidget_1 = __webpack_require__(22);
+        var GridWidget_1 = __webpack_require__(23);
+        var TrendsGradientWidget_1 = __webpack_require__(25);
+        var TrendsLineWidget_1 = __webpack_require__(27);
+        var TrendsCandleWidget_1 = __webpack_require__(28);
+        var deps_1 = __webpack_require__(13);
+        var Color_1 = __webpack_require__(24);
         var AxisMarksWidget_1 = __webpack_require__(29);
         var ChartBlankView = function() {
             function ChartBlankView(state, $container, pluginsAndWidgets) {
@@ -1271,7 +1271,7 @@
         })();
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var deps_1 = __webpack_require__(5);
+        var deps_1 = __webpack_require__(13);
         var EventEmitter = function() {
             function EventEmitter() {
                 this.ee = new deps_1.EE2();
@@ -1308,14 +1308,20 @@
         exports.EventEmitter = EventEmitter;
     }, function(module, exports, __webpack_require__) {
         "use strict";
+        function __export(m) {
+            for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
+        }
+        __export(__webpack_require__(5));
+    }, function(module, exports, __webpack_require__) {
+        "use strict";
         var Vector3 = THREE.Vector3;
-        var Trend_1 = __webpack_require__(14);
+        var Trend_1 = __webpack_require__(15);
         var EventEmmiter_1 = __webpack_require__(12);
         var Utils_1 = __webpack_require__(4);
-        var TrendsManager_1 = __webpack_require__(16);
-        var Screen_1 = __webpack_require__(17);
-        var AxisMarks_1 = __webpack_require__(18);
-        var interfaces_1 = __webpack_require__(19);
+        var TrendsManager_1 = __webpack_require__(17);
+        var Screen_1 = __webpack_require__(18);
+        var AxisMarks_1 = __webpack_require__(19);
+        var interfaces_1 = __webpack_require__(20);
         var deps_1 = __webpack_require__(5);
         var CHART_STATE_EVENTS = {
             INITIAL_STATE_APPLIED: "initialStateApplied",
@@ -1449,6 +1455,7 @@
                 };
                 this.plugins = {};
                 this.isReady = false;
+                this.isDestroyed = false;
                 this.ee = new EventEmmiter_1.EventEmitter();
                 this.ee.setMaxListeners(initialState.eventEmitterMaxListeners || this.state.eventEmitterMaxListeners);
                 this.state = Utils_1.Utils.deepMerge(this.state, initialState);
@@ -1472,6 +1479,7 @@
                 this.ee.emit(CHART_STATE_EVENTS.DESTROY);
                 this.ee.removeAllListeners();
                 this.state = {};
+                this.isDestroyed = true;
             };
             Chart.prototype.onDestroy = function(cb) {
                 return this.ee.subscribe(CHART_STATE_EVENTS.DESTROY, cb);
@@ -1512,6 +1520,9 @@
             Chart.prototype.setState = function(newState, eventData, silent) {
                 if (silent === void 0) {
                     silent = false;
+                }
+                if (this.isDestroyed) {
+                    Utils_1.Utils.error("You have tried to change trend of destroyed Chart instance");
                 }
                 var stateData = this.state;
                 var newStateObj = newState;
@@ -1892,7 +1903,7 @@
     }, function(module, exports, __webpack_require__) {
         "use strict";
         var Utils_1 = __webpack_require__(4);
-        var TrendSegmentsManager_1 = __webpack_require__(15);
+        var TrendSegmentsManager_1 = __webpack_require__(16);
         var EventEmmiter_1 = __webpack_require__(12);
         var deps_1 = __webpack_require__(5);
         var EVENTS = {
@@ -1912,8 +1923,8 @@
                 this.maxYVal = -Infinity;
                 var options = initialState.trends[trendName];
                 this.name = trendName;
-                this.chartState = chartState;
-                this.calculatedOptions = Utils_1.Utils.deepMerge(this.chartState.state.trendDefaultState, options);
+                this.chart = chartState;
+                this.calculatedOptions = Utils_1.Utils.deepMerge(this.chart.state.trendDefaultState, options);
                 this.calculatedOptions.name = trendName;
                 if (options.dataset) this.calculatedOptions.data = Trend.prepareData(options.dataset);
                 this.calculatedOptions.dataset = [];
@@ -1921,11 +1932,11 @@
                 this.bindEvents();
             }
             Trend.prototype.onInitialStateApplied = function() {
-                this.segmentsManager = new TrendSegmentsManager_1.TrendSegmentsManager(this.chartState, this);
+                this.segmentsManager = new TrendSegmentsManager_1.TrendSegmentsManager(this.chart, this);
             };
             Trend.prototype.bindEvents = function() {
                 var _this = this;
-                var chartState = this.chartState;
+                var chartState = this.chart;
                 chartState.onInitialStateApplied(function() {
                     return _this.onInitialStateApplied();
                 });
@@ -1971,7 +1982,7 @@
                         data: allData
                     }, _a)
                 };
-                this.chartState.setState(statePatch, newData);
+                this.chart.setState(statePatch, newData);
                 var _a;
             };
             Trend.prototype.getData = function(fromX, toX) {
@@ -1996,10 +2007,10 @@
                 return data[data.length - 1];
             };
             Trend.prototype.getOptions = function() {
-                return this.chartState.state.trends[this.name];
+                return this.chart.state.trends[this.name];
             };
             Trend.prototype.setOptions = function(options) {
-                this.chartState.setState({
+                this.chart.setState({
                     trends: (_a = {}, _a[this.name] = options, _a)
                 });
                 var _a;
@@ -2031,7 +2042,7 @@
             Trend.prototype.checkForPrependRequest = function() {
                 var _this = this;
                 if (this.prependRequest) return;
-                var chartState = this.chartState;
+                var chartState = this.chart;
                 var minXVal = chartState.state.computedData.trends.minXVal;
                 var minScreenX = chartState.getScreenXByValue(minXVal);
                 var needToRequest = minScreenX > 0;
@@ -2085,7 +2096,7 @@
         "use strict";
         var EventEmmiter_1 = __webpack_require__(12);
         var Vector3 = THREE.Vector3;
-        var Trend_1 = __webpack_require__(14);
+        var Trend_1 = __webpack_require__(15);
         var Utils_1 = __webpack_require__(4);
         var MAX_ANIMATED_SEGMENTS = 100;
         var EVENTS = {
@@ -2538,7 +2549,7 @@
         exports.TrendSegment = TrendSegment;
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var Trend_1 = __webpack_require__(14);
+        var Trend_1 = __webpack_require__(15);
         var EventEmmiter_1 = __webpack_require__(12);
         var EVENTS = {
             SEGMENTS_REBUILDED: "segmentsRebuilded"
@@ -2945,7 +2956,7 @@
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
         var Utils_1 = __webpack_require__(4);
-        var interfaces_1 = __webpack_require__(19);
+        var interfaces_1 = __webpack_require__(20);
         var EventEmmiter_1 = __webpack_require__(12);
         var AXIS_MARK_DEFAULT_OPTIONS = {
             type: "simple",
@@ -3143,11 +3154,11 @@
         };
         var Mesh = THREE.Mesh;
         var Object3D = THREE.Object3D;
-        var Widget_1 = __webpack_require__(20);
-        var GridWidget_1 = __webpack_require__(22);
+        var Widget_1 = __webpack_require__(21);
+        var GridWidget_1 = __webpack_require__(23);
         var Utils_1 = __webpack_require__(4);
-        var interfaces_1 = __webpack_require__(19);
-        var Color_1 = __webpack_require__(23);
+        var interfaces_1 = __webpack_require__(20);
+        var Color_1 = __webpack_require__(24);
         var AxisWidget = function(_super) {
             __extends(AxisWidget, _super);
             function AxisWidget() {
@@ -3333,10 +3344,10 @@
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
         var Vector3 = THREE.Vector3;
-        var Widget_1 = __webpack_require__(20);
+        var Widget_1 = __webpack_require__(21);
         var LineSegments = THREE.LineSegments;
         var Utils_1 = __webpack_require__(4);
-        var Color_1 = __webpack_require__(23);
+        var Color_1 = __webpack_require__(24);
         var GridWidget = function(_super) {
             __extends(GridWidget, _super);
             function GridWidget() {
@@ -3531,8 +3542,8 @@
         };
         var Geometry = THREE.Geometry;
         var Utils_1 = __webpack_require__(4);
-        var TrendsWidget_1 = __webpack_require__(25);
-        var Color_1 = __webpack_require__(23);
+        var TrendsWidget_1 = __webpack_require__(26);
+        var Color_1 = __webpack_require__(24);
         var TrendsGradientWidget = function(_super) {
             __extends(TrendsGradientWidget, _super);
             function TrendsGradientWidget() {
@@ -3672,7 +3683,7 @@
             }
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
-        var Widget_1 = __webpack_require__(20);
+        var Widget_1 = __webpack_require__(21);
         var Object3D = THREE.Object3D;
         var TrendsWidget = function(_super) {
             __extends(TrendsWidget, _super);
@@ -3796,9 +3807,9 @@
         var Geometry = THREE.Geometry;
         var LineBasicMaterial = THREE.LineBasicMaterial;
         var Vector3 = THREE.Vector3;
-        var TrendsWidget_1 = __webpack_require__(25);
+        var TrendsWidget_1 = __webpack_require__(26);
         var LineSegments = THREE.LineSegments;
-        var Trend_1 = __webpack_require__(14);
+        var Trend_1 = __webpack_require__(15);
         var Utils_1 = __webpack_require__(4);
         var TrendsLineWidget = function(_super) {
             __extends(TrendsLineWidget, _super);
@@ -3938,7 +3949,7 @@
             }
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
-        var TrendsWidget_1 = __webpack_require__(25);
+        var TrendsWidget_1 = __webpack_require__(26);
         var Object3D = THREE.Object3D;
         var Geometry = THREE.Geometry;
         var Vector3 = THREE.Vector3;
@@ -3946,7 +3957,7 @@
         var Line = THREE.Line;
         var MeshBasicMaterial = THREE.MeshBasicMaterial;
         var PlaneGeometry = THREE.PlaneGeometry;
-        var Trend_1 = __webpack_require__(14);
+        var Trend_1 = __webpack_require__(15);
         var LineBasicMaterial = THREE.LineBasicMaterial;
         var Utils_1 = __webpack_require__(4);
         var RISE_COLOR = 2927680;
@@ -4124,12 +4135,6 @@
         }();
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        function __export(m) {
-            for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
-        }
-        __export(__webpack_require__(5));
-    }, function(module, exports, __webpack_require__) {
-        "use strict";
         var __extends = this && this.__extends || function(d, b) {
             for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
             function __() {
@@ -4137,7 +4142,7 @@
             }
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
-        var Widget_1 = __webpack_require__(20);
+        var Widget_1 = __webpack_require__(21);
         var Object3D = THREE.Object3D;
         var Geometry = THREE.Geometry;
         var LineBasicMaterial = THREE.LineBasicMaterial;
@@ -4145,8 +4150,8 @@
         var Utils_1 = __webpack_require__(4);
         var Line = THREE.Line;
         var Mesh = THREE.Mesh;
-        var interfaces_1 = __webpack_require__(19);
-        var Color_1 = __webpack_require__(23);
+        var interfaces_1 = __webpack_require__(20);
+        var Color_1 = __webpack_require__(24);
         var AxisMarksWidget = function(_super) {
             __extends(AxisMarksWidget, _super);
             function AxisMarksWidget() {
@@ -4326,11 +4331,11 @@
         function __export(m) {
             for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
         }
-        __export(__webpack_require__(21));
         __export(__webpack_require__(22));
-        __export(__webpack_require__(25));
+        __export(__webpack_require__(23));
         __export(__webpack_require__(26));
-        __export(__webpack_require__(24));
+        __export(__webpack_require__(27));
+        __export(__webpack_require__(25));
         __export(__webpack_require__(29));
     } ]);
 });

@@ -45,7 +45,7 @@ export declare class Trend {
     minYVal: number;
     maxXVal: number;
     maxYVal: number;
-    private chartState;
+    private chart;
     private calculatedOptions;
     private prependRequest;
     private ee;
