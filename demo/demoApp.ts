@@ -1,14 +1,14 @@
 
-import { ChartView, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE } from '../src';
+//import { ChartView, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE } from '../src';
 
-// import { ChartView, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE } from 'three-charts';
-// import { TREND_MARK_SIDE, ITrendMarkOptions, TrendsMarksPlugin } from '../plugins/build/TrendsMarksPlugin';
-// import { TrendsBeaconWidget } from '../plugins/build/TrendsBeaconWidget';
-// import { TrendsLoadingWidget } from '../plugins/build/TrendsLoadingWidget';
-// import { TrendsIndicatorWidget } from '../plugins/build/TrendsIndicatorWidget';
-// ChartView.preinstalledWidgets.push(TrendsLoadingWidget, TrendsBeaconWidget, TrendsIndicatorWidget);
+import { ChartView, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE } from 'three-charts';
+import { TREND_MARK_SIDE, ITrendMarkOptions, TrendsMarksPlugin } from '../plugins/build/TrendsMarksPlugin';
+import { TrendsBeaconWidget } from '../plugins/build/TrendsBeaconWidget';
+import { TrendsLoadingWidget } from '../plugins/build/TrendsLoadingWidget';
+import { TrendsIndicatorWidget } from '../plugins/build/TrendsIndicatorWidget';
+ChartView.preinstalledWidgets.push(TrendsLoadingWidget, TrendsBeaconWidget, TrendsIndicatorWidget);
 
-var chart: ChartView;
+var chartView: ChartView;
 
 class DataSourse {
 	data: ITrendItem[] = [];
@@ -62,31 +62,31 @@ class DataSourse {
 	}
 }
 
-// class MarksSource {
-// 	static getNext(val: number): ITrendMarkOptions {
-// 		if (Math.random() > 0.2) return null;
-// 		return this.generate(val);
-// 	}
-//
-// 	static generate(val: number): ITrendMarkOptions {
-// 		let descriptionColor = 'rgb(40,136,75)';
-// 		let orientation =  Utils.getRandomItem([TREND_MARK_SIDE.TOP, TREND_MARK_SIDE.BOTTOM]);
-// 		if (orientation == TREND_MARK_SIDE.BOTTOM) {
-// 			descriptionColor = 'rgb(219,73,49)';
-// 		}
-//
-// 		return {
-// 			trendName: 'main',
-// 			value: val,
-// 			title: Utils.getRandomItem(['Alex Malcon', 'Serg Morrs', 'Harry Potter']),
-// 			description: Utils.getRandomItem(['$10 -> 20$', '$15 -> 30$', '40$ -> 80$']),
-// 			icon: Utils.getRandomItem(['AM', 'SM', 'HP']),
-// 			iconColor: Utils.getRandomItem(['rgb(69,67,130)', 'rgb(124,39,122)']),
-// 			orientation: orientation,
-// 			descriptionColor: descriptionColor
-// 		}
-// 	}
-// }
+class MarksSource {
+	static getNext(val: number): ITrendMarkOptions {
+		if (Math.random() > 0.2) return null;
+		return this.generate(val);
+	}
+
+	static generate(val: number): ITrendMarkOptions {
+		let descriptionColor = 'rgb(40,136,75)';
+		let orientation =  Utils.getRandomItem([TREND_MARK_SIDE.TOP, TREND_MARK_SIDE.BOTTOM]);
+		if (orientation == TREND_MARK_SIDE.BOTTOM) {
+			descriptionColor = 'rgb(219,73,49)';
+		}
+
+		return {
+			trendName: 'main',
+			value: val,
+			title: Utils.getRandomItem(['Alex Malcon', 'Serg Morrs', 'Harry Potter']),
+			description: Utils.getRandomItem(['$10 -> 20$', '$15 -> 30$', '40$ -> 80$']),
+			icon: Utils.getRandomItem(['AM', 'SM', 'HP']),
+			iconColor: Utils.getRandomItem(['rgb(69,67,130)', 'rgb(124,39,122)']),
+			orientation: orientation,
+			descriptionColor: descriptionColor
+		}
+	}
+}
 
 window.onload = function () {
 
@@ -99,7 +99,7 @@ window.onload = function () {
 
 
 
-	chart = new ChartView({
+	chartView = new ChartView({
 		yAxis: {
 			marks: [
 				{value: dsMain.data[0].yVal, name: 'openprice', title: 'OPEN PRICE', lineColor: '#29874b', stickToEdges: true},
@@ -155,20 +155,20 @@ window.onload = function () {
 		}
 	},
 	document.querySelector('.chart')
-	// 	,
-	// [
-	// 	new TrendsMarksPlugin({items: [MarksSource.generate(now + 3000), MarksSource.generate(now + 3000), MarksSource.generate(now + 4000)]})
-	// ]
+		,
+	[
+		new TrendsMarksPlugin({items: [MarksSource.generate(now + 3000), MarksSource.generate(now + 3000), MarksSource.generate(now + 4000)]})
+	]
 	);
 
-	chart.setState({animations: {enabled: false}});
-	chart.setState({animations: {enabled: true}});
+	chartView.setState({animations: {enabled: false}});
+	chartView.setState({animations: {enabled: true}});
 	
-	(<any>window)['chart'] = chart;
+	(<any>window)['chartView'] = chartView;
 
-	var mainTrend = chart.getTrend('main');
-	var deadlineMark = chart.chart.xAxisMarks.getItem('deadline');
-	var closeMark = chart.chart.xAxisMarks.getItem('close');
+	var mainTrend = chartView.getTrend('main');
+	var deadlineMark = chartView.chart.xAxisMarks.getItem('deadline');
+	var closeMark = chartView.chart.xAxisMarks.getItem('close');
 
 	mainTrend.onDataChange(() => {
 		var closeValue = closeMark.options.value;
@@ -176,11 +176,11 @@ window.onload = function () {
 			deadlineMark.setOptions({value: closeValue + 10000});
 			closeMark.setOptions({value: closeValue + 20000})
 		}
-		// var markOptions = MarksSource.getNext(mainTrend.getLastItem().xVal);
-		// if (markOptions) setTimeout(() => {
-		// 	let trendsMarks = state.state.getPlugin(TrendsMarksPlugin.NAME) as TrendsMarksPlugin;
-		// 	trendsMarks.createMark(markOptions);
-		// }, 500);
+		var markOptions = MarksSource.getNext(mainTrend.getLastItem().xVal);
+		if (markOptions) setTimeout(() => {
+			let trendsMarks = chartView.chart.getPlugin(TrendsMarksPlugin.NAME) as TrendsMarksPlugin;
+			trendsMarks.createMark(markOptions);
+		}, 500);
 	});
 
 
@@ -228,7 +228,7 @@ window.onload = function () {
 
 	var i = 0;
 
-	chart.getTrend('main').onPrependRequest((requestedLength, resolve, reject) => {
+	chartView.getTrend('main').onPrependRequest((requestedLength, resolve, reject) => {
 		var responseData: ITrendItem[] = [];
 		var ticksCount = Math.round(requestedLength / 1000) ;
 		while (ticksCount--) responseData.unshift(dsMain.getPrev());
@@ -243,7 +243,7 @@ window.onload = function () {
 
 		// [i % 2 ? 10 : 20]
 
-		 chart.getTrend('main').appendData([val]);
+		 chartView.getTrend('main').appendData([val]);
 		// state.getTrend('main').prependData([dsMain.getPrev(), dsMain.getPrev()].reverse());
 		// state.getTrend('main').appendData([val, dsMain.getNext(), dsMain.getNext(), dsMain.getNext(), dsMain.getNext()]);
 		// state.getTrend('main').prependData([val, dsMain.getNext(), dsMain.getNext(), dsMain.getNext()]);
@@ -272,35 +272,35 @@ window.onload = function () {
 function initListeners() {
 	var $checkboxMaintrend = document.querySelector('input[name="maintrend"]') as HTMLInputElement;
 	$checkboxMaintrend.addEventListener('change', () => {
-		chart.setState({trends: {main: {enabled: $checkboxMaintrend.checked}}});
+		chartView.setState({trends: {main: {enabled: $checkboxMaintrend.checked}}});
 	});
 	var $checkboxRedtrend = document.querySelector('input[name="redtrend"]') as HTMLInputElement;
 	$checkboxRedtrend.addEventListener('change', () => {
-		chart.setState({trends: {red: {enabled: $checkboxRedtrend.checked}}});
+		chartView.setState({trends: {red: {enabled: $checkboxRedtrend.checked}}});
 	});
 	var $checkboxBluetrend = document.querySelector('input[name="bluetrend"]') as HTMLInputElement;
 	$checkboxBluetrend.addEventListener('change', () => {
-		chart.setState({trends: {blue: {enabled: $checkboxBluetrend.checked}}});
+		chartView.setState({trends: {blue: {enabled: $checkboxBluetrend.checked}}});
 	});
 
 	var $switchLineBtn = document.querySelector('[name="switch-line"]') as HTMLInputElement;
 	$switchLineBtn.addEventListener('click', () => {
-		chart.getTrend('main').setOptions({type: TREND_TYPE.LINE});
+		chartView.getTrend('main').setOptions({type: TREND_TYPE.LINE});
 	});
 
 	var $switchBarsBtn = document.querySelector('[name="switch-bars"]') as HTMLInputElement;
 	$switchBarsBtn.addEventListener('click', () => {
-		chart.getTrend('main').setOptions({type: TREND_TYPE.CANDLE});
+		chartView.getTrend('main').setOptions({type: TREND_TYPE.CANDLE});
 	});
 
 	document.querySelector('[name="move-left"]').addEventListener('click', () => {
-		let currentRange = chart.chart.state.xAxis.range;
-		chart.setState({xAxis: {range: {from: currentRange.from - 2000}}});
+		let currentRange = chartView.chart.state.xAxis.range;
+		chartView.setState({xAxis: {range: {from: currentRange.from - 2000}}});
 	});
 
 	document.querySelector('[name="move-right"]').addEventListener('click', () => {
-		let currentRange = chart.chart.state.xAxis.range;
-		chart.setState({xAxis: {range: {to: currentRange.to + 2000}}});
+		let currentRange = chartView.chart.state.xAxis.range;
+		chartView.setState({xAxis: {range: {to: currentRange.to + 2000}}});
 	});
 	
 	var timeframeButtons = document.querySelectorAll(".timeframe");
@@ -310,10 +310,10 @@ function initListeners() {
 			var segmentLength = Number(this.getAttribute('data-segment-length'));
 
 
-			chart.chart.setState({autoScroll: false});
-			chart.chart.zoomToRange(range);
-			chart.chart.scrollToEnd().then(() => {
-				chart.chart.setState({autoScroll: true});
+			chartView.chart.setState({autoScroll: false});
+			chartView.chart.zoomToRange(range);
+			chartView.chart.scrollToEnd().then(() => {
+				chartView.chart.setState({autoScroll: true});
 			});
 		});
 	}

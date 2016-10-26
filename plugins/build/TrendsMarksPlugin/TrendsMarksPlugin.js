@@ -214,7 +214,7 @@
                 return trendMarks;
             };
             TrendsMarksPlugin.NAME = "TrendsMarks";
-            TrendsMarksPlugin.pluginWidgets = [ TrendsMarksWidget_1.TrendsMarksWidget ];
+            TrendsMarksPlugin.providedWidgets = [ TrendsMarksWidget_1.TrendsMarksWidget ];
             return TrendsMarksPlugin;
         }(three_charts_1.ChartPlugin);
         exports.TrendsMarksPlugin = TrendsMarksPlugin;

@@ -32,7 +32,7 @@ export interface ITrendMarkOptions {
 }
 export declare class TrendsMarksPlugin extends ChartPlugin {
     static NAME: string;
-    static pluginWidgets: typeof ChartWidget[];
+    static providedWidgets: typeof ChartWidget[];
     private items;
     private rects;
     constructor(trendsMarksPluginOptions: TTrendsMarksPluginOptions);

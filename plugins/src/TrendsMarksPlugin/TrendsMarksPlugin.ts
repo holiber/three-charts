@@ -46,7 +46,7 @@ const AXIS_MARK_DEFAULT_OPTIONS: ITrendMarkOptions = {
 
 export class TrendsMarksPlugin extends ChartPlugin {
 	static NAME = 'TrendsMarks';
-	static pluginWidgets = [TrendsMarksWidget] as typeof ChartWidget[];
+	static providedWidgets = [TrendsMarksWidget] as typeof ChartWidget[];
 
 	private items: {[name: string]: TrendMark} = {};
 	private rects: {[name: string]: number[]} = {};
