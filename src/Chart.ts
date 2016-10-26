@@ -287,7 +287,7 @@ export class Chart {
 	setState(newState: IChartState, eventData?: any, silent = false) {
 
 		if (this.isDestroyed) {
-			Utils.error('You have tried to change trend of destroyed Chart instance');
+			Utils.error('You have tried to change state of destroyed Chart instance');
 		}
 
 		let stateData = this.state as {[key: string]: any};

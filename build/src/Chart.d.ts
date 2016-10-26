@@ -88,7 +88,7 @@ export declare class Chart {
     private ee;
     constructor(initialState: IChartState, plugins?: ChartPlugin[]);
     /**
-     * destroy state, use ChartView.destroy to completely destroy state
+     * destroy chart, use ChartView.destroy to completely destroy Chart
      */
     destroy(): void;
     onDestroy(cb: Function): Function;

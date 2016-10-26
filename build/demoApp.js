@@ -2987,6 +2987,7 @@
                         };
                     };
                     Screen.prototype.onTransformationFrame = function(cb) {
+                        console.log(cb.toString());
                         var _this = this;
                         var eventName = "transformationFrame";
                         this.ee.on(eventName, cb);

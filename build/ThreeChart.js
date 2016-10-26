@@ -117,7 +117,7 @@
             };
             ChartBlankView.prototype.initWidgets = function() {
                 var _this = this;
-                var preinstalledWidgetsClasses = this.constructor.preinstalledWidgets;
+                var preinstalledWidgetsClasses = this.constructor.preinstalledWidgets.slice();
                 var customWidgets = [];
                 this.pluginsAndWidgets.forEach(function(pluginOrWidget) {
                     if (pluginOrWidget instanceof Widget_1.ChartWidget) {
@@ -1522,7 +1522,7 @@
                     silent = false;
                 }
                 if (this.isDestroyed) {
-                    Utils_1.Utils.error("You have tried to change trend of destroyed Chart instance");
+                    Utils_1.Utils.error("You have tried to change state of destroyed Chart instance");
                 }
                 var stateData = this.state;
                 var newStateObj = newState;

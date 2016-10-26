@@ -103,7 +103,7 @@ export class ChartBlankView {
 	 * collect and init widgets from preinstalled widgets, plugins widgets and custom widgets
 	 */
 	private initWidgets() {
-		let preinstalledWidgetsClasses = (this.constructor as typeof ChartView).preinstalledWidgets;
+		let preinstalledWidgetsClasses = (this.constructor as typeof ChartView).preinstalledWidgets.slice();
 		let customWidgets: ChartWidget[] = [];
 
 		this.pluginsAndWidgets.forEach(pluginOrWidget => {
