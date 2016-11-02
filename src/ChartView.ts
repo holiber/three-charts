@@ -1,7 +1,5 @@
-// deps must be always on top
-import { ChartPlugin } from './Plugin';
-require('./deps/deps');
 
+import { ChartPlugin } from './Plugin';
 import { Trend } from "./Trend";
 import Vector3 = THREE.Vector3;
 import PerspectiveCamera = THREE.PerspectiveCamera;
@@ -144,6 +142,7 @@ export class ChartBlankView {
 	}
 
 	render() {
+		this.chart.render();
 		this.renderer.render(this.scene, this.camera);
 	}
 

@@ -1,8 +1,8 @@
 import PerspectiveCamera = THREE.PerspectiveCamera;
 import Vector3 = THREE.Vector3;
 import {Chart, IChartState} from "./Chart";
-import forestgreen = THREE.ColorKeywords.forestgreen;
-import {EventEmitter} from './EventEmmiter';
+import { EventEmitter } from './EventEmmiter';
+import { Animation } from './AnimationManager';
 
 export interface IScreenTransformOptions {
 	scrollXVal?: number,
@@ -13,28 +13,32 @@ export interface IScreenTransformOptions {
 	zoomY?: number
 }
 
+const SCREEN_EVENTS = {
+	ZOOM_FRAME: 'zoomFrame',
+	SCROLL_FRAME: 'scrollFrame',
+	TRANSFORMATION_FRAME: 'transformationFrame'
+};
+
 /**
  * manage camera, and contains methods for transforming pixels to values
  */
 export class Screen {
+	// TODO: make own interface for Chart and Screen for calculating screen positions
+
 	options: IScreenTransformOptions = {scrollXVal: 0, scrollX: 0, scrollYVal: 0, scrollY: 0, zoomX: 1, zoomY: 1};
-	private chartState: Chart;
-	private scrollXAnimation: TweenLite;
-	private scrollYAnimation: TweenLite;
-	private zoomXAnimation: TweenLite;
-	private zoomYAnimation: TweenLite;
-	private currentScrollX = {x: 0};
-	private currentScrollY = {y: 0};
-	private currentZoomX = {val: 1};
-	private currentZoomY = {val: 1};
+	private chart: Chart;
+	private scrollXAnimation: Animation<number>;
+	private scrollYAnimation: Animation<number>;
+	private zoomXAnimation: Animation<number>;
+	private zoomYAnimation: Animation<number>;
 	private ee: EventEmitter;
 
 	constructor(chartState: Chart) {
-		this.chartState = chartState;
+		this.chart = chartState;
 		var {width: w, height: h} = chartState.state;
 		this.ee = new EventEmitter();
 		this.transform({
-			scrollY: this.valueToPxByYAxis(this.chartState.state.yAxis.range.scroll),
+			scrollY: this.valueToPxByYAxis(this.chart.state.yAxis.range.scroll),
 			zoomY: 1
 		});
 		this.bindEvents();
@@ -44,7 +48,7 @@ export class Screen {
 	
 	getCameraSettings() {
 
-		var {width: w, height: h} = this.chartState.state;
+		var {width: w, height: h} = this.chart.state;
 
 		// settings for pixel-perfect camera
 		var FOV = 75;
@@ -64,36 +68,27 @@ export class Screen {
 	}
 
 	onZoomFrame(cb: (zoomX: number, zoomY: number) => void): Function {
-		var eventName = 'zoomFrame';
-		this.ee.on(eventName, cb);
-		return () => {
-			this.ee.off(eventName, cb);
-		}
+		return this.ee.subscribe(SCREEN_EVENTS.ZOOM_FRAME, cb);
 	}
 
 	onScrollFrame(cb: (options: IScreenTransformOptions) => void): Function {
-		var eventName = 'scrollFrame';
-		this.ee.on(eventName, cb);
-		return () => {
-			this.ee.off(eventName, cb);
-		}
+		return this.ee.subscribe(SCREEN_EVENTS.SCROLL_FRAME, cb);
 	}
 
 	onTransformationFrame(cb: (options: IScreenTransformOptions) => void): Function {
-		var eventName = 'transformationFrame';
-		this.ee.on(eventName, cb);
-		return () => {
-			this.ee.off(eventName, cb);
-		}
+		return this.ee.subscribe(SCREEN_EVENTS.TRANSFORMATION_FRAME, cb);
 	}
 
 	cameraIsMoving(): boolean {
 		return !!(
-			this.scrollXAnimation && this.scrollXAnimation.isActive() ||
-				this.zoomXAnimation && this.zoomXAnimation.isActive()
+			this.scrollXAnimation && !this.scrollXAnimation.isFinished ||
+				this.zoomXAnimation && !this.zoomXAnimation.isFinished
 		);
 	}
 
+	/**
+	 * setup zoom and scroll
+	 */
 	private transform (options: IScreenTransformOptions, silent = false) {
 		var {scrollX, scrollY, zoomX, zoomY} = options;
 		
@@ -114,20 +109,18 @@ export class Screen {
 
 		if (silent) return;
 
-		this.ee.emit('transformationFrame', options);
-		
-		if (options.scrollXVal != void 0 || options.scrollYVal != void 0) {
-			this.ee.emit('scrollFrame', options);
-		}
-		
-		if (options.zoomX != void 0 || options.zoomY != void 0) {
-			this.ee.emit('zoomFrame', options);
-		}
+		this.ee.emit(SCREEN_EVENTS.TRANSFORMATION_FRAME, options);
+
+		let scrollEventNeeded = options.scrollXVal != void 0 || options.scrollYVal != void 0;
+		if (scrollEventNeeded) this.ee.emit(SCREEN_EVENTS.SCROLL_FRAME, options);
+
+		let zoomEventNeeded = options.zoomX != void 0 || options.zoomY != void 0;
+		if (zoomEventNeeded) this.ee.emit(SCREEN_EVENTS.ZOOM_FRAME, options);
 	}
 
 
 	private bindEvents() {
-		var state = this.chartState;
+		var state = this.chart;
 
 		// handle scroll and zoom
 		state.onChange((changedProps) => {
@@ -145,113 +138,75 @@ export class Screen {
 
 	private onDestroyHandler() {
 		this.ee.removeAllListeners();
-		this.scrollXAnimation && this.scrollXAnimation.kill();
-		this.scrollYAnimation && this.scrollYAnimation.kill();
-		this.zoomXAnimation && this.zoomXAnimation.kill();
-		this.zoomYAnimation && this.zoomYAnimation.kill();
 	}
 
 	private onScrollXHandler(changedProps: IChartState) {
-		var state = this.chartState;
-		var isDragMode = state.state.cursor.dragMode;
-		var animations =  state.state.animations;
-		var canAnimate = animations.enabled && !isDragMode;
-		var zoomXChanged = changedProps.xAxis.range.zoom;
-		var isAutoscroll = state.state.autoScroll && !isDragMode && !zoomXChanged;
-		var time = isAutoscroll ? animations.autoScrollSpeed : animations.zoomSpeed;
-		var ease = isAutoscroll ? animations.autoScrollEase : animations.zoomEase;
-		if (this.scrollXAnimation) this.scrollXAnimation.pause();
+		let chart = this.chart;
+		let isDragMode = chart.state.cursor.dragMode;
+		let animations =  chart.state.animations;
+		let zoomXChanged = changedProps.xAxis.range.zoom;
+		let isAutoscroll = chart.state.autoScroll && !isDragMode && !zoomXChanged;
+		let time = isAutoscroll ? animations.autoScrollSpeed : animations.zoomSpeed;
+		let ease = isAutoscroll ? animations.autoScrollEase : animations.zoomEase;
+		let range = chart.state.xAxis.range;
+		let targetX = range.scroll * range.scaleFactor * range.zoom;
 
-		var range = state.state.xAxis.range;
-		var targetX = range.scroll * range.scaleFactor * range.zoom;
-		this.currentScrollX.x = this.options.scrollX;
+		if (this.scrollXAnimation) this.scrollXAnimation.stop();
 
-		var cb = () => {
-			this.transform({scrollX: this.currentScrollX.x});
-		};
-
-		if (canAnimate) {
-			this.scrollXAnimation = TweenLite.to(this.currentScrollX, time, {
-				x: targetX, ease: ease
+		this.scrollXAnimation = chart.animationManager.animate(time, ease)
+			.from(this.options.scrollX)
+			.to(targetX)
+			.onTick((value) => {
+				this.transform({scrollX: value});
 			});
-			this.scrollXAnimation.eventCallback('onUpdate', cb);
-		} else {
-			this.currentScrollX.x = targetX;
-			cb();
-		}
-
 	}
 
 	private onScrollYHandler() {
-		var state = this.chartState;
-		var animations =  state.state.animations;
-		var canAnimate = animations.enabled;
-		var time = animations.zoomSpeed;
-		if (this.scrollYAnimation) this.scrollYAnimation.pause();
-		var range = state.state.yAxis.range;
-		var targetY = range.scroll * range.scaleFactor * range.zoom;
+		let chart = this.chart;
+		let animations =  chart.state.animations;
+		let range = chart.state.yAxis.range;
+		let targetY = range.scroll * range.scaleFactor * range.zoom;
 
-		this.currentScrollY.y = this.options.scrollY;
+		if (this.scrollYAnimation) this.scrollYAnimation.stop();
 
-		var cb = () => {
-			this.transform({scrollY: this.currentScrollY.y});
-		};
-
-		if (canAnimate) {
-			this.scrollYAnimation = TweenLite.to(this.currentScrollY, time, {
-				y: targetY, ease: animations.zoomEase
+		this.scrollYAnimation = chart.animationManager.animate(animations.zoomSpeed, animations.zoomEase)
+			.from(this.options.scrollY)
+			.to(targetY)
+			.onTick((value) => {
+				this.transform({scrollY: value});
 			});
-			this.scrollYAnimation.eventCallback('onUpdate', cb);
-		} else {
-			this.currentScrollY.y = targetY;
-			cb();
-		}
 	}
+
 
 	private onZoomXHandler() {
-		var state = this.chartState;
-		var animations =  state.state.animations;
-		var canAnimate = animations.enabled;
-		var time = animations.zoomSpeed;
-		var targetZoom = state.state.xAxis.range.zoom;
-		if (this.zoomXAnimation) this.zoomXAnimation.pause();
+		let chart = this.chart;
+		let animations =  chart.state.animations;
+		let targetZoom = chart.state.xAxis.range.zoom;
+		if (this.zoomXAnimation) this.zoomXAnimation.stop();
 
-		var cb = () => {
-			this.transform({zoomX: this.currentZoomX.val});
-		};
-
-		if (canAnimate) {
-			this.zoomXAnimation = TweenLite.to(this.currentZoomX, time, {
-				val: targetZoom, ease: animations.zoomEase
+		this.zoomXAnimation = chart.animationManager
+			.animate(animations.zoomSpeed, animations.zoomEase)
+			.from(this.options.zoomX)
+			.to(targetZoom)
+			.onTick((value) => {
+				this.transform({zoomX: value});
 			});
-			this.zoomXAnimation.eventCallback('onUpdate', cb);
-		} else {
-			this.currentZoomX.val = targetZoom;
-			cb();
-		}
 	}
 
+
 	private onZoomYHandler() {
-		var state = this.chartState;
-		var animations =  state.state.animations;
-		var canAnimate = animations.enabled;
-		var time = animations.zoomSpeed;
-		var targetZoom = state.state.yAxis.range.zoom;
-		if (this.zoomYAnimation) this.zoomYAnimation.pause();
+		let chart = this.chart;
+		let targetZoom = chart.state.yAxis.range.zoom;
+		let animations =  chart.state.animations;
+		if (this.zoomYAnimation) this.zoomYAnimation.stop();
 
-		var cb = () => {
-			this.transform({zoomY: this.currentZoomY.val});
-		};
-
-		if (canAnimate) {
-			this.zoomYAnimation = TweenLite.to(this.currentZoomY, time, {
-				val: targetZoom, ease: animations.zoomEase
+		this.zoomYAnimation = chart.animationManager
+			.animate(animations.zoomSpeed, animations.zoomEase)
+			.from(this.options.zoomY)
+			.to(targetZoom)
+			.onTick((value) => {
+				this.transform({zoomY: value});
 			});
-			this.zoomYAnimation.eventCallback('onUpdate', cb);
-		} else {
-			this.currentZoomY.val = targetZoom;
-			cb();
-		}
 	}
 
 
@@ -259,7 +214,7 @@ export class Screen {
 	 *  returns offset in pixels from xAxis.range.zeroVal to scrollXVal
 	 */
 	getPointOnXAxis(xVal: number): number {
-		var {scaleFactor, zeroVal} = this.chartState.state.xAxis.range;
+		var {scaleFactor, zeroVal} = this.chart.state.xAxis.range;
 		var zoom = this.options.zoomX;
 		return (xVal - zeroVal) * scaleFactor * zoom;
 	}
@@ -268,7 +223,7 @@ export class Screen {
 	 *  returns offset in pixels from yAxis.range.zeroVal to scrollYVal
 	 */
 	getPointOnYAxis(yVal: number): number {
-		var {scaleFactor, zeroVal} =  this.chartState.state.yAxis.range;
+		var {scaleFactor, zeroVal} =  this.chart.state.yAxis.range;
 		var zoom = this.options.zoomY;
 		return (yVal - zeroVal) * scaleFactor * zoom;
 	}
@@ -284,7 +239,7 @@ export class Screen {
 	 * returns value by offset in pixels from xAxis.range.zeroVal
 	 */
 	getValueOnXAxis(x: number): number {
-		return this.chartState.state.xAxis.range.zeroVal + this.pxToValueByXAxis(x);
+		return this.chart.state.xAxis.range.zeroVal + this.pxToValueByXAxis(x);
 	}
 
 
@@ -292,7 +247,7 @@ export class Screen {
 	 *  convert value to pixels by using settings from xAxis.range
 	 */
 	valueToPxByXAxis(xVal: number) {
-		return xVal * this.chartState.state.xAxis.range.scaleFactor * this.options.zoomX;
+		return xVal * this.chart.state.xAxis.range.scaleFactor * this.options.zoomX;
 	}
 
 
@@ -300,14 +255,14 @@ export class Screen {
 	 *  convert value to pixels by using settings from yAxis.range
 	 */
 	valueToPxByYAxis(yVal: number) {
-		return yVal * this.chartState.state.yAxis.range.scaleFactor * this.options.zoomY;
+		return yVal * this.chart.state.yAxis.range.scaleFactor * this.options.zoomY;
 	}
 	
 	/**
 	 *  convert pixels to value by using settings from xAxis.range
 	 */
 	pxToValueByXAxis(xVal: number) {
-		return xVal / this.chartState.state.xAxis.range.scaleFactor / this.options.zoomX;
+		return xVal / this.chart.state.xAxis.range.scaleFactor / this.options.zoomX;
 	}
 
 
@@ -315,7 +270,7 @@ export class Screen {
 	 *  convert pixels to value by using settings from yAxis.range
 	 */
 	pxToValueByYAxis(yVal: number) {
-		return yVal / this.chartState.state.yAxis.range.scaleFactor / this.options.zoomY;
+		return yVal / this.chart.state.yAxis.range.scaleFactor / this.options.zoomY;
 	}
 
 
@@ -323,7 +278,7 @@ export class Screen {
 	 *  returns scrollX value by screen scrollX coordinate
 	 */
 	getValueByScreenX(x: number): number {
-		return this.chartState.state.xAxis.range.zeroVal + this.options.scrollXVal + this.pxToValueByXAxis(x);
+		return this.chart.state.xAxis.range.zeroVal + this.options.scrollXVal + this.pxToValueByXAxis(x);
 	}
 	
 	
@@ -331,7 +286,7 @@ export class Screen {
 	 *  returns scrollY value by screen scrollY coordinate
 	 */
 	getValueByScreenY(y: number): number {
-		return this.chartState.state.yAxis.range.zeroVal + this.options.scrollYVal + this.pxToValueByYAxis(y);
+		return this.chart.state.yAxis.range.zeroVal + this.options.scrollYVal + this.pxToValueByYAxis(y);
 	}
 	
 	//
@@ -339,7 +294,7 @@ export class Screen {
 	 *  returns screen scrollX value by screen scrollY coordinate
 	 */
 	getScreenXByValue(xVal: number): number {
-		var {scroll, zeroVal} = this.chartState.state.xAxis.range;
+		var {scroll, zeroVal} = this.chart.state.xAxis.range;
 		return this.valueToPxByXAxis(xVal - zeroVal - scroll)
 	}
 
@@ -375,7 +330,7 @@ export class Screen {
 	}
 
 	getTop(): number {
-		return this.getPointByScreenY(this.chartState.state.height);
+		return this.getPointByScreenY(this.chart.state.height);
 	}
 	
 	getBottom(): number {
@@ -387,11 +342,11 @@ export class Screen {
 	}
 
 	getScreenRightVal() {
-		return this.getValueByScreenX(this.chartState.state.width);
+		return this.getValueByScreenX(this.chart.state.width);
 	}
 
 	getTopVal() {
-		return this.getValueByScreenY(this.chartState.state.height);
+		return this.getValueByScreenY(this.chart.state.height);
 	}
 	
 	getBottomVal() {
@@ -399,7 +354,7 @@ export class Screen {
 	}
 
 	getCenterYVal() {
-		return this.getValueByScreenY(this.chartState.state.height / 2);
+		return this.getValueByScreenY(this.chart.state.height / 2);
 	}
 
 }

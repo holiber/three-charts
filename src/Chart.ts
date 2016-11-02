@@ -11,7 +11,8 @@ import {
 import { Promise } from './deps/deps';
 import { ChartPlugin } from './Plugin';
 import {TChartColor} from "./Color";
-
+import { AnimationManager } from "./AnimationManager";
+import { EASING } from './Easing';
 
 interface IRecalculatedStateResult {
 	changedProps: IChartState,
@@ -134,12 +135,12 @@ export class Chart {
 			enabled: true,
 			trendChangeSpeed: 0.5,
 			trendChangeEase: void 0,
-			zoomSpeed: 0.25,
-			zoomEase:  void 0,
-			scrollSpeed: 0.5,
-			scrollEase: Linear.easeNone,
-			autoScrollSpeed: 1,
-			autoScrollEase: Linear.easeNone,
+			zoomSpeed: 250,
+			scrollSpeed: 1000,
+			scrollEase: EASING.Quadratic.Out,
+			zoomEase: EASING.Quadratic.Out,
+			autoScrollSpeed: 1000,
+			autoScrollEase: EASING.Linear.None,
 		},
 		autoRender: {enabled: true, fps: 0},
 		autoResize: true,
@@ -185,6 +186,7 @@ export class Chart {
 	};
 	plugins: {[pluginName: string]: ChartPlugin} = {};
 	trendsManager: TrendsManager;
+	animationManager = new AnimationManager();
 	screen: Screen;
 	xAxisMarks: AxisMarks;
 	yAxisMarks: AxisMarks;
@@ -282,6 +284,10 @@ export class Chart {
 	
 	getTrend(trendName: string): Trend {
 		return this.trendsManager.getTrend(trendName);
+	}
+
+	render() {
+		this.animationManager.tick();
 	}
 
 	setState(newState: IChartState, eventData?: any, silent = false) {
@@ -489,6 +495,11 @@ export class Chart {
 	private initListeners() {
 		this.ee.on(CHART_STATE_EVENTS.TRENDS_CHANGE, (changedTrends: ITrendsOptions, newData: ITrendData) => {
 			this.handleTrendsChange(changedTrends, newData)
+		});
+		this.ee.on('animationsChange', (animationOptions: IAnimationsOptions) => {
+			if (animationOptions.enabled !== this.animationManager.isAnimationsEnabled) {
+				this.animationManager.setAimationsEnabled(animationOptions.enabled);
+			}
 		});
 	}
 

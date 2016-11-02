@@ -29,7 +29,8 @@
         function __export(m) {
             for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
         }
-        __export(__webpack_require__(2));
+        __webpack_require__(2);
+        __export(__webpack_require__(9));
         __export(__webpack_require__(20));
         __export(__webpack_require__(19));
         __export(__webpack_require__(18));
@@ -37,597 +38,22 @@
         __export(__webpack_require__(15));
         __export(__webpack_require__(16));
         __export(__webpack_require__(17));
-        __export(__webpack_require__(4));
+        __export(__webpack_require__(11));
+        __export(__webpack_require__(23));
+        __export(__webpack_require__(10));
+        __export(__webpack_require__(26));
         __export(__webpack_require__(21));
-        __export(__webpack_require__(3));
-        __export(__webpack_require__(24));
-        __export(__webpack_require__(30));
-    }, function(module, exports, __webpack_require__) {
-        "use strict";
-        var __extends = this && this.__extends || function(d, b) {
-            for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-            function __() {
-                this.constructor = d;
-            }
-            d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-        };
-        var Plugin_1 = __webpack_require__(3);
-        __webpack_require__(5);
-        var PerspectiveCamera = THREE.PerspectiveCamera;
-        var Chart_1 = __webpack_require__(14);
-        var Widget_1 = __webpack_require__(21);
-        var Utils_1 = __webpack_require__(4);
-        var AxisWidget_1 = __webpack_require__(22);
-        var GridWidget_1 = __webpack_require__(23);
-        var TrendsGradientWidget_1 = __webpack_require__(25);
-        var TrendsLineWidget_1 = __webpack_require__(27);
-        var TrendsCandleWidget_1 = __webpack_require__(28);
-        var deps_1 = __webpack_require__(13);
-        var Color_1 = __webpack_require__(24);
-        var AxisMarksWidget_1 = __webpack_require__(29);
-        var ChartBlankView = function() {
-            function ChartBlankView(state, $container, pluginsAndWidgets) {
-                var _this = this;
-                if (pluginsAndWidgets === void 0) {
-                    pluginsAndWidgets = [];
-                }
-                this.widgets = [];
-                if (!THREE || !THREE.REVISION) Utils_1.Utils.error("three.js not found");
-                if (!$container) {
-                    Utils_1.Utils.error("$el must be set");
-                }
-                var style = getComputedStyle($container);
-                state.width = parseInt(style.width);
-                state.height = parseInt(style.height);
-                var plugins = pluginsAndWidgets.filter(function(pluginOrWidget) {
-                    return pluginOrWidget instanceof Plugin_1.ChartPlugin;
-                });
-                this.chart = new Chart_1.Chart(state, plugins);
-                this.pluginsAndWidgets = pluginsAndWidgets;
-                this.zoomThrottled = Utils_1.Utils.throttle(function(zoomValue, origin) {
-                    return _this.zoom(zoomValue, origin);
-                }, 200);
-                this.$container = $container;
-                this.init($container);
-            }
-            ChartBlankView.prototype.init = function($container) {
-                var chart = this.chart;
-                var _a = chart.state, w = _a.width, h = _a.height, showStats = _a.showStats, autoRender = _a.autoRender;
-                this.scene = new THREE.Scene();
-                this.isStopped = !autoRender.enabled;
-                var renderer = this.renderer = new ChartView.renderers[this.chart.state.renderer]({
-                    antialias: true,
-                    alpha: true
-                });
-                var backgroundColor = new Color_1.ChartColor(chart.state.backgroundColor);
-                renderer.setSize(w, h);
-                renderer.setPixelRatio(ChartView.devicePixelRatio);
-                renderer.setClearColor(backgroundColor.value, backgroundColor.a);
-                $container.appendChild(renderer.domElement);
-                this.$el = renderer.domElement;
-                this.$el.style.display = "block";
-                if (showStats) {
-                    this.stats = new Stats();
-                    $container.appendChild(this.stats.domElement);
-                }
-                this.setupCamera();
-                this.initWidgets();
-                this.bindEvents();
-                this.renderLoop();
-            };
-            ChartBlankView.prototype.initWidgets = function() {
-                var _this = this;
-                var preinstalledWidgetsClasses = this.constructor.preinstalledWidgets.slice();
-                var customWidgets = [];
-                this.pluginsAndWidgets.forEach(function(pluginOrWidget) {
-                    if (pluginOrWidget instanceof Widget_1.ChartWidget) {
-                        customWidgets.push(pluginOrWidget);
-                        return;
-                    }
-                    if (!(pluginOrWidget instanceof Plugin_1.ChartPlugin)) return;
-                    var pluginWidgetClasses = pluginOrWidget.constructor.providedWidgets;
-                    preinstalledWidgetsClasses.push.apply(preinstalledWidgetsClasses, pluginWidgetClasses);
-                });
-                this.widgets = customWidgets.concat(preinstalledWidgetsClasses.map(function(WidgetClass) {
-                    return new WidgetClass();
-                }));
-                this.widgets.forEach(function(widget) {
-                    widget.setupChart(_this.chart);
-                    widget.onReadyHandler();
-                    _this.scene.add(widget.getObject3D());
-                });
-            };
-            ChartBlankView.prototype.renderLoop = function() {
-                var _this = this;
-                if (this.isDestroyed) return;
-                this.stats && this.stats.begin();
-                this.render();
-                if (this.isStopped) return;
-                var fpsLimit = this.chart.state.autoRender.fps;
-                if (fpsLimit) {
-                    var delay_1 = 1e3 / fpsLimit;
-                    setTimeout(function() {
-                        return requestAnimationFrame(function() {
-                            return _this.renderLoop();
-                        });
-                    }, delay_1);
-                } else {
-                    requestAnimationFrame(function() {
-                        return _this.renderLoop();
-                    });
-                }
-                this.stats && this.stats.end();
-            };
-            ChartBlankView.prototype.render = function() {
-                this.renderer.render(this.scene, this.camera);
-            };
-            ChartBlankView.prototype.stop = function() {
-                this.isStopped = true;
-            };
-            ChartBlankView.prototype.run = function() {
-                this.isStopped = false;
-                this.renderLoop();
-            };
-            ChartBlankView.prototype.destroy = function() {
-                this.isDestroyed = true;
-                this.stop();
-                this.chart.destroy();
-                this.unbindEvents();
-                try {
-                    this.renderer.forceContextLoss();
-                } catch (wtf) {}
-                this.renderer.context = null;
-                this.renderer.domElement = null;
-                this.renderer = null;
-            };
-            ChartBlankView.prototype.getState = function() {
-                return this.chart.state;
-            };
-            ChartBlankView.prototype.getTrend = function(trendName) {
-                return this.chart.getTrend(trendName);
-            };
-            ChartBlankView.prototype.setState = function(state) {
-                return this.chart.setState(state);
-            };
-            ChartBlankView.prototype.bindEvents = function() {
-                var _this = this;
-                var $el = this.$el;
-                if (this.chart.state.controls.enabled) {
-                    $el.addEventListener("mousewheel", function(ev) {
-                        _this.onMouseWheel(ev);
-                    });
-                    $el.addEventListener("mousemove", function(ev) {
-                        _this.onMouseMove(ev);
-                    });
-                    $el.addEventListener("mousedown", function(ev) {
-                        return _this.onMouseDown(ev);
-                    });
-                    $el.addEventListener("mouseup", function(ev) {
-                        return _this.onMouseUp(ev);
-                    });
-                    $el.addEventListener("touchmove", function(ev) {
-                        _this.onTouchMove(ev);
-                    });
-                    $el.addEventListener("touchend", function(ev) {
-                        _this.onTouchEnd(ev);
-                    });
-                }
-                if (this.chart.state.autoResize) {
-                    this.resizeSensor = new deps_1.ResizeSensor(this.$container, function() {
-                        _this.onChartContainerResizeHandler(_this.$container.clientWidth, _this.$container.clientHeight);
-                    });
-                }
-                this.unsubscribers = [ this.chart.onTrendsChange(function() {
-                    return _this.autoscroll();
-                }), this.chart.screen.onTransformationFrame(function(options) {
-                    return _this.onScreenTransformHandler(options);
-                }), this.chart.onResize(function(options) {
-                    return _this.onChartResize();
-                }) ];
-            };
-            ChartBlankView.prototype.unbindEvents = function() {
-                try {
-                    this.resizeSensor && this.resizeSensor.detach();
-                } catch (e) {}
-                this.$el.remove();
-                this.unsubscribers.forEach(function(unsubscribe) {
-                    return unsubscribe();
-                });
-            };
-            ChartBlankView.prototype.setupCamera = function() {
-                var camSettings = this.chart.screen.getCameraSettings();
-                if (!this.camera) {
-                    this.camera = new PerspectiveCamera(camSettings.FOV, camSettings.aspect, camSettings.near, camSettings.far);
-                    this.scene.add(this.camera);
-                } else {
-                    this.camera.fov = camSettings.FOV;
-                    this.camera.aspect = camSettings.aspect;
-                    this.camera.far = camSettings.far;
-                    this.camera.near = camSettings.near;
-                    this.camera.updateProjectionMatrix();
-                }
-                this.camera.position.set(camSettings.x, camSettings.y, camSettings.z);
-                this.cameraInitialPosition = this.camera.position.clone();
-                this.onScreenTransformHandler(this.chart.screen.options);
-            };
-            ChartBlankView.prototype.onScreenTransformHandler = function(options) {
-                if (options.scrollX != void 0) {
-                    var scrollX_1 = this.cameraInitialPosition.x + options.scrollX;
-                    this.camera.position.setX(scrollX_1);
-                }
-                if (options.scrollY != void 0) {
-                    var scrollY_1 = this.cameraInitialPosition.y + options.scrollY;
-                    this.camera.position.setY(scrollY_1);
-                }
-            };
-            ChartBlankView.prototype.autoscroll = function() {
-                var state = this.chart;
-                if (!state.state.autoScroll) return;
-                var oldTrendsMaxX = state.state.prevState.computedData.trends.maxXVal;
-                var trendsMaxXDelta = state.state.computedData.trends.maxXVal - oldTrendsMaxX;
-                if (trendsMaxXDelta > 0) {
-                    var maxVisibleX = this.chart.screen.getScreenRightVal();
-                    var paddingRightX = this.chart.getPaddingRight();
-                    var currentScroll = state.state.xAxis.range.scroll;
-                    if (oldTrendsMaxX < paddingRightX || oldTrendsMaxX > maxVisibleX) {
-                        return;
-                    }
-                    var scrollDelta = trendsMaxXDelta;
-                    this.setState({
-                        xAxis: {
-                            range: {
-                                scroll: currentScroll + scrollDelta
-                            }
-                        }
-                    });
-                }
-            };
-            ChartBlankView.prototype.onScrollStop = function() {};
-            ChartBlankView.prototype.onMouseDown = function(ev) {
-                this.setState({
-                    cursor: {
-                        dragMode: true,
-                        x: ev.clientX,
-                        y: ev.clientY
-                    }
-                });
-            };
-            ChartBlankView.prototype.onMouseUp = function(ev) {
-                this.setState({
-                    cursor: {
-                        dragMode: false
-                    }
-                });
-            };
-            ChartBlankView.prototype.onMouseMove = function(ev) {
-                if (this.chart.state.cursor.dragMode) {
-                    this.setState({
-                        cursor: {
-                            dragMode: true,
-                            x: ev.clientX,
-                            y: ev.clientY
-                        }
-                    });
-                }
-            };
-            ChartBlankView.prototype.onMouseWheel = function(ev) {
-                ev.stopPropagation();
-                ev.preventDefault();
-                var zoomOrigin = ev.layerX / this.chart.state.width;
-                var zoomValue = 1 + ev.wheelDeltaY * .001;
-                this.zoom(zoomValue, zoomOrigin);
-            };
-            ChartBlankView.prototype.onTouchMove = function(ev) {
-                this.setState({
-                    cursor: {
-                        dragMode: true,
-                        x: ev.touches[0].clientX,
-                        y: ev.touches[0].clientY
-                    }
-                });
-            };
-            ChartBlankView.prototype.onTouchEnd = function(ev) {
-                this.setState({
-                    cursor: {
-                        dragMode: false
-                    }
-                });
-            };
-            ChartBlankView.prototype.onChartContainerResizeHandler = function(width, height) {
-                this.setState({
-                    width: width,
-                    height: height
-                });
-            };
-            ChartBlankView.prototype.onChartResize = function() {
-                var _a = this.chart.state, width = _a.width, height = _a.height;
-                this.renderer.setSize(width, height);
-                this.setupCamera();
-            };
-            ChartBlankView.prototype.zoom = function(zoomValue, zoomOrigin) {
-                var _this = this;
-                var MAX_ZOOM_VALUE = 1.5;
-                var MIN_ZOOM_VALUE = .7;
-                zoomValue = Math.min(zoomValue, MAX_ZOOM_VALUE);
-                zoomValue = Math.max(zoomValue, MIN_ZOOM_VALUE);
-                var autoScrollIsEnabled = this.chart.state.autoScroll;
-                if (autoScrollIsEnabled) this.chart.setState({
-                    autoScroll: false
-                });
-                this.chart.zoom(zoomValue, zoomOrigin).then(function() {
-                    if (autoScrollIsEnabled) _this.setState({
-                        autoScroll: true
-                    });
-                });
-            };
-            ChartBlankView.devicePixelRatio = window.devicePixelRatio;
-            ChartBlankView.preinstalledWidgets = [];
-            ChartBlankView.renderers = {
-                CanvasRenderer: THREE.CanvasRenderer,
-                WebGLRenderer: THREE.WebGLRenderer
-            };
-            return ChartBlankView;
-        }();
-        exports.ChartBlankView = ChartBlankView;
-        var ChartView = function(_super) {
-            __extends(ChartView, _super);
-            function ChartView() {
-                _super.apply(this, arguments);
-            }
-            ChartView.preinstalledWidgets = [ TrendsLineWidget_1.TrendsLineWidget, TrendsCandleWidget_1.TrendsCandlesWidget, AxisWidget_1.AxisWidget, GridWidget_1.GridWidget, TrendsGradientWidget_1.TrendsGradientWidget, AxisMarksWidget_1.AxisMarksWidget ];
-            return ChartView;
-        }(ChartBlankView);
-        exports.ChartView = ChartView;
-    }, function(module, exports, __webpack_require__) {
-        "use strict";
-        var Utils_1 = __webpack_require__(4);
-        var EventEmmiter_1 = __webpack_require__(12);
-        exports.DEFAULT_CONFIG = {
-            installPluginWidgets: true
-        };
-        var ChartPlugin = function() {
-            function ChartPlugin(options, config) {
-                if (config === void 0) {
-                    config = {};
-                }
-                this.unsubscribers = [];
-                this.initialState = options;
-                this.config = Utils_1.Utils.deepMerge(exports.DEFAULT_CONFIG, config);
-                this.name = this.constructor.NAME;
-                if (!this.name) Utils_1.Utils.error("Unnamed plugin detected");
-            }
-            ChartPlugin.prototype.setupChart = function(chart) {
-                var _this = this;
-                this.chart = chart;
-                this.ee = new EventEmmiter_1.EventEmitter();
-                this.bindEvent(this.chart.onInitialStateApplied(function(initialState) {
-                    return _this.onInitialStateAppliedHandler(initialState);
-                }), this.chart.onReady(function() {
-                    return _this.onReadyHandler();
-                }), this.chart.onDestroy(function() {
-                    return _this.onDestroyHandler();
-                }), this.chart.onPluginsStateChange(function(changedPluginsStates) {
-                    return changedPluginsStates[_this.name] && _this.onStateChanged(changedPluginsStates[_this.name]);
-                }));
-            };
-            ChartPlugin.prototype.getOptions = function() {
-                return this.chart.state.pluginsState[this.name];
-            };
-            ChartPlugin.prototype.onInitialStateAppliedHandler = function(initialState) {};
-            ChartPlugin.prototype.onReadyHandler = function() {};
-            ChartPlugin.prototype.onStateChanged = function(changedState) {};
-            ChartPlugin.prototype.onDestroyHandler = function() {
-                this.ee.removeAllListeners();
-            };
-            ChartPlugin.prototype.bindEvent = function() {
-                var args = [];
-                for (var _i = 0; _i < arguments.length; _i++) {
-                    args[_i - 0] = arguments[_i];
-                }
-                var unsubscribers = [];
-                if (!Array.isArray(args[0])) {
-                    unsubscribers.push(args[0]);
-                } else {
-                    unsubscribers.push.apply(unsubscribers, args);
-                }
-                (_a = this.unsubscribers).push.apply(_a, unsubscribers);
-                var _a;
-            };
-            ChartPlugin.prototype.unbindEvents = function() {
-                this.unsubscribers.forEach(function(unsubscriber) {
-                    return unsubscriber();
-                });
-                this.unsubscribers.length = 0;
-            };
-            ChartPlugin.NAME = "";
-            ChartPlugin.providedWidgets = [];
-            return ChartPlugin;
-        }();
-        exports.ChartPlugin = ChartPlugin;
-    }, function(module, exports, __webpack_require__) {
-        "use strict";
-        var deps_1 = __webpack_require__(5);
-        function deepmerge(target, src, mergeArrays) {
-            if (mergeArrays === void 0) {
-                mergeArrays = true;
-            }
-            var array = Array.isArray(src);
-            var dst = array && [] || {};
-            if (array) {
-                target = target || [];
-                if (mergeArrays) {
-                    dst = dst.concat(target);
-                }
-                src.forEach(function(e, i) {
-                    if (typeof dst[i] === "undefined") {
-                        dst[i] = e;
-                    } else if (typeof e === "object") {
-                        dst[i] = deepmerge(target[i], e, mergeArrays);
-                    } else {
-                        if (target.indexOf(e) === -1) {
-                            dst.push(e);
-                        }
-                    }
-                });
-            } else {
-                if (target && typeof target === "object") {
-                    Object.keys(target).forEach(function(key) {
-                        dst[key] = target[key];
-                    });
-                }
-                Object.keys(src).forEach(function(key) {
-                    if (typeof src[key] !== "object" || !src[key]) {
-                        dst[key] = src[key];
-                    } else {
-                        if (!target[key]) {
-                            dst[key] = src[key];
-                        } else {
-                            dst[key] = deepmerge(target[key], src[key], mergeArrays);
-                        }
-                    }
-                });
-            }
-            return dst;
-        }
-        var Utils = function() {
-            function Utils() {}
-            Utils.deepMerge = function(obj1, obj2, mergeArrays) {
-                return deepmerge(obj1, obj2, mergeArrays);
-            };
-            Utils.deepCopy = function(obj) {
-                return JSON.parse(JSON.stringify(obj));
-            };
-            Utils.toFixed = function(num, digitsCount) {
-                var maxDigits = 15;
-                var result = "";
-                var intVal = Math.floor(num);
-                var intStr = intVal.toString();
-                var lengthDiff = digitsCount - intStr.length;
-                if (lengthDiff > 0) {
-                    result = "0".repeat(lengthDiff) + intStr;
-                } else {
-                    result = intStr;
-                }
-                var afterPointDigitsCount = maxDigits - intStr.length;
-                var afterPointStr = num.toString().split(".")[1];
-                if (afterPointStr) {
-                    result += "." + afterPointStr.substr(0, afterPointDigitsCount);
-                }
-                return result;
-            };
-            Utils.bindEvent = function() {};
-            Utils.createTexture = function(width, height, fn) {
-                var canvas = document.createElement("canvas");
-                canvas.width = width;
-                canvas.height = height;
-                var ctx = canvas.getContext("2d");
-                fn(ctx);
-                var texture = new THREE.Texture(canvas);
-                texture.needsUpdate = true;
-                return texture;
-            };
-            Utils.createPixelPerfectTexture = function(width, height, fn) {
-                var texture = this.createTexture(width, height, fn);
-                texture.minFilter = THREE.NearestFilter;
-                return texture;
-            };
-            Utils.error = function(msg) {
-                console.error("Chart error: " + msg);
-                throw "Chart: " + msg;
-            };
-            Utils.warn = function(msg) {
-                console.warn("Chart warning: " + msg);
-            };
-            Utils.getUid = function() {
-                return this.currentId++;
-            };
-            Utils.getDistance = function(num1, num2) {
-                return Math.max(num1, num2) - Math.min(num1, num2);
-            };
-            Utils.binarySearchClosestInd = function(arr, num, key) {
-                var mid;
-                var lo = 0;
-                var hi = arr.length - 1;
-                while (hi - lo > 1) {
-                    mid = Math.floor((lo + hi) / 2);
-                    if (arr[mid][key] < num) {
-                        lo = mid;
-                    } else {
-                        hi = mid;
-                    }
-                }
-                if (num - arr[lo][key] <= arr[hi][key] - num) {
-                    return lo;
-                }
-                return hi;
-            };
-            Utils.binarySearchClosest = function(arr, num, key) {
-                var ind = this.binarySearchClosestInd(arr, num, key);
-                return arr[ind];
-            };
-            Utils.rectsIntersect = function(r1, r2) {
-                var left1 = r1[0], top1 = r1[1], width1 = r1[2], height1 = r1[3];
-                var left2 = r2[0], top2 = r2[1], width2 = r2[2], height2 = r2[3];
-                var _a = [ left1 + width1, left2 + width2, top1 + height1, top2 + height2 ], right1 = _a[0], right2 = _a[1], bottom1 = _a[2], bottom2 = _a[3];
-                return !(left2 > right1 || right2 < left1 || top2 > bottom1 || bottom2 < top1);
-            };
-            Utils.throttle = function(func, ms) {
-                var isThrottled = false, savedArgs, savedThis;
-                function wrapper() {
-                    if (isThrottled) {
-                        savedArgs = arguments;
-                        savedThis = this;
-                        return;
-                    }
-                    func.apply(this, arguments);
-                    isThrottled = true;
-                    setTimeout(function() {
-                        isThrottled = false;
-                        if (savedArgs) {
-                            wrapper.apply(savedThis, savedArgs);
-                            savedArgs = savedThis = null;
-                        }
-                    }, ms);
-                }
-                return wrapper;
-            };
-            Utils.msToTimeString = function(timestamp) {
-                var h = Math.floor(timestamp / 36e4);
-                var m = Math.floor(timestamp / 6e4);
-                var s = Math.floor(timestamp / 1e3);
-                return h + ":" + m + ":" + s;
-            };
-            Utils.getRandomItem = function(arr) {
-                var ind = Math.floor(Math.random() * arr.length);
-                return arr[ind];
-            };
-            Utils.copyProps = function(srcObject, dstObject, props, excludeProps) {
-                if (excludeProps === void 0) {
-                    excludeProps = [];
-                }
-                for (var key in props) {
-                    if (excludeProps.indexOf(key) !== -1) continue;
-                    if (srcObject[key] == void 0) continue;
-                    if (deps_1.isPlainObject(props[key]) && dstObject[key] !== void 0) {
-                        this.copyProps(srcObject[key], dstObject[key], props[key]);
-                    } else {
-                        dstObject[key] = this.deepCopy(srcObject[key]);
-                    }
-                }
-            };
-            Utils.currentId = 1;
-            return Utils;
-        }();
-        exports.Utils = Utils;
+        __export(__webpack_require__(22));
+        __export(__webpack_require__(32));
     }, function(module, exports, __webpack_require__) {
         "use strict";
         window.TweenLite = TweenMax;
-        window.Stats = __webpack_require__(6);
-        exports.isPlainObject = __webpack_require__(7);
-        exports.EE2 = __webpack_require__(9);
-        var es6_promise_1 = __webpack_require__(10);
+        window.Stats = __webpack_require__(3);
+        exports.isPlainObject = __webpack_require__(4);
+        exports.EE2 = __webpack_require__(6);
+        var es6_promise_1 = __webpack_require__(7);
         exports.Promise = es6_promise_1.Promise;
-        exports.ResizeSensor = __webpack_require__(11);
+        exports.ResizeSensor = __webpack_require__(8);
     }, function(module, exports) {
         var Stats = function() {
             function h(a) {
@@ -715,7 +141,7 @@
 	 * Licensed under the MIT License.
 	 */
         "use strict";
-        var isObject = __webpack_require__(8);
+        var isObject = __webpack_require__(5);
         function isObjectObject(o) {
             return isObject(o) === true && Object.prototype.toString.call(o) === "[object Object]";
         }
@@ -1271,6 +697,583 @@
         })();
     }, function(module, exports, __webpack_require__) {
         "use strict";
+        var __extends = this && this.__extends || function(d, b) {
+            for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+            function __() {
+                this.constructor = d;
+            }
+            d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+        };
+        var Plugin_1 = __webpack_require__(10);
+        var PerspectiveCamera = THREE.PerspectiveCamera;
+        var Chart_1 = __webpack_require__(14);
+        var Widget_1 = __webpack_require__(23);
+        var Utils_1 = __webpack_require__(11);
+        var AxisWidget_1 = __webpack_require__(24);
+        var GridWidget_1 = __webpack_require__(25);
+        var TrendsGradientWidget_1 = __webpack_require__(27);
+        var TrendsLineWidget_1 = __webpack_require__(29);
+        var TrendsCandleWidget_1 = __webpack_require__(30);
+        var deps_1 = __webpack_require__(13);
+        var Color_1 = __webpack_require__(26);
+        var AxisMarksWidget_1 = __webpack_require__(31);
+        var ChartBlankView = function() {
+            function ChartBlankView(state, $container, pluginsAndWidgets) {
+                var _this = this;
+                if (pluginsAndWidgets === void 0) {
+                    pluginsAndWidgets = [];
+                }
+                this.widgets = [];
+                if (!THREE || !THREE.REVISION) Utils_1.Utils.error("three.js not found");
+                if (!$container) {
+                    Utils_1.Utils.error("$el must be set");
+                }
+                var style = getComputedStyle($container);
+                state.width = parseInt(style.width);
+                state.height = parseInt(style.height);
+                var plugins = pluginsAndWidgets.filter(function(pluginOrWidget) {
+                    return pluginOrWidget instanceof Plugin_1.ChartPlugin;
+                });
+                this.chart = new Chart_1.Chart(state, plugins);
+                this.pluginsAndWidgets = pluginsAndWidgets;
+                this.zoomThrottled = Utils_1.Utils.throttle(function(zoomValue, origin) {
+                    return _this.zoom(zoomValue, origin);
+                }, 200);
+                this.$container = $container;
+                this.init($container);
+            }
+            ChartBlankView.prototype.init = function($container) {
+                var chart = this.chart;
+                var _a = chart.state, w = _a.width, h = _a.height, showStats = _a.showStats, autoRender = _a.autoRender;
+                this.scene = new THREE.Scene();
+                this.isStopped = !autoRender.enabled;
+                var renderer = this.renderer = new ChartView.renderers[this.chart.state.renderer]({
+                    antialias: true,
+                    alpha: true
+                });
+                var backgroundColor = new Color_1.ChartColor(chart.state.backgroundColor);
+                renderer.setSize(w, h);
+                renderer.setPixelRatio(ChartView.devicePixelRatio);
+                renderer.setClearColor(backgroundColor.value, backgroundColor.a);
+                $container.appendChild(renderer.domElement);
+                this.$el = renderer.domElement;
+                this.$el.style.display = "block";
+                if (showStats) {
+                    this.stats = new Stats();
+                    $container.appendChild(this.stats.domElement);
+                }
+                this.setupCamera();
+                this.initWidgets();
+                this.bindEvents();
+                this.renderLoop();
+            };
+            ChartBlankView.prototype.initWidgets = function() {
+                var _this = this;
+                var preinstalledWidgetsClasses = this.constructor.preinstalledWidgets.slice();
+                var customWidgets = [];
+                this.pluginsAndWidgets.forEach(function(pluginOrWidget) {
+                    if (pluginOrWidget instanceof Widget_1.ChartWidget) {
+                        customWidgets.push(pluginOrWidget);
+                        return;
+                    }
+                    if (!(pluginOrWidget instanceof Plugin_1.ChartPlugin)) return;
+                    var pluginWidgetClasses = pluginOrWidget.constructor.providedWidgets;
+                    preinstalledWidgetsClasses.push.apply(preinstalledWidgetsClasses, pluginWidgetClasses);
+                });
+                this.widgets = customWidgets.concat(preinstalledWidgetsClasses.map(function(WidgetClass) {
+                    return new WidgetClass();
+                }));
+                this.widgets.forEach(function(widget) {
+                    widget.setupChart(_this.chart);
+                    widget.onReadyHandler();
+                    _this.scene.add(widget.getObject3D());
+                });
+            };
+            ChartBlankView.prototype.renderLoop = function() {
+                var _this = this;
+                if (this.isDestroyed) return;
+                this.stats && this.stats.begin();
+                this.render();
+                if (this.isStopped) return;
+                var fpsLimit = this.chart.state.autoRender.fps;
+                if (fpsLimit) {
+                    var delay_1 = 1e3 / fpsLimit;
+                    setTimeout(function() {
+                        return requestAnimationFrame(function() {
+                            return _this.renderLoop();
+                        });
+                    }, delay_1);
+                } else {
+                    requestAnimationFrame(function() {
+                        return _this.renderLoop();
+                    });
+                }
+                this.stats && this.stats.end();
+            };
+            ChartBlankView.prototype.render = function() {
+                this.chart.render();
+                this.renderer.render(this.scene, this.camera);
+            };
+            ChartBlankView.prototype.stop = function() {
+                this.isStopped = true;
+            };
+            ChartBlankView.prototype.run = function() {
+                this.isStopped = false;
+                this.renderLoop();
+            };
+            ChartBlankView.prototype.destroy = function() {
+                this.isDestroyed = true;
+                this.stop();
+                this.chart.destroy();
+                this.unbindEvents();
+                try {
+                    this.renderer.forceContextLoss();
+                } catch (wtf) {}
+                this.renderer.context = null;
+                this.renderer.domElement = null;
+                this.renderer = null;
+            };
+            ChartBlankView.prototype.getState = function() {
+                return this.chart.state;
+            };
+            ChartBlankView.prototype.getTrend = function(trendName) {
+                return this.chart.getTrend(trendName);
+            };
+            ChartBlankView.prototype.setState = function(state) {
+                return this.chart.setState(state);
+            };
+            ChartBlankView.prototype.bindEvents = function() {
+                var _this = this;
+                var $el = this.$el;
+                if (this.chart.state.controls.enabled) {
+                    $el.addEventListener("mousewheel", function(ev) {
+                        _this.onMouseWheel(ev);
+                    });
+                    $el.addEventListener("mousemove", function(ev) {
+                        _this.onMouseMove(ev);
+                    });
+                    $el.addEventListener("mousedown", function(ev) {
+                        return _this.onMouseDown(ev);
+                    });
+                    $el.addEventListener("mouseup", function(ev) {
+                        return _this.onMouseUp(ev);
+                    });
+                    $el.addEventListener("touchmove", function(ev) {
+                        _this.onTouchMove(ev);
+                    });
+                    $el.addEventListener("touchend", function(ev) {
+                        _this.onTouchEnd(ev);
+                    });
+                }
+                if (this.chart.state.autoResize) {
+                    this.resizeSensor = new deps_1.ResizeSensor(this.$container, function() {
+                        _this.onChartContainerResizeHandler(_this.$container.clientWidth, _this.$container.clientHeight);
+                    });
+                }
+                this.unsubscribers = [ this.chart.onTrendsChange(function() {
+                    return _this.autoscroll();
+                }), this.chart.screen.onTransformationFrame(function(options) {
+                    return _this.onScreenTransformHandler(options);
+                }), this.chart.onResize(function(options) {
+                    return _this.onChartResize();
+                }) ];
+            };
+            ChartBlankView.prototype.unbindEvents = function() {
+                try {
+                    this.resizeSensor && this.resizeSensor.detach();
+                } catch (e) {}
+                this.$el.remove();
+                this.unsubscribers.forEach(function(unsubscribe) {
+                    return unsubscribe();
+                });
+            };
+            ChartBlankView.prototype.setupCamera = function() {
+                var camSettings = this.chart.screen.getCameraSettings();
+                if (!this.camera) {
+                    this.camera = new PerspectiveCamera(camSettings.FOV, camSettings.aspect, camSettings.near, camSettings.far);
+                    this.scene.add(this.camera);
+                } else {
+                    this.camera.fov = camSettings.FOV;
+                    this.camera.aspect = camSettings.aspect;
+                    this.camera.far = camSettings.far;
+                    this.camera.near = camSettings.near;
+                    this.camera.updateProjectionMatrix();
+                }
+                this.camera.position.set(camSettings.x, camSettings.y, camSettings.z);
+                this.cameraInitialPosition = this.camera.position.clone();
+                this.onScreenTransformHandler(this.chart.screen.options);
+            };
+            ChartBlankView.prototype.onScreenTransformHandler = function(options) {
+                if (options.scrollX != void 0) {
+                    var scrollX_1 = this.cameraInitialPosition.x + options.scrollX;
+                    this.camera.position.setX(scrollX_1);
+                }
+                if (options.scrollY != void 0) {
+                    var scrollY_1 = this.cameraInitialPosition.y + options.scrollY;
+                    this.camera.position.setY(scrollY_1);
+                }
+            };
+            ChartBlankView.prototype.autoscroll = function() {
+                var state = this.chart;
+                if (!state.state.autoScroll) return;
+                var oldTrendsMaxX = state.state.prevState.computedData.trends.maxXVal;
+                var trendsMaxXDelta = state.state.computedData.trends.maxXVal - oldTrendsMaxX;
+                if (trendsMaxXDelta > 0) {
+                    var maxVisibleX = this.chart.screen.getScreenRightVal();
+                    var paddingRightX = this.chart.getPaddingRight();
+                    var currentScroll = state.state.xAxis.range.scroll;
+                    if (oldTrendsMaxX < paddingRightX || oldTrendsMaxX > maxVisibleX) {
+                        return;
+                    }
+                    var scrollDelta = trendsMaxXDelta;
+                    this.setState({
+                        xAxis: {
+                            range: {
+                                scroll: currentScroll + scrollDelta
+                            }
+                        }
+                    });
+                }
+            };
+            ChartBlankView.prototype.onScrollStop = function() {};
+            ChartBlankView.prototype.onMouseDown = function(ev) {
+                this.setState({
+                    cursor: {
+                        dragMode: true,
+                        x: ev.clientX,
+                        y: ev.clientY
+                    }
+                });
+            };
+            ChartBlankView.prototype.onMouseUp = function(ev) {
+                this.setState({
+                    cursor: {
+                        dragMode: false
+                    }
+                });
+            };
+            ChartBlankView.prototype.onMouseMove = function(ev) {
+                if (this.chart.state.cursor.dragMode) {
+                    this.setState({
+                        cursor: {
+                            dragMode: true,
+                            x: ev.clientX,
+                            y: ev.clientY
+                        }
+                    });
+                }
+            };
+            ChartBlankView.prototype.onMouseWheel = function(ev) {
+                ev.stopPropagation();
+                ev.preventDefault();
+                var zoomOrigin = ev.layerX / this.chart.state.width;
+                var zoomValue = 1 + ev.wheelDeltaY * .001;
+                this.zoom(zoomValue, zoomOrigin);
+            };
+            ChartBlankView.prototype.onTouchMove = function(ev) {
+                this.setState({
+                    cursor: {
+                        dragMode: true,
+                        x: ev.touches[0].clientX,
+                        y: ev.touches[0].clientY
+                    }
+                });
+            };
+            ChartBlankView.prototype.onTouchEnd = function(ev) {
+                this.setState({
+                    cursor: {
+                        dragMode: false
+                    }
+                });
+            };
+            ChartBlankView.prototype.onChartContainerResizeHandler = function(width, height) {
+                this.setState({
+                    width: width,
+                    height: height
+                });
+            };
+            ChartBlankView.prototype.onChartResize = function() {
+                var _a = this.chart.state, width = _a.width, height = _a.height;
+                this.renderer.setSize(width, height);
+                this.setupCamera();
+            };
+            ChartBlankView.prototype.zoom = function(zoomValue, zoomOrigin) {
+                var _this = this;
+                var MAX_ZOOM_VALUE = 1.5;
+                var MIN_ZOOM_VALUE = .7;
+                zoomValue = Math.min(zoomValue, MAX_ZOOM_VALUE);
+                zoomValue = Math.max(zoomValue, MIN_ZOOM_VALUE);
+                var autoScrollIsEnabled = this.chart.state.autoScroll;
+                if (autoScrollIsEnabled) this.chart.setState({
+                    autoScroll: false
+                });
+                this.chart.zoom(zoomValue, zoomOrigin).then(function() {
+                    if (autoScrollIsEnabled) _this.setState({
+                        autoScroll: true
+                    });
+                });
+            };
+            ChartBlankView.devicePixelRatio = window.devicePixelRatio;
+            ChartBlankView.preinstalledWidgets = [];
+            ChartBlankView.renderers = {
+                CanvasRenderer: THREE.CanvasRenderer,
+                WebGLRenderer: THREE.WebGLRenderer
+            };
+            return ChartBlankView;
+        }();
+        exports.ChartBlankView = ChartBlankView;
+        var ChartView = function(_super) {
+            __extends(ChartView, _super);
+            function ChartView() {
+                _super.apply(this, arguments);
+            }
+            ChartView.preinstalledWidgets = [ TrendsLineWidget_1.TrendsLineWidget, TrendsCandleWidget_1.TrendsCandlesWidget, AxisWidget_1.AxisWidget, GridWidget_1.GridWidget, TrendsGradientWidget_1.TrendsGradientWidget, AxisMarksWidget_1.AxisMarksWidget ];
+            return ChartView;
+        }(ChartBlankView);
+        exports.ChartView = ChartView;
+    }, function(module, exports, __webpack_require__) {
+        "use strict";
+        var Utils_1 = __webpack_require__(11);
+        var EventEmmiter_1 = __webpack_require__(12);
+        exports.DEFAULT_CONFIG = {
+            installPluginWidgets: true
+        };
+        var ChartPlugin = function() {
+            function ChartPlugin(options, config) {
+                if (config === void 0) {
+                    config = {};
+                }
+                this.unsubscribers = [];
+                this.initialState = options;
+                this.config = Utils_1.Utils.deepMerge(exports.DEFAULT_CONFIG, config);
+                this.name = this.constructor.NAME;
+                if (!this.name) Utils_1.Utils.error("Unnamed plugin detected");
+            }
+            ChartPlugin.prototype.setupChart = function(chart) {
+                var _this = this;
+                this.chart = chart;
+                this.ee = new EventEmmiter_1.EventEmitter();
+                this.bindEvent(this.chart.onInitialStateApplied(function(initialState) {
+                    return _this.onInitialStateAppliedHandler(initialState);
+                }), this.chart.onReady(function() {
+                    return _this.onReadyHandler();
+                }), this.chart.onDestroy(function() {
+                    return _this.onDestroyHandler();
+                }), this.chart.onPluginsStateChange(function(changedPluginsStates) {
+                    return changedPluginsStates[_this.name] && _this.onStateChanged(changedPluginsStates[_this.name]);
+                }));
+            };
+            ChartPlugin.prototype.getOptions = function() {
+                return this.chart.state.pluginsState[this.name];
+            };
+            ChartPlugin.prototype.onInitialStateAppliedHandler = function(initialState) {};
+            ChartPlugin.prototype.onReadyHandler = function() {};
+            ChartPlugin.prototype.onStateChanged = function(changedState) {};
+            ChartPlugin.prototype.onDestroyHandler = function() {
+                this.ee.removeAllListeners();
+            };
+            ChartPlugin.prototype.bindEvent = function() {
+                var args = [];
+                for (var _i = 0; _i < arguments.length; _i++) {
+                    args[_i - 0] = arguments[_i];
+                }
+                var unsubscribers = [];
+                if (!Array.isArray(args[0])) {
+                    unsubscribers.push(args[0]);
+                } else {
+                    unsubscribers.push.apply(unsubscribers, args);
+                }
+                (_a = this.unsubscribers).push.apply(_a, unsubscribers);
+                var _a;
+            };
+            ChartPlugin.prototype.unbindEvents = function() {
+                this.unsubscribers.forEach(function(unsubscriber) {
+                    return unsubscriber();
+                });
+                this.unsubscribers.length = 0;
+            };
+            ChartPlugin.NAME = "";
+            ChartPlugin.providedWidgets = [];
+            return ChartPlugin;
+        }();
+        exports.ChartPlugin = ChartPlugin;
+    }, function(module, exports, __webpack_require__) {
+        "use strict";
+        var deps_1 = __webpack_require__(2);
+        function deepmerge(target, src, mergeArrays) {
+            if (mergeArrays === void 0) {
+                mergeArrays = true;
+            }
+            var array = Array.isArray(src);
+            var dst = array && [] || {};
+            if (array) {
+                target = target || [];
+                if (mergeArrays) {
+                    dst = dst.concat(target);
+                }
+                src.forEach(function(e, i) {
+                    if (typeof dst[i] === "undefined") {
+                        dst[i] = e;
+                    } else if (typeof e === "object") {
+                        dst[i] = deepmerge(target[i], e, mergeArrays);
+                    } else {
+                        if (target.indexOf(e) === -1) {
+                            dst.push(e);
+                        }
+                    }
+                });
+            } else {
+                if (target && typeof target === "object") {
+                    Object.keys(target).forEach(function(key) {
+                        dst[key] = target[key];
+                    });
+                }
+                Object.keys(src).forEach(function(key) {
+                    if (typeof src[key] !== "object" || !src[key]) {
+                        dst[key] = src[key];
+                    } else {
+                        if (!target[key]) {
+                            dst[key] = src[key];
+                        } else {
+                            dst[key] = deepmerge(target[key], src[key], mergeArrays);
+                        }
+                    }
+                });
+            }
+            return dst;
+        }
+        var Utils = function() {
+            function Utils() {}
+            Utils.deepMerge = function(obj1, obj2, mergeArrays) {
+                return deepmerge(obj1, obj2, mergeArrays);
+            };
+            Utils.deepCopy = function(obj) {
+                return JSON.parse(JSON.stringify(obj));
+            };
+            Utils.toFixed = function(num, digitsCount) {
+                var maxDigits = 15;
+                var result = "";
+                var intVal = Math.floor(num);
+                var intStr = intVal.toString();
+                var lengthDiff = digitsCount - intStr.length;
+                if (lengthDiff > 0) {
+                    result = "0".repeat(lengthDiff) + intStr;
+                } else {
+                    result = intStr;
+                }
+                var afterPointDigitsCount = maxDigits - intStr.length;
+                var afterPointStr = num.toString().split(".")[1];
+                if (afterPointStr) {
+                    result += "." + afterPointStr.substr(0, afterPointDigitsCount);
+                }
+                return result;
+            };
+            Utils.bindEvent = function() {};
+            Utils.createTexture = function(width, height, fn) {
+                var canvas = document.createElement("canvas");
+                canvas.width = width;
+                canvas.height = height;
+                var ctx = canvas.getContext("2d");
+                fn(ctx);
+                var texture = new THREE.Texture(canvas);
+                texture.needsUpdate = true;
+                return texture;
+            };
+            Utils.createPixelPerfectTexture = function(width, height, fn) {
+                var texture = this.createTexture(width, height, fn);
+                texture.minFilter = THREE.NearestFilter;
+                return texture;
+            };
+            Utils.error = function(msg) {
+                console.error("Chart error: " + msg);
+                throw "Chart: " + msg;
+            };
+            Utils.warn = function(msg) {
+                console.warn("Chart warning: " + msg);
+            };
+            Utils.getUid = function() {
+                return this.currentId++;
+            };
+            Utils.getDistance = function(num1, num2) {
+                return Math.max(num1, num2) - Math.min(num1, num2);
+            };
+            Utils.binarySearchClosestInd = function(arr, num, key) {
+                var mid;
+                var lo = 0;
+                var hi = arr.length - 1;
+                while (hi - lo > 1) {
+                    mid = Math.floor((lo + hi) / 2);
+                    if (arr[mid][key] < num) {
+                        lo = mid;
+                    } else {
+                        hi = mid;
+                    }
+                }
+                if (num - arr[lo][key] <= arr[hi][key] - num) {
+                    return lo;
+                }
+                return hi;
+            };
+            Utils.binarySearchClosest = function(arr, num, key) {
+                var ind = this.binarySearchClosestInd(arr, num, key);
+                return arr[ind];
+            };
+            Utils.rectsIntersect = function(r1, r2) {
+                var left1 = r1[0], top1 = r1[1], width1 = r1[2], height1 = r1[3];
+                var left2 = r2[0], top2 = r2[1], width2 = r2[2], height2 = r2[3];
+                var _a = [ left1 + width1, left2 + width2, top1 + height1, top2 + height2 ], right1 = _a[0], right2 = _a[1], bottom1 = _a[2], bottom2 = _a[3];
+                return !(left2 > right1 || right2 < left1 || top2 > bottom1 || bottom2 < top1);
+            };
+            Utils.throttle = function(func, ms) {
+                var isThrottled = false, savedArgs, savedThis;
+                function wrapper() {
+                    if (isThrottled) {
+                        savedArgs = arguments;
+                        savedThis = this;
+                        return;
+                    }
+                    func.apply(this, arguments);
+                    isThrottled = true;
+                    setTimeout(function() {
+                        isThrottled = false;
+                        if (savedArgs) {
+                            wrapper.apply(savedThis, savedArgs);
+                            savedArgs = savedThis = null;
+                        }
+                    }, ms);
+                }
+                return wrapper;
+            };
+            Utils.msToTimeString = function(timestamp) {
+                var h = Math.floor(timestamp / 36e4);
+                var m = Math.floor(timestamp / 6e4);
+                var s = Math.floor(timestamp / 1e3);
+                return h + ":" + m + ":" + s;
+            };
+            Utils.getRandomItem = function(arr) {
+                var ind = Math.floor(Math.random() * arr.length);
+                return arr[ind];
+            };
+            Utils.copyProps = function(srcObject, dstObject, props, excludeProps) {
+                if (excludeProps === void 0) {
+                    excludeProps = [];
+                }
+                for (var key in props) {
+                    if (excludeProps.indexOf(key) !== -1) continue;
+                    if (srcObject[key] == void 0) continue;
+                    if (deps_1.isPlainObject(props[key]) && dstObject[key] !== void 0) {
+                        this.copyProps(srcObject[key], dstObject[key], props[key]);
+                    } else {
+                        dstObject[key] = this.deepCopy(srcObject[key]);
+                    }
+                }
+            };
+            Utils.currentId = 1;
+            return Utils;
+        }();
+        exports.Utils = Utils;
+    }, function(module, exports, __webpack_require__) {
+        "use strict";
         var deps_1 = __webpack_require__(13);
         var EventEmitter = function() {
             function EventEmitter() {
@@ -1311,18 +1314,20 @@
         function __export(m) {
             for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
         }
-        __export(__webpack_require__(5));
+        __export(__webpack_require__(2));
     }, function(module, exports, __webpack_require__) {
         "use strict";
         var Vector3 = THREE.Vector3;
         var Trend_1 = __webpack_require__(15);
         var EventEmmiter_1 = __webpack_require__(12);
-        var Utils_1 = __webpack_require__(4);
+        var Utils_1 = __webpack_require__(11);
         var TrendsManager_1 = __webpack_require__(17);
         var Screen_1 = __webpack_require__(18);
         var AxisMarks_1 = __webpack_require__(19);
         var interfaces_1 = __webpack_require__(20);
-        var deps_1 = __webpack_require__(5);
+        var deps_1 = __webpack_require__(2);
+        var AnimationManager_1 = __webpack_require__(21);
+        var Easing_1 = __webpack_require__(22);
         var CHART_STATE_EVENTS = {
             INITIAL_STATE_APPLIED: "initialStateApplied",
             READY: "ready",
@@ -1399,12 +1404,12 @@
                         enabled: true,
                         trendChangeSpeed: .5,
                         trendChangeEase: void 0,
-                        zoomSpeed: .25,
-                        zoomEase: void 0,
-                        scrollSpeed: .5,
-                        scrollEase: Linear.easeNone,
-                        autoScrollSpeed: 1,
-                        autoScrollEase: Linear.easeNone
+                        zoomSpeed: 250,
+                        scrollSpeed: 1e3,
+                        scrollEase: Easing_1.EASING.Quadratic.Out,
+                        zoomEase: Easing_1.EASING.Quadratic.Out,
+                        autoScrollSpeed: 1e3,
+                        autoScrollEase: Easing_1.EASING.Linear.None
                     },
                     autoRender: {
                         enabled: true,
@@ -1454,6 +1459,7 @@
                     maxVisibleSegments: 1280
                 };
                 this.plugins = {};
+                this.animationManager = new AnimationManager_1.AnimationManager();
                 this.isReady = false;
                 this.isDestroyed = false;
                 this.ee = new EventEmmiter_1.EventEmitter();
@@ -1516,6 +1522,9 @@
             };
             Chart.prototype.getTrend = function(trendName) {
                 return this.trendsManager.getTrend(trendName);
+            };
+            Chart.prototype.render = function() {
+                this.animationManager.tick();
             };
             Chart.prototype.setState = function(newState, eventData, silent) {
                 if (silent === void 0) {
@@ -1659,6 +1668,11 @@
                 var _this = this;
                 this.ee.on(CHART_STATE_EVENTS.TRENDS_CHANGE, function(changedTrends, newData) {
                     _this.handleTrendsChange(changedTrends, newData);
+                });
+                this.ee.on("animationsChange", function(animationOptions) {
+                    if (animationOptions.enabled !== _this.animationManager.isAnimationsEnabled) {
+                        _this.animationManager.setAimationsEnabled(animationOptions.enabled);
+                    }
                 });
             };
             Chart.prototype.handleTrendsChange = function(changedTrends, newData) {
@@ -1902,10 +1916,10 @@
         exports.Chart = Chart;
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var Utils_1 = __webpack_require__(4);
+        var Utils_1 = __webpack_require__(11);
         var TrendSegmentsManager_1 = __webpack_require__(16);
         var EventEmmiter_1 = __webpack_require__(12);
-        var deps_1 = __webpack_require__(5);
+        var deps_1 = __webpack_require__(2);
         var EVENTS = {
             CHANGE: "Change",
             PREPEND_REQUEST: "prependRequest"
@@ -2097,7 +2111,7 @@
         var EventEmmiter_1 = __webpack_require__(12);
         var Vector3 = THREE.Vector3;
         var Trend_1 = __webpack_require__(15);
-        var Utils_1 = __webpack_require__(4);
+        var Utils_1 = __webpack_require__(11);
         var MAX_ANIMATED_SEGMENTS = 100;
         var EVENTS = {
             REBUILD: "rebuild",
@@ -2649,6 +2663,11 @@
         "use strict";
         var Vector3 = THREE.Vector3;
         var EventEmmiter_1 = __webpack_require__(12);
+        var SCREEN_EVENTS = {
+            ZOOM_FRAME: "zoomFrame",
+            SCROLL_FRAME: "scrollFrame",
+            TRANSFORMATION_FRAME: "transformationFrame"
+        };
         var Screen = function() {
             function Screen(chartState) {
                 this.options = {
@@ -2659,29 +2678,17 @@
                     zoomX: 1,
                     zoomY: 1
                 };
-                this.currentScrollX = {
-                    x: 0
-                };
-                this.currentScrollY = {
-                    y: 0
-                };
-                this.currentZoomX = {
-                    val: 1
-                };
-                this.currentZoomY = {
-                    val: 1
-                };
-                this.chartState = chartState;
+                this.chart = chartState;
                 var _a = chartState.state, w = _a.width, h = _a.height;
                 this.ee = new EventEmmiter_1.EventEmitter();
                 this.transform({
-                    scrollY: this.valueToPxByYAxis(this.chartState.state.yAxis.range.scroll),
+                    scrollY: this.valueToPxByYAxis(this.chart.state.yAxis.range.scroll),
                     zoomY: 1
                 });
                 this.bindEvents();
             }
             Screen.prototype.getCameraSettings = function() {
-                var _a = this.chartState.state, w = _a.width, h = _a.height;
+                var _a = this.chart.state, w = _a.width, h = _a.height;
                 var FOV = 75;
                 var vFOV = FOV * (Math.PI / 180);
                 return {
@@ -2695,31 +2702,16 @@
                 };
             };
             Screen.prototype.onZoomFrame = function(cb) {
-                var _this = this;
-                var eventName = "zoomFrame";
-                this.ee.on(eventName, cb);
-                return function() {
-                    _this.ee.off(eventName, cb);
-                };
+                return this.ee.subscribe(SCREEN_EVENTS.ZOOM_FRAME, cb);
             };
             Screen.prototype.onScrollFrame = function(cb) {
-                var _this = this;
-                var eventName = "scrollFrame";
-                this.ee.on(eventName, cb);
-                return function() {
-                    _this.ee.off(eventName, cb);
-                };
+                return this.ee.subscribe(SCREEN_EVENTS.SCROLL_FRAME, cb);
             };
             Screen.prototype.onTransformationFrame = function(cb) {
-                var _this = this;
-                var eventName = "transformationFrame";
-                this.ee.on(eventName, cb);
-                return function() {
-                    _this.ee.off(eventName, cb);
-                };
+                return this.ee.subscribe(SCREEN_EVENTS.TRANSFORMATION_FRAME, cb);
             };
             Screen.prototype.cameraIsMoving = function() {
-                return !!(this.scrollXAnimation && this.scrollXAnimation.isActive() || this.zoomXAnimation && this.zoomXAnimation.isActive());
+                return !!(this.scrollXAnimation && !this.scrollXAnimation.isFinished || this.zoomXAnimation && !this.zoomXAnimation.isFinished);
             };
             Screen.prototype.transform = function(options, silent) {
                 if (silent === void 0) {
@@ -2739,17 +2731,15 @@
                     this.options.scrollYVal = options.scrollYVal;
                 }
                 if (silent) return;
-                this.ee.emit("transformationFrame", options);
-                if (options.scrollXVal != void 0 || options.scrollYVal != void 0) {
-                    this.ee.emit("scrollFrame", options);
-                }
-                if (options.zoomX != void 0 || options.zoomY != void 0) {
-                    this.ee.emit("zoomFrame", options);
-                }
+                this.ee.emit(SCREEN_EVENTS.TRANSFORMATION_FRAME, options);
+                var scrollEventNeeded = options.scrollXVal != void 0 || options.scrollYVal != void 0;
+                if (scrollEventNeeded) this.ee.emit(SCREEN_EVENTS.SCROLL_FRAME, options);
+                var zoomEventNeeded = options.zoomX != void 0 || options.zoomY != void 0;
+                if (zoomEventNeeded) this.ee.emit(SCREEN_EVENTS.ZOOM_FRAME, options);
             };
             Screen.prototype.bindEvents = function() {
                 var _this = this;
-                var state = this.chartState;
+                var state = this.chart;
                 state.onChange(function(changedProps) {
                     if (changedProps.xAxis && changedProps.xAxis.range) {
                         if (changedProps.xAxis.range.scroll != void 0) _this.onScrollXHandler(changedProps);
@@ -2766,122 +2756,69 @@
             };
             Screen.prototype.onDestroyHandler = function() {
                 this.ee.removeAllListeners();
-                this.scrollXAnimation && this.scrollXAnimation.kill();
-                this.scrollYAnimation && this.scrollYAnimation.kill();
-                this.zoomXAnimation && this.zoomXAnimation.kill();
-                this.zoomYAnimation && this.zoomYAnimation.kill();
             };
             Screen.prototype.onScrollXHandler = function(changedProps) {
                 var _this = this;
-                var state = this.chartState;
-                var isDragMode = state.state.cursor.dragMode;
-                var animations = state.state.animations;
-                var canAnimate = animations.enabled && !isDragMode;
+                var chart = this.chart;
+                var isDragMode = chart.state.cursor.dragMode;
+                var animations = chart.state.animations;
                 var zoomXChanged = changedProps.xAxis.range.zoom;
-                var isAutoscroll = state.state.autoScroll && !isDragMode && !zoomXChanged;
+                var isAutoscroll = chart.state.autoScroll && !isDragMode && !zoomXChanged;
                 var time = isAutoscroll ? animations.autoScrollSpeed : animations.zoomSpeed;
                 var ease = isAutoscroll ? animations.autoScrollEase : animations.zoomEase;
-                if (this.scrollXAnimation) this.scrollXAnimation.pause();
-                var range = state.state.xAxis.range;
+                var range = chart.state.xAxis.range;
                 var targetX = range.scroll * range.scaleFactor * range.zoom;
-                this.currentScrollX.x = this.options.scrollX;
-                var cb = function() {
+                if (this.scrollXAnimation) this.scrollXAnimation.stop();
+                this.scrollXAnimation = chart.animationManager.animate(time, ease).from(this.options.scrollX).to(targetX).onTick(function(value) {
                     _this.transform({
-                        scrollX: _this.currentScrollX.x
+                        scrollX: value
                     });
-                };
-                if (canAnimate) {
-                    this.scrollXAnimation = TweenLite.to(this.currentScrollX, time, {
-                        x: targetX,
-                        ease: ease
-                    });
-                    this.scrollXAnimation.eventCallback("onUpdate", cb);
-                } else {
-                    this.currentScrollX.x = targetX;
-                    cb();
-                }
+                });
             };
             Screen.prototype.onScrollYHandler = function() {
                 var _this = this;
-                var state = this.chartState;
-                var animations = state.state.animations;
-                var canAnimate = animations.enabled;
-                var time = animations.zoomSpeed;
-                if (this.scrollYAnimation) this.scrollYAnimation.pause();
-                var range = state.state.yAxis.range;
+                var chart = this.chart;
+                var animations = chart.state.animations;
+                var range = chart.state.yAxis.range;
                 var targetY = range.scroll * range.scaleFactor * range.zoom;
-                this.currentScrollY.y = this.options.scrollY;
-                var cb = function() {
+                if (this.scrollYAnimation) this.scrollYAnimation.stop();
+                this.scrollYAnimation = chart.animationManager.animate(animations.zoomSpeed, animations.zoomEase).from(this.options.scrollY).to(targetY).onTick(function(value) {
                     _this.transform({
-                        scrollY: _this.currentScrollY.y
+                        scrollY: value
                     });
-                };
-                if (canAnimate) {
-                    this.scrollYAnimation = TweenLite.to(this.currentScrollY, time, {
-                        y: targetY,
-                        ease: animations.zoomEase
-                    });
-                    this.scrollYAnimation.eventCallback("onUpdate", cb);
-                } else {
-                    this.currentScrollY.y = targetY;
-                    cb();
-                }
+                });
             };
             Screen.prototype.onZoomXHandler = function() {
                 var _this = this;
-                var state = this.chartState;
-                var animations = state.state.animations;
-                var canAnimate = animations.enabled;
-                var time = animations.zoomSpeed;
-                var targetZoom = state.state.xAxis.range.zoom;
-                if (this.zoomXAnimation) this.zoomXAnimation.pause();
-                var cb = function() {
+                var chart = this.chart;
+                var animations = chart.state.animations;
+                var targetZoom = chart.state.xAxis.range.zoom;
+                if (this.zoomXAnimation) this.zoomXAnimation.stop();
+                this.zoomXAnimation = chart.animationManager.animate(animations.zoomSpeed, animations.zoomEase).from(this.options.zoomX).to(targetZoom).onTick(function(value) {
                     _this.transform({
-                        zoomX: _this.currentZoomX.val
+                        zoomX: value
                     });
-                };
-                if (canAnimate) {
-                    this.zoomXAnimation = TweenLite.to(this.currentZoomX, time, {
-                        val: targetZoom,
-                        ease: animations.zoomEase
-                    });
-                    this.zoomXAnimation.eventCallback("onUpdate", cb);
-                } else {
-                    this.currentZoomX.val = targetZoom;
-                    cb();
-                }
+                });
             };
             Screen.prototype.onZoomYHandler = function() {
                 var _this = this;
-                var state = this.chartState;
-                var animations = state.state.animations;
-                var canAnimate = animations.enabled;
-                var time = animations.zoomSpeed;
-                var targetZoom = state.state.yAxis.range.zoom;
-                if (this.zoomYAnimation) this.zoomYAnimation.pause();
-                var cb = function() {
+                var chart = this.chart;
+                var targetZoom = chart.state.yAxis.range.zoom;
+                var animations = chart.state.animations;
+                if (this.zoomYAnimation) this.zoomYAnimation.stop();
+                this.zoomYAnimation = chart.animationManager.animate(animations.zoomSpeed, animations.zoomEase).from(this.options.zoomY).to(targetZoom).onTick(function(value) {
                     _this.transform({
-                        zoomY: _this.currentZoomY.val
+                        zoomY: value
                     });
-                };
-                if (canAnimate) {
-                    this.zoomYAnimation = TweenLite.to(this.currentZoomY, time, {
-                        val: targetZoom,
-                        ease: animations.zoomEase
-                    });
-                    this.zoomYAnimation.eventCallback("onUpdate", cb);
-                } else {
-                    this.currentZoomY.val = targetZoom;
-                    cb();
-                }
+                });
             };
             Screen.prototype.getPointOnXAxis = function(xVal) {
-                var _a = this.chartState.state.xAxis.range, scaleFactor = _a.scaleFactor, zeroVal = _a.zeroVal;
+                var _a = this.chart.state.xAxis.range, scaleFactor = _a.scaleFactor, zeroVal = _a.zeroVal;
                 var zoom = this.options.zoomX;
                 return (xVal - zeroVal) * scaleFactor * zoom;
             };
             Screen.prototype.getPointOnYAxis = function(yVal) {
-                var _a = this.chartState.state.yAxis.range, scaleFactor = _a.scaleFactor, zeroVal = _a.zeroVal;
+                var _a = this.chart.state.yAxis.range, scaleFactor = _a.scaleFactor, zeroVal = _a.zeroVal;
                 var zoom = this.options.zoomY;
                 return (yVal - zeroVal) * scaleFactor * zoom;
             };
@@ -2889,28 +2826,28 @@
                 return new Vector3(this.getPointOnXAxis(xVal), this.getPointOnYAxis(yVal), 0);
             };
             Screen.prototype.getValueOnXAxis = function(x) {
-                return this.chartState.state.xAxis.range.zeroVal + this.pxToValueByXAxis(x);
+                return this.chart.state.xAxis.range.zeroVal + this.pxToValueByXAxis(x);
             };
             Screen.prototype.valueToPxByXAxis = function(xVal) {
-                return xVal * this.chartState.state.xAxis.range.scaleFactor * this.options.zoomX;
+                return xVal * this.chart.state.xAxis.range.scaleFactor * this.options.zoomX;
             };
             Screen.prototype.valueToPxByYAxis = function(yVal) {
-                return yVal * this.chartState.state.yAxis.range.scaleFactor * this.options.zoomY;
+                return yVal * this.chart.state.yAxis.range.scaleFactor * this.options.zoomY;
             };
             Screen.prototype.pxToValueByXAxis = function(xVal) {
-                return xVal / this.chartState.state.xAxis.range.scaleFactor / this.options.zoomX;
+                return xVal / this.chart.state.xAxis.range.scaleFactor / this.options.zoomX;
             };
             Screen.prototype.pxToValueByYAxis = function(yVal) {
-                return yVal / this.chartState.state.yAxis.range.scaleFactor / this.options.zoomY;
+                return yVal / this.chart.state.yAxis.range.scaleFactor / this.options.zoomY;
             };
             Screen.prototype.getValueByScreenX = function(x) {
-                return this.chartState.state.xAxis.range.zeroVal + this.options.scrollXVal + this.pxToValueByXAxis(x);
+                return this.chart.state.xAxis.range.zeroVal + this.options.scrollXVal + this.pxToValueByXAxis(x);
             };
             Screen.prototype.getValueByScreenY = function(y) {
-                return this.chartState.state.yAxis.range.zeroVal + this.options.scrollYVal + this.pxToValueByYAxis(y);
+                return this.chart.state.yAxis.range.zeroVal + this.options.scrollYVal + this.pxToValueByYAxis(y);
             };
             Screen.prototype.getScreenXByValue = function(xVal) {
-                var _a = this.chartState.state.xAxis.range, scroll = _a.scroll, zeroVal = _a.zeroVal;
+                var _a = this.chart.state.xAxis.range, scroll = _a.scroll, zeroVal = _a.zeroVal;
                 return this.valueToPxByXAxis(xVal - zeroVal - scroll);
             };
             Screen.prototype.getScreenXByPoint = function(xVal) {
@@ -2923,7 +2860,7 @@
                 return this.getPointOnYAxis(this.getValueByScreenY(screenY));
             };
             Screen.prototype.getTop = function() {
-                return this.getPointByScreenY(this.chartState.state.height);
+                return this.getPointByScreenY(this.chart.state.height);
             };
             Screen.prototype.getBottom = function() {
                 return this.getPointByScreenY(0);
@@ -2932,16 +2869,16 @@
                 return this.getPointByScreenX(0);
             };
             Screen.prototype.getScreenRightVal = function() {
-                return this.getValueByScreenX(this.chartState.state.width);
+                return this.getValueByScreenX(this.chart.state.width);
             };
             Screen.prototype.getTopVal = function() {
-                return this.getValueByScreenY(this.chartState.state.height);
+                return this.getValueByScreenY(this.chart.state.height);
             };
             Screen.prototype.getBottomVal = function() {
                 return this.getValueByScreenY(0);
             };
             Screen.prototype.getCenterYVal = function() {
-                return this.getValueByScreenY(this.chartState.state.height / 2);
+                return this.getValueByScreenY(this.chart.state.height / 2);
             };
             return Screen;
         }();
@@ -2955,7 +2892,7 @@
             }
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
-        var Utils_1 = __webpack_require__(4);
+        var Utils_1 = __webpack_require__(11);
         var interfaces_1 = __webpack_require__(20);
         var EventEmmiter_1 = __webpack_require__(12);
         var AXIS_MARK_DEFAULT_OPTIONS = {
@@ -3110,6 +3047,313 @@
             AXIS_DATA_TYPE[AXIS_DATA_TYPE["DATE"] = 1] = "DATE";
         })(exports.AXIS_DATA_TYPE || (exports.AXIS_DATA_TYPE = {}));
         var AXIS_DATA_TYPE = exports.AXIS_DATA_TYPE;
+    }, function(module, exports, __webpack_require__) {
+        "use strict";
+        var Easing_1 = __webpack_require__(22);
+        var AnimationManager = function() {
+            function AnimationManager() {
+                this.isAnimationsEnabled = true;
+                this.animations = [];
+            }
+            AnimationManager.prototype.animate = function(time, timingFunction) {
+                var animation = new Animation(this, time, this.lastTickTime, timingFunction);
+                this.animations.push(animation);
+                return animation;
+            };
+            AnimationManager.prototype.animateObj = function(source, target) {};
+            AnimationManager.prototype.setAimationsEnabled = function(isEnabled) {
+                this.isAnimationsEnabled = isEnabled;
+            };
+            AnimationManager.prototype.tick = function() {
+                var now = Date.now();
+                var animations = this.animations;
+                for (var i_1 = 0; i_1 < animations.length; i_1++) {
+                    var animation = animations[i_1];
+                    if (this.isAnimationsEnabled) {
+                        animation.tick(now);
+                    } else {
+                        animation.completeAndStop();
+                    }
+                }
+                var i = animations.length;
+                while (i--) {
+                    if (animations[i].isFinished) animations.splice(i, 1);
+                }
+                this.lastTickTime = Date.now();
+            };
+            AnimationManager.prototype.hasActiveAnimations = function() {
+                return this.animations.length > 0;
+            };
+            return AnimationManager;
+        }();
+        exports.AnimationManager = AnimationManager;
+        var Animation = function() {
+            function Animation(animationManager, time, startTime, easing) {
+                if (easing === void 0) {
+                    easing = Easing_1.EASING.Quadratic.Out;
+                }
+                this.animationManager = animationManager;
+                this.time = time;
+                this.startTime = startTime;
+                this.easing = easing;
+                this.progress = 0;
+                this.isFinished = false;
+                this.isStopped = false;
+            }
+            Animation.prototype.tick = function(now) {
+                if (!this.isStopped) {
+                    var progress = this.time > 0 ? (now - this.startTime) / this.time : 1;
+                    this.setProgress(progress);
+                }
+                var needToFinish = (this.progress == 1 || this.isStopped) && !this.isFinished;
+                if (needToFinish) this.onFinishHandler();
+            };
+            Animation.prototype.from = function(sourceObj) {
+                if (typeof sourceObj == "object") {
+                    this.sourceObj = sourceObj;
+                    this.initialObj = {};
+                    var sourceIteralable = sourceObj;
+                    for (var key in sourceIteralable) if (typeof sourceIteralable[key] == "number") {
+                        this.initialObj[key] = sourceIteralable[key];
+                    }
+                } else if (typeof sourceObj == "number") {
+                    this.sourceObj = sourceObj;
+                    this.initialObj = sourceObj;
+                }
+                return this;
+            };
+            Animation.prototype.to = function(targetObj) {
+                this.targetObject = targetObj;
+                if (typeof this.initialObj == "object") {
+                    var initialIteralable = this.initialObj;
+                    for (var key in this.targetObject) {
+                        if (initialIteralable[key] == void 0) delete initialIteralable[key];
+                    }
+                }
+                return this;
+            };
+            Animation.prototype.onTick = function(onTickCb) {
+                this.onTickCb = onTickCb;
+                return this;
+            };
+            Animation.prototype.then = function(onFinishCb) {
+                this.onFinishCb = onFinishCb;
+                return this;
+            };
+            Animation.prototype.stop = function() {
+                this.isStopped = true;
+            };
+            Animation.prototype.completeAndStop = function() {
+                this.setProgress(1);
+                this.stop();
+            };
+            Animation.prototype.setProgress = function(progress) {
+                progress = Math.min(progress, 1);
+                this.progress = progress;
+                var k = this.easing(progress);
+                if (typeof this.sourceObj == "number") {
+                    var initialVal = this.initialObj;
+                    var targetVal = this.targetObject;
+                    var sourceVal = this.sourceObj;
+                    this.sourceObj = initialVal + (targetVal - initialVal) * k;
+                } else if (this.sourceObj && this.targetObject) {
+                    for (var key in this.initialObj) {
+                        var initialVal = this.initialObj[key];
+                        var targetVal = this.targetObject[key];
+                        this.sourceObj[key] = initialVal + (targetVal - initialVal) * k;
+                    }
+                }
+                if (this.onTickCb) this.onTickCb(this.sourceObj, progress, k);
+            };
+            Animation.prototype.onFinishHandler = function() {
+                this.onFinishCb && this.onFinishCb(this.progress);
+                this.isFinished = true;
+            };
+            return Animation;
+        }();
+        exports.Animation = Animation;
+    }, function(module, exports) {
+        "use strict";
+        exports.EASING = {
+            Linear: {
+                None: function(k) {
+                    return k;
+                }
+            },
+            Quadratic: {
+                In: function(k) {
+                    return k * k;
+                },
+                Out: function(k) {
+                    return k * (2 - k);
+                },
+                InOut: function(k) {
+                    if ((k *= 2) < 1) {
+                        return .5 * k * k;
+                    }
+                    return -.5 * (--k * (k - 2) - 1);
+                }
+            },
+            Cubic: {
+                In: function(k) {
+                    return k * k * k;
+                },
+                Out: function(k) {
+                    return --k * k * k + 1;
+                },
+                InOut: function(k) {
+                    if ((k *= 2) < 1) {
+                        return .5 * k * k * k;
+                    }
+                    return .5 * ((k -= 2) * k * k + 2);
+                }
+            },
+            Quartic: {
+                In: function(k) {
+                    return k * k * k * k;
+                },
+                Out: function(k) {
+                    return 1 - --k * k * k * k;
+                },
+                InOut: function(k) {
+                    if ((k *= 2) < 1) {
+                        return .5 * k * k * k * k;
+                    }
+                    return -.5 * ((k -= 2) * k * k * k - 2);
+                }
+            },
+            Quintic: {
+                In: function(k) {
+                    return k * k * k * k * k;
+                },
+                Out: function(k) {
+                    return --k * k * k * k * k + 1;
+                },
+                InOut: function(k) {
+                    if ((k *= 2) < 1) {
+                        return .5 * k * k * k * k * k;
+                    }
+                    return .5 * ((k -= 2) * k * k * k * k + 2);
+                }
+            },
+            Sinusoidal: {
+                In: function(k) {
+                    return 1 - Math.cos(k * Math.PI / 2);
+                },
+                Out: function(k) {
+                    return Math.sin(k * Math.PI / 2);
+                },
+                InOut: function(k) {
+                    return .5 * (1 - Math.cos(Math.PI * k));
+                }
+            },
+            Exponential: {
+                In: function(k) {
+                    return k === 0 ? 0 : Math.pow(1024, k - 1);
+                },
+                Out: function(k) {
+                    return k === 1 ? 1 : 1 - Math.pow(2, -10 * k);
+                },
+                InOut: function(k) {
+                    if (k === 0) {
+                        return 0;
+                    }
+                    if (k === 1) {
+                        return 1;
+                    }
+                    if ((k *= 2) < 1) {
+                        return .5 * Math.pow(1024, k - 1);
+                    }
+                    return .5 * (-Math.pow(2, -10 * (k - 1)) + 2);
+                }
+            },
+            Circular: {
+                In: function(k) {
+                    return 1 - Math.sqrt(1 - k * k);
+                },
+                Out: function(k) {
+                    return Math.sqrt(1 - --k * k);
+                },
+                InOut: function(k) {
+                    if ((k *= 2) < 1) {
+                        return -.5 * (Math.sqrt(1 - k * k) - 1);
+                    }
+                    return .5 * (Math.sqrt(1 - (k -= 2) * k) + 1);
+                }
+            },
+            Elastic: {
+                In: function(k) {
+                    if (k === 0) {
+                        return 0;
+                    }
+                    if (k === 1) {
+                        return 1;
+                    }
+                    return -Math.pow(2, 10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI);
+                },
+                Out: function(k) {
+                    if (k === 0) {
+                        return 0;
+                    }
+                    if (k === 1) {
+                        return 1;
+                    }
+                    return Math.pow(2, -10 * k) * Math.sin((k - .1) * 5 * Math.PI) + 1;
+                },
+                InOut: function(k) {
+                    if (k === 0) {
+                        return 0;
+                    }
+                    if (k === 1) {
+                        return 1;
+                    }
+                    k *= 2;
+                    if (k < 1) {
+                        return -.5 * Math.pow(2, 10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI);
+                    }
+                    return .5 * Math.pow(2, -10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI) + 1;
+                }
+            },
+            Back: {
+                In: function(k) {
+                    var s = 1.70158;
+                    return k * k * ((s + 1) * k - s);
+                },
+                Out: function(k) {
+                    var s = 1.70158;
+                    return --k * k * ((s + 1) * k + s) + 1;
+                },
+                InOut: function(k) {
+                    var s = 1.70158 * 1.525;
+                    if ((k *= 2) < 1) {
+                        return .5 * (k * k * ((s + 1) * k - s));
+                    }
+                    return .5 * ((k -= 2) * k * ((s + 1) * k + s) + 2);
+                }
+            },
+            Bounce: {
+                In: function(k) {
+                    return 1 - exports.EASING.Bounce.Out(1 - k);
+                },
+                Out: function(k) {
+                    if (k < 1 / 2.75) {
+                        return 7.5625 * k * k;
+                    } else if (k < 2 / 2.75) {
+                        return 7.5625 * (k -= 1.5 / 2.75) * k + .75;
+                    } else if (k < 2.5 / 2.75) {
+                        return 7.5625 * (k -= 2.25 / 2.75) * k + .9375;
+                    } else {
+                        return 7.5625 * (k -= 2.625 / 2.75) * k + .984375;
+                    }
+                },
+                InOut: function(k) {
+                    if (k < .5) {
+                        return exports.EASING.Bounce.In(k * 2) * .5;
+                    }
+                    return exports.EASING.Bounce.Out(k * 2 - 1) * .5 + .5;
+                }
+            }
+        };
     }, function(module, exports) {
         "use strict";
         var ChartWidget = function() {
@@ -3154,11 +3398,11 @@
         };
         var Mesh = THREE.Mesh;
         var Object3D = THREE.Object3D;
-        var Widget_1 = __webpack_require__(21);
-        var GridWidget_1 = __webpack_require__(23);
-        var Utils_1 = __webpack_require__(4);
+        var Widget_1 = __webpack_require__(23);
+        var GridWidget_1 = __webpack_require__(25);
+        var Utils_1 = __webpack_require__(11);
         var interfaces_1 = __webpack_require__(20);
-        var Color_1 = __webpack_require__(24);
+        var Color_1 = __webpack_require__(26);
         var AxisWidget = function(_super) {
             __extends(AxisWidget, _super);
             function AxisWidget() {
@@ -3344,10 +3588,10 @@
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
         var Vector3 = THREE.Vector3;
-        var Widget_1 = __webpack_require__(21);
+        var Widget_1 = __webpack_require__(23);
         var LineSegments = THREE.LineSegments;
-        var Utils_1 = __webpack_require__(4);
-        var Color_1 = __webpack_require__(24);
+        var Utils_1 = __webpack_require__(11);
+        var Color_1 = __webpack_require__(26);
         var GridWidget = function(_super) {
             __extends(GridWidget, _super);
             function GridWidget() {
@@ -3541,9 +3785,9 @@
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
         var Geometry = THREE.Geometry;
-        var Utils_1 = __webpack_require__(4);
-        var TrendsWidget_1 = __webpack_require__(26);
-        var Color_1 = __webpack_require__(24);
+        var Utils_1 = __webpack_require__(11);
+        var TrendsWidget_1 = __webpack_require__(28);
+        var Color_1 = __webpack_require__(26);
         var TrendsGradientWidget = function(_super) {
             __extends(TrendsGradientWidget, _super);
             function TrendsGradientWidget() {
@@ -3683,7 +3927,7 @@
             }
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
-        var Widget_1 = __webpack_require__(21);
+        var Widget_1 = __webpack_require__(23);
         var Object3D = THREE.Object3D;
         var TrendsWidget = function(_super) {
             __extends(TrendsWidget, _super);
@@ -3807,10 +4051,10 @@
         var Geometry = THREE.Geometry;
         var LineBasicMaterial = THREE.LineBasicMaterial;
         var Vector3 = THREE.Vector3;
-        var TrendsWidget_1 = __webpack_require__(26);
+        var TrendsWidget_1 = __webpack_require__(28);
         var LineSegments = THREE.LineSegments;
         var Trend_1 = __webpack_require__(15);
-        var Utils_1 = __webpack_require__(4);
+        var Utils_1 = __webpack_require__(11);
         var TrendsLineWidget = function(_super) {
             __extends(TrendsLineWidget, _super);
             function TrendsLineWidget() {
@@ -3949,7 +4193,7 @@
             }
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
-        var TrendsWidget_1 = __webpack_require__(26);
+        var TrendsWidget_1 = __webpack_require__(28);
         var Object3D = THREE.Object3D;
         var Geometry = THREE.Geometry;
         var Vector3 = THREE.Vector3;
@@ -3959,7 +4203,7 @@
         var PlaneGeometry = THREE.PlaneGeometry;
         var Trend_1 = __webpack_require__(15);
         var LineBasicMaterial = THREE.LineBasicMaterial;
-        var Utils_1 = __webpack_require__(4);
+        var Utils_1 = __webpack_require__(11);
         var RISE_COLOR = 2927680;
         var FALL_COLOR = 15619379;
         var MARGIN_PERCENT = .3;
@@ -4142,16 +4386,16 @@
             }
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
-        var Widget_1 = __webpack_require__(21);
+        var Widget_1 = __webpack_require__(23);
         var Object3D = THREE.Object3D;
         var Geometry = THREE.Geometry;
         var LineBasicMaterial = THREE.LineBasicMaterial;
         var Vector3 = THREE.Vector3;
-        var Utils_1 = __webpack_require__(4);
+        var Utils_1 = __webpack_require__(11);
         var Line = THREE.Line;
         var Mesh = THREE.Mesh;
         var interfaces_1 = __webpack_require__(20);
-        var Color_1 = __webpack_require__(24);
+        var Color_1 = __webpack_require__(26);
         var AxisMarksWidget = function(_super) {
             __extends(AxisMarksWidget, _super);
             function AxisMarksWidget() {
@@ -4331,12 +4575,12 @@
         function __export(m) {
             for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
         }
-        __export(__webpack_require__(22));
-        __export(__webpack_require__(23));
-        __export(__webpack_require__(26));
-        __export(__webpack_require__(27));
+        __export(__webpack_require__(24));
         __export(__webpack_require__(25));
+        __export(__webpack_require__(28));
         __export(__webpack_require__(29));
+        __export(__webpack_require__(27));
+        __export(__webpack_require__(31));
     } ]);
 });
 

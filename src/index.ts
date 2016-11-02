@@ -1,3 +1,4 @@
+require('./deps/deps');
 export * from './ChartView';
 export * from './interfaces';
 export * from './AxisMarks';
@@ -10,4 +11,6 @@ export * from './Utils';
 export * from './Widget';
 export * from './Plugin';
 export * from './Color';
+export * from './AnimationManager';
+export * from './Easing';
 export * from './widgets';

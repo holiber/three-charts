@@ -7,6 +7,7 @@ import { IAxisOptions, IAnimationsOptions } from "./interfaces";
 import { Promise } from './deps/deps';
 import { ChartPlugin } from './Plugin';
 import { TChartColor } from "./Color";
+import { AnimationManager } from "./AnimationManager";
 /**
  * readonly computed state state
  * calculated after recalculateState() call
@@ -77,6 +78,7 @@ export declare class Chart {
         [pluginName: string]: ChartPlugin;
     };
     trendsManager: TrendsManager;
+    animationManager: AnimationManager;
     screen: Screen;
     xAxisMarks: AxisMarks;
     yAxisMarks: AxisMarks;
@@ -107,6 +109,7 @@ export declare class Chart {
         [pluginName: string]: Plugin;
     }) => any): Function;
     getTrend(trendName: string): Trend;
+    render(): void;
     setState(newState: IChartState, eventData?: any, silent?: boolean): void;
     /**
      * recalculate all computed state props

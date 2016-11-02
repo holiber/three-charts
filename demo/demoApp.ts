@@ -1,12 +1,12 @@
 
-//import { ChartView, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE } from '../src';
+import { ChartView, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE } from '../src';
 
-import { ChartView, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE } from 'three-charts';
-import { TREND_MARK_SIDE, ITrendMarkOptions, TrendsMarksPlugin } from '../plugins/build/TrendsMarksPlugin';
-import { TrendsBeaconWidget } from '../plugins/build/TrendsBeaconWidget';
-import { TrendsLoadingWidget } from '../plugins/build/TrendsLoadingWidget';
-import { TrendsIndicatorWidget } from '../plugins/build/TrendsIndicatorWidget';
-ChartView.preinstalledWidgets.push(TrendsLoadingWidget, TrendsBeaconWidget, TrendsIndicatorWidget);
+// import { ChartView, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE } from 'three-charts';
+// import { TREND_MARK_SIDE, ITrendMarkOptions, TrendsMarksPlugin } from '../plugins/build/TrendsMarksPlugin';
+// import { TrendsBeaconWidget } from '../plugins/build/TrendsBeaconWidget';
+// import { TrendsLoadingWidget } from '../plugins/build/TrendsLoadingWidget';
+// import { TrendsIndicatorWidget } from '../plugins/build/TrendsIndicatorWidget';
+// ChartView.preinstalledWidgets.push(TrendsLoadingWidget, TrendsBeaconWidget, TrendsIndicatorWidget);
 
 var chartView: ChartView;
 
@@ -61,32 +61,32 @@ class DataSourse {
 		return item;
 	}
 }
-
-class MarksSource {
-	static getNext(val: number): ITrendMarkOptions {
-		if (Math.random() > 0.2) return null;
-		return this.generate(val);
-	}
-
-	static generate(val: number): ITrendMarkOptions {
-		let descriptionColor = 'rgb(40,136,75)';
-		let orientation =  Utils.getRandomItem([TREND_MARK_SIDE.TOP, TREND_MARK_SIDE.BOTTOM]);
-		if (orientation == TREND_MARK_SIDE.BOTTOM) {
-			descriptionColor = 'rgb(219,73,49)';
-		}
-
-		return {
-			trendName: 'main',
-			value: val,
-			title: Utils.getRandomItem(['Alex Malcon', 'Serg Morrs', 'Harry Potter']),
-			description: Utils.getRandomItem(['$10 -> 20$', '$15 -> 30$', '40$ -> 80$']),
-			icon: Utils.getRandomItem(['AM', 'SM', 'HP']),
-			iconColor: Utils.getRandomItem(['rgb(69,67,130)', 'rgb(124,39,122)']),
-			orientation: orientation,
-			descriptionColor: descriptionColor
-		}
-	}
-}
+//
+// class MarksSource {
+// 	static getNext(val: number): ITrendMarkOptions {
+// 		if (Math.random() > 0.2) return null;
+// 		return this.generate(val);
+// 	}
+//
+// 	static generate(val: number): ITrendMarkOptions {
+// 		let descriptionColor = 'rgb(40,136,75)';
+// 		let orientation =  Utils.getRandomItem([TREND_MARK_SIDE.TOP, TREND_MARK_SIDE.BOTTOM]);
+// 		if (orientation == TREND_MARK_SIDE.BOTTOM) {
+// 			descriptionColor = 'rgb(219,73,49)';
+// 		}
+//
+// 		return {
+// 			trendName: 'main',
+// 			value: val,
+// 			title: Utils.getRandomItem(['Alex Malcon', 'Serg Morrs', 'Harry Potter']),
+// 			description: Utils.getRandomItem(['$10 -> 20$', '$15 -> 30$', '40$ -> 80$']),
+// 			icon: Utils.getRandomItem(['AM', 'SM', 'HP']),
+// 			iconColor: Utils.getRandomItem(['rgb(69,67,130)', 'rgb(124,39,122)']),
+// 			orientation: orientation,
+// 			descriptionColor: descriptionColor
+// 		}
+// 	}
+// }
 
 window.onload = function () {
 
@@ -149,7 +149,7 @@ window.onload = function () {
 		trendDefaultState: {
 			settingsForTypes: {
 				LINE: {
-					minSegmentLengthInPx: 10
+					// minSegmentLengthInPx: 10
 				}
 			}
 		}
@@ -157,7 +157,7 @@ window.onload = function () {
 	document.querySelector('.chart')
 		,
 	[
-		new TrendsMarksPlugin({items: [MarksSource.generate(now + 3000), MarksSource.generate(now + 3000), MarksSource.generate(now + 4000)]})
+		//new TrendsMarksPlugin({items: [MarksSource.generate(now + 3000), MarksSource.generate(now + 3000), MarksSource.generate(now + 4000)]})
 	]
 	);
 
@@ -176,11 +176,11 @@ window.onload = function () {
 			deadlineMark.setOptions({value: closeValue + 10000});
 			closeMark.setOptions({value: closeValue + 20000})
 		}
-		var markOptions = MarksSource.getNext(mainTrend.getLastItem().xVal);
-		if (markOptions) setTimeout(() => {
-			let trendsMarks = chartView.chart.getPlugin(TrendsMarksPlugin.NAME) as TrendsMarksPlugin;
-			trendsMarks.createMark(markOptions);
-		}, 500);
+		// var markOptions = MarksSource.getNext(mainTrend.getLastItem().xVal);
+		// if (markOptions) setTimeout(() => {
+		// 	let trendsMarks = chartView.chart.getPlugin(TrendsMarksPlugin.NAME) as TrendsMarksPlugin;
+		// 	trendsMarks.createMark(markOptions);
+		// }, 500);
 	});
 
 

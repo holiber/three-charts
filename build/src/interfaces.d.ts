@@ -79,9 +79,9 @@ export interface IAnimationsOptions {
     trendChangeSpeed?: number;
     trendChangeEase?: TEase;
     scrollSpeed?: number;
-    scrollEase?: TEase;
+    scrollEase?: (progress: number) => number;
     autoScrollSpeed?: number;
-    autoScrollEase?: TEase;
+    autoScrollEase?: (progress: number) => number;
     zoomSpeed?: number;
-    zoomEase?: TEase;
+    zoomEase?: (progress: number) => number;
 }

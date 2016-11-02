@@ -1,7 +1,7 @@
 /**
  * Easing from tween.js lib https://github.com/tweenjs/tween.js
  **/
-export const Easing = {
+export const EASING = {
 
 	Linear: {
 
@@ -287,7 +287,7 @@ export const Easing = {
 
 		In: function (k: number) {
 
-			return 1 - Easing.Bounce.Out(1 - k);
+			return 1 - EASING.Bounce.Out(1 - k);
 
 		},
 
@@ -308,51 +308,13 @@ export const Easing = {
 		InOut: function (k: number) {
 
 			if (k < 0.5) {
-				return Easing.Bounce.In(k * 2) * 0.5;
+				return EASING.Bounce.In(k * 2) * 0.5;
 			}
 
-			return Easing.Bounce.Out(k * 2 - 1) * 0.5 + 0.5;
+			return EASING.Bounce.Out(k * 2 - 1) * 0.5 + 0.5;
 
 		}
 
 	}
 
 };
-
-
-export class Animator {
-
-	private animations: Animation[] = [];
-
-	constructor() {
-	}
-
-	animate(time: number, fn: (k: number) => any, easing?: (k: number) => any) {
-		let animation = new Animation(this, time, fn, easing);
-		this.animations.push(animation);
-		return animation;
-	}
-
-	update() {
-
-	}
-
-}
-
-export class Animation {
-
-	progress = 0;
-
-	constructor(
-		private animator: Animator,
-		public time: number,
-		public fn: (k: number) => any,
-		public easing: (k: number) => any = Easing.Quadratic.Out)
-	{
-
-	}
-
-	tick() {
-
-	}
-}

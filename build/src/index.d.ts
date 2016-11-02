@@ -10,4 +10,6 @@ export * from './Utils';
 export * from './Widget';
 export * from './Plugin';
 export * from './Color';
+export * from './AnimationManager';
+export * from './Easing';
 export * from './widgets';

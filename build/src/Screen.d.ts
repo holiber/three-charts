@@ -13,15 +13,11 @@ export interface IScreenTransformOptions {
  */
 export declare class Screen {
     options: IScreenTransformOptions;
-    private chartState;
+    private chart;
     private scrollXAnimation;
     private scrollYAnimation;
     private zoomXAnimation;
     private zoomYAnimation;
-    private currentScrollX;
-    private currentScrollY;
-    private currentZoomX;
-    private currentZoomY;
     private ee;
     constructor(chartState: Chart);
     getCameraSettings(): {
@@ -37,6 +33,9 @@ export declare class Screen {
     onScrollFrame(cb: (options: IScreenTransformOptions) => void): Function;
     onTransformationFrame(cb: (options: IScreenTransformOptions) => void): Function;
     cameraIsMoving(): boolean;
+    /**
+     * setup zoom and scroll
+     */
     private transform(options, silent?);
     private bindEvents();
     private onDestroyHandler();
