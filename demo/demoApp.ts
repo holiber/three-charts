@@ -1,12 +1,12 @@
 
-import { ChartView, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE } from '../src';
+// import { ChartView, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE } from '../src';
 
-// import { ChartView, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE } from 'three-charts';
-// import { TREND_MARK_SIDE, ITrendMarkOptions, TrendsMarksPlugin } from '../plugins/build/TrendsMarksPlugin';
-// import { TrendsBeaconWidget } from '../plugins/build/TrendsBeaconWidget';
-// import { TrendsLoadingWidget } from '../plugins/build/TrendsLoadingWidget';
-// import { TrendsIndicatorWidget } from '../plugins/build/TrendsIndicatorWidget';
-// ChartView.preinstalledWidgets.push(TrendsLoadingWidget, TrendsBeaconWidget, TrendsIndicatorWidget);
+import { ChartView, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE } from 'three-charts';
+import { TREND_MARK_SIDE, ITrendMarkOptions, TrendsMarksPlugin } from '../plugins/src/TrendsMarksPlugin';
+import { TrendsBeaconWidget } from '../plugins/build/TrendsBeaconWidget';
+import { TrendsLoadingWidget } from '../plugins/build/TrendsLoadingWidget';
+import { TrendsIndicatorWidget } from '../plugins/build/TrendsIndicatorWidget';
+ChartView.preinstalledWidgets.push(TrendsLoadingWidget, TrendsBeaconWidget, TrendsIndicatorWidget);
 
 var chartView: ChartView;
 
@@ -61,32 +61,34 @@ class DataSourse {
 		return item;
 	}
 }
-//
-// class MarksSource {
-// 	static getNext(val: number): ITrendMarkOptions {
-// 		if (Math.random() > 0.2) return null;
-// 		return this.generate(val);
-// 	}
-//
-// 	static generate(val: number): ITrendMarkOptions {
-// 		let descriptionColor = 'rgb(40,136,75)';
-// 		let orientation =  Utils.getRandomItem([TREND_MARK_SIDE.TOP, TREND_MARK_SIDE.BOTTOM]);
-// 		if (orientation == TREND_MARK_SIDE.BOTTOM) {
-// 			descriptionColor = 'rgb(219,73,49)';
-// 		}
-//
-// 		return {
-// 			trendName: 'main',
-// 			value: val,
-// 			title: Utils.getRandomItem(['Alex Malcon', 'Serg Morrs', 'Harry Potter']),
-// 			description: Utils.getRandomItem(['$10 -> 20$', '$15 -> 30$', '40$ -> 80$']),
-// 			icon: Utils.getRandomItem(['AM', 'SM', 'HP']),
-// 			iconColor: Utils.getRandomItem(['rgb(69,67,130)', 'rgb(124,39,122)']),
-// 			orientation: orientation,
-// 			descriptionColor: descriptionColor
-// 		}
-// 	}
-// }
+
+class MarksSource {
+	static getNext(val: number): ITrendMarkOptions {
+		if (Math.random() > 0.2) return null;
+		return this.generate(val);
+	}
+
+	static generate(val: number): ITrendMarkOptions {
+		let descriptionColor = 'rgb(40,136,75)';
+		let orientation =  Utils.getRandomItem([TREND_MARK_SIDE.TOP, TREND_MARK_SIDE.BOTTOM]);
+		if (orientation == TREND_MARK_SIDE.BOTTOM) {
+			descriptionColor = 'rgb(219,73,49)';
+		}
+
+		return {
+			trendName: 'main',
+			xVal: val,
+			title: Utils.getRandomItem(['Alex Malcon', 'Serg Morrs', 'Harry Potter']),
+			color: Utils.getRandomItem(['#ad57b2', '#0099d9']),
+			orientation: orientation,
+			userData: {
+				description: Utils.getRandomItem(['$10 -> 20$', '$15 -> 30$', '40$ -> 80$']),
+				icon: Utils.getRandomItem(['AM', 'SM', 'HP']),
+				descriptionColor: descriptionColor
+			}
+		}
+	}
+}
 
 window.onload = function () {
 
@@ -157,7 +159,7 @@ window.onload = function () {
 	document.querySelector('.chart')
 		,
 	[
-		//new TrendsMarksPlugin({items: [MarksSource.generate(now + 3000), MarksSource.generate(now + 3000), MarksSource.generate(now + 4000)]})
+		new TrendsMarksPlugin({items: [MarksSource.generate(now + 3000), MarksSource.generate(now + 3000), MarksSource.generate(now + 4000)]})
 	]
 	);
 
@@ -176,55 +178,14 @@ window.onload = function () {
 			deadlineMark.setOptions({value: closeValue + 10000});
 			closeMark.setOptions({value: closeValue + 20000})
 		}
-		// var markOptions = MarksSource.getNext(mainTrend.getLastItem().xVal);
-		// if (markOptions) setTimeout(() => {
-		// 	let trendsMarks = chartView.chart.getPlugin(TrendsMarksPlugin.NAME) as TrendsMarksPlugin;
-		// 	trendsMarks.createMark(markOptions);
-		// }, 500);
+		var markOptions = MarksSource.getNext(mainTrend.getLastItem().xVal);
+		if (markOptions) setTimeout(() => {
+			let trendsMarks = chartView.chart.getPlugin(TrendsMarksPlugin.NAME) as TrendsMarksPlugin;
+			trendsMarks.createMark(markOptions);
+		}, 500);
 	});
 
 
-	// var previewChart1 = ChartView.createPreviewChart({
-	// 	$el: document.querySelectorAll('.preview-state')[0],
-	// 	yAxis: {
-	// 		range: {type: AXIS_RANGE_TYPE.FIXED, from: 20, to: 150}
-	// 	},
-	// 	xAxis: {
-	// 		range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 100}
-	// 	},
-	// 	trends: {
-	// 		'main': {dataset: dsMain.state, hasBeacon: true}
-	// 	}
-	// });
-	//
-	// var previewChart2 = ChartView.createPreviewChart({
-	// 	$el: document.querySelectorAll('.preview-state')[1],
-	// 	yAxis: {
-	// 		range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 200}
-	// 	},
-	// 	xAxis: {
-	// 		range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 200}
-	// 	},
-	// 	trends: {
-	// 		'main': {dataset: dsMain.state, hasBeacon: true}
-	// 	},
-	//
-	// });
-	//
-	// var previewChart3 = ChartView.createPreviewChart({
-	// 	$el: document.querySelectorAll('.preview-state')[2],
-	// 	yAxis: {
-	// 		range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 100}
-	// 	},
-	// 	xAxis: {
-	// 		range: {type: AXIS_RANGE_TYPE.FIXED, from: 0, to: 80}
-	// 	},
-	// 	trends: {
-	// 		'main': {dataset: dsMain.state, hasBeacon: true},
-	// 		'red': {dataset: dsRed.state, lineColor: 0xFF2222},
-	// 	}
-	// });
-	//
 
 	var i = 0;
 
@@ -244,27 +205,7 @@ window.onload = function () {
 		// [i % 2 ? 10 : 20]
 
 		 chartView.getTrend('main').appendData([val]);
-		// state.getTrend('main').prependData([dsMain.getPrev(), dsMain.getPrev()].reverse());
-		// state.getTrend('main').appendData([val, dsMain.getNext(), dsMain.getNext(), dsMain.getNext(), dsMain.getNext()]);
-		// state.getTrend('main').prependData([val, dsMain.getNext(), dsMain.getNext(), dsMain.getNext()]);
-		// state.getTrend('red').appendData([val + 10 + Math.random() * 20]);
-		// state.getTrend('blue').appendData([val + 20 + Math.random() * 20]);
 
-
-
-		// previewChart1.getTrend('main').appendData([val]);
-		// previewChart2.getTrend('main').appendData([val + 10 + Math.random() * 20]);
-		// previewChart3.getTrend('red').appendData([val + 20 + Math.random() * 20]);
-		
-		// previewChart1.appendData(dataToAppend1);
-		//
-		// var chartData2 = previewChart2.state.state.trends[0].state;
-		// var lastItem2 = chartData2[chartData.length - 1];
-		// var dataToAppend2 = [
-		// 	{xVal: lastItem2.xVal + 1, yVal: lastItem2.yVal + Math.random() * 14 - 7 },
-		// ];
-		// previewChart2.appendData(dataToAppend2);
-		// previewChart3.appendData(dataToAppend2);
 	}, 1000);
 };
 

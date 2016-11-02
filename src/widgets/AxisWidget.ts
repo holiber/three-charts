@@ -16,7 +16,7 @@ import MeshBasicMaterial = THREE.MeshBasicMaterial;
 import OrthographicCamera = THREE.OrthographicCamera;
 import {IScreenTransformOptions} from "../Screen";
 import {AXIS_TYPE, AXIS_DATA_TYPE, IAxisOptions} from "../interfaces";
-import { ChartColor } from "../Color";
+import { Color } from "../Color";
 
 /**
  * widget for drawing axis
@@ -105,8 +105,8 @@ export class AxisWidget extends ChartWidget {
 			axisOptions = this.chart.state.yAxis;
 		}
 
-		var texture = Utils.createPixelPerfectTexture(canvasWidth, canvasHeight, (ctx) => {
-			let color = new ChartColor(axisOptions.color);
+		var texture = Utils.createNearestTexture(canvasWidth, canvasHeight, (ctx) => {
+			let color = new Color(axisOptions.color);
 			ctx.beginPath();
 			ctx.font = this.chart.state.font.m;
 			ctx.fillStyle = color.rgbaStr;

@@ -16,8 +16,8 @@ export class Promise <R> implements Thenable <R> {
 	/**
 	 * onFulfilled is called when/if "promise" resolves. onRejected is called when/if "promise" rejects.
 	 * Both are optional, if either/both are omitted the next onFulfilled/onRejected in the chain is called.
-	 * Both callbacks have a single parameter , the fulfillment value or rejection reason.
-	 * "then" returns a new promise equivalent to the value you return from onFulfilled/onRejected after being passed through Promise.resolve.
+	 * Both callbacks have a single parameter , the fulfillment xVal or rejection reason.
+	 * "then" returns a new promise equivalent to the xVal you return from onFulfilled/onRejected after being passed through Promise.resolve.
 	 * If an error is thrown in the callback, the returned promise rejects with that error.
 	 *
 	 * @param onFulfilled called when/if "promise" resolves
@@ -48,7 +48,7 @@ export class Promise <R> implements Thenable <R> {
 	/**
 	 * Make a promise that fulfills when every item in the array fulfills, and rejects if (and when) any item rejects.
 	 * the array passed to all can be a mixture of promise-like objects and other objects.
-	 * The fulfillment value is an array (in order) of fulfillment values. The rejection value is the first rejection value.
+	 * The fulfillment xVal is an array (in order) of fulfillment values. The rejection xVal is the first rejection xVal.
 	 */
 	static all<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(values: [T1 | Thenable<T1>, T2 | Thenable<T2>, T3 | Thenable<T3>, T4 | Thenable <T4>, T5 | Thenable<T5>, T6 | Thenable<T6>, T7 | Thenable<T7>, T8 | Thenable<T8>, T9 | Thenable<T9>, T10 | Thenable<T10>]): Promise<[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]>;
 	static all<T1, T2, T3, T4, T5, T6, T7, T8, T9>(values: [T1 | Thenable<T1>, T2 | Thenable<T2>, T3 | Thenable<T3>, T4 | Thenable <T4>, T5 | Thenable<T5>, T6 | Thenable<T6>, T7 | Thenable<T7>, T8 | Thenable<T8>, T9 | Thenable<T9>]): Promise<[T1, T2, T3, T4, T5, T6, T7, T8, T9]>;

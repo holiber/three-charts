@@ -1,5 +1,5 @@
-export declare type TChartColor = string | number;
-export declare class ChartColor {
+export declare type TColor = string | number;
+export declare class Color {
     /**!
      * @preserve $.parseColor
      * Copyright 2011 THEtheChad Elliott
@@ -18,6 +18,8 @@ export declare class ChartColor {
     value: number;
     hexStr: string;
     rgbaStr: string;
-    constructor(color: TChartColor);
-    set(color: TChartColor): void;
+    constructor(color: TColor);
+    static numberToHexStr(value: number): string;
+    set(color: TColor): void;
+    getTransparent(opacity: number): Color;
 }

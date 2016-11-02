@@ -1,6 +1,7 @@
 import { IIteralable } from './interfaces';
 import { EASING } from  './Easing';
 
+// TODO: transfer AnimationManager to own repo
 export class AnimationManager {
 
 	isAnimationsEnabled = true;
@@ -40,9 +41,7 @@ export class AnimationManager {
 
 		// cleanup completed animations
 		let i = animations.length;
-		while (i--) {
-			if (animations[i].isFinished) animations.splice(i, 1);
-		}
+		while (i--) if (animations[i].isFinished) animations.splice(i, 1);
 
 		this.lastTickTime = Date.now();
 	}

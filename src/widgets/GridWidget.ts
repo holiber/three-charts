@@ -4,13 +4,12 @@ import LineBasicMaterial = THREE.LineBasicMaterial;
 import Material = THREE.Material;
 import Vector3 = THREE.Vector3;
 import Line = THREE.Line;
-import {ChartWidget} from "../Widget";
+import { ChartWidget } from "../Widget";
 import LineSegments = THREE.LineSegments;
-import {Utils} from "../Utils";
-import {IScreenTransformOptions} from "../Screen";
-import {IAxisOptions} from "../interfaces";
-import Color = THREE.Color;
-import {ChartColor} from "../Color";
+import { Utils } from "../Utils";
+import { IScreenTransformOptions } from "../Screen";
+import { IAxisOptions } from "../interfaces";
+import { Color } from "../Color";
 
 export interface IGridParamsForAxis {
 	start: number,
@@ -60,7 +59,7 @@ export class GridWidget extends ChartWidget{
 	}
 
 	private initGrid() {
-		let color = new ChartColor(this.chart.state.xAxis.grid.color);
+		let color = new Color(this.chart.state.xAxis.grid.color);
 		let geometry = new THREE.Geometry();
 		let material = new THREE.LineBasicMaterial({linewidth: 1, color: color.value, opacity: color.a, transparent: true});
 		let xLinesCount = this.gridSizeH;

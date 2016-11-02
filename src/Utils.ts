@@ -125,9 +125,15 @@ export class Utils {
 	 * 	// create texture with rect
 	 *  var texture = Utils.createTexture(20, 20, (ctx) => {ctx.fillRect(0, 0, 10, 10)});
 	 */
+	static createNearestTexture(width: number, height: number, fn: (ctx: CanvasRenderingContext2D) => void ): Texture{
+		var texture = this.createTexture(width, height, fn);
+		texture.minFilter = THREE.NearestFilter;
+		return texture;
+	}
+
 	static createPixelPerfectTexture(width: number, height: number, fn: (ctx: CanvasRenderingContext2D) => void ): Texture{
 		var texture = this.createTexture(width, height, fn);
-		// texture.magFilter = THREE.NearestFilter;
+		texture.magFilter = THREE.NearestFilter;
 		texture.minFilter = THREE.NearestFilter;
 		return texture;
 	}

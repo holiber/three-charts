@@ -1,7 +1,8 @@
 
 import Vector3 = THREE.Vector3;
 import { ChartPlugin, ChartWidget, TrendSegment, TREND_TYPE, Utils, Chart } from 'three-charts';
-import { TrendsMarksWidget } from './TrendsMarksWidget';
+import { TrendsMarksWidget, DEFAULT_RENDERER } from './TrendsMarksWidget';
+import { TColor } from "../../../src/Color";
 
 export enum TREND_MARK_SIDE {TOP, BOTTOM}
 export enum EVENTS {CHANGE}
@@ -9,44 +10,44 @@ export type TTrendsMarksPluginOptions = {items: ITrendMarkOptions[]};
 
 export interface ITrendMarkOptions {
 	trendName: string,
-	value: number,
+	xVal: number,
+	title?: string,
 	name?: string,
-	title?: string
-	description?: string,
-	descriptionColor?: string,
-	icon?: string,
-	iconColor?: string,
+	color?: TColor,
 	orientation?: TREND_MARK_SIDE,
 	width?: number,
 	height?: number,
 	/**
-	 * min distance between trend and mark
-	 */
-	offset?: number,
-	/**
 	 * space between marks
 	 */
-	margin?: number
+	margin?: number,
+	/**
+	 * custom render function
+	 */
+	onRender?: (
+		marks: TrendMark[],
+		ctx: CanvasRenderingContext2D,
+		chart: Chart
+	) => any,
+	userData?: any
 }
 
 const AXIS_MARK_DEFAULT_OPTIONS: ITrendMarkOptions = {
 	trendName: '',
 	title: '',
-	description: '',
-	descriptionColor: 'rgb(40,136,75)',
-	value: 0,
-	iconColor: 'rgb(255, 102, 217)',
+	color: 'rgb(40,136,75)',
+	xVal: 0,
 	orientation: TREND_MARK_SIDE.TOP,
-	width: 65,
-	height: 80,
-	offset: 40,
-	margin: 20
+	width: 85,
+	height: 200,
+	margin: 10,
+	onRender: DEFAULT_RENDERER
 };
 
 
 export class TrendsMarksPlugin extends ChartPlugin {
 	static NAME = 'TrendsMarks';
-	static providedWidgets = [TrendsMarksWidget] as typeof ChartWidget[];
+	static providedWidgets: typeof ChartWidget[] = [TrendsMarksWidget];
 
 	private items: {[name: string]: TrendMark} = {};
 	private rects: {[name: string]: number[]} = {};
@@ -140,7 +141,7 @@ export class TrendsMarksPlugin extends ChartPlugin {
 
 		let chart = this.chart;
 		let options = mark.options;
-		let {width, height, offset, name} = options;
+		let {width, height, name} = options;
 		let left = chart.getPointOnXAxis(mark.xVal) - width / 2;
 		let top = chart.getPointOnYAxis(mark.yVal);
 		let isTopSideMark = options.orientation == TREND_MARK_SIDE.TOP;
@@ -148,9 +149,7 @@ export class TrendsMarksPlugin extends ChartPlugin {
 		let row = 0;
 
 		if (isTopSideMark) {
-			top += offset + height;
-		} else {
-			top -= offset;
+			top += height;
 		}
 
 		let markRect = [left, top, width, height];
@@ -190,11 +189,11 @@ export class TrendsMarksPlugin extends ChartPlugin {
 			var xVals: number[] = [];
 			for (let markName in marks) {
 				let mark = marks[markName];
-				xVals.push(mark.options.value);
+				xVals.push(mark.options.xVal);
 				marksArr.push(mark);
 				mark._setSegment(null);
 			}
-			marksArr.sort((a, b) => a.options.value - b.options.value);
+			marksArr.sort((a, b) => a.options.xVal - b.options.xVal);
 			let trend = chart.getTrend(trendName);
 			let points = trend.segmentsManager.getSegmentsForXValues(xVals.sort((a, b) => a - b));
 			for (let markInd = 0; markInd < marksArr.length; markInd++) {
@@ -237,7 +236,7 @@ export class TrendMark {
 		this.segment = segment;
 		if (!segment) return;
 
-		let trend = this.chart.getTrend(this.options.trendName)
+		let trend = this.chart.getTrend(this.options.trendName);
 
 		if (trend.getOptions().type == TREND_TYPE.LINE) {
 			this.xVal = segment.endXVal;

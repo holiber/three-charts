@@ -751,7 +751,7 @@
                     antialias: true,
                     alpha: true
                 });
-                var backgroundColor = new Color_1.ChartColor(chart.state.backgroundColor);
+                var backgroundColor = new Color_1.Color(chart.state.backgroundColor);
                 renderer.setSize(w, h);
                 renderer.setPixelRatio(ChartView.devicePixelRatio);
                 renderer.setClearColor(backgroundColor.value, backgroundColor.a);
@@ -1179,8 +1179,14 @@
                 texture.needsUpdate = true;
                 return texture;
             };
+            Utils.createNearestTexture = function(width, height, fn) {
+                var texture = this.createTexture(width, height, fn);
+                texture.minFilter = THREE.NearestFilter;
+                return texture;
+            };
             Utils.createPixelPerfectTexture = function(width, height, fn) {
                 var texture = this.createTexture(width, height, fn);
+                texture.magFilter = THREE.NearestFilter;
                 texture.minFilter = THREE.NearestFilter;
                 return texture;
             };
@@ -3076,9 +3082,7 @@
                     }
                 }
                 var i = animations.length;
-                while (i--) {
-                    if (animations[i].isFinished) animations.splice(i, 1);
-                }
+                while (i--) if (animations[i].isFinished) animations.splice(i, 1);
                 this.lastTickTime = Date.now();
             };
             AnimationManager.prototype.hasActiveAnimations = function() {
@@ -3476,8 +3480,8 @@
                     canvasHeight = visibleHeight * 3;
                     axisOptions = this.chart.state.yAxis;
                 }
-                var texture = Utils_1.Utils.createPixelPerfectTexture(canvasWidth, canvasHeight, function(ctx) {
-                    var color = new Color_1.ChartColor(axisOptions.color);
+                var texture = Utils_1.Utils.createNearestTexture(canvasWidth, canvasHeight, function(ctx) {
+                    var color = new Color_1.Color(axisOptions.color);
                     ctx.beginPath();
                     ctx.font = _this.chart.state.font.m;
                     ctx.fillStyle = color.rgbaStr;
@@ -3624,7 +3628,7 @@
                 }));
             };
             GridWidget.prototype.initGrid = function() {
-                var color = new Color_1.ChartColor(this.chart.state.xAxis.grid.color);
+                var color = new Color_1.Color(this.chart.state.xAxis.grid.color);
                 var geometry = new THREE.Geometry();
                 var material = new THREE.LineBasicMaterial({
                     linewidth: 1,
@@ -3742,8 +3746,8 @@
         exports.GridWidget = GridWidget;
     }, function(module, exports) {
         "use strict";
-        var ChartColor = function() {
-            function ChartColor(color) {
+        var Color = function() {
+            function Color(color) {
                 this.set(color);
             }
             /**!
@@ -3751,30 +3755,34 @@
 	     * Copyright 2011 THEtheChad Elliott
 	     * Released under the MIT and GPL licenses.
 	     */
-            ChartColor.parseColor = function(color) {
+            Color.parseColor = function(color) {
                 var cache, p = parseInt, color = color.replace(/\s\s*/g, "");
                 if (cache = /^#([\da-fA-F]{2})([\da-fA-F]{2})([\da-fA-F]{2})/.exec(color)) cache = [ p(cache[1], 16), p(cache[2], 16), p(cache[3], 16) ]; else if (cache = /^#([\da-fA-F])([\da-fA-F])([\da-fA-F])/.exec(color)) cache = [ p(cache[1], 16) * 17, p(cache[2], 16) * 17, p(cache[3], 16) * 17 ]; else if (cache = /^rgba\(#([\da-fA-F]{2})([\da-fA-F]{2})([\da-fA-F]{2}),(([0-9]*[.])?[0-9]+)/.exec(color)) cache = [ p(cache[1], 16), p(cache[2], 16), p(cache[3], 16), +cache[4] ]; else if (cache = /^rgba\(([\d]+),([\d]+),([\d]+),([\d]+|[\d]*.[\d]+)\)/.exec(color)) cache = [ +cache[1], +cache[2], +cache[3], +cache[4] ]; else if (cache = /^rgb\(([\d]+),([\d]+),([\d]+)\)/.exec(color)) cache = [ +cache[1], +cache[2], +cache[3] ]; else throw Error(color + " is not supported by parseColor");
                 isNaN(cache[3]) && (cache[3] = 1);
                 return cache;
             };
-            ChartColor.prototype.set = function(color) {
-                if (typeof color == "number") {
-                    color = color.toString(16);
-                    color = "#" + "0".repeat(6 - color.length) + color;
-                }
+            Color.numberToHexStr = function(value) {
+                var result = value.toString(16);
+                return "#" + "0".repeat(6 - result.length) + result;
+            };
+            Color.prototype.set = function(color) {
+                if (typeof color == "number") color = Color.numberToHexStr(color);
                 var colorStr = color;
-                var rgba = ChartColor.parseColor(colorStr);
+                var rgba = Color.parseColor(colorStr);
                 this.r = rgba[0];
                 this.g = rgba[1];
                 this.b = rgba[2];
                 this.a = rgba[3];
                 this.value = (rgba[0] << 8 * 2) + (rgba[1] << 8) + rgba[2];
-                this.hexStr = "#" + this.value.toString(16);
+                this.hexStr = Color.numberToHexStr(this.value);
                 this.rgbaStr = "rgba(" + this.r + ", " + this.g + ", " + this.b + ", " + this.a + ")";
             };
-            return ChartColor;
+            Color.prototype.getTransparent = function(opacity) {
+                return new Color("rgba(" + this.hexStr + ", " + opacity + ")");
+            };
+            return Color;
         }();
-        exports.ChartColor = ChartColor;
+        exports.Color = Color;
     }, function(module, exports, __webpack_require__) {
         "use strict";
         var __extends = this && this.__extends || function(d, b) {
@@ -3836,7 +3844,7 @@
                     var ind = i * 4;
                     geometry.faces.push(new THREE.Face3(ind, ind + 1, ind + 2), new THREE.Face3(ind + 3, ind, ind + 2));
                 }
-                var color = new Color_1.ChartColor(this.trend.getOptions().backgroundColor);
+                var color = new Color_1.Color(this.trend.getOptions().backgroundColor);
                 this.gradient = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
                     color: color.value,
                     transparent: true,
@@ -4483,13 +4491,13 @@
                 var lineGeometry = new Geometry();
                 lineGeometry.vertices.push(new Vector3(0, 0, 0), new Vector3(0, 0, 0));
                 return new Line(lineGeometry, new LineBasicMaterial({
-                    color: new Color_1.ChartColor(lineColor).value,
+                    color: new Color_1.Color(lineColor).value,
                     linewidth: lineWidth
                 }));
             };
             AxisMarkWidget.prototype.createIndicator = function() {
                 var _a = this, width = _a.indicatorWidth, height = _a.indicatorHeight;
-                var texture = Utils_1.Utils.createPixelPerfectTexture(width, height, function(ctx) {
+                var texture = Utils_1.Utils.createNearestTexture(width, height, function(ctx) {
                     ctx.beginPath();
                     ctx.font = "10px Arial";
                 });

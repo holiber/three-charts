@@ -8,13 +8,12 @@ import Vector3 = THREE.Vector3;
 import {Utils} from "../Utils";
 import Line = THREE.Line;
 import Mesh = THREE.Mesh;
-import Color = THREE.Color;
 import Texture = THREE.Texture;
 import MeshBasicMaterial = THREE.MeshBasicMaterial;
 import {AxisMark, AxisMarks} from "../AxisMarks";
 import {AXIS_TYPE} from "../interfaces";
 import {IScreenTransformOptions} from "../Screen";
-import { ChartColor } from '../Color';
+import { Color } from '../Color';
 
 
 /**
@@ -129,13 +128,13 @@ class AxisMarkWidget {
 		lineGeometry.vertices.push(new Vector3(0,0,0), new Vector3(0,0,0));
 		return new Line(
 			lineGeometry,
-			new LineBasicMaterial( { color: new ChartColor(lineColor).value, linewidth: lineWidth})
+			new LineBasicMaterial( { color: new Color(lineColor).value, linewidth: lineWidth})
 		);
 	}
 
 	protected createIndicator(): Mesh {
 		var {indicatorWidth: width, indicatorHeight: height} = this;
-		var texture = Utils.createPixelPerfectTexture(width, height, (ctx) => {
+		var texture = Utils.createNearestTexture(width, height, (ctx) => {
 			ctx.beginPath();
 			ctx.font = "10px Arial";
 		});

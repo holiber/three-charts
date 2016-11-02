@@ -3,7 +3,7 @@ import {Utils} from "./Utils";
 import {TrendSegmentsManager} from "./TrendSegmentsManager";
 import {EventEmitter} from './EventEmmiter';
 import {Promise} from './deps/deps';
-import { TChartColor } from './Color';
+import { TColor } from './Color';
 
 export interface IPrependPromiseExecutor {
 	(requestedDataLength: number, resolve: (data: TTrendRawData) => void, reject: () => void): void;
@@ -27,8 +27,8 @@ export interface ITrendOptions {
 	name?: string;
 	type?: TREND_TYPE;
 	lineWidth?: number;
-	lineColor?: TChartColor;
-	backgroundColor?: TChartColor;
+	lineColor?: TColor;
+	backgroundColor?: TColor;
 	hasIndicator?: boolean;
 	hasBackground?: boolean;
 	hasBeacon?: boolean;

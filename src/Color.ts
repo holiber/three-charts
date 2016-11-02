@@ -1,7 +1,7 @@
-export declare type TChartColor = string | number;
+export declare type TColor = string | number;
 
 
-export class ChartColor {
+export class Color {
 
 	/**!
 	 * @preserve $.parseColor
@@ -49,7 +49,7 @@ export class ChartColor {
 		// Performs RGBA conversion by default
 		isNaN(cache[3]) && (cache[3] = 1);
 		return cache;
-		// Adds or removes 4th value based on rgba support
+		// Adds or removes 4th xVal based on rgba support
 		// Support is flipped twice to prevent erros if
 		// it's not defined
 		//return cache.slice(0,3 + !!$.support.rgba);
@@ -63,23 +63,30 @@ export class ChartColor {
 	hexStr: string;
 	rgbaStr: string;
 
-	constructor (color: TChartColor) {
+	constructor (color: TColor) {
 		this.set(color);
 	}
 
-	set(color: TChartColor) {
-		if (typeof color == 'number') {
-			color = (color as number).toString(16);
-			color = '#' + '0'.repeat(6 - color.length) + color;
-		}
+	static numberToHexStr(value: number): string {
+		let result = value.toString(16);
+		return '#' + '0'.repeat(6 - result.length) + result;
+	}
+
+
+	set(color: TColor) {
+		if (typeof color == 'number') color = Color.numberToHexStr(color);
 		let colorStr = color as string;
-		let rgba = ChartColor.parseColor(colorStr);
+		let rgba = Color.parseColor(colorStr);
 		this.r = rgba[0];
 		this.g = rgba[1];
 		this.b = rgba[2];
 		this.a = rgba[3];
 		this.value = (rgba[0] << (8 * 2)) + (rgba[1] << 8) + rgba[2];
-		this.hexStr = '#' + this.value.toString(16);
+		this.hexStr = Color.numberToHexStr(this.value);
 		this.rgbaStr = `rgba(${this.r}, ${this.g}, ${this.b}, ${this.a})`;
+	}
+
+	getTransparent(opacity: number) {
+		return new Color(`rgba(${this.hexStr}, ${opacity})`);
 	}
 }

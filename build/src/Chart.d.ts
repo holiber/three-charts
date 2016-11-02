@@ -6,7 +6,7 @@ import { AxisMarks } from "./AxisMarks";
 import { IAxisOptions, IAnimationsOptions } from "./interfaces";
 import { Promise } from './deps/deps';
 import { ChartPlugin } from './Plugin';
-import { TChartColor } from "./Color";
+import { TColor } from "./Color";
 import { AnimationManager } from "./AnimationManager";
 /**
  * readonly computed state state
@@ -62,7 +62,7 @@ export interface IChartState {
     };
     autoScroll?: boolean;
     showStats?: boolean;
-    backgroundColor?: TChartColor;
+    backgroundColor?: TColor;
     computedData?: IChartStateComputedData;
     pluginsState?: {
         [pluginName: string]: any;
@@ -143,47 +143,47 @@ export declare class Chart {
      */
     getPointOnYAxis(yVal: number): number;
     /**
-     * returns value by offset in pixels from xAxis.range.zeroVal
+     * returns xVal by offset in pixels from xAxis.range.zeroVal
      */
     getValueOnXAxis(x: number): number;
     /**
-     *  convert value to pixels by using settings from xAxis.range
+     *  convert xVal to pixels by using settings from xAxis.range
      */
     valueToPxByXAxis(xVal: number): number;
     /**
-     *  convert value to pixels by using settings from yAxis.range
+     *  convert xVal to pixels by using settings from yAxis.range
      */
     valueToPxByYAxis(yVal: number): number;
     /**
-     *  convert pixels to value by using settings from xAxis.range
+     *  convert pixels to xVal by using settings from xAxis.range
      */
     pxToValueByXAxis(xVal: number): number;
     /**
-     *  convert pixels to value by using settings from yAxis.range
+     *  convert pixels to xVal by using settings from yAxis.range
      */
     pxToValueByYAxis(yVal: number): number;
     /**
-     *  returns x value by screen x coordinate
+     *  returns x xVal by screen x coordinate
      */
     getValueByScreenX(x: number): number;
     /**
-     *  returns y value by screen y coordinate
+     *  returns y xVal by screen y coordinate
      */
     getValueByScreenY(y: number): number;
     /**
-     *  returns screen x value by screen y coordinate
+     *  returns screen x xVal by screen y coordinate
      */
     getScreenXByValue(xVal: number): number;
     /**
-     *  returns screen y value by screen y coordinate
+     *  returns screen y xVal by screen y coordinate
      */
     getScreenYByValue(yVal: number): number;
     /**
-     * returns screen x coordinate by offset in pixels from xAxis.range.zeroVal value
+     * returns screen x coordinate by offset in pixels from xAxis.range.zeroVal xVal
      */
     getScreenXByPoint(xVal: number): number;
     /**
-     * returns offset in pixels from xAxis.range.zeroVal value by screen x coordinate
+     * returns offset in pixels from xAxis.range.zeroVal xVal by screen x coordinate
      */
     getPointByScreenX(screenX: number): number;
     getPointOnChart(xVal: number, yVal: number): Vector3;

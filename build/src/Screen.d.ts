@@ -56,47 +56,47 @@ export declare class Screen {
      */
     getPointOnChart(xVal: number, yVal: number): Vector3;
     /**
-     * returns value by offset in pixels from xAxis.range.zeroVal
+     * returns xVal by offset in pixels from xAxis.range.zeroVal
      */
     getValueOnXAxis(x: number): number;
     /**
-     *  convert value to pixels by using settings from xAxis.range
+     *  convert xVal to pixels by using settings from xAxis.range
      */
     valueToPxByXAxis(xVal: number): number;
     /**
-     *  convert value to pixels by using settings from yAxis.range
+     *  convert xVal to pixels by using settings from yAxis.range
      */
     valueToPxByYAxis(yVal: number): number;
     /**
-     *  convert pixels to value by using settings from xAxis.range
+     *  convert pixels to xVal by using settings from xAxis.range
      */
     pxToValueByXAxis(xVal: number): number;
     /**
-     *  convert pixels to value by using settings from yAxis.range
+     *  convert pixels to xVal by using settings from yAxis.range
      */
     pxToValueByYAxis(yVal: number): number;
     /**
-     *  returns scrollX value by screen scrollX coordinate
+     *  returns scrollX xVal by screen scrollX coordinate
      */
     getValueByScreenX(x: number): number;
     /**
-     *  returns scrollY value by screen scrollY coordinate
+     *  returns scrollY xVal by screen scrollY coordinate
      */
     getValueByScreenY(y: number): number;
     /**
-     *  returns screen scrollX value by screen scrollY coordinate
+     *  returns screen scrollX xVal by screen scrollY coordinate
      */
     getScreenXByValue(xVal: number): number;
     /**
-     * returns screen scrollX coordinate by offset in pixels from xAxis.range.zeroVal value
+     * returns screen scrollX coordinate by offset in pixels from xAxis.range.zeroVal xVal
      */
     getScreenXByPoint(xVal: number): number;
     /**
-     * returns offset in pixels from xAxis.range.zeroVal value by screen scrollX coordinate
+     * returns offset in pixels from xAxis.range.zeroVal xVal by screen scrollX coordinate
      */
     getPointByScreenX(screenX: number): number;
     /**
-     * returns offset in pixels from yAxis.range.zeroVal value by screen scrollY coordinate
+     * returns offset in pixels from yAxis.range.zeroVal xVal by screen scrollY coordinate
      */
     getPointByScreenY(screenY: number): number;
     getTop(): number;

@@ -18,7 +18,7 @@ import { TrendsLineWidget } from "./widgets/TrendsLineWidget";
 import { TrendsCandlesWidget } from './widgets/TrendsCandleWidget';
 import { ResizeSensor, ResizeSensorType } from './deps';
 import OrthographicCamera = THREE.OrthographicCamera;
-import {ChartColor} from "./Color";
+import {Color} from "./Color";
 import { AxisMarksWidget } from "./widgets/AxisMarksWidget";
 
 
@@ -78,7 +78,7 @@ export class ChartBlankView {
 			antialias: true,
 			alpha: true
 		});
-		let backgroundColor = new ChartColor(chart.state.backgroundColor);
+		let backgroundColor = new Color(chart.state.backgroundColor);
 		renderer.setSize(w, h);
 		renderer.setPixelRatio(ChartView.devicePixelRatio);
 		renderer.setClearColor(backgroundColor.value, backgroundColor.a);

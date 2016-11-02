@@ -236,7 +236,7 @@ export class Screen {
 	}
 	
 	/**
-	 * returns value by offset in pixels from xAxis.range.zeroVal
+	 * returns xVal by offset in pixels from xAxis.range.zeroVal
 	 */
 	getValueOnXAxis(x: number): number {
 		return this.chart.state.xAxis.range.zeroVal + this.pxToValueByXAxis(x);
@@ -244,7 +244,7 @@ export class Screen {
 
 
 	/**
-	 *  convert value to pixels by using settings from xAxis.range
+	 *  convert xVal to pixels by using settings from xAxis.range
 	 */
 	valueToPxByXAxis(xVal: number) {
 		return xVal * this.chart.state.xAxis.range.scaleFactor * this.options.zoomX;
@@ -252,14 +252,14 @@ export class Screen {
 
 
 	/**
-	 *  convert value to pixels by using settings from yAxis.range
+	 *  convert xVal to pixels by using settings from yAxis.range
 	 */
 	valueToPxByYAxis(yVal: number) {
 		return yVal * this.chart.state.yAxis.range.scaleFactor * this.options.zoomY;
 	}
 	
 	/**
-	 *  convert pixels to value by using settings from xAxis.range
+	 *  convert pixels to xVal by using settings from xAxis.range
 	 */
 	pxToValueByXAxis(xVal: number) {
 		return xVal / this.chart.state.xAxis.range.scaleFactor / this.options.zoomX;
@@ -267,7 +267,7 @@ export class Screen {
 
 
 	/**
-	 *  convert pixels to value by using settings from yAxis.range
+	 *  convert pixels to xVal by using settings from yAxis.range
 	 */
 	pxToValueByYAxis(yVal: number) {
 		return yVal / this.chart.state.yAxis.range.scaleFactor / this.options.zoomY;
@@ -275,7 +275,7 @@ export class Screen {
 
 
 	/**
-	 *  returns scrollX value by screen scrollX coordinate
+	 *  returns scrollX xVal by screen scrollX coordinate
 	 */
 	getValueByScreenX(x: number): number {
 		return this.chart.state.xAxis.range.zeroVal + this.options.scrollXVal + this.pxToValueByXAxis(x);
@@ -283,7 +283,7 @@ export class Screen {
 	
 	
 	/**
-	 *  returns scrollY value by screen scrollY coordinate
+	 *  returns scrollY xVal by screen scrollY coordinate
 	 */
 	getValueByScreenY(y: number): number {
 		return this.chart.state.yAxis.range.zeroVal + this.options.scrollYVal + this.pxToValueByYAxis(y);
@@ -291,7 +291,7 @@ export class Screen {
 	
 	//
 	/**
-	 *  returns screen scrollX value by screen scrollY coordinate
+	 *  returns screen scrollX xVal by screen scrollY coordinate
 	 */
 	getScreenXByValue(xVal: number): number {
 		var {scroll, zeroVal} = this.chart.state.xAxis.range;
@@ -299,7 +299,7 @@ export class Screen {
 	}
 
 	// /**
-	//  *  returns screen scrollY value by screen scrollY coordinate
+	//  *  returns screen scrollY xVal by screen scrollY coordinate
 	//  */
 	// getScreenYByValue(scrollYVal: number): number {
 	// 	var {scroll, zeroVal} = this.state.yAxis.range;
@@ -308,7 +308,7 @@ export class Screen {
 	//
 	//
 	/**
-	 * returns screen scrollX coordinate by offset in pixels from xAxis.range.zeroVal value
+	 * returns screen scrollX coordinate by offset in pixels from xAxis.range.zeroVal xVal
 	 */
 	getScreenXByPoint(xVal: number): number {
 		return this.getScreenXByValue(this.getValueOnXAxis(xVal));
@@ -316,14 +316,14 @@ export class Screen {
 
 
 	/**
-	 * returns offset in pixels from xAxis.range.zeroVal value by screen scrollX coordinate
+	 * returns offset in pixels from xAxis.range.zeroVal xVal by screen scrollX coordinate
 	 */
 	getPointByScreenX(screenX: number): number {
 		return this.getPointOnXAxis(this.getValueByScreenX(screenX));
 	}
 
 	/**
-	 * returns offset in pixels from yAxis.range.zeroVal value by screen scrollY coordinate
+	 * returns offset in pixels from yAxis.range.zeroVal xVal by screen scrollY coordinate
 	 */
 	getPointByScreenY(screenY: number): number {
 		return this.getPointOnYAxis(this.getValueByScreenY(screenY));

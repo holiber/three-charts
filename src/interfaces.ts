@@ -2,14 +2,14 @@
 
 /**
  * defines how axis range will be calculated
- * FIXED - directly use range.from and range.to value
+ * FIXED - directly use range.from and range.to xVal
  * AUTO - automatically sets range.from and range.to by visible part of opposite axis
  * RELATIVE_END - same as AUTO, but trend end always present in range
  * ALL - automatically sets range.from and range.to by all values of opposite axis
  *
  */
 import {IAxisMarkOptions} from "./AxisMarks";
-import {TChartColor} from "./Color";
+import {TColor} from "./Color";
 export enum AXIS_RANGE_TYPE {
 	FIXED,
 	RELATIVE_END,
@@ -71,13 +71,13 @@ export interface IAxisOptions {
 	autoScroll?: boolean;
 	marks?: IAxisMarkOptions[];
 	grid?: IGridOptions;
-	color?: TChartColor;
+	color?: TColor;
 }
 
 export interface IGridOptions {
 	enabled: boolean;
 	minSizePx?: number;
-	color?: TChartColor;
+	color?: TColor;
 }
 
 export interface IAnimationsOptions {

@@ -15,7 +15,7 @@ import {TrendsWidget, TrendWidget} from "./TrendsWidget";
 import PlaneGeometry = THREE.PlaneGeometry;
 import { IScreenTransformOptions } from '../Screen';
 import { TrendSegmentsManager, ITrendSegmentState } from '../TrendSegmentsManager';
-import { ChartColor } from '../Color';
+import { Color } from '../Color';
 
 export class TrendsGradientWidget extends TrendsWidget<TrendGradient> {
 	static widgetName = "TrendsGradient";
@@ -91,7 +91,7 @@ export class TrendGradient extends TrendWidget {
 			);
 		}
 
-		let color = new ChartColor(this.trend.getOptions().backgroundColor);
+		let color = new Color(this.trend.getOptions().backgroundColor);
 		this.gradient = new THREE.Mesh(
 			geometry,
 			new THREE.MeshBasicMaterial( {color: color.value, transparent: true, opacity: color.a} )
