@@ -18,7 +18,7 @@ const EVENTS = {
 export class TrendSegmentsManager {
 	segmentsById: {[id: string]: TrendSegment} = {};
 	segments: TrendSegment[] = [];
-	chartState: Chart;
+	chart: Chart;
 	animatedSegmentsIds: number[] = [];
 	maxSegmentLength: number;
 	segmentsLength = 0;
@@ -36,24 +36,38 @@ export class TrendSegmentsManager {
 	private trend: Trend;
 	private ee: EventEmitter;
 
-	constructor (chartState: Chart, trend: Trend) {
-		this.chartState = chartState;
+	// TODO: make subscriptions array
+	private unbindList: Function[] = [];
+
+	constructor (chart: Chart, trend: Trend) {
+		this.chart = chart;
 		this.ee = new EventEmitter();
 		this.trend = trend;
-		this.maxSegmentLength = trend.getOptions().maxSegmentLength;
-		this.tryToRebuildSegments();
 		this.bindEvents();
 	}
 
 	protected bindEvents() {
 		this.trend.onChange((changedOptions, newData) => this.onTrendChangeHandler(changedOptions, newData));
-		this.chartState.onZoom(() => this.onZoomHandler());
-		this.chartState.onScroll(() => this.recalculateDisplayedRange());
-		this.chartState.onDestroy(() => this.onDestroyHandler());
+		this.unbindList = [
+			this.chart.onInitialStateApplied(() => this.onInitialStateAppliedHandler()),
+			this.chart.onZoom(() => this.onZoomHandler()),
+			this.chart.onScroll(() => this.recalculateDisplayedRange()),
+			this.chart.onDestroy(() => this.onDestroyHandler())
+		]
+	}
+
+	private unbindEvents() {
+		this.unbindList.forEach(unbind => unbind())
+	}
+
+	private onInitialStateAppliedHandler() {
+		this.maxSegmentLength = this.trend.getOptions().maxSegmentLength;
+		this.tryToRebuildSegments();
 	}
 
 	private onDestroyHandler() {
 		this.ee.removeAllListeners();
+		this.unbindEvents();
 		this.appendAnimation && this.appendAnimation.kill();
 		this.prependAnimation && this.prependAnimation.kill();
 	}
@@ -111,15 +125,15 @@ export class TrendSegmentsManager {
 		let segmentLength = this.maxSegmentLength;
 
 		// call toFixed(2) to prevent floating segment error compare
-		let currentSegmentLengthInPx = Number(this.chartState.valueToPxByXAxis(segmentLength).toFixed(2));
-		let currentMaxSegmentLengthInPx = Number(this.chartState.valueToPxByXAxis(this.maxSegmentLength).toFixed(2));
+		let currentSegmentLengthInPx = Number(this.chart.valueToPxByXAxis(segmentLength).toFixed(2));
+		let currentMaxSegmentLengthInPx = Number(this.chart.valueToPxByXAxis(this.maxSegmentLength).toFixed(2));
 
 		if (currentSegmentLengthInPx < minSegmentLengthInPx) {
 			needToRebuild = true;
-			segmentLength = Math.ceil(this.chartState.pxToValueByXAxis(maxSegmentLengthInPx));
+			segmentLength = Math.ceil(this.chart.pxToValueByXAxis(maxSegmentLengthInPx));
 		} else if (currentMaxSegmentLengthInPx > maxSegmentLengthInPx) {
 			needToRebuild = true;
-			segmentLength = this.chartState.pxToValueByXAxis(minSegmentLengthInPx);
+			segmentLength = this.chart.pxToValueByXAxis(minSegmentLengthInPx);
 		}
 
 		if (!needToRebuild) return false;
@@ -146,7 +160,7 @@ export class TrendSegmentsManager {
 	}
 	
 	private recalculateDisplayedRange(segmentsAreRebuilded = false) {
-		var {from, to} = this.chartState.state.xAxis.range;
+		var {from, to} = this.chart.state.xAxis.range;
 		var {firstDisplayedSegment, lastDisplayedSegment} = this;
 		var displayedRange = to - from;
 
@@ -309,7 +323,7 @@ export class TrendSegmentsManager {
 
 		}
 
-		var animationsOptions = this.chartState.state.animations;
+		var animationsOptions = this.chart.state.animations;
 		var time = animationsOptions.enabled ? animationsOptions.trendChangeSpeed : 0;
 
 		// var t2 = performance.now();
@@ -377,7 +391,7 @@ export class TrendSegmentsManager {
 
 		}
 
-		var animationsOptions = this.chartState.state.animations;
+		var animationsOptions = this.chart.state.animations;
 		var time = animationsOptions.enabled ? animationsOptions.trendChangeSpeed : 0;
 
 		if (this.animatedSegmentsForPrepend.length > MAX_ANIMATED_SEGMENTS) time = 0;
@@ -395,7 +409,7 @@ export class TrendSegmentsManager {
 			animatedSegmentsIds.length = 0;
 			return;
 		}
-		var animationsOptions = this.chartState.state.animations;
+		var animationsOptions = this.chart.state.animations;
 		var ease = animationsOptions.trendChangeEase;
 		var objectToAnimate = {animationValue: 0};
 		animation = TweenLite.to(objectToAnimate, time, {animationValue: 1, ease});
@@ -468,6 +482,7 @@ export class TrendSegment implements ITrendSegmentState {
 		this.trendSegments = trendPoints;
 		this.id = id;
 		this.maxLength = trendPoints.maxSegmentLength;
+		this.currentAnimationState = this.createAnimationState();
 	}
 
 	createAnimationState(): ITrendSegmentState {
@@ -581,7 +596,7 @@ export class TrendSegment implements ITrendSegmentState {
 
 	getFramePoint(): Vector3 {
 		var frameVal = this.getFrameVal();
-		return this.trendSegments.chartState.screen.getPointOnChart(frameVal.x, frameVal.y);
+		return this.trendSegments.chart.screen.getPointOnChart(frameVal.x, frameVal.y);
 	}
 
 }

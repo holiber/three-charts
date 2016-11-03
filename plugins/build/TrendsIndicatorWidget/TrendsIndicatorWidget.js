@@ -76,7 +76,7 @@
                 texture.needsUpdate = true;
             };
             TrendIndicator.prototype.initObject = function() {
-                var color = new three_charts_1.ChartColor(this.trend.getOptions().lineColor);
+                var color = new three_charts_1.Color(this.trend.getOptions().lineColor);
                 var texture = three_charts_1.Utils.createPixelPerfectTexture(CANVAS_WIDTH, CANVAS_HEIGHT, function(ctx) {
                     ctx.beginPath();
                     ctx.font = "15px Arial";

@@ -1,8 +1,8 @@
 
 import Vector3 = THREE.Vector3;
-import { ChartPlugin, ChartWidget, TrendSegment, TREND_TYPE, Utils, Chart } from 'three-charts';
+import { ChartPlugin, ChartWidget, TrendSegment, TREND_TYPE, Utils, Chart, TColor, TEase } from 'three-charts';
 import { TrendsMarksWidget, DEFAULT_RENDERER } from './TrendsMarksWidget';
-import { TColor } from "../../../src/Color";
+import { EASING } from "../../../src/Easing";
 
 export enum TREND_MARK_SIDE {TOP, BOTTOM}
 export enum EVENTS {CHANGE}
@@ -29,18 +29,22 @@ export interface ITrendMarkOptions {
 		ctx: CanvasRenderingContext2D,
 		chart: Chart
 	) => any,
+	ease?: TEase,
+	easeSpeed?: number,
 	userData?: any
 }
 
 const AXIS_MARK_DEFAULT_OPTIONS: ITrendMarkOptions = {
 	trendName: '',
 	title: '',
-	color: 'rgb(40,136,75)',
+	color: 'rgba(#0099d9, 0.5)',
 	xVal: 0,
 	orientation: TREND_MARK_SIDE.TOP,
-	width: 85,
-	height: 200,
+	width: 105,
+	height: 100,
 	margin: 10,
+	ease: EASING.Elastic.Out,
+	easeSpeed: 1000,
 	onRender: DEFAULT_RENDERER
 };
 
@@ -56,10 +60,11 @@ export class TrendsMarksPlugin extends ChartPlugin {
 		super(trendsMarksPluginOptions);
 	}
 
-	protected onInitialStateApplied() {
-		this.bindEvents();
+	protected onInitialStateAppliedHandler() {
 		this.onMarksChangeHandler();
+		this.bindEvents();
 	}
+
 
 	protected onStateChanged() {
 		this.onMarksChangeHandler();
@@ -89,12 +94,10 @@ export class TrendsMarksPlugin extends ChartPlugin {
 	}
 
 	protected bindEvents() {
-		this.chart.trendsManager.onSegmentsRebuilded(() => this.updateMarksSegments());
+		this.chart.trendsManager.onSegmentsRebuilded(() => {
+			this.updateMarksSegments()
+		});
 		this.chart.screen.onZoomFrame(() => this.calclulateMarksPositions());
-	}
-
-	protected onInitialStateAppliedHandler() {
-		this.onMarksChangeHandler();
 	}
 
 	private onMarksChangeHandler() {
@@ -125,7 +128,6 @@ export class TrendsMarksPlugin extends ChartPlugin {
 			delete this.items[markName];
 		}
 		this.updateMarksSegments();
-		this.ee.emit(EVENTS[EVENTS.CHANGE]);
 	}
 
 
@@ -201,6 +203,7 @@ export class TrendsMarksPlugin extends ChartPlugin {
 			}
 		}
 		this.calclulateMarksPositions();
+		this.ee.emit(EVENTS[EVENTS.CHANGE]);
 	}
 
 	private getTrendMarks(trendName: string): TrendMark[] {

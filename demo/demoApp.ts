@@ -3,9 +3,9 @@
 
 import { ChartView, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE } from 'three-charts';
 import { TREND_MARK_SIDE, ITrendMarkOptions, TrendsMarksPlugin } from '../plugins/src/TrendsMarksPlugin';
-import { TrendsBeaconWidget } from '../plugins/build/TrendsBeaconWidget';
-import { TrendsLoadingWidget } from '../plugins/build/TrendsLoadingWidget';
-import { TrendsIndicatorWidget } from '../plugins/build/TrendsIndicatorWidget';
+import { TrendsBeaconWidget } from '../plugins/src/TrendsBeaconWidget';
+import { TrendsLoadingWidget } from '../plugins/src/TrendsLoadingWidget';
+import { TrendsIndicatorWidget } from '../plugins/src/TrendsIndicatorWidget';
 ChartView.preinstalledWidgets.push(TrendsLoadingWidget, TrendsBeaconWidget, TrendsIndicatorWidget);
 
 var chartView: ChartView;
@@ -78,8 +78,8 @@ class MarksSource {
 		return {
 			trendName: 'main',
 			xVal: val,
-			title: Utils.getRandomItem(['Alex Malcon', 'Serg Morrs', 'Harry Potter']),
-			color: Utils.getRandomItem(['#ad57b2', '#0099d9']),
+			title: Utils.getRandomItem(['Alex Malcon 224', 'Serg Morrs 453', 'Harry Potter 554']),
+			color: Utils.getRandomItem(['rgba(#ad57b2, 0.5)', 'rgba(#0099d9, 0.5)']),
 			orientation: orientation,
 			userData: {
 				description: Utils.getRandomItem(['$10 -> 20$', '$15 -> 30$', '40$ -> 80$']),
@@ -120,9 +120,10 @@ window.onload = function () {
 				type: AXIS_RANGE_TYPE.FIXED,
 				from: Date.now(),
 				to: Date.now() + 20000,
-				padding: {end: 200, start: 0},
+				padding: {end: 0, start: 0},
 				maxLength: 5000000,
-				minLength: 5000
+				minLength: 5000,
+				margin: {end: 200},
 			},
 			marks: [
 				{value: dsMain.endTime + 30000, name: 'deadline', title: 'DEADLINE', lineColor: '#ff6600', type: 'timeleft', showValue: true},

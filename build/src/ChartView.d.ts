@@ -50,8 +50,6 @@ export declare class ChartBlankView {
     private unbindEvents();
     private setupCamera();
     private onScreenTransformHandler(options);
-    private autoscroll();
-    private onScrollStop();
     private onMouseDown(ev);
     private onMouseUp(ev);
     private onMouseMove(ev);

@@ -13,8 +13,12 @@ import {
 	TrendSegment,
 	TrendSegmentsManager,
 	ITrendOptions,
+	Animation,
 	TREND_TYPE
 } from 'three-charts';
+
+const ANIMATION_TIME = 1000;
+const ANIMATION_DELAY = 300;
 
 /**
  * widget adds blinking beacon on trends end
@@ -32,7 +36,7 @@ export class TrendBeacon extends TrendWidget {
 	private mesh: Mesh;
 	private animated: boolean;
 	private segment: TrendSegment;
-	private animation: TweenLite;
+	private animation: Animation<any>;
 
 	static widgetIsEnabled(trendOptions: ITrendOptions) {
 		return trendOptions.enabled && trendOptions.hasBeacon && trendOptions.type == TREND_TYPE.LINE;
@@ -42,9 +46,6 @@ export class TrendBeacon extends TrendWidget {
 		super(chart, trendName);
 
 		this.initObject();
-		if (chart.state.animations.enabled) {
-			this.animate();
-		}
 		this.updatePosition();
 	}
 
@@ -54,13 +55,12 @@ export class TrendBeacon extends TrendWidget {
 
 	onTrendChange() {
 		this.updatePosition();
+		this.animate();
 	}
 
 	protected bindEvents() {
 		super.bindEvents();
 		this.bindEvent(this.chart.onScroll(() => this.updatePosition()));
-		this.bindEvent(this.chart.onChange(changedProps => this.onStateChange(changedProps)));
-		this.bindEvent(this.chart.onDestroy(() => this.stopAnimation()));
 	}
 
 	private initObject() {
@@ -71,8 +71,7 @@ export class TrendBeacon extends TrendWidget {
 			new MeshBasicMaterial({map: TrendBeacon.createTexture(), transparent: true})
 		);
 
-
-		light.scale.set(0.2, 0.2, 1);
+		this.setInitialState();
 
 		// add dot
 		light.add(new Mesh(
@@ -84,37 +83,40 @@ export class TrendBeacon extends TrendWidget {
 	}
 
 	private animate() {
-		this.animated = true;
-		var object = this.mesh;
-		var animationObject = {
-			scale: object.scale.x,
-			opacity: object.material.opacity
+		if (!this.chart.state.animations.enabled) return;
+
+		if (this.animation) this.animation.stop();
+		this.setInitialState();
+
+		let mesh = this.mesh;
+		let animationObject = {
+			scale: mesh.scale.x,
+			opacity: mesh.material.opacity
 		};
 
-
-		this.mesh.scale.set(0.1, 0.1, 1);
-
-		setTimeout(() => {
-			var animation = this.animation = TweenLite.to(
-				animationObject,
-				1,
-				{scale: 1, opacity: 0}
-			);
-			animation.eventCallback('onUpdate', () => {
-				object.scale.set(animationObject.scale, animationObject.scale, 1);
-				object.material.opacity = animationObject.opacity
-			}).eventCallback('onComplete', () => {
-				this.animation && animation.restart();
+		this.animation = this.chart.animationManager
+			.animate(ANIMATION_TIME)
+			.withDelay(ANIMATION_DELAY)
+			.from(animationObject)
+			.to({scale: 1, opacity: 0})
+			.onTick(animationObject => {
+				mesh.scale.set(animationObject.scale, animationObject.scale, 1);
+				mesh.material.opacity = animationObject.opacity
+			}).then(() => {
+				this.setInitialState();
 			});
-		}, 500);
-
 	}
 
-	private stopAnimation() {
-		this.animated = false;
-		this.animation && this.animation.kill();
-		this.animation = null;
+	private setInitialState() {
+		this.mesh.scale.set(0.2, 0.2, 1);
+		this.mesh.material.opacity = 1;
 	}
+
+	onDestroy() {
+		super.onDestroy();
+		if (this.animation) this.animation.stop();
+	}
+
 
 	private static createTexture() {
 		var h = 32, w = 32;
@@ -136,16 +138,6 @@ export class TrendBeacon extends TrendWidget {
 		this.updatePosition();
 	}
 
-	private onStateChange(changedProps: IChartState) {
-		if (!changedProps.animations) return;
-		if (changedProps.animations.enabled == void 0 || changedProps.animations.enabled == this.animated) return;
-		if (changedProps.animations.enabled) {
-			this.animate();
-		} else {
-			this.stopAnimation();
-		}
-	}
-
 	private updatePosition() {
 		var chart = this.chart;
 		var xVal: number, yVal: number;
@@ -161,7 +153,9 @@ export class TrendBeacon extends TrendWidget {
 		var screenWidth = chart.state.width;
 		var x = endPointVector.x;
 		var screenX = chart.screen.getScreenXByPoint(endPointVector.x);
-		if (screenX < 0) x = chart.screen.getPointByScreenX(0);
+		if (screenX < 0) {
+			x = chart.screen.getPointByScreenX(0);
+		}
 		if (screenX > screenWidth) x = chart.screen.getPointByScreenX(screenWidth);
 		this.mesh.position.set(x, endPointVector.y, 0.1);
 	}

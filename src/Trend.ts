@@ -60,17 +60,18 @@ export class Trend {
 		if (options.dataset) this.calculatedOptions.data = Trend.prepareData(options.dataset);
 		this.calculatedOptions.dataset = [];
 		this.ee = new EventEmitter();
+		this.segmentsManager = new TrendSegmentsManager(this.chart, this);
 		this.bindEvents();
 	}
 
-	private onInitialStateApplied() {
-		this.segmentsManager = new TrendSegmentsManager(this.chart, this);
-	}
+	// private onInitialStateApplied() {
+	// 	this.segmentsManager = new TrendSegmentsManager(this.chart, this);
+	// }
 
 	private bindEvents() {
 		var chartState = this.chart;
-		chartState.onInitialStateApplied(() => this.onInitialStateApplied());
-		chartState.onScrollStop(() => this.checkForPrependRequest());
+		// chart.onInitialStateApplied(() => this.onInitialStateApplied());
+		chartState.onDragStateChanged(() => this.checkForPrependRequest());
 		chartState.onZoom(() => this.checkForPrependRequest());
 		chartState.onTrendChange((trendName, changedOptions, newData) => this.ee.emit(EVENTS.CHANGE, changedOptions, newData));
 		chartState.onDestroy(() => this.ee.removeAllListeners());

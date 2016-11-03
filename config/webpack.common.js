@@ -2,6 +2,8 @@ var webpack = require('webpack');
 var helpers = require('./helpers');
 var WebpackOnBuildPlugin = require('on-build-webpack');
 var CopyWebpackPlugin = require('copy-webpack-plugin');
+var WatchIgnorePlugin = webpack.WatchIgnorePlugin;
+var ncp = require('ncp').ncp;
 
 
 module.exports = {
@@ -43,11 +45,20 @@ module.exports = {
             { from: 'src/polyfills', to: 'src/polyfills' }
         ]),
 
-        
-        // make index file and add commonJS support
+		new WatchIgnorePlugin([
+			helpers.root('node_modules'),
+		]),
+
+
         new WebpackOnBuildPlugin(function(stats) {
+
+			// make index file and add commonJS support
             var fs = require('fs');
             fs.writeFileSync(helpers.root('build') + '/index.js', 'module.exports = require("./ThreeChart")');
+
+			// copy built project to node_modules to allow
+			// plugins to use just built version of three-charts
+			ncp(helpers.root('build'), helpers.root('node_modules/three-charts/build'));
 
         })
 

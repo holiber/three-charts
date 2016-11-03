@@ -218,7 +218,6 @@ export class ChartBlankView {
 		}
 
 		this.unsubscribers = [
-			this.chart.onTrendsChange(() => this.autoscroll()),
 			this.chart.screen.onTransformationFrame((options) => this.onScreenTransformHandler(options)),
 			this.chart.onResize((options) => this.onChartResize())
 		];
@@ -256,39 +255,12 @@ export class ChartBlankView {
 	private onScreenTransformHandler(options: IScreenTransformOptions) {
 		if (options.scrollX != void 0) {
 			let scrollX = this.cameraInitialPosition.x + options.scrollX;
-			// scrollX =  Math.round(scrollX); // prevent to set camera beetween pixels
 			this.camera.position.setX(scrollX);
 		}
 		if (options.scrollY != void 0) {
 			let scrollY = this.cameraInitialPosition.y + options.scrollY;
-			// scrollY = Math.round(scrollY); // prevent to set camera beetween pixels
 			this.camera.position.setY(scrollY);
 		}
-	}
-
-	private autoscroll() {
-		var state = this.chart;
-		if (!state.state.autoScroll) return;
-		var oldTrendsMaxX = state.state.prevState.computedData.trends.maxXVal;
-		var trendsMaxXDelta = state.state.computedData.trends.maxXVal - oldTrendsMaxX;
-		if (trendsMaxXDelta > 0) {
-			var maxVisibleX = this.chart.screen.getScreenRightVal();
-			var paddingRightX = this.chart.getPaddingRight();
-			var currentScroll = state.state.xAxis.range.scroll;
-			if (oldTrendsMaxX < paddingRightX || oldTrendsMaxX > maxVisibleX) {
-				return;
-			}
-			var scrollDelta = trendsMaxXDelta;
-			this.setState({xAxis: {range: {scroll: currentScroll + scrollDelta}}});
-		}
-	}
-
-	private onScrollStop() {
-		// var tendsXMax = this.state.state.computedData.trends.maxX;
-		// var paddingRightX = this.state.getPaddingRight();
-		// if (tendsXMax < paddingRightX) {
-		// 	this.state.scrollToEnd();
-		// }
 	}
 
 	private onMouseDown(ev: MouseEvent) {
@@ -336,11 +308,7 @@ export class ChartBlankView {
 		const MIN_ZOOM_VALUE = 0.7;
 		zoomValue = Math.min(zoomValue, MAX_ZOOM_VALUE);
 		zoomValue = Math.max(zoomValue, MIN_ZOOM_VALUE);
-		let autoScrollIsEnabled = this.chart.state.autoScroll;
-		if (autoScrollIsEnabled) this.chart.setState({autoScroll: false});
-		this.chart.zoom(zoomValue, zoomOrigin).then(() => {
-			if (autoScrollIsEnabled) this.setState({autoScroll: true});
-		});
+		this.chart.zoom(zoomValue, zoomOrigin);
 	}
 
 

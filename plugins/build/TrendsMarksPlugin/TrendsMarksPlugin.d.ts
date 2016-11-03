@@ -1,4 +1,5 @@
 import { ChartPlugin, ChartWidget, TrendSegment, Chart } from 'three-charts';
+import { TColor } from "../../../src/Color";
 export declare enum TREND_MARK_SIDE {
     TOP = 0,
     BOTTOM = 1,
@@ -11,24 +12,22 @@ export declare type TTrendsMarksPluginOptions = {
 };
 export interface ITrendMarkOptions {
     trendName: string;
-    value: number;
-    name?: string;
+    xVal: number;
     title?: string;
-    description?: string;
-    descriptionColor?: string;
-    icon?: string;
-    iconColor?: string;
+    name?: string;
+    color?: TColor;
     orientation?: TREND_MARK_SIDE;
     width?: number;
     height?: number;
     /**
-     * min distance between trend and mark
-     */
-    offset?: number;
-    /**
      * space between marks
      */
     margin?: number;
+    /**
+     * custom render function
+     */
+    onRender?: (marks: TrendMark[], ctx: CanvasRenderingContext2D, chart: Chart) => any;
+    userData?: any;
 }
 export declare class TrendsMarksPlugin extends ChartPlugin {
     static NAME: string;

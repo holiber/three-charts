@@ -22,7 +22,5 @@ export declare class TrendsManager {
     getMaxYVal(fromX?: number, toX?: number): number;
     getMinYVal(fromX?: number, toX?: number): number;
     onSegmentsRebuilded(cb: (trendName: string) => any): Function;
-    private bindEvents();
-    private onInitialStateAppliedHandler();
     private createTrend(state, trendName, initialState);
 }

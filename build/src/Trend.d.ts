@@ -50,7 +50,6 @@ export declare class Trend {
     private prependRequest;
     private ee;
     constructor(chartState: Chart, trendName: string, initialState: IChartState);
-    private onInitialStateApplied();
     private bindEvents();
     getCalculatedOptions(): ITrendOptions;
     appendData(rawData: TTrendRawData): void;

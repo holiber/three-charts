@@ -29,7 +29,7 @@ const CHART_STATE_EVENTS = {
 	ZOOM: 'zoom',
 	RESIZE: 'resize',
 	SCROLL: 'scroll',
-	SCROLL_STOP: 'scrollStop',
+	DRAG_STATE_CHAGED: 'scrollStop',
 	PLUGINS_STATE_CHANGED: 'pluginsStateChanged'
 };
 
@@ -73,6 +73,10 @@ export interface IChartState {
 	renderer?: 'WebGLRenderer' | 'CanvasRenderer';
 	font?: {s?: string, m?: string, l?:string}
 
+	/**
+	 * set to false for smooth animations
+	 */
+	enablePixelPerfectRender?: boolean,
 
 	/**
 	 * buffer size for displayed segments
@@ -82,6 +86,7 @@ export interface IChartState {
 	autoResize?: boolean;
 	controls?: {enabled: boolean};
 	autoScroll?: boolean;
+	inertialScroll?: boolean
 
 	//TODO: exclude stats in plugin
 	showStats?: boolean;
@@ -113,7 +118,6 @@ export class Chart {
 			},
 			dataType: AXIS_DATA_TYPE.NUMBER,
 			grid: {enabled: true, minSizePx:  100, color: `rgba(${LIGHT_BLUE}, 0.12)`},
-			autoScroll: true,
 			marks: [],
 			color: LIGHT_BLUE
 		},
@@ -139,7 +143,7 @@ export class Chart {
 			scrollSpeed: 1000,
 			scrollEase: EASING.Quadratic.Out,
 			zoomEase: EASING.Quadratic.Out,
-			autoScrollSpeed: 1000,
+			autoScrollSpeed: 1100,
 			autoScrollEase: EASING.Linear.None,
 		},
 		autoRender: {enabled: true, fps: 0},
@@ -182,7 +186,8 @@ export class Chart {
 		showStats: false,
 		pluginsState: {},
 		eventEmitterMaxListeners: 20,
-		maxVisibleSegments: 1280
+		maxVisibleSegments: 1280,
+		inertialScroll: true
 	};
 	plugins: {[pluginName: string]: ChartPlugin} = {};
 	trendsManager: TrendsManager;
@@ -218,7 +223,7 @@ export class Chart {
 		this.screen = new Screen(this);
 		this.xAxisMarks = new AxisMarks(this, AXIS_TYPE.X);
 		this.yAxisMarks = new AxisMarks(this, AXIS_TYPE.Y);
-		this.initListeners();
+		this.bindEvents();
 		
 		// message to other modules that Chart.state is ready for use
 		this.ee.emit(CHART_STATE_EVENTS.INITIAL_STATE_APPLIED, initialState);
@@ -226,6 +231,7 @@ export class Chart {
 		// message to other modules that Chart is ready for use
 		this.isReady = true;
 		this.ee.emit(CHART_STATE_EVENTS.READY, initialState);
+
 	}
 
 	/**
@@ -262,8 +268,8 @@ export class Chart {
 		return this.ee.subscribe(CHART_STATE_EVENTS.TRENDS_CHANGE, cb);
 	}
 
-	onScrollStop(cb: () => void) {
-		return this.ee.subscribe(CHART_STATE_EVENTS.SCROLL_STOP, cb);
+	onDragStateChanged(cb: (isDragMode: boolean, changedProps: IChartState) => void) {
+		return this.ee.subscribe(CHART_STATE_EVENTS.DRAG_STATE_CHAGED, cb);
 	}
 
 	onScroll(cb: (scrollOptions: {deltaX: number}) => void) {
@@ -439,17 +445,16 @@ export class Chart {
 		if (!this.isReady) return;
 
 		// emit special events based on changed state
-		let scrollStopEventNeeded = (
+		let dragEventNeeded = (
 			changedProps.cursor &&
-			changedProps.cursor.dragMode === false &&
-			prevState.cursor.dragMode === true
+			(changedProps.cursor.dragMode != prevState.cursor.dragMode)
 		);
-		scrollStopEventNeeded && this.ee.emit(CHART_STATE_EVENTS.SCROLL_STOP, changedProps);
+		dragEventNeeded && this.ee.emit(CHART_STATE_EVENTS.DRAG_STATE_CHAGED, changedProps.cursor.dragMode, changedProps);
 
 		let scrollChangeEventsNeeded = (
 			changedProps.xAxis &&
 			changedProps.xAxis.range &&
-			changedProps.xAxis.range.scroll !== void 0
+			changedProps.xAxis.range.scroll != void 0
 		);
 		scrollChangeEventsNeeded && this.ee.emit(CHART_STATE_EVENTS.SCROLL, changedProps);
 
@@ -492,10 +497,13 @@ export class Chart {
 	}
 
 
-	private initListeners() {
+	private bindEvents() {
 		this.ee.on(CHART_STATE_EVENTS.TRENDS_CHANGE, (changedTrends: ITrendsOptions, newData: ITrendData) => {
 			this.handleTrendsChange(changedTrends, newData)
 		});
+
+		this.onDragStateChanged(dragState => this.onDragStateChangedHandler(dragState));
+
 		this.ee.on('animationsChange', (animationOptions: IAnimationsOptions) => {
 			if (animationOptions.enabled !== this.animationManager.isAnimationsEnabled) {
 				this.animationManager.setAimationsEnabled(animationOptions.enabled);
@@ -507,6 +515,47 @@ export class Chart {
 		for (let trendName in changedTrends) {
 			this.ee.emit(CHART_STATE_EVENTS.TREND_CHANGE, trendName, changedTrends[trendName], newData);
 		}
+
+		// process autoscroll
+		let state = this.state;
+		if (!state.autoScroll || state.cursor.dragMode) return;
+		let oldTrendsMaxX = state.prevState.computedData.trends.maxXVal;
+		let trendsMaxXDelta = state.computedData.trends.maxXVal - oldTrendsMaxX;
+
+		if (trendsMaxXDelta > 0) {
+			let maxVisibleXVal = this.screen.getScreenRightVal();
+			let paddingRightVal = this.getValueByScreenX(
+				this.state.width -
+				state.xAxis.range.padding.end -
+				state.xAxis.range.margin.end
+			);
+			let marginRightVal = this.getValueByScreenX(
+				this.state.width -
+				state.xAxis.range.margin.end
+			);
+			var currentScroll = state.xAxis.range.scroll;
+			if (oldTrendsMaxX < marginRightVal || oldTrendsMaxX > maxVisibleXVal) {
+				return;
+			}
+
+			let scrollDelta = state.computedData.trends.maxXVal - paddingRightVal;
+
+			this.setState({xAxis: {range: {scroll: currentScroll + scrollDelta}}});
+		}
+	}
+
+	private onDragStateChangedHandler(isDragMode: boolean) {
+
+		// process inertial scroll
+		let state = this.state;
+		if (!state.inertialScroll || isDragMode) return;
+
+		// TODO:
+		// let currentScroll = state.xAxis.range.scroll;
+		// let currentX = state.cursor.x;
+		// let prevX = state.prevState.cursor.x;
+		// let scrollDelta = this.pxToValueByXAxis(prevX - currentX) * 10;
+		// this.setState({xAxis: {range: {scroll: currentScroll + scrollDelta}}})
 	}
 
 	private recalculateXAxis(actualData: IChartState, changedProps: IChartState): IAxisOptions {
@@ -680,11 +729,15 @@ export class Chart {
 		let state = this.state;
 		let endXVal = this.trendsManager.getEndXVal();
 		let range = state.xAxis.range;
-		var scroll = endXVal - this.pxToValueByXAxis(state.width) + this.pxToValueByXAxis(range.padding.end) - range.zeroVal;
+		let scroll = (
+			endXVal - this.pxToValueByXAxis(state.width) +
+			this.pxToValueByXAxis(range.padding.end + range.margin.end) -
+			range.zeroVal
+		);
 		this.setState({xAxis: {range: {scroll: scroll}}});
 		return new Promise<void>((resolve) => {
-			let animationTime = this.state.animations.enabled ? this.state.animations.scrollSpeed : 0;
-			setTimeout(resolve, animationTime * 1000);
+			let animationTime = state.animations.enabled ? state.animations.scrollSpeed : 0;
+			setTimeout(resolve, animationTime);
 		});
 	}
 
@@ -809,8 +862,9 @@ export class Chart {
 	}
 
 
-	getPaddingRight(): number {
-		return this.getValueByScreenX(this.state.width - this.state.xAxis.range.padding.end);
-	}
+	// getPaddingRight(): number {
+	// 	return this.getValueByScreenX(
+	// 		this.state.width - this.state.xAxis.range.padding.end);
+	// }
 
 }

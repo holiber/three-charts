@@ -28,6 +28,7 @@
 - extract candle charts to plugin
 - remove stats dependency
 - preinstall plugins and widgets
+- autoScroll examples with margin and padding
 - examples with line smoothing
 - examples how to create custom ChartView
 - examples with different colors on axis/background/grid

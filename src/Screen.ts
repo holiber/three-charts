@@ -13,19 +13,27 @@ export interface IScreenTransformOptions {
 	zoomY?: number
 }
 
+export enum TRANSFORMATION_EVENT {
+	STARTED,
+	FINISHED
+}
+
 const SCREEN_EVENTS = {
 	ZOOM_FRAME: 'zoomFrame',
 	SCROLL_FRAME: 'scrollFrame',
-	TRANSFORMATION_FRAME: 'transformationFrame'
+	TRANSFORMATION_FRAME: 'transformationFrame',
+	TRANSFORMATION_EVENT: 'transformationStateChanged',
 };
 
 /**
  * manage camera, and contains methods for transforming pixels to values
  */
 export class Screen {
-	// TODO: make own interface for Chart and Screen for calculating screen positions
+	// TODO: !!! rename point coordinates to world coordinates
+	// TODO: move all Chart metrics functions here
 
 	options: IScreenTransformOptions = {scrollXVal: 0, scrollX: 0, scrollYVal: 0, scrollY: 0, zoomX: 1, zoomY: 1};
+	transformationInProgress = false;
 	private chart: Chart;
 	private scrollXAnimation: Animation<number>;
 	private scrollYAnimation: Animation<number>;
@@ -67,16 +75,20 @@ export class Screen {
 		}
 	}
 
-	onZoomFrame(cb: (zoomX: number, zoomY: number) => void): Function {
+	onZoomFrame(cb: (zoomX: number, zoomY: number) => any): Function {
 		return this.ee.subscribe(SCREEN_EVENTS.ZOOM_FRAME, cb);
 	}
 
-	onScrollFrame(cb: (options: IScreenTransformOptions) => void): Function {
+	onScrollFrame(cb: (options: IScreenTransformOptions) => any): Function {
 		return this.ee.subscribe(SCREEN_EVENTS.SCROLL_FRAME, cb);
 	}
 
-	onTransformationFrame(cb: (options: IScreenTransformOptions) => void): Function {
+	onTransformationFrame(cb: (options: IScreenTransformOptions) => any): Function {
 		return this.ee.subscribe(SCREEN_EVENTS.TRANSFORMATION_FRAME, cb);
+	}
+
+	onTransformationEvent(cb: (event: TRANSFORMATION_EVENT) => any): Function {
+		return this.ee.subscribe(SCREEN_EVENTS.TRANSFORMATION_EVENT, cb);
 	}
 
 	cameraIsMoving(): boolean {
@@ -109,6 +121,30 @@ export class Screen {
 
 		if (silent) return;
 
+		let hasActiveAnimations = (
+			(this.scrollXAnimation && !this.scrollXAnimation.isStopped) ||
+			(this.scrollYAnimation && !this.scrollYAnimation.isStopped) ||
+			(this.zoomXAnimation && !this.zoomXAnimation.isStopped) ||
+			(this.zoomYAnimation && !this.zoomYAnimation.isStopped)
+		);
+		let transformationStarted = hasActiveAnimations && !this.transformationInProgress;
+		let transformationFinished = !hasActiveAnimations && this.transformationInProgress;
+
+		if (transformationStarted) {
+			this.transformationInProgress = true;
+			this.ee.emit(SCREEN_EVENTS.TRANSFORMATION_EVENT, TRANSFORMATION_EVENT.STARTED);
+		}
+
+		if (transformationFinished) {
+			this.transformationInProgress = false;
+		}
+
+		if (!this.transformationInProgress) {
+			// prevent to set camera between pixels
+			this.options.scrollX = options.scrollX = Math.round(this.options.scrollX);
+			this.options.scrollY = options.scrollY = Math.round(this.options.scrollY);
+		}
+
 		this.ee.emit(SCREEN_EVENTS.TRANSFORMATION_FRAME, options);
 
 		let scrollEventNeeded = options.scrollXVal != void 0 || options.scrollYVal != void 0;
@@ -116,6 +152,10 @@ export class Screen {
 
 		let zoomEventNeeded = options.zoomX != void 0 || options.zoomY != void 0;
 		if (zoomEventNeeded) this.ee.emit(SCREEN_EVENTS.ZOOM_FRAME, options);
+
+		if (transformationFinished) {
+			this.ee.emit(SCREEN_EVENTS.TRANSFORMATION_EVENT, TRANSFORMATION_EVENT.FINISHED);
+		}
 	}
 
 
@@ -150,6 +190,7 @@ export class Screen {
 		let ease = isAutoscroll ? animations.autoScrollEase : animations.zoomEase;
 		let range = chart.state.xAxis.range;
 		let targetX = range.scroll * range.scaleFactor * range.zoom;
+		if (isDragMode) time = 0;
 
 		if (this.scrollXAnimation) this.scrollXAnimation.stop();
 
@@ -208,7 +249,6 @@ export class Screen {
 				this.transform({zoomY: value});
 			});
 	}
-
 
 	/**
 	 *  returns offset in pixels from xAxis.range.zeroVal to scrollXVal
@@ -282,34 +322,22 @@ export class Screen {
 	}
 	
 	
-	/**
-	 *  returns scrollY xVal by screen scrollY coordinate
-	 */
+
 	getValueByScreenY(y: number): number {
 		return this.chart.state.yAxis.range.zeroVal + this.options.scrollYVal + this.pxToValueByYAxis(y);
 	}
 	
-	//
-	/**
-	 *  returns screen scrollX xVal by screen scrollY coordinate
-	 */
+
 	getScreenXByValue(xVal: number): number {
 		var {scroll, zeroVal} = this.chart.state.xAxis.range;
 		return this.valueToPxByXAxis(xVal - zeroVal - scroll)
 	}
 
-	// /**
-	//  *  returns screen scrollY xVal by screen scrollY coordinate
-	//  */
-	// getScreenYByValue(scrollYVal: number): number {
-	// 	var {scroll, zeroVal} = this.state.yAxis.range;
-	// 	return this.valueToPxByYAxis(scrollYVal - zeroVal - scroll)
-	// }
-	//
-	//
-	/**
-	 * returns screen scrollX coordinate by offset in pixels from xAxis.range.zeroVal xVal
-	 */
+	getScreenYByValue(yVal: number): number {
+		var {scroll, zeroVal} = this.chart.state.yAxis.range;
+		return this.valueToPxByYAxis(yVal - zeroVal - scroll)
+	}
+
 	getScreenXByPoint(xVal: number): number {
 		return this.getScreenXByValue(this.getValueOnXAxis(xVal));
 	}

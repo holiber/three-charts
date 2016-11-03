@@ -10,7 +10,7 @@ export declare class TrendSegmentsManager {
         [id: string]: TrendSegment;
     };
     segments: TrendSegment[];
-    chartState: Chart;
+    chart: Chart;
     animatedSegmentsIds: number[];
     maxSegmentLength: number;
     segmentsLength: number;
@@ -27,8 +27,11 @@ export declare class TrendSegmentsManager {
     private endSegmentId;
     private trend;
     private ee;
-    constructor(chartState: Chart, trend: Trend);
+    private unbindList;
+    constructor(chart: Chart, trend: Trend);
     protected bindEvents(): void;
+    private unbindEvents();
+    private onInitialStateAppliedHandler();
     private onDestroyHandler();
     private onZoomHandler();
     private onTrendChangeHandler(changedOptions, newData);

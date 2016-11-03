@@ -13,24 +13,26 @@ export declare class AnimationManager {
 export declare class Animation<AnimatedObjectType> {
     private animationManager;
     time: number;
-    private startTime;
+    private createdTime;
     easing: (k: number) => any;
     progress: number;
+    delay: number;
     isFinished: boolean;
+    isStopped: boolean;
     initialObj: AnimatedObjectType;
     sourceObj: AnimatedObjectType;
     targetObject: AnimatedObjectType;
+    startTime: number;
     private onFinishCb;
     private onTickCb;
-    private isStopped;
-    constructor(animationManager: AnimationManager, time: number, startTime: number, easing?: (k: number) => any);
+    constructor(animationManager: AnimationManager, time: number, createdTime: number, easing?: (k: number) => any);
     tick(now: number): void;
     from<T>(sourceObj: T): Animation<T>;
     to(targetObj: AnimatedObjectType): this;
-    onTick(onTickCb: (source: AnimatedObjectType, progress: number, k: number) => any): this;
-    then(onFinishCb: (progress: number) => any): this;
+    onTick(onTickCb: (source: AnimatedObjectType, progress: number, k: number, animation: this) => any): this;
+    then(onFinishCb: (progress: AnimatedObjectType) => any): this;
     stop(): void;
     completeAndStop(): void;
+    withDelay(delay: number): this;
     private setProgress(progress);
-    private onFinishHandler();
 }

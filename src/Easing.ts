@@ -1,3 +1,5 @@
+export declare type TEase = (k: number) => number;
+
 /**
  * Easing from tween.js lib https://github.com/tweenjs/tween.js
  **/

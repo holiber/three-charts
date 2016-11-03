@@ -9,6 +9,7 @@ export class AnimationManager {
 	private lastTickTime: number;
 
 	constructor() {
+		this.lastTickTime = Date.now();
 	}
 
 	animate(time: number, timingFunction?: (progress: number) => number): Animation<IIteralable|number> {
@@ -41,9 +42,9 @@ export class AnimationManager {
 
 		// cleanup completed animations
 		let i = animations.length;
-		while (i--) if (animations[i].isFinished) animations.splice(i, 1);
+		while (i--) if (animations[i].isStopped) animations.splice(i, 1);
 
-		this.lastTickTime = Date.now();
+		this.lastTickTime = now;
 	}
 
 	hasActiveAnimations(): boolean {
@@ -55,20 +56,23 @@ export class AnimationManager {
 export class Animation<AnimatedObjectType> {
 
 	progress = 0;
+	delay = 0;
 	isFinished = false;
+	isStopped = false;
 	initialObj: AnimatedObjectType;
 	sourceObj: AnimatedObjectType;
 	targetObject: AnimatedObjectType;
-	private onFinishCb: (progress: number) => any;
-	private onTickCb: (source: AnimatedObjectType, progress: number, k: number) => any;
-	private isStopped = false;
+	startTime: number;
+	private onFinishCb: (source: AnimatedObjectType, animation: this) => any;
+	private onTickCb: (source: AnimatedObjectType, progress: number, k: number, animation: this) => any;
 
 	constructor(
 		private animationManager: AnimationManager,
 		public time: number,
-		private startTime: number,
+		private createdTime: number,
 		public easing: (k: number) => any = EASING.Quadratic.Out)
 	{
+		this.startTime = createdTime;
 	}
 
 	tick(now: number) {
@@ -76,8 +80,6 @@ export class Animation<AnimatedObjectType> {
 			let progress = this.time > 0 ? ((now - this.startTime) / this.time) : 1;
 			this.setProgress(progress);
 		}
-		let needToFinish = (this.progress == 1 || this.isStopped) && !this.isFinished;
-		if (needToFinish) this.onFinishHandler();
 	}
 
 	from<T>(sourceObj: T): Animation<T> {
@@ -98,21 +100,29 @@ export class Animation<AnimatedObjectType> {
 
 	to(targetObj: AnimatedObjectType): this {
 		this.targetObject = targetObj;
+
+		// clear unused fields
 		if (typeof this.initialObj == 'object') {
+
 			let initialIteralable = this.initialObj as IIteralable;
 			for (let key in this.targetObject) {
 				if (initialIteralable[key] == void 0) delete initialIteralable[key];
+			}
+
+			let targetIteralable = this.targetObject as IIteralable;
+			for (let key in initialIteralable) {
+				if (targetIteralable[key] == void 0) delete initialIteralable[key];
 			}
 		}
 		return this;
 	}
 
-	onTick(onTickCb: (source: AnimatedObjectType, progress: number, k: number) => any): this {
+	onTick(onTickCb: (source: AnimatedObjectType, progress: number, k: number, animation: this) => any): this {
 		this.onTickCb = onTickCb;
 		return this;
 	}
 
-	then(onFinishCb: (progress: number) => any): this {
+	then(onFinishCb: (progress: AnimatedObjectType) => any): this {
 		this.onFinishCb = onFinishCb;
 		return this;
 	}
@@ -123,10 +133,18 @@ export class Animation<AnimatedObjectType> {
 
 	completeAndStop() {
 		this.setProgress(1);
-		this.stop();
+	}
+
+	withDelay(delay: number): this {
+		this.delay = delay;
+		this.startTime = this.createdTime + delay;
+		return this;
 	}
 
 	private setProgress(progress: number) {
+
+		if (progress < 0) return;
+
 		progress = Math.min(progress, 1);
 		this.progress = progress;
 		let k = this.easing(progress);
@@ -134,7 +152,6 @@ export class Animation<AnimatedObjectType> {
 		if (typeof this.sourceObj == 'number') {
 			let initialVal = this.initialObj as any as number;
 			let targetVal = this.targetObject as any as number;
-			let sourceVal = this.sourceObj as any as number;
 			this.sourceObj = (initialVal + (targetVal - initialVal) * k) as any as AnimatedObjectType;
 		} else if (this.sourceObj && this.targetObject) {
 			for (let key in this.initialObj) {
@@ -143,11 +160,16 @@ export class Animation<AnimatedObjectType> {
 				(this.sourceObj as IIteralable)[key] = initialVal + (targetVal - initialVal) * k;
 			}
 		}
-		if (this.onTickCb) this.onTickCb(this.sourceObj, progress, k);
+
+
+		if (progress == 1) {
+			this.isStopped = true;
+			this.isFinished = true;
+		}
+
+		if (this.onTickCb) this.onTickCb(this.sourceObj, progress, k, this);
+
+		if (progress == 1 && this.onFinishCb) this.onFinishCb(this.sourceObj, this);
 	}
 
-	private onFinishHandler() {
-		this.onFinishCb && this.onFinishCb(this.progress);
-		this.isFinished = true;
-	}
 }

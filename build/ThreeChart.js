@@ -870,9 +870,7 @@
                         _this.onChartContainerResizeHandler(_this.$container.clientWidth, _this.$container.clientHeight);
                     });
                 }
-                this.unsubscribers = [ this.chart.onTrendsChange(function() {
-                    return _this.autoscroll();
-                }), this.chart.screen.onTransformationFrame(function(options) {
+                this.unsubscribers = [ this.chart.screen.onTransformationFrame(function(options) {
                     return _this.onScreenTransformHandler(options);
                 }), this.chart.onResize(function(options) {
                     return _this.onChartResize();
@@ -913,29 +911,6 @@
                     this.camera.position.setY(scrollY_1);
                 }
             };
-            ChartBlankView.prototype.autoscroll = function() {
-                var state = this.chart;
-                if (!state.state.autoScroll) return;
-                var oldTrendsMaxX = state.state.prevState.computedData.trends.maxXVal;
-                var trendsMaxXDelta = state.state.computedData.trends.maxXVal - oldTrendsMaxX;
-                if (trendsMaxXDelta > 0) {
-                    var maxVisibleX = this.chart.screen.getScreenRightVal();
-                    var paddingRightX = this.chart.getPaddingRight();
-                    var currentScroll = state.state.xAxis.range.scroll;
-                    if (oldTrendsMaxX < paddingRightX || oldTrendsMaxX > maxVisibleX) {
-                        return;
-                    }
-                    var scrollDelta = trendsMaxXDelta;
-                    this.setState({
-                        xAxis: {
-                            range: {
-                                scroll: currentScroll + scrollDelta
-                            }
-                        }
-                    });
-                }
-            };
-            ChartBlankView.prototype.onScrollStop = function() {};
             ChartBlankView.prototype.onMouseDown = function(ev) {
                 this.setState({
                     cursor: {
@@ -998,20 +973,11 @@
                 this.setupCamera();
             };
             ChartBlankView.prototype.zoom = function(zoomValue, zoomOrigin) {
-                var _this = this;
                 var MAX_ZOOM_VALUE = 1.5;
                 var MIN_ZOOM_VALUE = .7;
                 zoomValue = Math.min(zoomValue, MAX_ZOOM_VALUE);
                 zoomValue = Math.max(zoomValue, MIN_ZOOM_VALUE);
-                var autoScrollIsEnabled = this.chart.state.autoScroll;
-                if (autoScrollIsEnabled) this.chart.setState({
-                    autoScroll: false
-                });
-                this.chart.zoom(zoomValue, zoomOrigin).then(function() {
-                    if (autoScrollIsEnabled) _this.setState({
-                        autoScroll: true
-                    });
-                });
+                this.chart.zoom(zoomValue, zoomOrigin);
             };
             ChartBlankView.devicePixelRatio = window.devicePixelRatio;
             ChartBlankView.preinstalledWidgets = [];
@@ -1182,6 +1148,7 @@
             Utils.createNearestTexture = function(width, height, fn) {
                 var texture = this.createTexture(width, height, fn);
                 texture.minFilter = THREE.NearestFilter;
+                texture.magFilter = THREE.NearestFilter;
                 return texture;
             };
             Utils.createPixelPerfectTexture = function(width, height, fn) {
@@ -1344,7 +1311,7 @@
             ZOOM: "zoom",
             RESIZE: "resize",
             SCROLL: "scroll",
-            SCROLL_STOP: "scrollStop",
+            DRAG_STATE_CHAGED: "scrollStop",
             PLUGINS_STATE_CHANGED: "pluginsStateChanged"
         };
         var LIGHT_BLUE = "#5273bd";
@@ -1378,7 +1345,6 @@
                             minSizePx: 100,
                             color: "rgba(" + LIGHT_BLUE + ", 0.12)"
                         },
-                        autoScroll: true,
                         marks: [],
                         color: LIGHT_BLUE
                     },
@@ -1414,7 +1380,7 @@
                         scrollSpeed: 1e3,
                         scrollEase: Easing_1.EASING.Quadratic.Out,
                         zoomEase: Easing_1.EASING.Quadratic.Out,
-                        autoScrollSpeed: 1e3,
+                        autoScrollSpeed: 1100,
                         autoScrollEase: Easing_1.EASING.Linear.None
                     },
                     autoRender: {
@@ -1462,7 +1428,8 @@
                     showStats: false,
                     pluginsState: {},
                     eventEmitterMaxListeners: 20,
-                    maxVisibleSegments: 1280
+                    maxVisibleSegments: 1280,
+                    inertialScroll: true
                 };
                 this.plugins = {};
                 this.animationManager = new AnimationManager_1.AnimationManager();
@@ -1482,7 +1449,7 @@
                 this.screen = new Screen_1.Screen(this);
                 this.xAxisMarks = new AxisMarks_1.AxisMarks(this, interfaces_1.AXIS_TYPE.X);
                 this.yAxisMarks = new AxisMarks_1.AxisMarks(this, interfaces_1.AXIS_TYPE.Y);
-                this.initListeners();
+                this.bindEvents();
                 this.ee.emit(CHART_STATE_EVENTS.INITIAL_STATE_APPLIED, initialState);
                 this.isReady = true;
                 this.ee.emit(CHART_STATE_EVENTS.READY, initialState);
@@ -1511,8 +1478,8 @@
             Chart.prototype.onTrendsChange = function(cb) {
                 return this.ee.subscribe(CHART_STATE_EVENTS.TRENDS_CHANGE, cb);
             };
-            Chart.prototype.onScrollStop = function(cb) {
-                return this.ee.subscribe(CHART_STATE_EVENTS.SCROLL_STOP, cb);
+            Chart.prototype.onDragStateChanged = function(cb) {
+                return this.ee.subscribe(CHART_STATE_EVENTS.DRAG_STATE_CHAGED, cb);
             };
             Chart.prototype.onScroll = function(cb) {
                 return this.ee.subscribe(CHART_STATE_EVENTS.SCROLL, cb);
@@ -1644,9 +1611,9 @@
                     this.ee.emit(key + "Change", changedProps[key], eventData);
                 }
                 if (!this.isReady) return;
-                var scrollStopEventNeeded = changedProps.cursor && changedProps.cursor.dragMode === false && prevState.cursor.dragMode === true;
-                scrollStopEventNeeded && this.ee.emit(CHART_STATE_EVENTS.SCROLL_STOP, changedProps);
-                var scrollChangeEventsNeeded = changedProps.xAxis && changedProps.xAxis.range && changedProps.xAxis.range.scroll !== void 0;
+                var dragEventNeeded = changedProps.cursor && changedProps.cursor.dragMode != prevState.cursor.dragMode;
+                dragEventNeeded && this.ee.emit(CHART_STATE_EVENTS.DRAG_STATE_CHAGED, changedProps.cursor.dragMode, changedProps);
+                var scrollChangeEventsNeeded = changedProps.xAxis && changedProps.xAxis.range && changedProps.xAxis.range.scroll != void 0;
                 scrollChangeEventsNeeded && this.ee.emit(CHART_STATE_EVENTS.SCROLL, changedProps);
                 var zoomEventsNeeded = changedProps.xAxis && changedProps.xAxis.range && changedProps.xAxis.range.zoom || changedProps.yAxis && changedProps.yAxis.range && changedProps.yAxis.range.zoom;
                 zoomEventsNeeded && this.ee.emit(CHART_STATE_EVENTS.ZOOM, changedProps);
@@ -1670,10 +1637,13 @@
             Chart.prototype.getPlugin = function(pluginName) {
                 return this.plugins[pluginName];
             };
-            Chart.prototype.initListeners = function() {
+            Chart.prototype.bindEvents = function() {
                 var _this = this;
                 this.ee.on(CHART_STATE_EVENTS.TRENDS_CHANGE, function(changedTrends, newData) {
                     _this.handleTrendsChange(changedTrends, newData);
+                });
+                this.onDragStateChanged(function(dragState) {
+                    return _this.onDragStateChangedHandler(dragState);
                 });
                 this.ee.on("animationsChange", function(animationOptions) {
                     if (animationOptions.enabled !== _this.animationManager.isAnimationsEnabled) {
@@ -1685,6 +1655,31 @@
                 for (var trendName in changedTrends) {
                     this.ee.emit(CHART_STATE_EVENTS.TREND_CHANGE, trendName, changedTrends[trendName], newData);
                 }
+                var state = this.state;
+                if (!state.autoScroll || state.cursor.dragMode) return;
+                var oldTrendsMaxX = state.prevState.computedData.trends.maxXVal;
+                var trendsMaxXDelta = state.computedData.trends.maxXVal - oldTrendsMaxX;
+                if (trendsMaxXDelta > 0) {
+                    var maxVisibleXVal = this.screen.getScreenRightVal();
+                    var paddingRightVal = this.getValueByScreenX(this.state.width - state.xAxis.range.padding.end - state.xAxis.range.margin.end);
+                    var marginRightVal = this.getValueByScreenX(this.state.width - state.xAxis.range.margin.end);
+                    var currentScroll = state.xAxis.range.scroll;
+                    if (oldTrendsMaxX < marginRightVal || oldTrendsMaxX > maxVisibleXVal) {
+                        return;
+                    }
+                    var scrollDelta = state.computedData.trends.maxXVal - paddingRightVal;
+                    this.setState({
+                        xAxis: {
+                            range: {
+                                scroll: currentScroll + scrollDelta
+                            }
+                        }
+                    });
+                }
+            };
+            Chart.prototype.onDragStateChangedHandler = function(isDragMode) {
+                var state = this.state;
+                if (!state.inertialScroll || isDragMode) return;
             };
             Chart.prototype.recalculateXAxis = function(actualData, changedProps) {
                 var axisRange = actualData.xAxis.range;
@@ -1843,11 +1838,10 @@
                 return this.zoom(currentRange / range, origin);
             };
             Chart.prototype.scrollToEnd = function() {
-                var _this = this;
                 var state = this.state;
                 var endXVal = this.trendsManager.getEndXVal();
                 var range = state.xAxis.range;
-                var scroll = endXVal - this.pxToValueByXAxis(state.width) + this.pxToValueByXAxis(range.padding.end) - range.zeroVal;
+                var scroll = endXVal - this.pxToValueByXAxis(state.width) + this.pxToValueByXAxis(range.padding.end + range.margin.end) - range.zeroVal;
                 this.setState({
                     xAxis: {
                         range: {
@@ -1856,8 +1850,8 @@
                     }
                 });
                 return new deps_1.Promise(function(resolve) {
-                    var animationTime = _this.state.animations.enabled ? _this.state.animations.scrollSpeed : 0;
-                    setTimeout(resolve, animationTime * 1e3);
+                    var animationTime = state.animations.enabled ? state.animations.scrollSpeed : 0;
+                    setTimeout(resolve, animationTime);
                 });
             };
             Chart.prototype.getPointOnXAxis = function(xVal) {
@@ -1914,9 +1908,6 @@
             Chart.prototype.getScreenRightVal = function() {
                 return this.getValueByScreenX(this.state.width);
             };
-            Chart.prototype.getPaddingRight = function() {
-                return this.getValueByScreenX(this.state.width - this.state.xAxis.range.padding.end);
-            };
             return Chart;
         }();
         exports.Chart = Chart;
@@ -1949,18 +1940,13 @@
                 if (options.dataset) this.calculatedOptions.data = Trend.prepareData(options.dataset);
                 this.calculatedOptions.dataset = [];
                 this.ee = new EventEmmiter_1.EventEmitter();
+                this.segmentsManager = new TrendSegmentsManager_1.TrendSegmentsManager(this.chart, this);
                 this.bindEvents();
             }
-            Trend.prototype.onInitialStateApplied = function() {
-                this.segmentsManager = new TrendSegmentsManager_1.TrendSegmentsManager(this.chart, this);
-            };
             Trend.prototype.bindEvents = function() {
                 var _this = this;
                 var chartState = this.chart;
-                chartState.onInitialStateApplied(function() {
-                    return _this.onInitialStateApplied();
-                });
-                chartState.onScrollStop(function() {
+                chartState.onDragStateChanged(function() {
                     return _this.checkForPrependRequest();
                 });
                 chartState.onZoom(function() {
@@ -2125,7 +2111,7 @@
             ANIMATION_FRAME: "animationFrame"
         };
         var TrendSegmentsManager = function() {
-            function TrendSegmentsManager(chartState, trend) {
+            function TrendSegmentsManager(chart, trend) {
                 this.segmentsById = {};
                 this.segments = [];
                 this.animatedSegmentsIds = [];
@@ -2135,11 +2121,10 @@
                 this.nextEmptyId = 0;
                 this.startSegmentId = 0;
                 this.endSegmentId = 0;
-                this.chartState = chartState;
+                this.unbindList = [];
+                this.chart = chart;
                 this.ee = new EventEmmiter_1.EventEmitter();
                 this.trend = trend;
-                this.maxSegmentLength = trend.getOptions().maxSegmentLength;
-                this.tryToRebuildSegments();
                 this.bindEvents();
             }
             TrendSegmentsManager.prototype.bindEvents = function() {
@@ -2147,18 +2132,28 @@
                 this.trend.onChange(function(changedOptions, newData) {
                     return _this.onTrendChangeHandler(changedOptions, newData);
                 });
-                this.chartState.onZoom(function() {
+                this.unbindList = [ this.chart.onInitialStateApplied(function() {
+                    return _this.onInitialStateAppliedHandler();
+                }), this.chart.onZoom(function() {
                     return _this.onZoomHandler();
-                });
-                this.chartState.onScroll(function() {
+                }), this.chart.onScroll(function() {
                     return _this.recalculateDisplayedRange();
-                });
-                this.chartState.onDestroy(function() {
+                }), this.chart.onDestroy(function() {
                     return _this.onDestroyHandler();
+                }) ];
+            };
+            TrendSegmentsManager.prototype.unbindEvents = function() {
+                this.unbindList.forEach(function(unbind) {
+                    return unbind();
                 });
+            };
+            TrendSegmentsManager.prototype.onInitialStateAppliedHandler = function() {
+                this.maxSegmentLength = this.trend.getOptions().maxSegmentLength;
+                this.tryToRebuildSegments();
             };
             TrendSegmentsManager.prototype.onDestroyHandler = function() {
                 this.ee.removeAllListeners();
+                this.unbindEvents();
                 this.appendAnimation && this.appendAnimation.kill();
                 this.prependAnimation && this.prependAnimation.kill();
             };
@@ -2200,14 +2195,14 @@
                 var minSegmentLengthInPx = trendTypeSettings.minSegmentLengthInPx, maxSegmentLengthInPx = trendTypeSettings.maxSegmentLengthInPx;
                 var needToRebuild = this.segments.length === 0 || force;
                 var segmentLength = this.maxSegmentLength;
-                var currentSegmentLengthInPx = Number(this.chartState.valueToPxByXAxis(segmentLength).toFixed(2));
-                var currentMaxSegmentLengthInPx = Number(this.chartState.valueToPxByXAxis(this.maxSegmentLength).toFixed(2));
+                var currentSegmentLengthInPx = Number(this.chart.valueToPxByXAxis(segmentLength).toFixed(2));
+                var currentMaxSegmentLengthInPx = Number(this.chart.valueToPxByXAxis(this.maxSegmentLength).toFixed(2));
                 if (currentSegmentLengthInPx < minSegmentLengthInPx) {
                     needToRebuild = true;
-                    segmentLength = Math.ceil(this.chartState.pxToValueByXAxis(maxSegmentLengthInPx));
+                    segmentLength = Math.ceil(this.chart.pxToValueByXAxis(maxSegmentLengthInPx));
                 } else if (currentMaxSegmentLengthInPx > maxSegmentLengthInPx) {
                     needToRebuild = true;
-                    segmentLength = this.chartState.pxToValueByXAxis(minSegmentLengthInPx);
+                    segmentLength = this.chart.pxToValueByXAxis(minSegmentLengthInPx);
                 }
                 if (!needToRebuild) return false;
                 this.maxSegmentLength = segmentLength;
@@ -2233,7 +2228,7 @@
                 if (segmentsAreRebuilded === void 0) {
                     segmentsAreRebuilded = false;
                 }
-                var _a = this.chartState.state.xAxis.range, from = _a.from, to = _a.to;
+                var _a = this.chart.state.xAxis.range, from = _a.from, to = _a.to;
                 var _b = this, firstDisplayedSegment = _b.firstDisplayedSegment, lastDisplayedSegment = _b.lastDisplayedSegment;
                 var displayedRange = to - from;
                 this.firstDisplayedSegmentInd = Utils_1.Utils.binarySearchClosestInd(this.segments, from - displayedRange, "startXVal");
@@ -2351,7 +2346,7 @@
                     var prevItem = trendData[startItemInd + itemInd - 1];
                     segment.appendItem(prevItem);
                 }
-                var animationsOptions = this.chartState.state.animations;
+                var animationsOptions = this.chart.state.animations;
                 var time = animationsOptions.enabled ? animationsOptions.trendChangeSpeed : 0;
                 if (needRebuildSegments) {
                     for (var _i = 0, _a = this.animatedSegmentsForAppend; _i < _a.length; _i++) {
@@ -2402,7 +2397,7 @@
                     var nextItem = trendData[itemInd + 1];
                     segment.prependItem(nextItem);
                 }
-                var animationsOptions = this.chartState.state.animations;
+                var animationsOptions = this.chart.state.animations;
                 var time = animationsOptions.enabled ? animationsOptions.trendChangeSpeed : 0;
                 if (this.animatedSegmentsForPrepend.length > MAX_ANIMATED_SEGMENTS) time = 0;
                 this.animate(time, true);
@@ -2420,7 +2415,7 @@
                     animatedSegmentsIds.length = 0;
                     return;
                 }
-                var animationsOptions = this.chartState.state.animations;
+                var animationsOptions = this.chart.state.animations;
                 var ease = animationsOptions.trendChangeEase;
                 var objectToAnimate = {
                     animationValue: 0
@@ -2473,6 +2468,7 @@
                 this.trendSegments = trendPoints;
                 this.id = id;
                 this.maxLength = trendPoints.maxSegmentLength;
+                this.currentAnimationState = this.createAnimationState();
             }
             TrendSegment.prototype.createAnimationState = function() {
                 var _a = this, xVal = _a.xVal, yVal = _a.yVal, startXVal = _a.startXVal, startYVal = _a.startYVal, endXVal = _a.endXVal, endYVal = _a.endYVal, maxYVal = _a.maxYVal, minYVal = _a.minYVal, maxLength = _a.maxLength;
@@ -2562,7 +2558,7 @@
             };
             TrendSegment.prototype.getFramePoint = function() {
                 var frameVal = this.getFrameVal();
-                return this.trendSegments.chartState.screen.getPointOnChart(frameVal.x, frameVal.y);
+                return this.trendSegments.chart.screen.getPointOnChart(frameVal.x, frameVal.y);
             };
             return TrendSegment;
         }();
@@ -2585,7 +2581,6 @@
                     trendsCalculatedOptions[trendName] = trend.getCalculatedOptions();
                 }
                 this.calculatedOptions = trendsCalculatedOptions;
-                this.bindEvents();
             }
             TrendsManager.prototype.getTrend = function(trendName) {
                 return this.trends[trendName];
@@ -2639,27 +2634,13 @@
             TrendsManager.prototype.onSegmentsRebuilded = function(cb) {
                 return this.ee.subscribe(EVENTS.SEGMENTS_REBUILDED, cb);
             };
-            TrendsManager.prototype.bindEvents = function() {
-                var _this = this;
-                this.chartState.onInitialStateApplied(function() {
-                    return _this.onInitialStateAppliedHandler();
-                });
-            };
-            TrendsManager.prototype.onInitialStateAppliedHandler = function() {
-                var _this = this;
-                var _loop_1 = function(trendName) {
-                    this_1.trends[trendName].segmentsManager.onRebuild(function() {
-                        return _this.ee.emit(EVENTS.SEGMENTS_REBUILDED, trendName);
-                    });
-                };
-                var this_1 = this;
-                for (var trendName in this.trends) {
-                    _loop_1(trendName);
-                }
-            };
             TrendsManager.prototype.createTrend = function(state, trendName, initialState) {
+                var _this = this;
                 var trend = new Trend_1.Trend(state, trendName, initialState);
                 this.trends[trendName] = trend;
+                trend.segmentsManager.onRebuild(function() {
+                    return _this.ee.emit(EVENTS.SEGMENTS_REBUILDED, trendName);
+                });
                 return trend;
             };
             return TrendsManager;
@@ -2669,10 +2650,16 @@
         "use strict";
         var Vector3 = THREE.Vector3;
         var EventEmmiter_1 = __webpack_require__(12);
+        (function(TRANSFORMATION_EVENT) {
+            TRANSFORMATION_EVENT[TRANSFORMATION_EVENT["STARTED"] = 0] = "STARTED";
+            TRANSFORMATION_EVENT[TRANSFORMATION_EVENT["FINISHED"] = 1] = "FINISHED";
+        })(exports.TRANSFORMATION_EVENT || (exports.TRANSFORMATION_EVENT = {}));
+        var TRANSFORMATION_EVENT = exports.TRANSFORMATION_EVENT;
         var SCREEN_EVENTS = {
             ZOOM_FRAME: "zoomFrame",
             SCROLL_FRAME: "scrollFrame",
-            TRANSFORMATION_FRAME: "transformationFrame"
+            TRANSFORMATION_FRAME: "transformationFrame",
+            TRANSFORMATION_EVENT: "transformationStateChanged"
         };
         var Screen = function() {
             function Screen(chartState) {
@@ -2684,6 +2671,7 @@
                     zoomX: 1,
                     zoomY: 1
                 };
+                this.transformationInProgress = false;
                 this.chart = chartState;
                 var _a = chartState.state, w = _a.width, h = _a.height;
                 this.ee = new EventEmmiter_1.EventEmitter();
@@ -2716,6 +2704,9 @@
             Screen.prototype.onTransformationFrame = function(cb) {
                 return this.ee.subscribe(SCREEN_EVENTS.TRANSFORMATION_FRAME, cb);
             };
+            Screen.prototype.onTransformationEvent = function(cb) {
+                return this.ee.subscribe(SCREEN_EVENTS.TRANSFORMATION_EVENT, cb);
+            };
             Screen.prototype.cameraIsMoving = function() {
                 return !!(this.scrollXAnimation && !this.scrollXAnimation.isFinished || this.zoomXAnimation && !this.zoomXAnimation.isFinished);
             };
@@ -2737,11 +2728,28 @@
                     this.options.scrollYVal = options.scrollYVal;
                 }
                 if (silent) return;
+                var hasActiveAnimations = this.scrollXAnimation && !this.scrollXAnimation.isStopped || this.scrollYAnimation && !this.scrollYAnimation.isStopped || this.zoomXAnimation && !this.zoomXAnimation.isStopped || this.zoomYAnimation && !this.zoomYAnimation.isStopped;
+                var transformationStarted = hasActiveAnimations && !this.transformationInProgress;
+                var transformationFinished = !hasActiveAnimations && this.transformationInProgress;
+                if (transformationStarted) {
+                    this.transformationInProgress = true;
+                    this.ee.emit(SCREEN_EVENTS.TRANSFORMATION_EVENT, TRANSFORMATION_EVENT.STARTED);
+                }
+                if (transformationFinished) {
+                    this.transformationInProgress = false;
+                }
+                if (!this.transformationInProgress) {
+                    this.options.scrollX = options.scrollX = Math.round(this.options.scrollX);
+                    this.options.scrollY = options.scrollY = Math.round(this.options.scrollY);
+                }
                 this.ee.emit(SCREEN_EVENTS.TRANSFORMATION_FRAME, options);
                 var scrollEventNeeded = options.scrollXVal != void 0 || options.scrollYVal != void 0;
                 if (scrollEventNeeded) this.ee.emit(SCREEN_EVENTS.SCROLL_FRAME, options);
                 var zoomEventNeeded = options.zoomX != void 0 || options.zoomY != void 0;
                 if (zoomEventNeeded) this.ee.emit(SCREEN_EVENTS.ZOOM_FRAME, options);
+                if (transformationFinished) {
+                    this.ee.emit(SCREEN_EVENTS.TRANSFORMATION_EVENT, TRANSFORMATION_EVENT.FINISHED);
+                }
             };
             Screen.prototype.bindEvents = function() {
                 var _this = this;
@@ -2774,6 +2782,7 @@
                 var ease = isAutoscroll ? animations.autoScrollEase : animations.zoomEase;
                 var range = chart.state.xAxis.range;
                 var targetX = range.scroll * range.scaleFactor * range.zoom;
+                if (isDragMode) time = 0;
                 if (this.scrollXAnimation) this.scrollXAnimation.stop();
                 this.scrollXAnimation = chart.animationManager.animate(time, ease).from(this.options.scrollX).to(targetX).onTick(function(value) {
                     _this.transform({
@@ -2855,6 +2864,10 @@
             Screen.prototype.getScreenXByValue = function(xVal) {
                 var _a = this.chart.state.xAxis.range, scroll = _a.scroll, zeroVal = _a.zeroVal;
                 return this.valueToPxByXAxis(xVal - zeroVal - scroll);
+            };
+            Screen.prototype.getScreenYByValue = function(yVal) {
+                var _a = this.chart.state.yAxis.range, scroll = _a.scroll, zeroVal = _a.zeroVal;
+                return this.valueToPxByYAxis(yVal - zeroVal - scroll);
             };
             Screen.prototype.getScreenXByPoint = function(xVal) {
                 return this.getScreenXByValue(this.getValueOnXAxis(xVal));
@@ -3060,6 +3073,7 @@
             function AnimationManager() {
                 this.isAnimationsEnabled = true;
                 this.animations = [];
+                this.lastTickTime = Date.now();
             }
             AnimationManager.prototype.animate = function(time, timingFunction) {
                 var animation = new Animation(this, time, this.lastTickTime, timingFunction);
@@ -3082,8 +3096,8 @@
                     }
                 }
                 var i = animations.length;
-                while (i--) if (animations[i].isFinished) animations.splice(i, 1);
-                this.lastTickTime = Date.now();
+                while (i--) if (animations[i].isStopped) animations.splice(i, 1);
+                this.lastTickTime = now;
             };
             AnimationManager.prototype.hasActiveAnimations = function() {
                 return this.animations.length > 0;
@@ -3092,25 +3106,25 @@
         }();
         exports.AnimationManager = AnimationManager;
         var Animation = function() {
-            function Animation(animationManager, time, startTime, easing) {
+            function Animation(animationManager, time, createdTime, easing) {
                 if (easing === void 0) {
                     easing = Easing_1.EASING.Quadratic.Out;
                 }
                 this.animationManager = animationManager;
                 this.time = time;
-                this.startTime = startTime;
+                this.createdTime = createdTime;
                 this.easing = easing;
                 this.progress = 0;
+                this.delay = 0;
                 this.isFinished = false;
                 this.isStopped = false;
+                this.startTime = createdTime;
             }
             Animation.prototype.tick = function(now) {
                 if (!this.isStopped) {
                     var progress = this.time > 0 ? (now - this.startTime) / this.time : 1;
                     this.setProgress(progress);
                 }
-                var needToFinish = (this.progress == 1 || this.isStopped) && !this.isFinished;
-                if (needToFinish) this.onFinishHandler();
             };
             Animation.prototype.from = function(sourceObj) {
                 if (typeof sourceObj == "object") {
@@ -3133,6 +3147,10 @@
                     for (var key in this.targetObject) {
                         if (initialIteralable[key] == void 0) delete initialIteralable[key];
                     }
+                    var targetIteralable = this.targetObject;
+                    for (var key in initialIteralable) {
+                        if (targetIteralable[key] == void 0) delete initialIteralable[key];
+                    }
                 }
                 return this;
             };
@@ -3149,16 +3167,20 @@
             };
             Animation.prototype.completeAndStop = function() {
                 this.setProgress(1);
-                this.stop();
+            };
+            Animation.prototype.withDelay = function(delay) {
+                this.delay = delay;
+                this.startTime = this.createdTime + delay;
+                return this;
             };
             Animation.prototype.setProgress = function(progress) {
+                if (progress < 0) return;
                 progress = Math.min(progress, 1);
                 this.progress = progress;
                 var k = this.easing(progress);
                 if (typeof this.sourceObj == "number") {
                     var initialVal = this.initialObj;
                     var targetVal = this.targetObject;
-                    var sourceVal = this.sourceObj;
                     this.sourceObj = initialVal + (targetVal - initialVal) * k;
                 } else if (this.sourceObj && this.targetObject) {
                     for (var key in this.initialObj) {
@@ -3167,11 +3189,12 @@
                         this.sourceObj[key] = initialVal + (targetVal - initialVal) * k;
                     }
                 }
-                if (this.onTickCb) this.onTickCb(this.sourceObj, progress, k);
-            };
-            Animation.prototype.onFinishHandler = function() {
-                this.onFinishCb && this.onFinishCb(this.progress);
-                this.isFinished = true;
+                if (progress == 1) {
+                    this.isStopped = true;
+                    this.isFinished = true;
+                }
+                if (this.onTickCb) this.onTickCb(this.sourceObj, progress, k, this);
+                if (progress == 1 && this.onFinishCb) this.onFinishCb(this.sourceObj, this);
             };
             return Animation;
         }();

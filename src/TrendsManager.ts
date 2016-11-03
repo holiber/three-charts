@@ -28,7 +28,6 @@ export class TrendsManager {
 			trendsCalculatedOptions[trendName] = trend.getCalculatedOptions();
 		}
 		this.calculatedOptions = trendsCalculatedOptions;
-		this.bindEvents();
 	}
 
 	getTrend(trendName: string) {
@@ -86,19 +85,10 @@ export class TrendsManager {
 		return this.ee.subscribe(EVENTS.SEGMENTS_REBUILDED, cb);
 	}
 
-	private bindEvents() {
-		this.chartState.onInitialStateApplied(() => this.onInitialStateAppliedHandler());
-	}
-
-	private onInitialStateAppliedHandler() {
-		for (let trendName in this.trends) {
-			this.trends[trendName].segmentsManager.onRebuild(() => this.ee.emit(EVENTS.SEGMENTS_REBUILDED, trendName));
-		}
-	}
-
 	private createTrend(state: Chart, trendName: string, initialState: IChartState): Trend {
 		let trend = new Trend(state, trendName, initialState);
 		this.trends[trendName] = trend;
+		trend.segmentsManager.onRebuild(() => this.ee.emit(EVENTS.SEGMENTS_REBUILDED, trendName));
 		return trend;
 	}
 }

@@ -52,6 +52,10 @@ export interface IChartState {
         l?: string;
     };
     /**
+     * set to false for smooth animations
+     */
+    enablePixelPerfectRender?: boolean;
+    /**
      * buffer size for displayed segments
      * used by widgets
      */
@@ -61,6 +65,7 @@ export interface IChartState {
         enabled: boolean;
     };
     autoScroll?: boolean;
+    inertialScroll?: boolean;
     showStats?: boolean;
     backgroundColor?: TColor;
     computedData?: IChartStateComputedData;
@@ -99,7 +104,7 @@ export declare class Chart {
     onChange(cb: (changedProps: IChartState) => void): Function;
     onTrendChange(cb: (trendName: string, changedOptions: ITrendOptions, newData: ITrendData) => void): Function;
     onTrendsChange(cb: (trendsOptions: ITrendsOptions) => void): Function;
-    onScrollStop(cb: () => void): Function;
+    onDragStateChanged(cb: (isDragMode: boolean, changedProps: IChartState) => void): Function;
     onScroll(cb: (scrollOptions: {
         deltaX: number;
     }) => void): Function;
@@ -127,8 +132,9 @@ export declare class Chart {
      * @example
      */
     getPlugin(pluginName: string): ChartPlugin;
-    private initListeners();
+    private bindEvents();
     private handleTrendsChange(changedTrends, newData);
+    private onDragStateChangedHandler(isDragMode);
     private recalculateXAxis(actualData, changedProps);
     private recalculateYAxis(actualData);
     zoom(zoomValue: number, origin?: number): Promise<void>;
@@ -189,5 +195,4 @@ export declare class Chart {
     getPointOnChart(xVal: number, yVal: number): Vector3;
     getScreenLeftVal(): number;
     getScreenRightVal(): number;
-    getPaddingRight(): number;
 }

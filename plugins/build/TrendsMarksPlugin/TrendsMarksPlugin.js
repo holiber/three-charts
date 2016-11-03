@@ -50,15 +50,13 @@
         var AXIS_MARK_DEFAULT_OPTIONS = {
             trendName: "",
             title: "",
-            description: "",
-            descriptionColor: "rgb(40,136,75)",
-            value: 0,
-            iconColor: "rgb(255, 102, 217)",
+            color: "rgb(40,136,75)",
+            xVal: 0,
             orientation: TREND_MARK_SIDE.TOP,
-            width: 65,
-            height: 80,
-            offset: 40,
-            margin: 20
+            width: 85,
+            height: 200,
+            margin: 10,
+            onRender: TrendsMarksWidget_1.DEFAULT_RENDERER
         };
         var TrendsMarksPlugin = function(_super) {
             __extends(TrendsMarksPlugin, _super);
@@ -143,16 +141,14 @@
                 if (!mark.segment) return;
                 var chart = this.chart;
                 var options = mark.options;
-                var width = options.width, height = options.height, offset = options.offset, name = options.name;
+                var width = options.width, height = options.height, name = options.name;
                 var left = chart.getPointOnXAxis(mark.xVal) - width / 2;
                 var top = chart.getPointOnYAxis(mark.yVal);
                 var isTopSideMark = options.orientation == TREND_MARK_SIDE.TOP;
                 var newOffset;
                 var row = 0;
                 if (isTopSideMark) {
-                    top += offset + height;
-                } else {
-                    top -= offset;
+                    top += height;
                 }
                 var markRect = [ left, top, width, height ];
                 var hasIntersection = false;
@@ -188,12 +184,12 @@
                     var xVals = [];
                     for (var markName in marks) {
                         var mark = marks[markName];
-                        xVals.push(mark.options.value);
+                        xVals.push(mark.options.xVal);
                         marksArr.push(mark);
                         mark._setSegment(null);
                     }
                     marksArr.sort(function(a, b) {
-                        return a.options.value - b.options.value;
+                        return a.options.xVal - b.options.xVal;
                     });
                     var trend = chart.getTrend(trendName);
                     var points = trend.segmentsManager.getSegmentsForXValues(xVals.sort(function(a, b) {
@@ -258,10 +254,10 @@
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
         var three_charts_1 = __webpack_require__(2);
-        var Geometry = THREE.Geometry;
         var Mesh = THREE.Mesh;
         var Object3D = THREE.Object3D;
         var TrendsMarksPlugin_1 = __webpack_require__(5);
+        var Color_1 = __webpack_require__(7);
         var MAX_MARKS_IN_ROW = 3;
         var TrendsMarksWidget = function(_super) {
             __extends(TrendsMarksWidget, _super);
@@ -336,75 +332,27 @@
         exports.TrendMarksWidget = TrendMarksWidget;
         var TrendMarkWidget = function() {
             function TrendMarkWidget(chart, trendMark) {
-                this.markHeight = 74;
-                this.markWidth = 150;
-                this.position = {
-                    lineHeight: 30,
-                    x: 0,
-                    y: 0
-                };
                 this.chart = chart;
                 this.mark = trendMark;
                 this.initObject();
                 this.show();
             }
             TrendMarkWidget.prototype.initObject = function() {
-                this.object3D = new Object3D();
-                this.markMesh = this.createMarkMesh();
-                this.line = this.createMarkLine();
-                this.object3D.add(this.markMesh);
-                this.object3D.add(this.line);
-            };
-            TrendMarkWidget.prototype.createMarkMesh = function() {
-                var _a = this, markHeight = _a.markHeight, markWidth = _a.markWidth;
-                var mark = this.mark.options;
-                var isTopSide = mark.orientation == TrendsMarksPlugin_1.TREND_MARK_SIDE.TOP;
-                var texture = three_charts_1.Utils.createPixelPerfectTexture(markWidth, markHeight, function(ctx) {
-                    var circleOffset = isTopSide ? 30 : 0;
-                    var circleR = 22;
-                    var circleX = markWidth / 2;
-                    var circleY = circleOffset + circleR;
-                    var textOffset = isTopSide ? 10 : circleR * 2 + 15;
-                    ctx.beginPath();
-                    ctx.textAlign = "center";
-                    ctx.font = "11px Arial";
-                    ctx.fillStyle = "rgba(255,255,255, 0.6)";
-                    ctx.fillText(mark.title, circleX, textOffset);
-                    ctx.fillStyle = mark.descriptionColor;
-                    ctx.fillText(mark.description, circleX, textOffset + 12);
-                    ctx.beginPath();
-                    ctx.fillStyle = mark.iconColor;
-                    ctx.arc(circleX, circleY, circleR, 0, 2 * Math.PI);
-                    ctx.fill();
-                    ctx.font = "19px Arial";
-                    ctx.fillStyle = "rgb(255, 255, 255)";
-                    ctx.fillText(mark.icon, circleX, circleY + 7);
+                var _this = this;
+                var options = this.mark.options;
+                var width = options.width, height = options.height;
+                var texture = three_charts_1.Utils.createPixelPerfectTexture(width, height, function(ctx) {
+                    options.onRender([ _this.mark ], ctx, _this.chart);
                 });
                 var material = new THREE.MeshBasicMaterial({
                     map: texture,
                     side: THREE.FrontSide
                 });
                 material.transparent = true;
-                var mesh = new Mesh(new THREE.PlaneGeometry(markWidth, markHeight), material);
-                var offset = this.mark.options.orientation == TrendsMarksPlugin_1.TREND_MARK_SIDE.TOP ? this.mark.offset : -this.mark.offset;
-                return mesh;
-            };
-            TrendMarkWidget.prototype.createMarkLine = function() {
-                var lineGeometry = new Geometry();
-                lineGeometry.vertices.push(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, this.mark.offset, 0));
-                lineGeometry.computeLineDistances();
-                var lineMaterial = new THREE.LineDashedMaterial({
-                    dashSize: 1,
-                    gapSize: 4,
-                    transparent: true,
-                    opacity: .6
-                });
-                var line = new THREE.Line(lineGeometry, lineMaterial);
-                line.position.setZ(-.1);
-                return line;
+                this.markMesh = new Mesh(new THREE.PlaneGeometry(width, height), material);
             };
             TrendMarkWidget.prototype.getObject3D = function() {
-                return this.object3D;
+                return this.markMesh;
             };
             TrendMarkWidget.prototype.onSegmentsAnimate = function() {
                 this.updatePosition();
@@ -415,38 +363,19 @@
             TrendMarkWidget.prototype.updatePosition = function() {
                 if (!this.mark.segment) return;
                 var mark = this.mark;
-                var meshMaterial = this.markMesh.material;
-                var lineMaterial = this.line.material;
-                if (mark.row >= MAX_MARKS_IN_ROW - 1) {
-                    meshMaterial.opacity = 0;
-                    lineMaterial.opacity = 0;
-                } else {
-                    meshMaterial.opacity = 1;
-                    lineMaterial.opacity = 1;
-                }
+                var options = this.mark.options;
                 var screen = this.chart.screen;
                 var posX = screen.getPointOnXAxis(mark.xVal);
                 var posY = screen.getPointOnYAxis(mark.yVal);
-                var lineGeometry = this.line.geometry;
-                if (mark.options.orientation == TrendsMarksPlugin_1.TREND_MARK_SIDE.TOP) {
-                    this.markMesh.position.setY(this.markHeight / 2 + mark.offset);
-                    lineGeometry.vertices[1].setY(mark.offset);
-                } else {
-                    this.markMesh.position.setY(-mark.offset - this.markHeight / 2);
-                    lineGeometry.vertices[1].setY(-mark.offset);
-                }
-                lineGeometry.verticesNeedUpdate = true;
-                lineGeometry.lineDistancesNeedUpdate = true;
-                lineGeometry.computeLineDistances();
-                this.object3D.position.set(posX, posY, 0);
+                this.markMesh.position.set(posX, posY, 0);
             };
             TrendMarkWidget.prototype.show = function() {
                 if (!this.mark.segment) return;
                 this.updatePosition();
                 var animations = this.chart.state.animations;
                 var time = animations.enabled ? 1 : 0;
-                this.object3D.scale.set(.01, .01, 1);
-                TweenLite.to(this.object3D.scale, time, {
+                this.markMesh.scale.set(.01, .01, 1);
+                TweenLite.to(this.markMesh.scale, time, {
                     x: 1,
                     y: 1,
                     ease: Elastic.easeOut
@@ -454,6 +383,76 @@
             };
             return TrendMarkWidget;
         }();
+        exports.DEFAULT_RENDERER = function(marks, ctx, chart) {
+            var mark = marks[0];
+            var options = mark.options;
+            var isTopSide = options.orientation == TrendsMarksPlugin_1.TREND_MARK_SIDE.TOP;
+            var color = options.color !== void 0 ? new Color_1.Color(options.color) : new Color_1.Color(chart.getTrend(options.trendName).getOptions().lineColor);
+            var rgbaColor = color.getTransparent(.5).rgbaStr;
+            var width = options.width, height = options.height;
+            var centerX = Math.round(width / 2);
+            var centerY = Math.round(height / 2);
+            var font = chart.state.font.m;
+            var textOffset = parseInt(font);
+            var textPosX = centerX;
+            var textPosY = isTopSide ? textOffset * 1.3 : height - textOffset * .7;
+            ctx.fillStyle = rgbaColor;
+            ctx.strokeStyle = rgbaColor;
+            ctx.fillRect(0, isTopSide ? 0 : height, width, isTopSide ? textOffset * 2 : -textOffset * 2);
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 4, 0, 2 * Math.PI, false);
+            ctx.fill();
+            var lineEndY = textPosY;
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(textPosX, lineEndY);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.textAlign = "center";
+            ctx.font = font;
+            ctx.fillStyle = "white";
+            ctx.strokeStyle = "white";
+            ctx.fillText(options.title, Math.round(textPosX), Math.round(textPosY));
+        };
+    }, function(module, exports) {
+        "use strict";
+        var Color = function() {
+            function Color(color) {
+                this.set(color);
+            }
+            /**!
+	     * @preserve $.parseColor
+	     * Copyright 2011 THEtheChad Elliott
+	     * Released under the MIT and GPL licenses.
+	     */
+            Color.parseColor = function(color) {
+                var cache, p = parseInt, color = color.replace(/\s\s*/g, "");
+                if (cache = /^#([\da-fA-F]{2})([\da-fA-F]{2})([\da-fA-F]{2})/.exec(color)) cache = [ p(cache[1], 16), p(cache[2], 16), p(cache[3], 16) ]; else if (cache = /^#([\da-fA-F])([\da-fA-F])([\da-fA-F])/.exec(color)) cache = [ p(cache[1], 16) * 17, p(cache[2], 16) * 17, p(cache[3], 16) * 17 ]; else if (cache = /^rgba\(#([\da-fA-F]{2})([\da-fA-F]{2})([\da-fA-F]{2}),(([0-9]*[.])?[0-9]+)/.exec(color)) cache = [ p(cache[1], 16), p(cache[2], 16), p(cache[3], 16), +cache[4] ]; else if (cache = /^rgba\(([\d]+),([\d]+),([\d]+),([\d]+|[\d]*.[\d]+)\)/.exec(color)) cache = [ +cache[1], +cache[2], +cache[3], +cache[4] ]; else if (cache = /^rgb\(([\d]+),([\d]+),([\d]+)\)/.exec(color)) cache = [ +cache[1], +cache[2], +cache[3] ]; else throw Error(color + " is not supported by parseColor");
+                isNaN(cache[3]) && (cache[3] = 1);
+                return cache;
+            };
+            Color.numberToHexStr = function(value) {
+                var result = value.toString(16);
+                return "#" + "0".repeat(6 - result.length) + result;
+            };
+            Color.prototype.set = function(color) {
+                if (typeof color == "number") color = Color.numberToHexStr(color);
+                var colorStr = color;
+                var rgba = Color.parseColor(colorStr);
+                this.r = rgba[0];
+                this.g = rgba[1];
+                this.b = rgba[2];
+                this.a = rgba[3];
+                this.value = (rgba[0] << 8 * 2) + (rgba[1] << 8) + rgba[2];
+                this.hexStr = Color.numberToHexStr(this.value);
+                this.rgbaStr = "rgba(" + this.r + ", " + this.g + ", " + this.b + ", " + this.a + ")";
+            };
+            Color.prototype.getTransparent = function(opacity) {
+                return new Color("rgba(" + this.hexStr + ", " + opacity + ")");
+            };
+            return Color;
+        }();
+        exports.Color = Color;
     } ]);
 });
 

@@ -10,6 +10,7 @@
  */
 import {IAxisMarkOptions} from "./AxisMarks";
 import {TColor} from "./Color";
+import { TEase } from "./Easing";
 export enum AXIS_RANGE_TYPE {
 	FIXED,
 	RELATIVE_END,
@@ -20,7 +21,7 @@ export enum AXIS_RANGE_TYPE {
 /**
  * Animation ease type
  */
-export declare type TEase = Ease | Linear;
+export declare type TTwinEase = Ease | Linear;
 
 export declare type TIteralable = {[key: string]: any};
 export interface IIteralable {[key: string]: any};
@@ -83,11 +84,11 @@ export interface IGridOptions {
 export interface IAnimationsOptions {
 	enabled?: boolean,
 	trendChangeSpeed?: number,
-	trendChangeEase?: TEase,
+	trendChangeEase?: TTwinEase,
 	scrollSpeed?: number,
-	scrollEase?: (progress: number) => number,
+	scrollEase?: TEase,
 	autoScrollSpeed?: number,
-	autoScrollEase?: (progress: number) => number,
+	autoScrollEase?: TEase,
 	zoomSpeed?: number,
-	zoomEase?: (progress: number) => number,
+	zoomEase?: TEase,
 }

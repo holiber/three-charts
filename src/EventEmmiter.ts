@@ -5,6 +5,8 @@ import {EE2} from './deps';
  */
 export class EventEmitter {
 	private ee: EventEmitter2;
+
+	// TODO: allow to create EE instances only in Chart class
 	constructor() {
 		this.ee = new EE2();
 	}

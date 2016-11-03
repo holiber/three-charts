@@ -128,6 +128,7 @@ export class Utils {
 	static createNearestTexture(width: number, height: number, fn: (ctx: CanvasRenderingContext2D) => void ): Texture{
 		var texture = this.createTexture(width, height, fn);
 		texture.minFilter = THREE.NearestFilter;
+		texture.magFilter = THREE.NearestFilter;
 		return texture;
 	}
 

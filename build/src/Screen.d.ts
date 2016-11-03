@@ -8,11 +8,16 @@ export interface IScreenTransformOptions {
     zoomX?: number;
     zoomY?: number;
 }
+export declare enum TRANSFORMATION_EVENT {
+    STARTED = 0,
+    FINISHED = 1,
+}
 /**
  * manage camera, and contains methods for transforming pixels to values
  */
 export declare class Screen {
     options: IScreenTransformOptions;
+    transformationInProgress: boolean;
     private chart;
     private scrollXAnimation;
     private scrollYAnimation;
@@ -29,9 +34,10 @@ export declare class Screen {
         x: number;
         y: number;
     };
-    onZoomFrame(cb: (zoomX: number, zoomY: number) => void): Function;
-    onScrollFrame(cb: (options: IScreenTransformOptions) => void): Function;
-    onTransformationFrame(cb: (options: IScreenTransformOptions) => void): Function;
+    onZoomFrame(cb: (zoomX: number, zoomY: number) => any): Function;
+    onScrollFrame(cb: (options: IScreenTransformOptions) => any): Function;
+    onTransformationFrame(cb: (options: IScreenTransformOptions) => any): Function;
+    onTransformationEvent(cb: (event: TRANSFORMATION_EVENT) => any): Function;
     cameraIsMoving(): boolean;
     /**
      * setup zoom and scroll
@@ -79,17 +85,9 @@ export declare class Screen {
      *  returns scrollX xVal by screen scrollX coordinate
      */
     getValueByScreenX(x: number): number;
-    /**
-     *  returns scrollY xVal by screen scrollY coordinate
-     */
     getValueByScreenY(y: number): number;
-    /**
-     *  returns screen scrollX xVal by screen scrollY coordinate
-     */
     getScreenXByValue(xVal: number): number;
-    /**
-     * returns screen scrollX coordinate by offset in pixels from xAxis.range.zeroVal xVal
-     */
+    getScreenYByValue(yVal: number): number;
     getScreenXByPoint(xVal: number): number;
     /**
      * returns offset in pixels from xAxis.range.zeroVal xVal by screen scrollX coordinate

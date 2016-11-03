@@ -1,4 +1,5 @@
-import {Chart, Utils, TrendsWidget, TrendWidget } from 'three-charts';
+import {Chart, Utils, TrendsWidget, TrendWidget, TRANSFORMATION_EVENT, Color } from 'three-charts';
+import { TrendMark, TREND_MARK_SIDE, TrendsMarksPlugin } from "./TrendsMarksPlugin";
 import Geometry = THREE.Geometry;
 import Mesh = THREE.Mesh;
 import LineBasicMaterial = THREE.LineBasicMaterial;
@@ -12,11 +13,9 @@ import Vector2 = THREE.Vector2;
 import LineSegments = THREE.LineSegments;
 import LineDashedMaterial = THREE.LineDashedMaterial;
 import MeshBasicMaterial = THREE.MeshBasicMaterial;
-import { TrendMark, TREND_MARK_SIDE, TrendsMarksPlugin } from "./TrendsMarksPlugin";
-import { Color } from "../../../src/Color";
+import LinearFilter = THREE.LinearFilter;
+import NearestFilter = THREE.NearestFilter;
 
-
-const MAX_MARKS_IN_ROW = 3;
 
 /**
  * widget for drawing trends marks for all trends
@@ -33,7 +32,6 @@ export class TrendsMarksWidget extends TrendsWidget<TrendMarksWidget> {
  */
 export class TrendMarksWidget extends TrendWidget {
 
-	private trendsMarksPlugin: TrendsMarksPlugin;
 	private object3D: Object3D;
 	private marksWidgets: {[name: string]: TrendMarkWidget} = {};
 
@@ -49,7 +47,8 @@ export class TrendMarksWidget extends TrendWidget {
 	
 	protected bindEvents() {
 		super.bindEvents();
-		this.getTrendsMarksPlugin().onChange(() => this.onMarksChange());
+		this.bindEvent(this.getTrendsMarksPlugin().onChange(() => this.onMarksChange()));
+		this.bindEvent(this.chart.screen.onTransformationEvent((event) => this.onScreenTransformationEvent(event)));
 	}
 
 	private getTrendsMarksPlugin(): TrendsMarksPlugin {
@@ -83,6 +82,13 @@ export class TrendMarksWidget extends TrendWidget {
 		delete this.marksWidgets[markName];
 	}
 
+	private onScreenTransformationEvent(event: TRANSFORMATION_EVENT) {
+		var widgets = this.marksWidgets;
+		for (let markName in widgets) {
+			widgets[markName].onScreenTransformationEventHandler(event);
+		}
+	}
+
 	protected onZoomFrame() {
 		var widgets = this.marksWidgets;
 		for (let markName in widgets) {
@@ -96,6 +102,7 @@ export class TrendMarksWidget extends TrendWidget {
 			widgets[markName].onSegmentsAnimate();
 		}
 	}
+
 }
 
 /**
@@ -117,7 +124,7 @@ class TrendMarkWidget {
 		let options = this.mark.options;
 		let {width, height} = options;
 
-		let texture = Utils.createPixelPerfectTexture(width, height, (ctx) => {
+		let texture = Utils.createNearestTexture(width, height, (ctx) => {
 			options.onRender([this.mark], ctx, this.chart);
 		});
 
@@ -142,33 +149,39 @@ class TrendMarkWidget {
 		this.updatePosition();
 	}
 
+	onScreenTransformationEventHandler(event: TRANSFORMATION_EVENT) {
+		let texture = (this.markMesh.material as MeshBasicMaterial).map;
+
+		// make text sharp when screen is not transforming
+		if (event == TRANSFORMATION_EVENT.STARTED) {
+			texture.magFilter = LinearFilter;
+		} else {
+			texture.magFilter = NearestFilter;
+		}
+
+		texture.needsUpdate = true;
+	}
+
 	private updatePosition() {
 		if (!this.mark.segment) return;
 		let mark = this.mark;
-		let options = this.mark.options;
-		// let meshMaterial = this.markMesh.material as MeshBasicMaterial;
-		// let lineMaterial = this.line.material as LineBasicMaterial;
-		// if (mark.row >= MAX_MARKS_IN_ROW - 1) {
-		// 	meshMaterial.opacity = 0;
-		// 	lineMaterial.opacity = 0;
-		// } else {
-		// 	meshMaterial.opacity = 1;
-		// 	lineMaterial.opacity = 1;
-		// }
-
 		let screen = this.chart.screen;
+
 		let posX = screen.getPointOnXAxis(mark.xVal);
 		let posY = screen.getPointOnYAxis(mark.yVal);
+
 		this.markMesh.position.set(posX, posY, 0);
 	}
 
 	private show() {
 		if (!this.mark.segment) return;
 		this.updatePosition();
-		var animations = this.chart.state.animations;
-		var time = animations.enabled ? 1 : 0;
 		this.markMesh.scale.set(0.01, 0.01, 1);
-		TweenLite.to(this.markMesh.scale, time, {x: 1, y: 1, ease: Elastic.easeOut});
+
+		this.chart.animationManager
+			.animate(1000, this.mark.options.ease)
+			.from(this.markMesh.scale as Object)
+			.to({x: 1, y: 1});
 	}
 }
 
@@ -194,7 +207,7 @@ export const DEFAULT_RENDERER = (
 	let textPosY = isTopSide ? textOffset * 1.3 : height - textOffset * 0.7;
 
 	// draw rect
-	ctx.fillStyle = rgbaColor; //'rgba(0,0,0,0.3)';
+	ctx.fillStyle = rgbaColor;
 	ctx.strokeStyle = rgbaColor;
 	ctx.fillRect(
 		0,
@@ -202,7 +215,6 @@ export const DEFAULT_RENDERER = (
 		width,
 		isTopSide ? textOffset * 2 : -textOffset * 2
 	);
-
 
 	// draw dot
 	ctx.beginPath();
@@ -213,15 +225,14 @@ export const DEFAULT_RENDERER = (
 	let lineEndY = textPosY ;
 	ctx.beginPath();
 	ctx.moveTo(centerX, centerY);
-	ctx.lineTo(textPosX, lineEndY);
+	ctx.lineTo(centerX, lineEndY);
 	ctx.stroke();
 
 	// draw text
 	ctx.beginPath();
 	ctx.textAlign = 'center';
 	ctx.font = font;
-	ctx.fillStyle = 'white';
-	ctx.strokeStyle = 'white';
+	ctx.fillStyle = 'rgba(250, 250, 250, 0.8)';
 	ctx.fillText(
 		options.title,
 		Math.round(textPosX),
@@ -234,31 +245,4 @@ export const DEFAULT_RENDERER = (
 	// ctx.rect(0, 0, width, height);
 	// ctx.stroke();
 
-
-	// let isTopSide = options.orientation == TREND_MARK_SIDE.TOP;
-	// var circleOffset = isTopSide ? 30 : 0;
-	// var circleR = 22;
-	// var circleX = markWidth / 2;
-	// var circleY = circleOffset + circleR;
-	// var textOffset = isTopSide ? 10 : circleR * 2 + 15;
-
-	// // title and description
-	// ctx.beginPath();
-	// ctx.textAlign = 'center';
-	// ctx.font = "11px Arial";
-	// ctx.fillStyle = 'rgba(255,255,255, 0.6)';
-	// ctx.fillText(options.title, circleX, textOffset);
-	// ctx.fillStyle = options.descriptionColor;
-	// ctx.fillText(options.description, circleX, textOffset + 12);
-    //
-	// // icon circle
-	// ctx.beginPath();
-	// ctx.fillStyle = options.iconColor;
-	// ctx.arc(circleX, circleY, circleR, 0, 2 * Math.PI);
-	// ctx.fill();
-    //
-	// // icon text
-	// ctx.font = "19px Arial";
-	// ctx.fillStyle = 'rgb(255, 255, 255)';
-	// ctx.fillText(options.icon, circleX, circleY + 7);
 };

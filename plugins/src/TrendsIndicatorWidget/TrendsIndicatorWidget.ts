@@ -4,11 +4,10 @@ import PlaneBufferGeometry = THREE.PlaneBufferGeometry;
 import MeshBasicMaterial = THREE.MeshBasicMaterial;
 import Vector3 = THREE.Vector3;
 import PlaneGeometry = THREE.PlaneGeometry;
-import Color = THREE.Color;
 import {
 	TrendSegmentsManager,
 	TrendSegment,
-	ChartColor,
+	Color,
 	Chart,
 	Utils,
 	TrendWidget,
@@ -16,7 +15,7 @@ import {
 	ITrendOptions
 } from "three-charts";
 
-const CANVAS_WIDTH = 128;
+const CANVAS_WIDTH = 150;
 const CANVAS_HEIGHT = 64;
 const OFFSET_X = 15;
 
@@ -61,7 +60,7 @@ export class TrendIndicator extends TrendWidget {
 	}
 
 	private initObject() {
-		var color = new ChartColor(this.trend.getOptions().lineColor);
+		var color = new Color(this.trend.getOptions().lineColor);
 		var texture = Utils.createPixelPerfectTexture(CANVAS_WIDTH, CANVAS_HEIGHT, (ctx) => {
 			ctx.beginPath();
 			ctx.font = "15px Arial";
