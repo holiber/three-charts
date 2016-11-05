@@ -1,5 +1,6 @@
-import { Chart, TrendsWidget, TrendWidget } from 'three-charts';
+import { Chart, TrendsWidget, TrendWidget, TRANSFORMATION_EVENT } from 'three-charts';
 import { TrendMark } from "./TrendsMarksPlugin";
+import Mesh = THREE.Mesh;
 import Object3D = THREE.Object3D;
 /**
  * widget for drawing trends marks for all trends
@@ -25,4 +26,20 @@ export declare class TrendMarksWidget extends TrendWidget {
     protected onZoomFrame(): void;
     protected onSegmentsAnimate(): void;
 }
-export declare const DEFAULT_RENDERER: (marks: TrendMark[], ctx: CanvasRenderingContext2D, chart: Chart) => void;
+/**
+ * widget for drawing one trend mark
+ */
+export declare class TrendMarkWidget {
+    mark: TrendMark;
+    private chart;
+    private markMesh;
+    constructor(chart: Chart, trendMark: TrendMark);
+    protected initObject(): void;
+    getObject3D(): Mesh;
+    onSegmentsAnimate(): void;
+    onZoomFrameHandler(): void;
+    onScreenTransformationEventHandler(event: TRANSFORMATION_EVENT): void;
+    private updatePosition();
+    private show();
+}
+export declare const DEFAULT_RENDERER: (trendMarkWidget: TrendMarkWidget, ctx: CanvasRenderingContext2D, chart: Chart) => void;

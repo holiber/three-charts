@@ -1,4 +1,5 @@
 import { ChartPlugin, ChartWidget, TrendSegment, Chart, TColor, TEase } from 'three-charts';
+import { TrendMarkWidget } from './TrendsMarksWidget';
 export declare enum TREND_MARK_SIDE {
     TOP = 0,
     BOTTOM = 1,
@@ -25,7 +26,7 @@ export interface ITrendMarkOptions {
     /**
      * custom render function
      */
-    onRender?: (marks: TrendMark[], ctx: CanvasRenderingContext2D, chart: Chart) => any;
+    onRender?: (trendMarkWidget: TrendMarkWidget, ctx: CanvasRenderingContext2D, chart: Chart) => any;
     ease?: TEase;
     easeSpeed?: number;
     userData?: any;

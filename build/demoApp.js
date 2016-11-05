@@ -5427,7 +5427,7 @@
                 var options = this.mark.options;
                 var width = options.width, height = options.height;
                 var texture = three_charts_1.Utils.createNearestTexture(width, height, function(ctx) {
-                    options.onRender([ _this.mark ], ctx, _this.chart);
+                    options.onRender(_this, ctx, _this.chart);
                 });
                 texture.magFilter = this.chart.screen.transformationInProgress ? LinearFilter : NearestFilter;
                 var material = new THREE.MeshBasicMaterial({
@@ -5470,8 +5470,9 @@
             };
             return TrendMarkWidget;
         }();
-        exports.DEFAULT_RENDERER = function(marks, ctx, chart) {
-            var mark = marks[0];
+        exports.TrendMarkWidget = TrendMarkWidget;
+        exports.DEFAULT_RENDERER = function(trendMarkWidget, ctx, chart) {
+            var mark = trendMarkWidget.mark;
             var options = mark.options;
             var isTopSide = options.orientation == TrendsMarksPlugin_1.TREND_MARK_SIDE.TOP;
             var color = options.color !== void 0 ? new three_charts_1.Color(options.color) : new three_charts_1.Color(chart.getTrend(options.trendName).getOptions().lineColor);

@@ -1,7 +1,7 @@
 
 import Vector3 = THREE.Vector3;
 import { ChartPlugin, ChartWidget, TrendSegment, TREND_TYPE, Utils, Chart, TColor, TEase } from 'three-charts';
-import { TrendsMarksWidget, DEFAULT_RENDERER } from './TrendsMarksWidget';
+import { TrendsMarksWidget, DEFAULT_RENDERER, TrendMarkWidget } from './TrendsMarksWidget';
 import { EASING } from "../../../src/Easing";
 
 export enum TREND_MARK_SIDE {TOP, BOTTOM}
@@ -25,7 +25,7 @@ export interface ITrendMarkOptions {
 	 * custom render function
 	 */
 	onRender?: (
-		marks: TrendMark[],
+		trendMarkWidget: TrendMarkWidget,
 		ctx: CanvasRenderingContext2D,
 		chart: Chart
 	) => any,

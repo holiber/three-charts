@@ -108,9 +108,9 @@ export class TrendMarksWidget extends TrendWidget {
 /**
  * widget for drawing one trend mark
  */
-class TrendMarkWidget {
+export class TrendMarkWidget {
+	mark: TrendMark;
 	private chart: Chart;
-	private mark: TrendMark;
 	private markMesh: Mesh;
 
 	constructor(chart: Chart, trendMark: TrendMark) {
@@ -125,7 +125,7 @@ class TrendMarkWidget {
 		let {width, height} = options;
 
 		let texture = Utils.createNearestTexture(width, height, (ctx) => {
-			options.onRender([this.mark], ctx, this.chart);
+			options.onRender(this, ctx, this.chart);
 		});
 
 
@@ -185,12 +185,12 @@ class TrendMarkWidget {
 }
 
 export const DEFAULT_RENDERER = (
-	marks: TrendMark[],
+	trendMarkWidget: TrendMarkWidget,
 	ctx: CanvasRenderingContext2D,
 	chart: Chart
 ) =>  {
 
-	let mark = marks[0];
+	let mark = trendMarkWidget.mark;
 	let options = mark.options;
 	let isTopSide = options.orientation == TREND_MARK_SIDE.TOP;
 	let color = options.color !== void 0 ?
