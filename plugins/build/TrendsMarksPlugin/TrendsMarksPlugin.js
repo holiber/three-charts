@@ -38,6 +38,7 @@
         };
         var three_charts_1 = __webpack_require__(2);
         var TrendsMarksWidget_1 = __webpack_require__(6);
+        var Easing_1 = __webpack_require__(7);
         (function(TREND_MARK_SIDE) {
             TREND_MARK_SIDE[TREND_MARK_SIDE["TOP"] = 0] = "TOP";
             TREND_MARK_SIDE[TREND_MARK_SIDE["BOTTOM"] = 1] = "BOTTOM";
@@ -50,12 +51,14 @@
         var AXIS_MARK_DEFAULT_OPTIONS = {
             trendName: "",
             title: "",
-            color: "rgb(40,136,75)",
+            color: "rgba(#0099d9, 0.5)",
             xVal: 0,
             orientation: TREND_MARK_SIDE.TOP,
-            width: 85,
-            height: 200,
+            width: 105,
+            height: 100,
             margin: 10,
+            ease: Easing_1.EASING.Elastic.Out,
+            easeSpeed: 1e3,
             onRender: TrendsMarksWidget_1.DEFAULT_RENDERER
         };
         var TrendsMarksPlugin = function(_super) {
@@ -65,9 +68,9 @@
                 this.items = {};
                 this.rects = {};
             }
-            TrendsMarksPlugin.prototype.onInitialStateApplied = function() {
-                this.bindEvents();
+            TrendsMarksPlugin.prototype.onInitialStateAppliedHandler = function() {
                 this.onMarksChangeHandler();
+                this.bindEvents();
             };
             TrendsMarksPlugin.prototype.onStateChanged = function() {
                 this.onMarksChangeHandler();
@@ -97,14 +100,11 @@
             TrendsMarksPlugin.prototype.bindEvents = function() {
                 var _this = this;
                 this.chart.trendsManager.onSegmentsRebuilded(function() {
-                    return _this.updateMarksSegments();
+                    _this.updateMarksSegments();
                 });
                 this.chart.screen.onZoomFrame(function() {
                     return _this.calclulateMarksPositions();
                 });
-            };
-            TrendsMarksPlugin.prototype.onInitialStateAppliedHandler = function() {
-                this.onMarksChangeHandler();
             };
             TrendsMarksPlugin.prototype.onMarksChangeHandler = function() {
                 var trendsMarksOptions = this.getOptions().items;
@@ -129,7 +129,6 @@
                     delete this.items[markName];
                 }
                 this.updateMarksSegments();
-                this.ee.emit(EVENTS[EVENTS.CHANGE]);
             };
             TrendsMarksPlugin.prototype.calclulateMarksPositions = function() {
                 this.rects = {};
@@ -200,6 +199,7 @@
                     }
                 }
                 this.calclulateMarksPositions();
+                this.ee.emit(EVENTS[EVENTS.CHANGE]);
             };
             TrendsMarksPlugin.prototype.getTrendMarks = function(trendName) {
                 var trendMarks = [];
@@ -254,11 +254,11 @@
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
         var three_charts_1 = __webpack_require__(2);
+        var TrendsMarksPlugin_1 = __webpack_require__(5);
         var Mesh = THREE.Mesh;
         var Object3D = THREE.Object3D;
-        var TrendsMarksPlugin_1 = __webpack_require__(5);
-        var Color_1 = __webpack_require__(7);
-        var MAX_MARKS_IN_ROW = 3;
+        var LinearFilter = THREE.LinearFilter;
+        var NearestFilter = THREE.NearestFilter;
         var TrendsMarksWidget = function(_super) {
             __extends(TrendsMarksWidget, _super);
             function TrendsMarksWidget() {
@@ -285,9 +285,12 @@
             TrendMarksWidget.prototype.bindEvents = function() {
                 var _this = this;
                 _super.prototype.bindEvents.call(this);
-                this.getTrendsMarksPlugin().onChange(function() {
+                this.bindEvent(this.getTrendsMarksPlugin().onChange(function() {
                     return _this.onMarksChange();
-                });
+                }));
+                this.bindEvent(this.chart.screen.onTransformationEvent(function(event) {
+                    return _this.onScreenTransformationEvent(event);
+                }));
             };
             TrendMarksWidget.prototype.getTrendsMarksPlugin = function() {
                 return this.chart.getPlugin(TrendsMarksPlugin_1.TrendsMarksPlugin.NAME);
@@ -315,6 +318,12 @@
                 this.object3D.remove(this.marksWidgets[markName].getObject3D());
                 delete this.marksWidgets[markName];
             };
+            TrendMarksWidget.prototype.onScreenTransformationEvent = function(event) {
+                var widgets = this.marksWidgets;
+                for (var markName in widgets) {
+                    widgets[markName].onScreenTransformationEventHandler(event);
+                }
+            };
             TrendMarksWidget.prototype.onZoomFrame = function() {
                 var widgets = this.marksWidgets;
                 for (var markName in widgets) {
@@ -341,7 +350,7 @@
                 var _this = this;
                 var options = this.mark.options;
                 var width = options.width, height = options.height;
-                var texture = three_charts_1.Utils.createPixelPerfectTexture(width, height, function(ctx) {
+                var texture = three_charts_1.Utils.createNearestTexture(width, height, function(ctx) {
                     options.onRender([ _this.mark ], ctx, _this.chart);
                 });
                 var material = new THREE.MeshBasicMaterial({
@@ -360,10 +369,18 @@
             TrendMarkWidget.prototype.onZoomFrameHandler = function() {
                 this.updatePosition();
             };
+            TrendMarkWidget.prototype.onScreenTransformationEventHandler = function(event) {
+                var texture = this.markMesh.material.map;
+                if (event == three_charts_1.TRANSFORMATION_EVENT.STARTED) {
+                    texture.magFilter = LinearFilter;
+                } else {
+                    texture.magFilter = NearestFilter;
+                }
+                texture.needsUpdate = true;
+            };
             TrendMarkWidget.prototype.updatePosition = function() {
                 if (!this.mark.segment) return;
                 var mark = this.mark;
-                var options = this.mark.options;
                 var screen = this.chart.screen;
                 var posX = screen.getPointOnXAxis(mark.xVal);
                 var posY = screen.getPointOnYAxis(mark.yVal);
@@ -372,13 +389,10 @@
             TrendMarkWidget.prototype.show = function() {
                 if (!this.mark.segment) return;
                 this.updatePosition();
-                var animations = this.chart.state.animations;
-                var time = animations.enabled ? 1 : 0;
                 this.markMesh.scale.set(.01, .01, 1);
-                TweenLite.to(this.markMesh.scale, time, {
+                this.chart.animationManager.animate(1e3, this.mark.options.ease).from(this.markMesh.scale).to({
                     x: 1,
-                    y: 1,
-                    ease: Elastic.easeOut
+                    y: 1
                 });
             };
             return TrendMarkWidget;
@@ -387,7 +401,7 @@
             var mark = marks[0];
             var options = mark.options;
             var isTopSide = options.orientation == TrendsMarksPlugin_1.TREND_MARK_SIDE.TOP;
-            var color = options.color !== void 0 ? new Color_1.Color(options.color) : new Color_1.Color(chart.getTrend(options.trendName).getOptions().lineColor);
+            var color = options.color !== void 0 ? new three_charts_1.Color(options.color) : new three_charts_1.Color(chart.getTrend(options.trendName).getOptions().lineColor);
             var rgbaColor = color.getTransparent(.5).rgbaStr;
             var width = options.width, height = options.height;
             var centerX = Math.round(width / 2);
@@ -405,54 +419,196 @@
             var lineEndY = textPosY;
             ctx.beginPath();
             ctx.moveTo(centerX, centerY);
-            ctx.lineTo(textPosX, lineEndY);
+            ctx.lineTo(centerX, lineEndY);
             ctx.stroke();
             ctx.beginPath();
             ctx.textAlign = "center";
             ctx.font = font;
-            ctx.fillStyle = "white";
-            ctx.strokeStyle = "white";
+            ctx.fillStyle = "rgba(250, 250, 250, 0.8)";
             ctx.fillText(options.title, Math.round(textPosX), Math.round(textPosY));
         };
     }, function(module, exports) {
         "use strict";
-        var Color = function() {
-            function Color(color) {
-                this.set(color);
+        exports.EASING = {
+            Linear: {
+                None: function(k) {
+                    return k;
+                }
+            },
+            Quadratic: {
+                In: function(k) {
+                    return k * k;
+                },
+                Out: function(k) {
+                    return k * (2 - k);
+                },
+                InOut: function(k) {
+                    if ((k *= 2) < 1) {
+                        return .5 * k * k;
+                    }
+                    return -.5 * (--k * (k - 2) - 1);
+                }
+            },
+            Cubic: {
+                In: function(k) {
+                    return k * k * k;
+                },
+                Out: function(k) {
+                    return --k * k * k + 1;
+                },
+                InOut: function(k) {
+                    if ((k *= 2) < 1) {
+                        return .5 * k * k * k;
+                    }
+                    return .5 * ((k -= 2) * k * k + 2);
+                }
+            },
+            Quartic: {
+                In: function(k) {
+                    return k * k * k * k;
+                },
+                Out: function(k) {
+                    return 1 - --k * k * k * k;
+                },
+                InOut: function(k) {
+                    if ((k *= 2) < 1) {
+                        return .5 * k * k * k * k;
+                    }
+                    return -.5 * ((k -= 2) * k * k * k - 2);
+                }
+            },
+            Quintic: {
+                In: function(k) {
+                    return k * k * k * k * k;
+                },
+                Out: function(k) {
+                    return --k * k * k * k * k + 1;
+                },
+                InOut: function(k) {
+                    if ((k *= 2) < 1) {
+                        return .5 * k * k * k * k * k;
+                    }
+                    return .5 * ((k -= 2) * k * k * k * k + 2);
+                }
+            },
+            Sinusoidal: {
+                In: function(k) {
+                    return 1 - Math.cos(k * Math.PI / 2);
+                },
+                Out: function(k) {
+                    return Math.sin(k * Math.PI / 2);
+                },
+                InOut: function(k) {
+                    return .5 * (1 - Math.cos(Math.PI * k));
+                }
+            },
+            Exponential: {
+                In: function(k) {
+                    return k === 0 ? 0 : Math.pow(1024, k - 1);
+                },
+                Out: function(k) {
+                    return k === 1 ? 1 : 1 - Math.pow(2, -10 * k);
+                },
+                InOut: function(k) {
+                    if (k === 0) {
+                        return 0;
+                    }
+                    if (k === 1) {
+                        return 1;
+                    }
+                    if ((k *= 2) < 1) {
+                        return .5 * Math.pow(1024, k - 1);
+                    }
+                    return .5 * (-Math.pow(2, -10 * (k - 1)) + 2);
+                }
+            },
+            Circular: {
+                In: function(k) {
+                    return 1 - Math.sqrt(1 - k * k);
+                },
+                Out: function(k) {
+                    return Math.sqrt(1 - --k * k);
+                },
+                InOut: function(k) {
+                    if ((k *= 2) < 1) {
+                        return -.5 * (Math.sqrt(1 - k * k) - 1);
+                    }
+                    return .5 * (Math.sqrt(1 - (k -= 2) * k) + 1);
+                }
+            },
+            Elastic: {
+                In: function(k) {
+                    if (k === 0) {
+                        return 0;
+                    }
+                    if (k === 1) {
+                        return 1;
+                    }
+                    return -Math.pow(2, 10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI);
+                },
+                Out: function(k) {
+                    if (k === 0) {
+                        return 0;
+                    }
+                    if (k === 1) {
+                        return 1;
+                    }
+                    return Math.pow(2, -10 * k) * Math.sin((k - .1) * 5 * Math.PI) + 1;
+                },
+                InOut: function(k) {
+                    if (k === 0) {
+                        return 0;
+                    }
+                    if (k === 1) {
+                        return 1;
+                    }
+                    k *= 2;
+                    if (k < 1) {
+                        return -.5 * Math.pow(2, 10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI);
+                    }
+                    return .5 * Math.pow(2, -10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI) + 1;
+                }
+            },
+            Back: {
+                In: function(k) {
+                    var s = 1.70158;
+                    return k * k * ((s + 1) * k - s);
+                },
+                Out: function(k) {
+                    var s = 1.70158;
+                    return --k * k * ((s + 1) * k + s) + 1;
+                },
+                InOut: function(k) {
+                    var s = 1.70158 * 1.525;
+                    if ((k *= 2) < 1) {
+                        return .5 * (k * k * ((s + 1) * k - s));
+                    }
+                    return .5 * ((k -= 2) * k * ((s + 1) * k + s) + 2);
+                }
+            },
+            Bounce: {
+                In: function(k) {
+                    return 1 - exports.EASING.Bounce.Out(1 - k);
+                },
+                Out: function(k) {
+                    if (k < 1 / 2.75) {
+                        return 7.5625 * k * k;
+                    } else if (k < 2 / 2.75) {
+                        return 7.5625 * (k -= 1.5 / 2.75) * k + .75;
+                    } else if (k < 2.5 / 2.75) {
+                        return 7.5625 * (k -= 2.25 / 2.75) * k + .9375;
+                    } else {
+                        return 7.5625 * (k -= 2.625 / 2.75) * k + .984375;
+                    }
+                },
+                InOut: function(k) {
+                    if (k < .5) {
+                        return exports.EASING.Bounce.In(k * 2) * .5;
+                    }
+                    return exports.EASING.Bounce.Out(k * 2 - 1) * .5 + .5;
+                }
             }
-            /**!
-	     * @preserve $.parseColor
-	     * Copyright 2011 THEtheChad Elliott
-	     * Released under the MIT and GPL licenses.
-	     */
-            Color.parseColor = function(color) {
-                var cache, p = parseInt, color = color.replace(/\s\s*/g, "");
-                if (cache = /^#([\da-fA-F]{2})([\da-fA-F]{2})([\da-fA-F]{2})/.exec(color)) cache = [ p(cache[1], 16), p(cache[2], 16), p(cache[3], 16) ]; else if (cache = /^#([\da-fA-F])([\da-fA-F])([\da-fA-F])/.exec(color)) cache = [ p(cache[1], 16) * 17, p(cache[2], 16) * 17, p(cache[3], 16) * 17 ]; else if (cache = /^rgba\(#([\da-fA-F]{2})([\da-fA-F]{2})([\da-fA-F]{2}),(([0-9]*[.])?[0-9]+)/.exec(color)) cache = [ p(cache[1], 16), p(cache[2], 16), p(cache[3], 16), +cache[4] ]; else if (cache = /^rgba\(([\d]+),([\d]+),([\d]+),([\d]+|[\d]*.[\d]+)\)/.exec(color)) cache = [ +cache[1], +cache[2], +cache[3], +cache[4] ]; else if (cache = /^rgb\(([\d]+),([\d]+),([\d]+)\)/.exec(color)) cache = [ +cache[1], +cache[2], +cache[3] ]; else throw Error(color + " is not supported by parseColor");
-                isNaN(cache[3]) && (cache[3] = 1);
-                return cache;
-            };
-            Color.numberToHexStr = function(value) {
-                var result = value.toString(16);
-                return "#" + "0".repeat(6 - result.length) + result;
-            };
-            Color.prototype.set = function(color) {
-                if (typeof color == "number") color = Color.numberToHexStr(color);
-                var colorStr = color;
-                var rgba = Color.parseColor(colorStr);
-                this.r = rgba[0];
-                this.g = rgba[1];
-                this.b = rgba[2];
-                this.a = rgba[3];
-                this.value = (rgba[0] << 8 * 2) + (rgba[1] << 8) + rgba[2];
-                this.hexStr = Color.numberToHexStr(this.value);
-                this.rgbaStr = "rgba(" + this.r + ", " + this.g + ", " + this.b + ", " + this.a + ")";
-            };
-            Color.prototype.getTransparent = function(opacity) {
-                return new Color("rgba(" + this.hexStr + ", " + opacity + ")");
-            };
-            return Color;
-        }();
-        exports.Color = Color;
+        };
     } ]);
 });
 

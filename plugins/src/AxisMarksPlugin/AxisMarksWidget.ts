@@ -1,5 +1,5 @@
 import {Chart, Utils, TrendsWidget, TrendWidget, TRANSFORMATION_EVENT, Color } from 'three-charts';
-import { TrendMark, TREND_MARK_SIDE, TrendsMarksPlugin } from "./TrendsMarksPlugin";
+import { TrendMark, TREND_MARK_SIDE, TrendsMarksPlugin } from "./AxisMarksPlugin";
 import Geometry = THREE.Geometry;
 import Mesh = THREE.Mesh;
 import LineBasicMaterial = THREE.LineBasicMaterial;

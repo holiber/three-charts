@@ -191,7 +191,7 @@ export class Chart {
 	};
 	plugins: {[pluginName: string]: ChartPlugin} = {};
 	trendsManager: TrendsManager;
-	animationManager = new AnimationManager();
+	animationManager: AnimationManager;
 	screen: Screen;
 	xAxisMarks: AxisMarks;
 	yAxisMarks: AxisMarks;
@@ -220,6 +220,8 @@ export class Chart {
 		this.setState({computedData: this.getComputedData()});
 		this.savePrevState();
 
+		this.animationManager = new AnimationManager();
+		this.animationManager.setAimationsEnabled(this.state.animations.enabled);
 		this.screen = new Screen(this);
 		this.xAxisMarks = new AxisMarks(this, AXIS_TYPE.X);
 		this.yAxisMarks = new AxisMarks(this, AXIS_TYPE.Y);

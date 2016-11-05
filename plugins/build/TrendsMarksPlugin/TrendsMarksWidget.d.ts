@@ -1,6 +1,6 @@
 import { Chart, TrendsWidget, TrendWidget } from 'three-charts';
-import Object3D = THREE.Object3D;
 import { TrendMark } from "./TrendsMarksPlugin";
+import Object3D = THREE.Object3D;
 /**
  * widget for drawing trends marks for all trends
  */
@@ -12,7 +12,6 @@ export declare class TrendsMarksWidget extends TrendsWidget<TrendMarksWidget> {
  * widget for drawing trend marks for one trend
  */
 export declare class TrendMarksWidget extends TrendWidget {
-    private trendsMarksPlugin;
     private object3D;
     private marksWidgets;
     constructor(chart: Chart, trendName: string);
@@ -22,6 +21,7 @@ export declare class TrendMarksWidget extends TrendWidget {
     private onMarksChange();
     private createMarkWidget(mark);
     private destroyMarkWidget(markName);
+    private onScreenTransformationEvent(event);
     protected onZoomFrame(): void;
     protected onSegmentsAnimate(): void;
 }

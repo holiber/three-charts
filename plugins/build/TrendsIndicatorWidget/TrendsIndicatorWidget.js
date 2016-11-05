@@ -38,7 +38,7 @@
         };
         var Mesh = THREE.Mesh;
         var three_charts_1 = __webpack_require__(2);
-        var CANVAS_WIDTH = 128;
+        var CANVAS_WIDTH = 150;
         var CANVAS_HEIGHT = 64;
         var OFFSET_X = 15;
         var TrendsIndicatorWidget = function(_super) {

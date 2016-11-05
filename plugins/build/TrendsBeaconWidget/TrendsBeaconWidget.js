@@ -38,6 +38,8 @@
         var PlaneBufferGeometry = THREE.PlaneBufferGeometry;
         var MeshBasicMaterial = THREE.MeshBasicMaterial;
         var three_charts_1 = __webpack_require__(2);
+        var ANIMATION_TIME = 1e3;
+        var ANIMATION_DELAY = 300;
         var TrendsBeaconWidget = function(_super) {
             __extends(TrendsBeaconWidget, _super);
             function TrendsBeaconWidget() {
@@ -55,9 +57,6 @@
             function TrendBeacon(chart, trendName) {
                 _super.call(this, chart, trendName);
                 this.initObject();
-                if (chart.state.animations.enabled) {
-                    this.animate();
-                }
                 this.updatePosition();
             }
             TrendBeacon.widgetIsEnabled = function(trendOptions) {
@@ -68,6 +67,7 @@
             };
             TrendBeacon.prototype.onTrendChange = function() {
                 this.updatePosition();
+                this.animate();
             };
             TrendBeacon.prototype.bindEvents = function() {
                 var _this = this;
@@ -75,19 +75,13 @@
                 this.bindEvent(this.chart.onScroll(function() {
                     return _this.updatePosition();
                 }));
-                this.bindEvent(this.chart.onChange(function(changedProps) {
-                    return _this.onStateChange(changedProps);
-                }));
-                this.bindEvent(this.chart.onDestroy(function() {
-                    return _this.stopAnimation();
-                }));
             };
             TrendBeacon.prototype.initObject = function() {
                 var light = this.mesh = new Mesh(new PlaneBufferGeometry(32, 32), new MeshBasicMaterial({
                     map: TrendBeacon.createTexture(),
                     transparent: true
                 }));
-                light.scale.set(.2, .2, 1);
+                this.setInitialState();
                 light.add(new Mesh(new PlaneBufferGeometry(5, 5), new MeshBasicMaterial({
                     map: TrendBeacon.createTexture()
                 })));
@@ -95,30 +89,31 @@
             };
             TrendBeacon.prototype.animate = function() {
                 var _this = this;
-                this.animated = true;
-                var object = this.mesh;
+                if (!this.chart.state.animations.enabled) return;
+                if (this.animation) this.animation.stop();
+                this.setInitialState();
+                var mesh = this.mesh;
                 var animationObject = {
-                    scale: object.scale.x,
-                    opacity: object.material.opacity
+                    scale: mesh.scale.x,
+                    opacity: mesh.material.opacity
                 };
-                this.mesh.scale.set(.1, .1, 1);
-                setTimeout(function() {
-                    var animation = _this.animation = TweenLite.to(animationObject, 1, {
-                        scale: 1,
-                        opacity: 0
-                    });
-                    animation.eventCallback("onUpdate", function() {
-                        object.scale.set(animationObject.scale, animationObject.scale, 1);
-                        object.material.opacity = animationObject.opacity;
-                    }).eventCallback("onComplete", function() {
-                        _this.animation && animation.restart();
-                    });
-                }, 500);
+                this.animation = this.chart.animationManager.animate(ANIMATION_TIME).withDelay(ANIMATION_DELAY).from(animationObject).to({
+                    scale: 1,
+                    opacity: 0
+                }).onTick(function(animationObject) {
+                    mesh.scale.set(animationObject.scale, animationObject.scale, 1);
+                    mesh.material.opacity = animationObject.opacity;
+                }).then(function() {
+                    _this.setInitialState();
+                });
             };
-            TrendBeacon.prototype.stopAnimation = function() {
-                this.animated = false;
-                this.animation && this.animation.kill();
-                this.animation = null;
+            TrendBeacon.prototype.setInitialState = function() {
+                this.mesh.scale.set(.2, .2, 1);
+                this.mesh.material.opacity = 1;
+            };
+            TrendBeacon.prototype.onDestroy = function() {
+                _super.prototype.onDestroy.call(this);
+                if (this.animation) this.animation.stop();
             };
             TrendBeacon.createTexture = function() {
                 var h = 32, w = 32;
@@ -137,15 +132,6 @@
                 this.segment = trendsSegments.getEndSegment();
                 this.updatePosition();
             };
-            TrendBeacon.prototype.onStateChange = function(changedProps) {
-                if (!changedProps.animations) return;
-                if (changedProps.animations.enabled == void 0 || changedProps.animations.enabled == this.animated) return;
-                if (changedProps.animations.enabled) {
-                    this.animate();
-                } else {
-                    this.stopAnimation();
-                }
-            };
             TrendBeacon.prototype.updatePosition = function() {
                 var chart = this.chart;
                 var xVal, yVal;
@@ -161,7 +147,9 @@
                 var screenWidth = chart.state.width;
                 var x = endPointVector.x;
                 var screenX = chart.screen.getScreenXByPoint(endPointVector.x);
-                if (screenX < 0) x = chart.screen.getPointByScreenX(0);
+                if (screenX < 0) {
+                    x = chart.screen.getPointByScreenX(0);
+                }
                 if (screenX > screenWidth) x = chart.screen.getPointByScreenX(screenWidth);
                 this.mesh.position.set(x, endPointVector.y, .1);
             };

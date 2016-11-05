@@ -1,5 +1,4 @@
-import { ChartPlugin, ChartWidget, TrendSegment, Chart } from 'three-charts';
-import { TColor } from "../../../src/Color";
+import { ChartPlugin, ChartWidget, TrendSegment, Chart, TColor, TEase } from 'three-charts';
 export declare enum TREND_MARK_SIDE {
     TOP = 0,
     BOTTOM = 1,
@@ -27,6 +26,8 @@ export interface ITrendMarkOptions {
      * custom render function
      */
     onRender?: (marks: TrendMark[], ctx: CanvasRenderingContext2D, chart: Chart) => any;
+    ease?: TEase;
+    easeSpeed?: number;
     userData?: any;
 }
 export declare class TrendsMarksPlugin extends ChartPlugin {
@@ -35,7 +36,7 @@ export declare class TrendsMarksPlugin extends ChartPlugin {
     private items;
     private rects;
     constructor(trendsMarksPluginOptions: TTrendsMarksPluginOptions);
-    protected onInitialStateApplied(): void;
+    protected onInitialStateAppliedHandler(): void;
     protected onStateChanged(): void;
     getOptions(): TTrendsMarksPluginOptions;
     getItems(): {
@@ -45,7 +46,6 @@ export declare class TrendsMarksPlugin extends ChartPlugin {
     createMark(options: ITrendMarkOptions): void;
     onChange(cb: () => any): Function;
     protected bindEvents(): void;
-    protected onInitialStateAppliedHandler(): void;
     private onMarksChangeHandler();
     private calclulateMarksPositions();
     private createMarkRect(mark);

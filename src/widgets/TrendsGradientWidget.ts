@@ -141,7 +141,7 @@ export class TrendGradient extends TrendWidget {
 		}
 
 		// setup visible segments and collapse invisible
-		for (let i = 0; i <= segmentsToProcessCnt; i++) {
+		for (let i = 0; i < segmentsToProcessCnt; i++) {
 			if (segmentInd <= lastDisplayedSegmentInd) {
 				let segment = trendSegments[segmentInd];
 				this.setupSegmentVertices(i, segment.currentAnimationState);

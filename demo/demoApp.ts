@@ -164,8 +164,8 @@ window.onload = function () {
 	]
 	);
 
-	chartView.setState({animations: {enabled: false}});
-	chartView.setState({animations: {enabled: true}});
+	// chartView.setState({animations: {enabled: false}});
+	// chartView.setState({animations: {enabled: true}});
 	
 	(<any>window)['chartView'] = chartView;
 

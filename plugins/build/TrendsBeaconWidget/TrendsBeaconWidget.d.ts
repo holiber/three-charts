@@ -20,10 +20,10 @@ export declare class TrendBeacon extends TrendWidget {
     protected bindEvents(): void;
     private initObject();
     private animate();
-    private stopAnimation();
+    private setInitialState();
+    onDestroy(): void;
     private static createTexture();
     protected onTransformationFrame(): void;
     protected onSegmentsAnimate(trendsSegments: TrendSegmentsManager): void;
-    private onStateChange(changedProps);
     private updatePosition();
 }

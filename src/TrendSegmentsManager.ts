@@ -300,14 +300,18 @@ export class TrendSegmentsManager {
 			if (segmentIsReadyForAnimate) {
 				let id = segment.id;
 				if (!initialSegment) initialSegment = segment;
-				if (!initialAnimationState) initialAnimationState = initialSegment.createAnimationState();
+				if (!initialAnimationState) {
+					initialAnimationState = initialSegment.createAnimationState();
+				}
 
 				segment.initialAnimationState = Utils.deepMerge({}, initialAnimationState);
+
 				if (this.animatedSegmentsForAppend.length > 0) {
 					segment.initialAnimationState.startXVal = initialAnimationState.endXVal;
 					segment.initialAnimationState.startYVal = initialAnimationState.endYVal;
 				}
 
+				segment.currentAnimationState =  Utils.deepMerge({}, initialAnimationState);
 				segment.targetAnimationState = segment.createAnimationState();
 				this.animatedSegmentsForAppend.push(id);
 
@@ -482,7 +486,6 @@ export class TrendSegment implements ITrendSegmentState {
 		this.trendSegments = trendPoints;
 		this.id = id;
 		this.maxLength = trendPoints.maxSegmentLength;
-		this.currentAnimationState = this.createAnimationState();
 	}
 
 	createAnimationState(): ITrendSegmentState {
@@ -576,7 +579,7 @@ export class TrendSegment implements ITrendSegmentState {
 		this.yVal = middleYVal;
 		this.maxYVal = Math.max(...yVals);
 		this.minYVal = Math.min(...yVals);
-		if (!this.currentAnimationState) this.currentAnimationState = this.createAnimationState();
+		this.currentAnimationState = this.createAnimationState();
 	}
 
 	getNext() {

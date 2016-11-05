@@ -252,6 +252,8 @@ export class Utils {
 			if (srcObject[key] == void 0) continue;
 			if (isPlainObject(props[key]) && dstObject[key] !== void 0) {
 				this.copyProps(srcObject[key], dstObject[key], props[key])
+			} else if (typeof srcObject[key] == 'function') {
+				dstObject[key] = srcObject[key];
 			} else {
 				dstObject[key] = this.deepCopy(srcObject[key]);
 			}

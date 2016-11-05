@@ -1236,6 +1236,8 @@
                     if (srcObject[key] == void 0) continue;
                     if (deps_1.isPlainObject(props[key]) && dstObject[key] !== void 0) {
                         this.copyProps(srcObject[key], dstObject[key], props[key]);
+                    } else if (typeof srcObject[key] == "function") {
+                        dstObject[key] = srcObject[key];
                     } else {
                         dstObject[key] = this.deepCopy(srcObject[key]);
                     }
@@ -1432,7 +1434,6 @@
                     inertialScroll: true
                 };
                 this.plugins = {};
-                this.animationManager = new AnimationManager_1.AnimationManager();
                 this.isReady = false;
                 this.isDestroyed = false;
                 this.ee = new EventEmmiter_1.EventEmitter();
@@ -1446,6 +1447,8 @@
                     computedData: this.getComputedData()
                 });
                 this.savePrevState();
+                this.animationManager = new AnimationManager_1.AnimationManager();
+                this.animationManager.setAimationsEnabled(this.state.animations.enabled);
                 this.screen = new Screen_1.Screen(this);
                 this.xAxisMarks = new AxisMarks_1.AxisMarks(this, interfaces_1.AXIS_TYPE.X);
                 this.yAxisMarks = new AxisMarks_1.AxisMarks(this, interfaces_1.AXIS_TYPE.Y);
@@ -2331,12 +2334,15 @@
                     if (segmentIsReadyForAnimate) {
                         var id = segment.id;
                         if (!initialSegment) initialSegment = segment;
-                        if (!initialAnimationState) initialAnimationState = initialSegment.createAnimationState();
+                        if (!initialAnimationState) {
+                            initialAnimationState = initialSegment.createAnimationState();
+                        }
                         segment.initialAnimationState = Utils_1.Utils.deepMerge({}, initialAnimationState);
                         if (this.animatedSegmentsForAppend.length > 0) {
                             segment.initialAnimationState.startXVal = initialAnimationState.endXVal;
                             segment.initialAnimationState.startYVal = initialAnimationState.endYVal;
                         }
+                        segment.currentAnimationState = Utils_1.Utils.deepMerge({}, initialAnimationState);
                         segment.targetAnimationState = segment.createAnimationState();
                         this.animatedSegmentsForAppend.push(id);
                     }
@@ -2468,7 +2474,6 @@
                 this.trendSegments = trendPoints;
                 this.id = id;
                 this.maxLength = trendPoints.maxSegmentLength;
-                this.currentAnimationState = this.createAnimationState();
             }
             TrendSegment.prototype.createAnimationState = function() {
                 var _a = this, xVal = _a.xVal, yVal = _a.yVal, startXVal = _a.startXVal, startYVal = _a.startYVal, endXVal = _a.endXVal, endYVal = _a.endYVal, maxYVal = _a.maxYVal, minYVal = _a.minYVal, maxLength = _a.maxLength;
@@ -2542,7 +2547,7 @@
                 this.yVal = middleYVal;
                 this.maxYVal = Math.max.apply(Math, yVals);
                 this.minYVal = Math.min.apply(Math, yVals);
-                if (!this.currentAnimationState) this.currentAnimationState = this.createAnimationState();
+                this.currentAnimationState = this.createAnimationState();
             };
             TrendSegment.prototype.getNext = function() {
                 var nextPoint = this.trendSegments.segmentsById[this.nextId];
@@ -3904,7 +3909,7 @@
                 if (segmentsToProcessCnt > this.segmentsIds.length) {
                     Utils_1.Utils.error(TrendsGradientWidget.widgetName + ": MAX_SEGMENTS reached");
                 }
-                for (var i = 0; i <= segmentsToProcessCnt; i++) {
+                for (var i = 0; i < segmentsToProcessCnt; i++) {
                     if (segmentInd <= lastDisplayedSegmentInd) {
                         var segment = trendSegments[segmentInd];
                         this.setupSegmentVertices(i, segment.currentAnimationState);
