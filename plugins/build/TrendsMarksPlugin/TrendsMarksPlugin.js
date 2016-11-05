@@ -353,6 +353,7 @@
                 var texture = three_charts_1.Utils.createNearestTexture(width, height, function(ctx) {
                     options.onRender([ _this.mark ], ctx, _this.chart);
                 });
+                texture.magFilter = this.chart.screen.transformationInProgress ? LinearFilter : NearestFilter;
                 var material = new THREE.MeshBasicMaterial({
                     map: texture,
                     side: THREE.FrontSide
@@ -371,11 +372,7 @@
             };
             TrendMarkWidget.prototype.onScreenTransformationEventHandler = function(event) {
                 var texture = this.markMesh.material.map;
-                if (event == three_charts_1.TRANSFORMATION_EVENT.STARTED) {
-                    texture.magFilter = LinearFilter;
-                } else {
-                    texture.magFilter = NearestFilter;
-                }
+                texture.magFilter = event == three_charts_1.TRANSFORMATION_EVENT.STARTED ? LinearFilter : NearestFilter;
                 texture.needsUpdate = true;
             };
             TrendMarkWidget.prototype.updatePosition = function() {
