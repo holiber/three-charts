@@ -1,5 +1,5 @@
 import {Chart, Utils, TrendsWidget, TrendWidget, TRANSFORMATION_EVENT, Color } from 'three-charts';
-import { TrendMark, TREND_MARK_SIDE, TrendsMarksPlugin } from "./TrendsMarksPlugin";
+import { TrendMark, TREND_MARK_SIDE, TrendsMarksPlugin, TEXTURE_FILTER } from "./TrendsMarksPlugin";
 import Geometry = THREE.Geometry;
 import Mesh = THREE.Mesh;
 import LineBasicMaterial = THREE.LineBasicMaterial;
@@ -130,7 +130,14 @@ export class TrendMarkWidget {
 
 
 		// make text sharp when screen is not transforming
-		texture.magFilter = this.chart.screen.transformationInProgress ? LinearFilter : NearestFilter;
+		switch (options.textureFilter) {
+			case TEXTURE_FILTER.AUTO:
+				texture.magFilter = this.chart.screen.transformationInProgress ? LinearFilter : NearestFilter;
+			case TEXTURE_FILTER.LINEAR:
+				texture.magFilter = LinearFilter;
+			case TEXTURE_FILTER.NEAREST:
+				texture.magFilter = NearestFilter;
+		}
 
 		var material = new THREE.MeshBasicMaterial( {map: texture, side: THREE.FrontSide} );
 		material.transparent = true;
@@ -157,8 +164,9 @@ export class TrendMarkWidget {
 		let texture = (this.markMesh.material as MeshBasicMaterial).map;
 
 		// make text sharp when screen is not transforming
+		if (this.mark.options.textureFilter !== TEXTURE_FILTER.AUTO) return;
 		texture.magFilter = (event == TRANSFORMATION_EVENT.STARTED) ? LinearFilter : NearestFilter;
-		texture.needsUpdate = true;
+		texture.needsUpdate =true;
 	}
 
 	private updatePosition() {

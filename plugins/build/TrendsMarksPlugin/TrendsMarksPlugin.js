@@ -49,6 +49,12 @@
             EVENTS[EVENTS["CHANGE"] = 0] = "CHANGE";
         })(exports.EVENTS || (exports.EVENTS = {}));
         var EVENTS = exports.EVENTS;
+        (function(TEXTURE_FILTER) {
+            TEXTURE_FILTER[TEXTURE_FILTER["AUTO"] = 0] = "AUTO";
+            TEXTURE_FILTER[TEXTURE_FILTER["LINEAR"] = 1] = "LINEAR";
+            TEXTURE_FILTER[TEXTURE_FILTER["NEAREST"] = 2] = "NEAREST";
+        })(exports.TEXTURE_FILTER || (exports.TEXTURE_FILTER = {}));
+        var TEXTURE_FILTER = exports.TEXTURE_FILTER;
         var AXIS_MARK_DEFAULT_OPTIONS = {
             trendName: "",
             title: "",
@@ -60,6 +66,7 @@
             margin: 10,
             ease: Easing_1.EASING.Elastic.Out,
             easeSpeed: 1e3,
+            textureFilter: TEXTURE_FILTER.AUTO,
             onRender: TrendsMarksWidget_1.DEFAULT_RENDERER
         };
         var TrendsMarksPlugin = function(_super) {
@@ -354,7 +361,16 @@
                 var texture = three_charts_1.Utils.createNearestTexture(width, height, function(ctx) {
                     options.onRender(_this, ctx, _this.chart);
                 });
-                texture.magFilter = this.chart.screen.transformationInProgress ? LinearFilter : NearestFilter;
+                switch (options.textureFilter) {
+                  case TrendsMarksPlugin_1.TEXTURE_FILTER.AUTO:
+                    texture.magFilter = this.chart.screen.transformationInProgress ? LinearFilter : NearestFilter;
+
+                  case TrendsMarksPlugin_1.TEXTURE_FILTER.LINEAR:
+                    texture.magFilter = LinearFilter;
+
+                  case TrendsMarksPlugin_1.TEXTURE_FILTER.NEAREST:
+                    texture.magFilter = NearestFilter;
+                }
                 var material = new THREE.MeshBasicMaterial({
                     map: texture,
                     side: THREE.FrontSide
@@ -373,6 +389,7 @@
             };
             TrendMarkWidget.prototype.onScreenTransformationEventHandler = function(event) {
                 var texture = this.markMesh.material.map;
+                if (this.mark.options.textureFilter !== TrendsMarksPlugin_1.TEXTURE_FILTER.AUTO) return;
                 texture.magFilter = event == three_charts_1.TRANSFORMATION_EVENT.STARTED ? LinearFilter : NearestFilter;
                 texture.needsUpdate = true;
             };

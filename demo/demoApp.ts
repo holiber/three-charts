@@ -6,6 +6,7 @@ import { TREND_MARK_SIDE, ITrendMarkOptions, TrendsMarksPlugin } from '../plugin
 import { TrendsBeaconWidget } from '../plugins/src/TrendsBeaconWidget';
 import { TrendsLoadingWidget } from '../plugins/src/TrendsLoadingWidget';
 import { TrendsIndicatorWidget } from '../plugins/src/TrendsIndicatorWidget';
+import { TEXTURE_FILTER } from "../plugins/src/TrendsMarksPlugin/TrendsMarksPlugin";
 ChartView.preinstalledWidgets.push(TrendsLoadingWidget, TrendsBeaconWidget, TrendsIndicatorWidget);
 
 var chartView: ChartView;
@@ -81,6 +82,7 @@ class MarksSource {
 			title: Utils.getRandomItem(['Alex Malcon 224', 'Serg Morrs 453', 'Harry Potter 554']),
 			color: Utils.getRandomItem(['rgba(#ad57b2, 0.5)', 'rgba(#0099d9, 0.5)']),
 			orientation: orientation,
+			// textureFilter: TEXTURE_FILTER.NEAREST,
 			userData: {
 				description: Utils.getRandomItem(['$10 -> 20$', '$15 -> 30$', '40$ -> 80$']),
 				icon: Utils.getRandomItem(['AM', 'SM', 'HP']),

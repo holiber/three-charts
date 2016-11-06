@@ -25,6 +25,7 @@
         var TrendsBeaconWidget_1 = __webpack_require__(38);
         var TrendsLoadingWidget_1 = __webpack_require__(40);
         var TrendsIndicatorWidget_1 = __webpack_require__(42);
+        var TrendsMarksPlugin_2 = __webpack_require__(36);
         three_charts_1.ChartView.preinstalledWidgets.push(TrendsLoadingWidget_1.TrendsLoadingWidget, TrendsBeaconWidget_1.TrendsBeaconWidget, TrendsIndicatorWidget_1.TrendsIndicatorWidget);
         var chartView;
         var DataSourse = function() {
@@ -90,6 +91,7 @@
                     title: three_charts_1.Utils.getRandomItem([ "Alex Malcon 224", "Serg Morrs 453", "Harry Potter 554" ]),
                     color: three_charts_1.Utils.getRandomItem([ "rgba(#ad57b2, 0.5)", "rgba(#0099d9, 0.5)" ]),
                     orientation: orientation,
+                    textureFilter: TrendsMarksPlugin_2.TEXTURE_FILTER.NEAREST,
                     userData: {
                         description: three_charts_1.Utils.getRandomItem([ "$10 -> 20$", "$15 -> 30$", "40$ -> 80$" ]),
                         icon: three_charts_1.Utils.getRandomItem([ "AM", "SM", "HP" ]),
@@ -5103,6 +5105,7 @@
             for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
         }
         __export(__webpack_require__(36));
+        __export(__webpack_require__(37));
     }, function(module, exports, __webpack_require__) {
         "use strict";
         var __extends = this && this.__extends || function(d, b) {
@@ -5124,6 +5127,12 @@
             EVENTS[EVENTS["CHANGE"] = 0] = "CHANGE";
         })(exports.EVENTS || (exports.EVENTS = {}));
         var EVENTS = exports.EVENTS;
+        (function(TEXTURE_FILTER) {
+            TEXTURE_FILTER[TEXTURE_FILTER["AUTO"] = 0] = "AUTO";
+            TEXTURE_FILTER[TEXTURE_FILTER["LINEAR"] = 1] = "LINEAR";
+            TEXTURE_FILTER[TEXTURE_FILTER["NEAREST"] = 2] = "NEAREST";
+        })(exports.TEXTURE_FILTER || (exports.TEXTURE_FILTER = {}));
+        var TEXTURE_FILTER = exports.TEXTURE_FILTER;
         var AXIS_MARK_DEFAULT_OPTIONS = {
             trendName: "",
             title: "",
@@ -5135,6 +5144,7 @@
             margin: 10,
             ease: Easing_1.EASING.Elastic.Out,
             easeSpeed: 1e3,
+            textureFilter: TEXTURE_FILTER.AUTO,
             onRender: TrendsMarksWidget_1.DEFAULT_RENDERER
         };
         var TrendsMarksPlugin = function(_super) {
@@ -5429,7 +5439,16 @@
                 var texture = three_charts_1.Utils.createNearestTexture(width, height, function(ctx) {
                     options.onRender(_this, ctx, _this.chart);
                 });
-                texture.magFilter = this.chart.screen.transformationInProgress ? LinearFilter : NearestFilter;
+                switch (options.textureFilter) {
+                  case TrendsMarksPlugin_1.TEXTURE_FILTER.AUTO:
+                    texture.magFilter = this.chart.screen.transformationInProgress ? LinearFilter : NearestFilter;
+
+                  case TrendsMarksPlugin_1.TEXTURE_FILTER.LINEAR:
+                    texture.magFilter = LinearFilter;
+
+                  case TrendsMarksPlugin_1.TEXTURE_FILTER.NEAREST:
+                    texture.magFilter = NearestFilter;
+                }
                 var material = new THREE.MeshBasicMaterial({
                     map: texture,
                     side: THREE.FrontSide
@@ -5448,6 +5467,7 @@
             };
             TrendMarkWidget.prototype.onScreenTransformationEventHandler = function(event) {
                 var texture = this.markMesh.material.map;
+                if (this.mark.options.textureFilter !== TrendsMarksPlugin_1.TEXTURE_FILTER.AUTO) return;
                 texture.magFilter = event == three_charts_1.TRANSFORMATION_EVENT.STARTED ? LinearFilter : NearestFilter;
                 texture.needsUpdate = true;
             };

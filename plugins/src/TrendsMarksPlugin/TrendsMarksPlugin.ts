@@ -6,6 +6,7 @@ import { EASING } from "../../../src/Easing";
 
 export enum TREND_MARK_SIDE {TOP, BOTTOM}
 export enum EVENTS {CHANGE}
+export enum TEXTURE_FILTER {AUTO, LINEAR, NEAREST}
 export type TTrendsMarksPluginOptions = {items: ITrendMarkOptions[]};
 
 export interface ITrendMarkOptions {
@@ -17,6 +18,7 @@ export interface ITrendMarkOptions {
 	orientation?: TREND_MARK_SIDE,
 	width?: number,
 	height?: number,
+	textureFilter?: TEXTURE_FILTER
 	/**
 	 * space between marks
 	 */
@@ -45,6 +47,7 @@ const AXIS_MARK_DEFAULT_OPTIONS: ITrendMarkOptions = {
 	margin: 10,
 	ease: EASING.Elastic.Out,
 	easeSpeed: 1000,
+	textureFilter: TEXTURE_FILTER.AUTO,
 	onRender: DEFAULT_RENDERER
 };
 

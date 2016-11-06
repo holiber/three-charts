@@ -7,6 +7,11 @@ export declare enum TREND_MARK_SIDE {
 export declare enum EVENTS {
     CHANGE = 0,
 }
+export declare enum TEXTURE_FILTER {
+    AUTO = 0,
+    LINEAR = 1,
+    NEAREST = 2,
+}
 export declare type TTrendsMarksPluginOptions = {
     items: ITrendMarkOptions[];
 };
@@ -19,6 +24,7 @@ export interface ITrendMarkOptions {
     orientation?: TREND_MARK_SIDE;
     width?: number;
     height?: number;
+    textureFilter?: TEXTURE_FILTER;
     /**
      * space between marks
      */
