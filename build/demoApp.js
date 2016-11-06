@@ -25,7 +25,6 @@
         var TrendsBeaconWidget_1 = __webpack_require__(38);
         var TrendsLoadingWidget_1 = __webpack_require__(40);
         var TrendsIndicatorWidget_1 = __webpack_require__(42);
-        var TrendsMarksPlugin_2 = __webpack_require__(36);
         three_charts_1.ChartView.preinstalledWidgets.push(TrendsLoadingWidget_1.TrendsLoadingWidget, TrendsBeaconWidget_1.TrendsBeaconWidget, TrendsIndicatorWidget_1.TrendsIndicatorWidget);
         var chartView;
         var DataSourse = function() {
@@ -91,7 +90,6 @@
                     title: three_charts_1.Utils.getRandomItem([ "Alex Malcon 224", "Serg Morrs 453", "Harry Potter 554" ]),
                     color: three_charts_1.Utils.getRandomItem([ "rgba(#ad57b2, 0.5)", "rgba(#0099d9, 0.5)" ]),
                     orientation: orientation,
-                    textureFilter: TrendsMarksPlugin_2.TEXTURE_FILTER.NEAREST,
                     userData: {
                         description: three_charts_1.Utils.getRandomItem([ "$10 -> 20$", "$15 -> 30$", "40$ -> 80$" ]),
                         icon: three_charts_1.Utils.getRandomItem([ "AM", "SM", "HP" ]),
@@ -5482,7 +5480,7 @@
             TrendMarkWidget.prototype.show = function() {
                 if (!this.mark.segment) return;
                 this.updatePosition();
-                this.markMesh.scale.set(.01, .01, 1);
+                this.markMesh.scale.set(.01, .01, 0);
                 this.chart.animationManager.animate(1e3, this.mark.options.ease).from(this.markMesh.scale).to({
                     x: 1,
                     y: 1
@@ -5520,6 +5518,8 @@
             ctx.font = font;
             ctx.fillStyle = "rgba(250, 250, 250, 0.8)";
             ctx.fillText(options.title, Math.round(textPosX), Math.round(textPosY));
+            ctx.rect(0, 0, width, height);
+            ctx.stroke();
         };
     }, function(module, exports, __webpack_require__) {
         "use strict";
