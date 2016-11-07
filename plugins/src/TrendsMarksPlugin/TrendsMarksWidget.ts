@@ -249,7 +249,7 @@ export const DEFAULT_RENDERER = (
 
 
 	// uncomment to preview mark rect
-	ctx.rect(0, 0, width, height);
-	ctx.stroke();
+	// ctx.rect(0, 0, width, height);
+	// ctx.stroke();
 
 };

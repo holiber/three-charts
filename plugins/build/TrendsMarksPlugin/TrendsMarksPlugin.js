@@ -442,8 +442,6 @@
             ctx.font = font;
             ctx.fillStyle = "rgba(250, 250, 250, 0.8)";
             ctx.fillText(options.title, Math.round(textPosX), Math.round(textPosY));
-            ctx.rect(0, 0, width, height);
-            ctx.stroke();
         };
     }, function(module, exports) {
         "use strict";
