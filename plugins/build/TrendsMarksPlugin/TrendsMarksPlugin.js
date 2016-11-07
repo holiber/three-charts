@@ -404,7 +404,7 @@
             TrendMarkWidget.prototype.show = function() {
                 if (!this.mark.segment) return;
                 this.updatePosition();
-                this.markMesh.scale.set(.01, .01, 0);
+                this.markMesh.scale.set(.01, .01, 1);
                 this.chart.animationManager.animate(1e3, this.mark.options.ease).from(this.markMesh.scale).to({
                     x: 1,
                     y: 1

@@ -183,7 +183,7 @@ export class TrendMarkWidget {
 	private show() {
 		if (!this.mark.segment) return;
 		this.updatePosition();
-		this.markMesh.scale.set(0.01, 0.01, 0);
+		this.markMesh.scale.set(0.01, 0.01, 1);
 
 		this.chart.animationManager
 			.animate(1000, this.mark.options.ease)
