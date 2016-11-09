@@ -11,7 +11,7 @@ export declare const DEFAULT_CONFIG: IChartPluginConfig;
  * base class for all plugins
  * NAME is mandatory
  */
-export declare abstract class ChartPlugin {
+export declare abstract class ChartPlugin<TPluginState> {
     static NAME: string;
     static providedWidgets: typeof ChartWidget[];
     initialState: IChartPluginState;
@@ -20,12 +20,12 @@ export declare abstract class ChartPlugin {
     protected chart: Chart;
     protected unsubscribers: Function[];
     protected ee: EventEmitter;
-    constructor(options?: IChartPluginState, config?: IChartPluginConfig);
+    constructor(options?: TPluginState, config?: IChartPluginConfig);
     setupChart(chart: Chart): void;
-    getOptions(): IChartPluginState;
+    getOptions(): TPluginState;
     protected onInitialStateAppliedHandler(initialState: IChartState): void;
     protected onReadyHandler(): void;
-    protected onStateChanged(changedState: IChartPluginState): void;
+    protected onStateChangedHandler(changedState: TPluginState): void;
     protected onDestroyHandler(): void;
     protected bindEvent(...args: Array<Function | Function[]>): void;
     protected unbindEvents(): void;

@@ -73,6 +73,66 @@ export class Utils {
 		return JSON.parse(JSON.stringify(obj)) as T;
 	}
 
+	static patch<T extends IIteralable>(objectToPatch: T, patch: T) {
+		let idKey = '_id';
+		for (let key in patch) {
+
+			if (!patch.hasOwnProperty(key)) continue;
+
+			if (objectToPatch[key]) {
+
+				if (Array.isArray(patch[key])) {
+					for (let patchItem of patch[key]) {
+
+						let subObject = objectToPatch[key].find((item: any) => {
+							return item[idKey] != void 0 && item[idKey] === patchItem[idKey];
+						});
+						if (subObject) {
+							this.patch(subObject, patchItem);
+						} else {
+							objectToPatch[key].push(patchItem);
+						}
+					}
+					continue;
+
+				} else if (typeof patch[key] === 'object' && objectToPatch[key] != void 0) {
+
+					if (patch[idKey] && Object.keys(patch).length == 1) {
+						delete objectToPatch[key];
+					} else {
+						this.patch(objectToPatch[key], patch[key]);
+					}
+					continue;
+				}
+			}
+
+			objectToPatch[key] = patch[key];
+		}
+		if (objectToPatch['_onUpdate']) (objectToPatch['_onUpdate'] as Function).call(objectToPatch, patch);
+		return objectToPatch;
+	}
+
+	static travers(object: IIteralable, fn: (item: any) => boolean) {
+		for (let key in object) {
+			if (!object.hasOwnProperty(key)) continue;
+			let allowTraverseDeeper = fn(object[key]);
+			let canTraverseDeeper = allowTraverseDeeper && typeof object[key] == 'object';
+			if (canTraverseDeeper) this.travers(object[key], fn);
+		}
+	}
+
+	static setIdsToArrayItems(sourceObject: any) {
+		let idKey = '_id';
+		Utils.travers(sourceObject, (item: any) => {
+			if (!Array.isArray(item)) return true;
+			let arr = item as any[];
+			for (let obj of arr) {
+				if (typeof obj !== 'object' || Array.isArray(obj)) continue;
+				if (!obj[idKey]) obj[idKey] = Utils.getUid();
+			}
+		});
+	}
+
 	/**
 	 *
 	 * @example
@@ -108,12 +168,12 @@ export class Utils {
 	 * 	// create texture with rect
 	 *  var texture = Utils.createTexture(20, 20, (ctx) => {ctx.fillRect(0, 0, 10, 10)});
 	 */
-	static createTexture(width: number, height: number, fn: (ctx: CanvasRenderingContext2D) => void ): Texture {
+	static createTexture(width: number, height: number, fn?: (ctx: CanvasRenderingContext2D, width: number, height: number) => void ): Texture {
 		var canvas: HTMLCanvasElement = document.createElement('canvas');
 		canvas.width = width;
 		canvas.height = height;
 		var ctx = canvas.getContext('2d');
-		fn(ctx);
+		fn && fn(ctx, width, height);
 		var texture = new THREE.Texture(canvas);
 		texture.needsUpdate = true;
 		return texture;
@@ -125,14 +185,13 @@ export class Utils {
 	 * 	// create texture with rect
 	 *  var texture = Utils.createTexture(20, 20, (ctx) => {ctx.fillRect(0, 0, 10, 10)});
 	 */
-	static createNearestTexture(width: number, height: number, fn: (ctx: CanvasRenderingContext2D) => void ): Texture{
+	static createNearestTexture(width: number, height: number, fn?: (ctx: CanvasRenderingContext2D) => void ): Texture{
 		var texture = this.createTexture(width, height, fn);
 		texture.minFilter = THREE.NearestFilter;
-		texture.magFilter = THREE.NearestFilter;
 		return texture;
 	}
 
-	static createPixelPerfectTexture(width: number, height: number, fn: (ctx: CanvasRenderingContext2D) => void ): Texture{
+	static createPixelPerfectTexture(width: number, height: number, fn?: (ctx: CanvasRenderingContext2D) => void ): Texture{
 		var texture = this.createTexture(width, height, fn);
 		texture.magFilter = THREE.NearestFilter;
 		texture.minFilter = THREE.NearestFilter;
@@ -168,6 +227,7 @@ export class Utils {
 		return Math.max(num1, num2) - Math.min(num1, num2);
 	}
 
+	// TODO: refactor binary search functions
 	static binarySearchClosestInd(arr: IIteralable[], num: number, key: string): number {
 		var mid: number;
 		var lo = 0;
@@ -185,9 +245,34 @@ export class Utils {
 		}
 		return hi;
 	}
-	
+
 	static binarySearchClosest<ArrayItem>(arr: ArrayItem[], num: number, key: string): ArrayItem {
 		let ind = this.binarySearchClosestInd(arr, num, key);
+		return arr[ind];
+	}
+
+	static binarySearchInd<ArrayItem>(arr: IIteralable[], num: number, key: string): number {
+		let mid: number;
+		let lo = 0;
+		let hi = arr.length - 1;
+		while (hi - lo > 1) {
+			mid = Math.floor (( hi - lo) / 2);
+			if (arr[mid][key] < num) {
+				lo = mid;
+			} else {
+				hi = mid;
+			}
+			if (arr[lo][key] == num) {
+				return lo;
+			} else if (arr[hi][key] == num) {
+				return hi;
+			}
+		}
+		return -1;
+	}
+
+	static binarySearch<ArrayItem>(arr: ArrayItem[], num: number, key: string): ArrayItem {
+		let ind = this.binarySearchInd(arr, num, key);
 		return arr[ind];
 	}
 

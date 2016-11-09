@@ -4,7 +4,6 @@ import {EventEmitter} from './EventEmmiter';
 import {Utils} from './Utils';
 import {TrendsManager, ITrendsOptions} from "./TrendsManager";
 import {Screen} from "./Screen";
-import {AxisMarks} from "./AxisMarks";
 import {
 	AXIS_TYPE, AXIS_DATA_TYPE, IAxisOptions, IAnimationsOptions, AXIS_RANGE_TYPE
 } from "./interfaces";
@@ -118,7 +117,6 @@ export class Chart {
 			},
 			dataType: AXIS_DATA_TYPE.NUMBER,
 			grid: {enabled: true, minSizePx:  100, color: `rgba(${LIGHT_BLUE}, 0.12)`},
-			marks: [],
 			color: LIGHT_BLUE
 		},
 		yAxis: {
@@ -132,7 +130,6 @@ export class Chart {
 			},
 			grid: {enabled: true, minSizePx:  50, color: `rgba(${LIGHT_BLUE}, 0.12)`},
 			dataType: AXIS_DATA_TYPE.NUMBER,
-			marks: [],
 			color: LIGHT_BLUE
 		},
 		animations: {
@@ -189,12 +186,10 @@ export class Chart {
 		maxVisibleSegments: 1280,
 		inertialScroll: true
 	};
-	plugins: {[pluginName: string]: ChartPlugin} = {};
+	plugins: {[pluginName: string]: ChartPlugin<any>} = {};
 	trendsManager: TrendsManager;
 	animationManager: AnimationManager;
 	screen: Screen;
-	xAxisMarks: AxisMarks;
-	yAxisMarks: AxisMarks;
 
 	/**
 	 * true then state was initialized and ready to use
@@ -207,12 +202,12 @@ export class Chart {
 
 	constructor(
 		initialState: IChartState,
-		plugins: ChartPlugin[] = []
+		plugins: ChartPlugin<any>[] = []
 	) {
 		this.ee = new EventEmitter();
 		this.ee.setMaxListeners(initialState.eventEmitterMaxListeners || this.state.eventEmitterMaxListeners);
 
-		this.state = Utils.deepMerge(this.state, initialState);
+		this.state = Utils.patch(this.state, initialState); //Utils.deepMerge(this.state, initialState);
 		this.trendsManager = new TrendsManager(this, initialState);
 		initialState.trends = this.trendsManager.calculatedOptions;
 		initialState = this.installPlugins(plugins, initialState);
@@ -223,8 +218,6 @@ export class Chart {
 		this.animationManager = new AnimationManager();
 		this.animationManager.setAimationsEnabled(this.state.animations.enabled);
 		this.screen = new Screen(this);
-		this.xAxisMarks = new AxisMarks(this, AXIS_TYPE.X);
-		this.yAxisMarks = new AxisMarks(this, AXIS_TYPE.Y);
 		this.bindEvents();
 		
 		// message to other modules that Chart.state is ready for use
@@ -325,9 +318,11 @@ export class Chart {
 			delete trendOptions.data;
 		}
 		let newStateContainsData = Object.keys(trendsData).length > 0;
-		
 
-		this.state = Utils.deepMerge(this.state, newState, false);
+		// setup ids to array items
+		newState = Utils.deepMerge({}, newState);
+		Utils.setIdsToArrayItems(newState);
+		this.state = Utils.patch(this.state, newState); //Utils.deepMerge(this.state, newState, false);
 
 		// return state to state
 		if (newStateContainsData) for (let trendName in trendsData) {
@@ -350,7 +345,7 @@ export class Chart {
 	private recalculateState(changedProps?: IChartState): IRecalculatedStateResult {
 		var data = this.state;
 		var patch: IChartState = {};
-		var actualData = Utils.deepMerge({}, data);
+		var actualData = Utils.patch({}, data); //Utils.deepMerge({}, data);
 
 		// recalculate scroll position by changed cursor options
 		var cursorOptions = changedProps.cursor;
@@ -361,7 +356,7 @@ export class Chart {
 			var currentScroll = data.xAxis.range.scroll;
 			var deltaXVal = this.pxToValueByXAxis(oldX - currentX);
 			patch.xAxis = {range: {scroll: currentScroll + deltaXVal}};
-			actualData = Utils.deepMerge(actualData, {xAxis: patch.xAxis} as IChartState)
+			actualData = Utils.patch(actualData, {xAxis: patch.xAxis} as IChartState);//Utils.deepMerge(actualData, {xAxis: patch.xAxis} as IChartState)
 		}
 
 		let chartWasResized = changedProps.width != void 0 || changedProps.height != void 0;
@@ -377,8 +372,10 @@ export class Chart {
 			let xAxisPatch = this.recalculateXAxis(actualData, changedProps);
 			if (xAxisPatch) {
 				scrollXChanged = true;
-				patch = Utils.deepMerge(patch, {xAxis: xAxisPatch});
-				actualData = Utils.deepMerge(actualData, {xAxis: xAxisPatch} as IChartState);
+				//patch = Utils.deepMerge(patch, {xAxis: xAxisPatch});
+				Utils.patch(patch, {xAxis: xAxisPatch});
+				//actualData = Utils.deepMerge(actualData, {xAxis: xAxisPatch} as IChartState);
+				Utils.patch(actualData, {xAxis: xAxisPatch} as IChartState);
 			}
 		}
 
@@ -398,8 +395,10 @@ export class Chart {
 		if (needToRecalculateYAxis){
 			let yAxisPatch = this.recalculateYAxis(actualData);
 			if (yAxisPatch) {
-				patch = Utils.deepMerge(patch, {yAxis: yAxisPatch});
-				actualData = Utils.deepMerge(actualData, {yAxis: yAxisPatch} as IChartState);
+				// patch = Utils.deepMerge(patch, {yAxis: yAxisPatch});
+				// actualData = Utils.deepMerge(actualData, {yAxis: yAxisPatch} as IChartState);
+				Utils.patch(patch, {yAxis: yAxisPatch});
+				Utils.patch(actualData, {yAxis: yAxisPatch} as IChartState);
 			}
 		}
 
@@ -407,7 +406,8 @@ export class Chart {
 		let allChangedProps = Utils.deepMerge(changedProps, patch);
 		patch.computedData = this.getComputedData(allChangedProps);
 		this.savePrevState(patch);
-		this.state = Utils.deepMerge(this.state, patch);
+		// this.state = Utils.deepMerge(this.state, patch);
+		Utils.patch(this.state, patch);
 		return {changedProps: allChangedProps, patch: patch}
 	}
 
@@ -477,7 +477,7 @@ export class Chart {
 	/**
 	 * init plugins and save plugins options in initialState
 	 */
-	private installPlugins(plugins: ChartPlugin[], initialState: IChartState): IChartState {
+	private installPlugins(plugins: ChartPlugin<any>[], initialState: IChartState): IChartState {
 		initialState.pluginsState = {};
 		plugins.forEach(plugin => {
 			let PluginClass = plugin.constructor as typeof ChartPlugin;
@@ -494,7 +494,7 @@ export class Chart {
 	 * returns plugin instance by plugin name
 	 * @example
 	 */
-	getPlugin(pluginName: string): ChartPlugin {
+	getPlugin(pluginName: string): ChartPlugin<any> {
 		return this.plugins[pluginName];
 	}
 

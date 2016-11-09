@@ -15,6 +15,9 @@ export declare class Utils {
      * @deprecated
      */
     static deepCopy<T>(obj: T): T;
+    static patch<T extends IIteralable>(objectToPatch: T, patch: T): T;
+    static travers(object: IIteralable, fn: (item: any) => boolean): void;
+    static setIdsToArrayItems(sourceObject: any): void;
     /**
      *
      * @example
@@ -29,15 +32,15 @@ export declare class Utils {
      * 	// create texture with rect
      *  var texture = Utils.createTexture(20, 20, (ctx) => {ctx.fillRect(0, 0, 10, 10)});
      */
-    static createTexture(width: number, height: number, fn: (ctx: CanvasRenderingContext2D) => void): Texture;
+    static createTexture(width: number, height: number, fn?: (ctx: CanvasRenderingContext2D, width: number, height: number) => void): Texture;
     /**
      * generate texture from canvas context with NearestFilter
      * @example
      * 	// create texture with rect
      *  var texture = Utils.createTexture(20, 20, (ctx) => {ctx.fillRect(0, 0, 10, 10)});
      */
-    static createNearestTexture(width: number, height: number, fn: (ctx: CanvasRenderingContext2D) => void): Texture;
-    static createPixelPerfectTexture(width: number, height: number, fn: (ctx: CanvasRenderingContext2D) => void): Texture;
+    static createNearestTexture(width: number, height: number, fn?: (ctx: CanvasRenderingContext2D) => void): Texture;
+    static createPixelPerfectTexture(width: number, height: number, fn?: (ctx: CanvasRenderingContext2D) => void): Texture;
     /**
      * throw error
      */
@@ -56,6 +59,8 @@ export declare class Utils {
     static getDistance(num1: number, num2: number): number;
     static binarySearchClosestInd(arr: IIteralable[], num: number, key: string): number;
     static binarySearchClosest<ArrayItem>(arr: ArrayItem[], num: number, key: string): ArrayItem;
+    static binarySearchInd<ArrayItem>(arr: IIteralable[], num: number, key: string): number;
+    static binarySearch<ArrayItem>(arr: ArrayItem[], num: number, key: string): ArrayItem;
     static rectsIntersect(r1: number[], r2: number[]): boolean;
     static throttle(func: Function, ms: number): () => void;
     static msToTimeString(timestamp: number): string;

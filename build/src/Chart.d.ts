@@ -2,7 +2,6 @@ import Vector3 = THREE.Vector3;
 import { ITrendOptions, Trend, ITrendData } from "./Trend";
 import { TrendsManager, ITrendsOptions } from "./TrendsManager";
 import { Screen } from "./Screen";
-import { AxisMarks } from "./AxisMarks";
 import { IAxisOptions, IAnimationsOptions } from "./interfaces";
 import { Promise } from './deps/deps';
 import { ChartPlugin } from './Plugin';
@@ -80,20 +79,18 @@ export interface IChartState {
 export declare class Chart {
     state: IChartState;
     plugins: {
-        [pluginName: string]: ChartPlugin;
+        [pluginName: string]: ChartPlugin<any>;
     };
     trendsManager: TrendsManager;
     animationManager: AnimationManager;
     screen: Screen;
-    xAxisMarks: AxisMarks;
-    yAxisMarks: AxisMarks;
     /**
      * true then state was initialized and ready to use
      */
     isReady: boolean;
     isDestroyed: boolean;
     private ee;
-    constructor(initialState: IChartState, plugins?: ChartPlugin[]);
+    constructor(initialState: IChartState, plugins?: ChartPlugin<any>[]);
     /**
      * destroy chart, use ChartView.destroy to completely destroy Chart
      */
@@ -131,7 +128,7 @@ export declare class Chart {
      * returns plugin instance by plugin name
      * @example
      */
-    getPlugin(pluginName: string): ChartPlugin;
+    getPlugin(pluginName: string): ChartPlugin<any>;
     private bindEvents();
     private handleTrendsChange(changedTrends, newData);
     private onDragStateChangedHandler(isDragMode);

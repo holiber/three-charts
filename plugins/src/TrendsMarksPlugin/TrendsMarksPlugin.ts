@@ -52,7 +52,7 @@ const AXIS_MARK_DEFAULT_OPTIONS: ITrendMarkOptions = {
 };
 
 
-export class TrendsMarksPlugin extends ChartPlugin {
+export class TrendsMarksPlugin extends ChartPlugin<TTrendsMarksPluginOptions> {
 	static NAME = 'TrendsMarks';
 	static providedWidgets: typeof ChartWidget[] = [TrendsMarksWidget];
 
@@ -69,13 +69,8 @@ export class TrendsMarksPlugin extends ChartPlugin {
 	}
 
 
-	protected onStateChanged() {
+	protected onStateChangedHandler() {
 		this.onMarksChangeHandler();
-	}
-
-
-	getOptions(): TTrendsMarksPluginOptions {
-		return super.getOptions() as TTrendsMarksPluginOptions;
 	}
 
 	getItems() {

@@ -190,7 +190,7 @@ export class Screen {
 		let ease = isAutoscroll ? animations.autoScrollEase : animations.zoomEase;
 		let range = chart.state.xAxis.range;
 		let targetX = range.scroll * range.scaleFactor * range.zoom;
-		if (isDragMode) time = 0;
+		if (isDragMode && !chart.state.inertialScroll) time = 0;
 
 		if (this.scrollXAnimation) this.scrollXAnimation.stop();
 

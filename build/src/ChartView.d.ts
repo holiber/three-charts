@@ -23,7 +23,7 @@ export declare class ChartBlankView {
     private unsubscribers;
     private resizeSensor;
     private pluginsAndWidgets;
-    constructor(state: IChartState, $container: Element, pluginsAndWidgets?: Array<ChartPlugin | ChartWidget>);
+    constructor(state: IChartState, $container: Element, pluginsAndWidgets?: Array<ChartPlugin<any> | ChartWidget>);
     private init($container);
     /**
      * collect and init widgets from preinstalled widgets, plugins widgets and custom widgets

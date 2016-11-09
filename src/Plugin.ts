@@ -18,7 +18,7 @@ export const DEFAULT_CONFIG: IChartPluginConfig = {
  * base class for all plugins
  * NAME is mandatory
  */
-export abstract class ChartPlugin {
+export abstract class ChartPlugin<TPluginState> {
 	static NAME: string = '';
 	static providedWidgets: typeof ChartWidget[] = [];
 
@@ -29,7 +29,7 @@ export abstract class ChartPlugin {
 	protected unsubscribers: Function[] = [];
 	protected ee: EventEmitter;
 
-	constructor (options?: IChartPluginState, config: IChartPluginConfig = {}) {
+	constructor (options?: TPluginState, config: IChartPluginConfig = {}) {
 		this.initialState = options;
 		this.config = Utils.deepMerge(DEFAULT_CONFIG, config);
 		this.name = (this.constructor as typeof ChartPlugin).NAME;
@@ -43,11 +43,11 @@ export abstract class ChartPlugin {
 			this.chart.onInitialStateApplied(initialState => this.onInitialStateAppliedHandler(initialState)),
 			this.chart.onReady(() => this.onReadyHandler()),
 			this.chart.onDestroy(() => this.onDestroyHandler()),
-			this.chart.onPluginsStateChange(changedPluginsStates => changedPluginsStates[this.name] && this.onStateChanged(changedPluginsStates[this.name]))
+			this.chart.onPluginsStateChange(changedPluginsStates => changedPluginsStates[this.name] && this.onStateChangedHandler(changedPluginsStates[this.name] as any as TPluginState))
 		)
 	}
 
-	getOptions(): IChartPluginState {
+	getOptions(): TPluginState {
 		return this.chart.state.pluginsState[this.name];
 	}
 
@@ -57,7 +57,7 @@ export abstract class ChartPlugin {
 	protected onReadyHandler() {
 	}
 
-	protected onStateChanged(changedState: IChartPluginState) {
+	protected onStateChangedHandler(changedState: TPluginState) {
 	}
 
 	protected onDestroyHandler() {

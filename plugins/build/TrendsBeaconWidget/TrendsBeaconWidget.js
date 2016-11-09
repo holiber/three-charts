@@ -24,8 +24,10 @@
         function __export(m) {
             for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
         }
-        __export(__webpack_require__(1));
-    }, function(module, exports, __webpack_require__) {
+        __export(__webpack_require__(4));
+    }, , function(module, exports) {
+        module.exports = __WEBPACK_EXTERNAL_MODULE_2__;
+    }, , function(module, exports, __webpack_require__) {
         "use strict";
         var __extends = this && this.__extends || function(d, b) {
             for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -156,8 +158,6 @@
             return TrendBeacon;
         }(three_charts_1.TrendWidget);
         exports.TrendBeacon = TrendBeacon;
-    }, function(module, exports) {
-        module.exports = __WEBPACK_EXTERNAL_MODULE_2__;
     } ]);
 });
 

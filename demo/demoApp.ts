@@ -1,12 +1,12 @@
 
 // import { ChartView, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE } from '../src';
 
-import { ChartView, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE } from 'three-charts';
+import { ChartView, AXIS_RANGE_TYPE, ITrendItem, Utils, AXIS_DATA_TYPE, TREND_TYPE, AXIS_TYPE } from 'three-charts';
 import { TREND_MARK_SIDE, ITrendMarkOptions, TrendsMarksPlugin } from '../plugins/src/TrendsMarksPlugin';
 import { TrendsBeaconWidget } from '../plugins/src/TrendsBeaconWidget';
 import { TrendsLoadingWidget } from '../plugins/src/TrendsLoadingWidget';
 import { TrendsIndicatorWidget } from '../plugins/src/TrendsIndicatorWidget';
-import { TEXTURE_FILTER } from "../plugins/src/TrendsMarksPlugin/TrendsMarksPlugin";
+import { AxisMarksPlugin } from "../plugins/src/AxisMarksPlugin/AxisMarksPlugin";
 ChartView.preinstalledWidgets.push(TrendsLoadingWidget, TrendsBeaconWidget, TrendsIndicatorWidget);
 
 var chartView: ChartView;
@@ -105,9 +105,6 @@ window.onload = function () {
 
 	chartView = new ChartView({
 		yAxis: {
-			marks: [
-				{value: dsMain.data[0].yVal, name: 'openprice', title: 'OPEN PRICE', lineColor: '#29874b', stickToEdges: true},
-			],
 			range: {
 
 				padding: {end: 100, start: 100},
@@ -127,10 +124,6 @@ window.onload = function () {
 				minLength: 5000,
 				margin: {end: 200},
 			},
-			marks: [
-				{value: dsMain.endTime + 30000, name: 'deadline', title: 'DEADLINE', lineColor: '#ff6600', type: 'timeleft', showValue: true},
-				{value: dsMain.endTime + 40000, name: 'close', title: 'CLOSE', lineColor: '#005187', type: 'timeleft', showValue: true}
-			]
 			// range: {
 			// 	from: 80,
 			// 	to: 90
@@ -162,25 +155,38 @@ window.onload = function () {
 	document.querySelector('.chart')
 		,
 	[
-		new TrendsMarksPlugin({items: [MarksSource.generate(now + 3000), MarksSource.generate(now + 3000), MarksSource.generate(now + 4000)]})
+		new TrendsMarksPlugin({items: [MarksSource.generate(now + 3000), MarksSource.generate(now + 3000), MarksSource.generate(now + 4000)]}),
+		new AxisMarksPlugin([
+			{axisType: AXIS_TYPE.X, value: dsMain.startTime, name: 'test', title: 'DEADLINE'},
+			{axisType: AXIS_TYPE.X, value: dsMain.endTime + 30000, name: 'deadline', title: 'DEADLINE', color: '#ff6600'},
+			{axisType: AXIS_TYPE.X, value: dsMain.endTime + 40000, name: 'close', title: 'CLOSE', color: '#005187', displayedValue: () => String((new Date()).getSeconds()), needRender: () => true},
+
+		])
 	]
 	);
 
-	// chartView.setState({animations: {enabled: false}});
-	// chartView.setState({animations: {enabled: true}});
+
+	let axisMarks = chartView.chart.getPlugin(AxisMarksPlugin.NAME) as AxisMarksPlugin;
+
+	setTimeout(() => {
+		let mark = axisMarks.createMark({axisType: AXIS_TYPE.Y, value: dsMain.data[0].yVal, name: 'openprice', title: 'OPEN PRICE', color: '#29874b', stickToEdges: true});
+		setInterval(() => {
+			mark.update({value: mark.value + 1})
+		}, 1000);
+	}, 1000);
 	
 	(<any>window)['chartView'] = chartView;
 
 	var mainTrend = chartView.getTrend('main');
-	var deadlineMark = chartView.chart.xAxisMarks.getItem('deadline');
-	var closeMark = chartView.chart.xAxisMarks.getItem('close');
+	// var deadlineMark = chartView.chart.xAxisMarks.getItem('deadline');
+	// var closeMark = chartView.chart.xAxisMarks.getItem('close');
 
 	mainTrend.onDataChange(() => {
-		var closeValue = closeMark.options.value;
-		if (mainTrend.getLastItem().xVal >= closeValue) {
-			deadlineMark.setOptions({value: closeValue + 10000});
-			closeMark.setOptions({value: closeValue + 20000})
-		}
+		// var closeValue = closeMark.options.value;
+		// if (mainTrend.getLastItem().xVal >= closeValue) {
+		// 	deadlineMark.setOptions({value: closeValue + 10000});
+		// 	closeMark.setOptions({value: closeValue + 20000})
+		// }
 		var markOptions = MarksSource.getNext(mainTrend.getLastItem().xVal);
 		if (markOptions) setTimeout(() => {
 			let trendsMarks = chartView.chart.getPlugin(TrendsMarksPlugin.NAME) as TrendsMarksPlugin;

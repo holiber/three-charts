@@ -24,11 +24,11 @@
         function __export(m) {
             for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
         }
-        __export(__webpack_require__(5));
-        __export(__webpack_require__(6));
+        __export(__webpack_require__(7));
+        __export(__webpack_require__(8));
     }, , function(module, exports) {
         module.exports = __WEBPACK_EXTERNAL_MODULE_2__;
-    }, , , function(module, exports, __webpack_require__) {
+    }, , , , , function(module, exports, __webpack_require__) {
         "use strict";
         var __extends = this && this.__extends || function(d, b) {
             for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -38,8 +38,8 @@
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
         var three_charts_1 = __webpack_require__(2);
-        var TrendsMarksWidget_1 = __webpack_require__(6);
-        var Easing_1 = __webpack_require__(7);
+        var TrendsMarksWidget_1 = __webpack_require__(8);
+        var Easing_1 = __webpack_require__(9);
         (function(TREND_MARK_SIDE) {
             TREND_MARK_SIDE[TREND_MARK_SIDE["TOP"] = 0] = "TOP";
             TREND_MARK_SIDE[TREND_MARK_SIDE["BOTTOM"] = 1] = "BOTTOM";
@@ -80,11 +80,8 @@
                 this.onMarksChangeHandler();
                 this.bindEvents();
             };
-            TrendsMarksPlugin.prototype.onStateChanged = function() {
+            TrendsMarksPlugin.prototype.onStateChangedHandler = function() {
                 this.onMarksChangeHandler();
-            };
-            TrendsMarksPlugin.prototype.getOptions = function() {
-                return _super.prototype.getOptions.call(this);
             };
             TrendsMarksPlugin.prototype.getItems = function() {
                 return this.items;
@@ -262,7 +259,7 @@
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
         var three_charts_1 = __webpack_require__(2);
-        var TrendsMarksPlugin_1 = __webpack_require__(5);
+        var TrendsMarksPlugin_1 = __webpack_require__(7);
         var Mesh = THREE.Mesh;
         var Object3D = THREE.Object3D;
         var LinearFilter = THREE.LinearFilter;
@@ -364,13 +361,17 @@
                 switch (options.textureFilter) {
                   case TrendsMarksPlugin_1.TEXTURE_FILTER.AUTO:
                     texture.magFilter = this.chart.screen.transformationInProgress ? LinearFilter : NearestFilter;
+                    break;
 
                   case TrendsMarksPlugin_1.TEXTURE_FILTER.LINEAR:
                     texture.magFilter = LinearFilter;
+                    break;
 
                   case TrendsMarksPlugin_1.TEXTURE_FILTER.NEAREST:
                     texture.magFilter = NearestFilter;
+                    break;
                 }
+                texture.needsUpdate = true;
                 var material = new THREE.MeshBasicMaterial({
                     map: texture,
                     side: THREE.FrontSide

@@ -8,7 +8,6 @@
  * ALL - automatically sets range.from and range.to by all values of opposite axis
  *
  */
-import {IAxisMarkOptions} from "./AxisMarks";
 import {TColor} from "./Color";
 import { TEase } from "./Easing";
 export enum AXIS_RANGE_TYPE {
@@ -70,7 +69,6 @@ export interface IAxisOptions {
 	range?: IAxisRange;
 	dataType?: AXIS_DATA_TYPE;
 	autoScroll?: boolean;
-	marks?: IAxisMarkOptions[];
 	grid?: IGridOptions;
 	color?: TColor;
 }

@@ -19,7 +19,6 @@ import { TrendsCandlesWidget } from './widgets/TrendsCandleWidget';
 import { ResizeSensor, ResizeSensorType } from './deps';
 import OrthographicCamera = THREE.OrthographicCamera;
 import {Color} from "./Color";
-import { AxisMarksWidget } from "./widgets/AxisMarksWidget";
 
 
 export class ChartBlankView {
@@ -45,9 +44,9 @@ export class ChartBlankView {
 	private zoomThrottled: Function;
 	private unsubscribers: Function[];
 	private resizeSensor: ResizeSensorType;
-	private pluginsAndWidgets: Array<ChartPlugin | ChartWidget>;
+	private pluginsAndWidgets: Array<ChartPlugin<any> | ChartWidget>;
 
-	constructor(state: IChartState, $container: Element, pluginsAndWidgets: Array<ChartPlugin | ChartWidget> = []) {
+	constructor(state: IChartState, $container: Element, pluginsAndWidgets: Array<ChartPlugin<any> | ChartWidget> = []) {
 
 		if (!THREE || !THREE.REVISION) Utils.error('three.js not found');
 
@@ -59,7 +58,7 @@ export class ChartBlankView {
 		state.width = parseInt(style.width);
 		state.height = parseInt(style.height);
 
-		let plugins = pluginsAndWidgets.filter(pluginOrWidget => pluginOrWidget instanceof ChartPlugin) as ChartPlugin[];
+		let plugins = pluginsAndWidgets.filter(pluginOrWidget => pluginOrWidget instanceof ChartPlugin) as ChartPlugin<any>[];
 
 		this.chart = new Chart(state, plugins);
 		this.pluginsAndWidgets = pluginsAndWidgets;
@@ -321,8 +320,6 @@ export class ChartView extends ChartBlankView {
 		TrendsCandlesWidget,
 		AxisWidget,
 		GridWidget,
-		TrendsGradientWidget,
-		// TODO: remove AxisMarksWidget from preinstalled widgets
-		AxisMarksWidget
+		TrendsGradientWidget
 	]
 }

@@ -20,11 +20,12 @@
         return __webpack_require__(0);
     }([ function(module, exports, __webpack_require__) {
         "use strict";
-        var three_charts_1 = __webpack_require__(33);
-        var TrendsMarksPlugin_1 = __webpack_require__(35);
-        var TrendsBeaconWidget_1 = __webpack_require__(38);
-        var TrendsLoadingWidget_1 = __webpack_require__(40);
-        var TrendsIndicatorWidget_1 = __webpack_require__(42);
+        var three_charts_1 = __webpack_require__(32);
+        var TrendsMarksPlugin_1 = __webpack_require__(34);
+        var TrendsBeaconWidget_1 = __webpack_require__(37);
+        var TrendsLoadingWidget_1 = __webpack_require__(39);
+        var TrendsIndicatorWidget_1 = __webpack_require__(41);
+        var AxisMarksPlugin_1 = __webpack_require__(43);
         three_charts_1.ChartView.preinstalledWidgets.push(TrendsLoadingWidget_1.TrendsLoadingWidget, TrendsBeaconWidget_1.TrendsBeaconWidget, TrendsIndicatorWidget_1.TrendsIndicatorWidget);
         var chartView;
         var DataSourse = function() {
@@ -107,13 +108,6 @@
             var now = Date.now();
             chartView = new three_charts_1.ChartView({
                 yAxis: {
-                    marks: [ {
-                        value: dsMain.data[0].yVal,
-                        name: "openprice",
-                        title: "OPEN PRICE",
-                        lineColor: "#29874b",
-                        stickToEdges: true
-                    } ],
                     range: {
                         padding: {
                             end: 100,
@@ -141,22 +135,7 @@
                         margin: {
                             end: 200
                         }
-                    },
-                    marks: [ {
-                        value: dsMain.endTime + 3e4,
-                        name: "deadline",
-                        title: "DEADLINE",
-                        lineColor: "#ff6600",
-                        type: "timeleft",
-                        showValue: true
-                    }, {
-                        value: dsMain.endTime + 4e4,
-                        name: "close",
-                        title: "CLOSE",
-                        lineColor: "#005187",
-                        type: "timeleft",
-                        showValue: true
-                    } ]
+                    }
                 },
                 trends: {
                     main: {
@@ -175,21 +154,49 @@
                 }
             }, document.querySelector(".chart"), [ new TrendsMarksPlugin_1.TrendsMarksPlugin({
                 items: [ MarksSource.generate(now + 3e3), MarksSource.generate(now + 3e3), MarksSource.generate(now + 4e3) ]
-            }) ]);
+            }), new AxisMarksPlugin_1.AxisMarksPlugin([ {
+                axisType: three_charts_1.AXIS_TYPE.X,
+                value: dsMain.startTime,
+                name: "test",
+                title: "DEADLINE"
+            }, {
+                axisType: three_charts_1.AXIS_TYPE.X,
+                value: dsMain.endTime + 3e4,
+                name: "deadline",
+                title: "DEADLINE",
+                color: "#ff6600"
+            }, {
+                axisType: three_charts_1.AXIS_TYPE.X,
+                value: dsMain.endTime + 4e4,
+                name: "close",
+                title: "CLOSE",
+                color: "#005187",
+                displayedValue: function() {
+                    return String(new Date().getSeconds());
+                },
+                needRender: function() {
+                    return true;
+                }
+            } ]) ]);
+            var axisMarks = chartView.chart.getPlugin(AxisMarksPlugin_1.AxisMarksPlugin.NAME);
+            setTimeout(function() {
+                var mark = axisMarks.createMark({
+                    axisType: three_charts_1.AXIS_TYPE.Y,
+                    value: dsMain.data[0].yVal,
+                    name: "openprice",
+                    title: "OPEN PRICE",
+                    color: "#29874b",
+                    stickToEdges: true
+                });
+                setInterval(function() {
+                    mark.update({
+                        value: mark.value + 1
+                    });
+                }, 1e3);
+            }, 1e3);
             window["chartView"] = chartView;
             var mainTrend = chartView.getTrend("main");
-            var deadlineMark = chartView.chart.xAxisMarks.getItem("deadline");
-            var closeMark = chartView.chart.xAxisMarks.getItem("close");
             mainTrend.onDataChange(function() {
-                var closeValue = closeMark.options.value;
-                if (mainTrend.getLastItem().xVal >= closeValue) {
-                    deadlineMark.setOptions({
-                        value: closeValue + 1e4
-                    });
-                    closeMark.setOptions({
-                        value: closeValue + 2e4
-                    });
-                }
                 var markOptions = MarksSource.getNext(mainTrend.getLastItem().xVal);
                 if (markOptions) setTimeout(function() {
                     var trendsMarks = chartView.chart.getPlugin(TrendsMarksPlugin_1.TrendsMarksPlugin.NAME);
@@ -291,7 +298,7 @@
                 });
             }
         }
-    }, , , , , , , , , , , , , , , , , , , , , , function(module, exports) {
+    }, , , , , , , , , , , , , , , , , , , , , function(module, exports) {
         "use strict";
         exports.EASING = {
             Linear: {
@@ -474,7 +481,7 @@
             }
         };
     }, , , , , , , , , , , function(module, exports, __webpack_require__) {
-        module.exports = __webpack_require__(34);
+        module.exports = __webpack_require__(33);
     }, function(module, exports, __webpack_require__) {
         (function webpackUniversalModuleDefinition(root, factory) {
             if (true) module.exports = factory(); else if (typeof define === "function" && define.amd) define([], factory); else if (typeof exports === "object") exports["THREE_CHARTS"] = factory(); else root["THREE_CHARTS"] = factory();
@@ -509,7 +516,6 @@
                 }
                 __webpack_require__(2);
                 __export(__webpack_require__(9));
-                __export(__webpack_require__(20));
                 __export(__webpack_require__(19));
                 __export(__webpack_require__(18));
                 __export(__webpack_require__(14));
@@ -517,12 +523,14 @@
                 __export(__webpack_require__(16));
                 __export(__webpack_require__(17));
                 __export(__webpack_require__(11));
-                __export(__webpack_require__(23));
-                __export(__webpack_require__(10));
-                __export(__webpack_require__(26));
-                __export(__webpack_require__(21));
+                __export(__webpack_require__(30));
                 __export(__webpack_require__(22));
-                __export(__webpack_require__(32));
+                __export(__webpack_require__(31));
+                __export(__webpack_require__(10));
+                __export(__webpack_require__(25));
+                __export(__webpack_require__(20));
+                __export(__webpack_require__(12));
+                __export(__webpack_require__(21));
             }, function(module, exports, __webpack_require__) {
                 "use strict";
                 window.TweenLite = TweenMax;
@@ -1185,16 +1193,15 @@
                 var Plugin_1 = __webpack_require__(10);
                 var PerspectiveCamera = THREE.PerspectiveCamera;
                 var Chart_1 = __webpack_require__(14);
-                var Widget_1 = __webpack_require__(23);
+                var Widget_1 = __webpack_require__(22);
                 var Utils_1 = __webpack_require__(11);
-                var AxisWidget_1 = __webpack_require__(24);
-                var GridWidget_1 = __webpack_require__(25);
-                var TrendsGradientWidget_1 = __webpack_require__(27);
-                var TrendsLineWidget_1 = __webpack_require__(29);
-                var TrendsCandleWidget_1 = __webpack_require__(30);
+                var AxisWidget_1 = __webpack_require__(23);
+                var GridWidget_1 = __webpack_require__(24);
+                var TrendsGradientWidget_1 = __webpack_require__(26);
+                var TrendsLineWidget_1 = __webpack_require__(28);
+                var TrendsCandleWidget_1 = __webpack_require__(29);
                 var deps_1 = __webpack_require__(13);
-                var Color_1 = __webpack_require__(26);
-                var AxisMarksWidget_1 = __webpack_require__(31);
+                var Color_1 = __webpack_require__(25);
                 var ChartBlankView = function() {
                     function ChartBlankView(state, $container, pluginsAndWidgets) {
                         var _this = this;
@@ -1471,7 +1478,7 @@
                     function ChartView() {
                         _super.apply(this, arguments);
                     }
-                    ChartView.preinstalledWidgets = [ TrendsLineWidget_1.TrendsLineWidget, TrendsCandleWidget_1.TrendsCandlesWidget, AxisWidget_1.AxisWidget, GridWidget_1.GridWidget, TrendsGradientWidget_1.TrendsGradientWidget, AxisMarksWidget_1.AxisMarksWidget ];
+                    ChartView.preinstalledWidgets = [ TrendsLineWidget_1.TrendsLineWidget, TrendsCandleWidget_1.TrendsCandlesWidget, AxisWidget_1.AxisWidget, GridWidget_1.GridWidget, TrendsGradientWidget_1.TrendsGradientWidget ];
                     return ChartView;
                 }(ChartBlankView);
                 exports.ChartView = ChartView;
@@ -1504,7 +1511,7 @@
                         }), this.chart.onDestroy(function() {
                             return _this.onDestroyHandler();
                         }), this.chart.onPluginsStateChange(function(changedPluginsStates) {
-                            return changedPluginsStates[_this.name] && _this.onStateChanged(changedPluginsStates[_this.name]);
+                            return changedPluginsStates[_this.name] && _this.onStateChangedHandler(changedPluginsStates[_this.name]);
                         }));
                     };
                     ChartPlugin.prototype.getOptions = function() {
@@ -1512,7 +1519,7 @@
                     };
                     ChartPlugin.prototype.onInitialStateAppliedHandler = function(initialState) {};
                     ChartPlugin.prototype.onReadyHandler = function() {};
-                    ChartPlugin.prototype.onStateChanged = function(changedState) {};
+                    ChartPlugin.prototype.onStateChangedHandler = function(changedState) {};
                     ChartPlugin.prototype.onDestroyHandler = function() {
                         this.ee.removeAllListeners();
                     };
@@ -1594,6 +1601,62 @@
                     Utils.deepCopy = function(obj) {
                         return JSON.parse(JSON.stringify(obj));
                     };
+                    Utils.patch = function(objectToPatch, patch) {
+                        var idKey = "_id";
+                        for (var key in patch) {
+                            if (!patch.hasOwnProperty(key)) continue;
+                            if (objectToPatch[key]) {
+                                if (Array.isArray(patch[key])) {
+                                    var _loop_1 = function(patchItem) {
+                                        var subObject = objectToPatch[key].find(function(item) {
+                                            return item[idKey] != void 0 && item[idKey] === patchItem[idKey];
+                                        });
+                                        if (subObject) {
+                                            this_1.patch(subObject, patchItem);
+                                        } else {
+                                            objectToPatch[key].push(patchItem);
+                                        }
+                                    };
+                                    var this_1 = this;
+                                    for (var _i = 0, _a = patch[key]; _i < _a.length; _i++) {
+                                        var patchItem = _a[_i];
+                                        _loop_1(patchItem);
+                                    }
+                                    continue;
+                                } else if (typeof patch[key] === "object" && objectToPatch[key] != void 0) {
+                                    if (patch[idKey] && Object.keys(patch).length == 1) {
+                                        delete objectToPatch[key];
+                                    } else {
+                                        this.patch(objectToPatch[key], patch[key]);
+                                    }
+                                    continue;
+                                }
+                            }
+                            objectToPatch[key] = patch[key];
+                        }
+                        if (objectToPatch["_onUpdate"]) objectToPatch["_onUpdate"].call(objectToPatch, patch);
+                        return objectToPatch;
+                    };
+                    Utils.travers = function(object, fn) {
+                        for (var key in object) {
+                            if (!object.hasOwnProperty(key)) continue;
+                            var allowTraverseDeeper = fn(object[key]);
+                            var canTraverseDeeper = allowTraverseDeeper && typeof object[key] == "object";
+                            if (canTraverseDeeper) this.travers(object[key], fn);
+                        }
+                    };
+                    Utils.setIdsToArrayItems = function(sourceObject) {
+                        var idKey = "_id";
+                        Utils.travers(sourceObject, function(item) {
+                            if (!Array.isArray(item)) return true;
+                            var arr = item;
+                            for (var _i = 0, arr_1 = arr; _i < arr_1.length; _i++) {
+                                var obj = arr_1[_i];
+                                if (typeof obj !== "object" || Array.isArray(obj)) continue;
+                                if (!obj[idKey]) obj[idKey] = Utils.getUid();
+                            }
+                        });
+                    };
                     Utils.toFixed = function(num, digitsCount) {
                         var maxDigits = 15;
                         var result = "";
@@ -1618,7 +1681,7 @@
                         canvas.width = width;
                         canvas.height = height;
                         var ctx = canvas.getContext("2d");
-                        fn(ctx);
+                        fn && fn(ctx, width, height);
                         var texture = new THREE.Texture(canvas);
                         texture.needsUpdate = true;
                         return texture;
@@ -1626,7 +1689,6 @@
                     Utils.createNearestTexture = function(width, height, fn) {
                         var texture = this.createTexture(width, height, fn);
                         texture.minFilter = THREE.NearestFilter;
-                        texture.magFilter = THREE.NearestFilter;
                         return texture;
                     };
                     Utils.createPixelPerfectTexture = function(width, height, fn) {
@@ -1667,6 +1729,29 @@
                     };
                     Utils.binarySearchClosest = function(arr, num, key) {
                         var ind = this.binarySearchClosestInd(arr, num, key);
+                        return arr[ind];
+                    };
+                    Utils.binarySearchInd = function(arr, num, key) {
+                        var mid;
+                        var lo = 0;
+                        var hi = arr.length - 1;
+                        while (hi - lo > 1) {
+                            mid = Math.floor((hi - lo) / 2);
+                            if (arr[mid][key] < num) {
+                                lo = mid;
+                            } else {
+                                hi = mid;
+                            }
+                            if (arr[lo][key] == num) {
+                                return lo;
+                            } else if (arr[hi][key] == num) {
+                                return hi;
+                            }
+                        }
+                        return -1;
+                    };
+                    Utils.binarySearch = function(arr, num, key) {
+                        var ind = this.binarySearchInd(arr, num, key);
                         return arr[ind];
                     };
                     Utils.rectsIntersect = function(r1, r2) {
@@ -1776,11 +1861,10 @@
                 var Utils_1 = __webpack_require__(11);
                 var TrendsManager_1 = __webpack_require__(17);
                 var Screen_1 = __webpack_require__(18);
-                var AxisMarks_1 = __webpack_require__(19);
-                var interfaces_1 = __webpack_require__(20);
+                var interfaces_1 = __webpack_require__(19);
                 var deps_1 = __webpack_require__(2);
-                var AnimationManager_1 = __webpack_require__(21);
-                var Easing_1 = __webpack_require__(22);
+                var AnimationManager_1 = __webpack_require__(20);
+                var Easing_1 = __webpack_require__(21);
                 var CHART_STATE_EVENTS = {
                     INITIAL_STATE_APPLIED: "initialStateApplied",
                     READY: "ready",
@@ -1825,7 +1909,6 @@
                                     minSizePx: 100,
                                     color: "rgba(" + LIGHT_BLUE + ", 0.12)"
                                 },
-                                marks: [],
                                 color: LIGHT_BLUE
                             },
                             yAxis: {
@@ -1849,7 +1932,6 @@
                                     color: "rgba(" + LIGHT_BLUE + ", 0.12)"
                                 },
                                 dataType: interfaces_1.AXIS_DATA_TYPE.NUMBER,
-                                marks: [],
                                 color: LIGHT_BLUE
                             },
                             animations: {
@@ -1916,7 +1998,7 @@
                         this.isDestroyed = false;
                         this.ee = new EventEmmiter_1.EventEmitter();
                         this.ee.setMaxListeners(initialState.eventEmitterMaxListeners || this.state.eventEmitterMaxListeners);
-                        this.state = Utils_1.Utils.deepMerge(this.state, initialState);
+                        this.state = Utils_1.Utils.patch(this.state, initialState);
                         this.trendsManager = new TrendsManager_1.TrendsManager(this, initialState);
                         initialState.trends = this.trendsManager.calculatedOptions;
                         initialState = this.installPlugins(plugins, initialState);
@@ -1928,8 +2010,6 @@
                         this.animationManager = new AnimationManager_1.AnimationManager();
                         this.animationManager.setAimationsEnabled(this.state.animations.enabled);
                         this.screen = new Screen_1.Screen(this);
-                        this.xAxisMarks = new AxisMarks_1.AxisMarks(this, interfaces_1.AXIS_TYPE.X);
-                        this.yAxisMarks = new AxisMarks_1.AxisMarks(this, interfaces_1.AXIS_TYPE.Y);
                         this.bindEvents();
                         this.ee.emit(CHART_STATE_EVENTS.INITIAL_STATE_APPLIED, initialState);
                         this.isReady = true;
@@ -2003,7 +2083,9 @@
                             delete trendOptions.data;
                         }
                         var newStateContainsData = Object.keys(trendsData).length > 0;
-                        this.state = Utils_1.Utils.deepMerge(this.state, newState, false);
+                        newState = Utils_1.Utils.deepMerge({}, newState);
+                        Utils_1.Utils.setIdsToArrayItems(newState);
+                        this.state = Utils_1.Utils.patch(this.state, newState);
                         if (newStateContainsData) for (var trendName in trendsData) {
                             this.state.trends[trendName].data = trendsData[trendName];
                         }
@@ -2015,7 +2097,7 @@
                     Chart.prototype.recalculateState = function(changedProps) {
                         var data = this.state;
                         var patch = {};
-                        var actualData = Utils_1.Utils.deepMerge({}, data);
+                        var actualData = Utils_1.Utils.patch({}, data);
                         var cursorOptions = changedProps.cursor;
                         var isMouseDrag = cursorOptions && data.cursor.dragMode && data.prevState.cursor.dragMode;
                         if (isMouseDrag) {
@@ -2028,7 +2110,7 @@
                                     scroll: currentScroll + deltaXVal
                                 }
                             };
-                            actualData = Utils_1.Utils.deepMerge(actualData, {
+                            actualData = Utils_1.Utils.patch(actualData, {
                                 xAxis: patch.xAxis
                             });
                         }
@@ -2039,10 +2121,10 @@
                             var xAxisPatch = this.recalculateXAxis(actualData, changedProps);
                             if (xAxisPatch) {
                                 scrollXChanged = true;
-                                patch = Utils_1.Utils.deepMerge(patch, {
+                                Utils_1.Utils.patch(patch, {
                                     xAxis: xAxisPatch
                                 });
-                                actualData = Utils_1.Utils.deepMerge(actualData, {
+                                Utils_1.Utils.patch(actualData, {
                                     xAxis: xAxisPatch
                                 });
                             }
@@ -2051,10 +2133,10 @@
                         if (needToRecalculateYAxis) {
                             var yAxisPatch = this.recalculateYAxis(actualData);
                             if (yAxisPatch) {
-                                patch = Utils_1.Utils.deepMerge(patch, {
+                                Utils_1.Utils.patch(patch, {
                                     yAxis: yAxisPatch
                                 });
-                                actualData = Utils_1.Utils.deepMerge(actualData, {
+                                Utils_1.Utils.patch(actualData, {
                                     yAxis: yAxisPatch
                                 });
                             }
@@ -2063,7 +2145,7 @@
                         var allChangedProps = Utils_1.Utils.deepMerge(changedProps, patch);
                         patch.computedData = this.getComputedData(allChangedProps);
                         this.savePrevState(patch);
-                        this.state = Utils_1.Utils.deepMerge(this.state, patch);
+                        Utils_1.Utils.patch(this.state, patch);
                         return {
                             changedProps: allChangedProps,
                             patch: patch
@@ -3265,7 +3347,7 @@
                         var ease = isAutoscroll ? animations.autoScrollEase : animations.zoomEase;
                         var range = chart.state.xAxis.range;
                         var targetX = range.scroll * range.scaleFactor * range.zoom;
-                        if (isDragMode) time = 0;
+                        if (isDragMode && !chart.state.inertialScroll) time = 0;
                         if (this.scrollXAnimation) this.scrollXAnimation.stop();
                         this.scrollXAnimation = chart.animationManager.animate(time, ease).from(this.options.scrollX).to(targetX).onTick(function(value) {
                             _this.transform({
@@ -3385,151 +3467,6 @@
                     return Screen;
                 }();
                 exports.Screen = Screen;
-            }, function(module, exports, __webpack_require__) {
-                "use strict";
-                var __extends = this && this.__extends || function(d, b) {
-                    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-                    function __() {
-                        this.constructor = d;
-                    }
-                    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-                };
-                var Utils_1 = __webpack_require__(11);
-                var interfaces_1 = __webpack_require__(20);
-                var EventEmmiter_1 = __webpack_require__(12);
-                var AXIS_MARK_DEFAULT_OPTIONS = {
-                    type: "simple",
-                    lineWidth: 1,
-                    value: 0,
-                    showValue: false,
-                    stickToEdges: false,
-                    lineColor: "#FFFFFF",
-                    title: ""
-                };
-                var AxisMarks = function() {
-                    function AxisMarks(chartState, axisType) {
-                        this.items = {};
-                        this.chartState = chartState;
-                        this.ee = new EventEmmiter_1.EventEmitter();
-                        this.axisType = axisType;
-                        var marks = this.items;
-                        var axisMarksOptions = axisType == interfaces_1.AXIS_TYPE.X ? chartState.state.xAxis.marks : chartState.state.yAxis.marks;
-                        for (var _i = 0, axisMarksOptions_1 = axisMarksOptions; _i < axisMarksOptions_1.length; _i++) {
-                            var options = axisMarksOptions_1[_i];
-                            var axisMark = void 0;
-                            options = Utils_1.Utils.deepMerge(AXIS_MARK_DEFAULT_OPTIONS, options);
-                            if (!options.name) options.name = Utils_1.Utils.getUid().toString();
-                            if (marks[options.name]) Utils_1.Utils.error("duplicated mark name " + options.name);
-                            if (options.type == "timeleft") {
-                                axisMark = new AxisTimeleftMark(chartState, axisType, options);
-                            } else {
-                                axisMark = new AxisMark(chartState, axisType, options);
-                            }
-                            marks[options.name] = axisMark;
-                        }
-                        this.bindEvents();
-                    }
-                    AxisMarks.prototype.bindEvents = function() {
-                        var _this = this;
-                        this.chartState.onTrendChange(function(trendName, changedOptions, newData) {
-                            _this.onTrendChange(trendName, newData);
-                        });
-                        this.chartState.onDestroy(function() {
-                            return _this.ee.removeAllListeners();
-                        });
-                    };
-                    AxisMarks.prototype.onTrendChange = function(trendName, newData) {
-                        if (!newData) return;
-                        var startVal = newData[0].xVal;
-                        var endVal = newData[newData.length - 1].xVal;
-                        var marks = this.items;
-                        for (var markName in marks) {
-                            var mark = marks[markName];
-                            var markVal = mark.options.value;
-                            var markWasCrossed = startVal == markVal || endVal == markVal || startVal < markVal && endVal > markVal;
-                            if (markWasCrossed) this.ee.emit("markCrossed", trendName, newData);
-                        }
-                    };
-                    AxisMarks.prototype.getItems = function() {
-                        return this.items;
-                    };
-                    AxisMarks.prototype.getItem = function(markName) {
-                        return this.items[markName];
-                    };
-                    return AxisMarks;
-                }();
-                exports.AxisMarks = AxisMarks;
-                var AxisMark = function() {
-                    function AxisMark(chartState, axisType, options) {
-                        this.renderOnTrendsChange = false;
-                        this.ee = new EventEmmiter_1.EventEmitter();
-                        this.options = options;
-                        this.axisType = axisType;
-                        this.chartState = chartState;
-                        this.bindEvents();
-                    }
-                    AxisMark.prototype.bindEvents = function() {};
-                    AxisMark.prototype.setOptions = function(newOptions) {
-                        var value = this.options.value;
-                        this.options = Utils_1.Utils.deepMerge(this.options, newOptions);
-                        if (this.options.value !== value) this.ee.emit("valueChange");
-                        this.ee.emit("onDisplayedValueChange");
-                    };
-                    AxisMark.prototype.getDisplayedVal = function() {
-                        var _a = this.options, value = _a.value, displayedValue = _a.displayedValue;
-                        return String(displayedValue !== void 0 ? displayedValue : value);
-                    };
-                    AxisMark.prototype.onMarkCrossed = function(cb) {
-                        var _this = this;
-                        this.ee.on("markCrossed", cb);
-                        return function() {
-                            _this.ee.off("markCrossed", cb);
-                        };
-                    };
-                    AxisMark.prototype.onValueChange = function(cb) {
-                        var _this = this;
-                        this.ee.on("valueChange", cb);
-                        return function() {
-                            _this.ee.off("valueChange", cb);
-                        };
-                    };
-                    AxisMark.prototype.onDisplayedValueChange = function(cb) {
-                        var _this = this;
-                        this.ee.on("onDisplayedValueChange", cb);
-                        return function() {
-                            _this.ee.off("onDisplayedValueChange", cb);
-                        };
-                    };
-                    AxisMark.typeName = "simple";
-                    return AxisMark;
-                }();
-                exports.AxisMark = AxisMark;
-                var AxisTimeleftMark = function(_super) {
-                    __extends(AxisTimeleftMark, _super);
-                    function AxisTimeleftMark() {
-                        _super.apply(this, arguments);
-                        this.renderOnTrendsChange = true;
-                    }
-                    AxisTimeleftMark.prototype.getDisplayedVal = function() {
-                        var markVal = this.options.value;
-                        var maxXVal = this.chartState.state.computedData.trends.maxXVal;
-                        var time = markVal - maxXVal;
-                        if (time < 0) time = 0;
-                        return Utils_1.Utils.msToTimeString(time);
-                    };
-                    AxisTimeleftMark.prototype.bindEvents = function() {
-                        var _this = this;
-                        this.chartState.onTrendsChange(function() {
-                            return _this.onTrendsChange();
-                        });
-                    };
-                    AxisTimeleftMark.prototype.onTrendsChange = function() {
-                        this.ee.emit("onDisplayedValueChange");
-                    };
-                    AxisTimeleftMark.typeName = "timeleft";
-                    return AxisTimeleftMark;
-                }(AxisMark);
-                exports.AxisTimeleftMark = AxisTimeleftMark;
             }, function(module, exports) {
                 "use strict";
                 (function(AXIS_RANGE_TYPE) {
@@ -3551,7 +3488,7 @@
                 var AXIS_DATA_TYPE = exports.AXIS_DATA_TYPE;
             }, function(module, exports, __webpack_require__) {
                 "use strict";
-                var Easing_1 = __webpack_require__(22);
+                var Easing_1 = __webpack_require__(21);
                 var AnimationManager = function() {
                     function AnimationManager() {
                         this.isAnimationsEnabled = true;
@@ -3908,11 +3845,11 @@
                 };
                 var Mesh = THREE.Mesh;
                 var Object3D = THREE.Object3D;
-                var Widget_1 = __webpack_require__(23);
-                var GridWidget_1 = __webpack_require__(25);
+                var Widget_1 = __webpack_require__(22);
+                var GridWidget_1 = __webpack_require__(24);
                 var Utils_1 = __webpack_require__(11);
-                var interfaces_1 = __webpack_require__(20);
-                var Color_1 = __webpack_require__(26);
+                var interfaces_1 = __webpack_require__(19);
+                var Color_1 = __webpack_require__(25);
                 var AxisWidget = function(_super) {
                     __extends(AxisWidget, _super);
                     function AxisWidget() {
@@ -4098,10 +4035,10 @@
                     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
                 };
                 var Vector3 = THREE.Vector3;
-                var Widget_1 = __webpack_require__(23);
+                var Widget_1 = __webpack_require__(22);
                 var LineSegments = THREE.LineSegments;
                 var Utils_1 = __webpack_require__(11);
-                var Color_1 = __webpack_require__(26);
+                var Color_1 = __webpack_require__(25);
                 var GridWidget = function(_super) {
                     __extends(GridWidget, _super);
                     function GridWidget() {
@@ -4300,8 +4237,8 @@
                 };
                 var Geometry = THREE.Geometry;
                 var Utils_1 = __webpack_require__(11);
-                var TrendsWidget_1 = __webpack_require__(28);
-                var Color_1 = __webpack_require__(26);
+                var TrendsWidget_1 = __webpack_require__(27);
+                var Color_1 = __webpack_require__(25);
                 var TrendsGradientWidget = function(_super) {
                     __extends(TrendsGradientWidget, _super);
                     function TrendsGradientWidget() {
@@ -4441,7 +4378,7 @@
                     }
                     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
                 };
-                var Widget_1 = __webpack_require__(23);
+                var Widget_1 = __webpack_require__(22);
                 var Object3D = THREE.Object3D;
                 var TrendsWidget = function(_super) {
                     __extends(TrendsWidget, _super);
@@ -4565,7 +4502,7 @@
                 var Geometry = THREE.Geometry;
                 var LineBasicMaterial = THREE.LineBasicMaterial;
                 var Vector3 = THREE.Vector3;
-                var TrendsWidget_1 = __webpack_require__(28);
+                var TrendsWidget_1 = __webpack_require__(27);
                 var LineSegments = THREE.LineSegments;
                 var Trend_1 = __webpack_require__(15);
                 var Utils_1 = __webpack_require__(11);
@@ -4707,7 +4644,7 @@
                     }
                     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
                 };
-                var TrendsWidget_1 = __webpack_require__(28);
+                var TrendsWidget_1 = __webpack_require__(27);
                 var Object3D = THREE.Object3D;
                 var Geometry = THREE.Geometry;
                 var Vector3 = THREE.Vector3;
@@ -4893,208 +4830,95 @@
                 }();
             }, function(module, exports, __webpack_require__) {
                 "use strict";
-                var __extends = this && this.__extends || function(d, b) {
-                    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-                    function __() {
-                        this.constructor = d;
-                    }
-                    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-                };
-                var Widget_1 = __webpack_require__(23);
-                var Object3D = THREE.Object3D;
-                var Geometry = THREE.Geometry;
-                var LineBasicMaterial = THREE.LineBasicMaterial;
-                var Vector3 = THREE.Vector3;
                 var Utils_1 = __webpack_require__(11);
-                var Line = THREE.Line;
-                var Mesh = THREE.Mesh;
-                var interfaces_1 = __webpack_require__(20);
-                var Color_1 = __webpack_require__(26);
-                var AxisMarksWidget = function(_super) {
-                    __extends(AxisMarksWidget, _super);
-                    function AxisMarksWidget() {
-                        _super.apply(this, arguments);
-                        this.axisMarksWidgets = [];
-                    }
-                    AxisMarksWidget.prototype.onReadyHandler = function() {
-                        this.object3D = new Object3D();
-                        var _a = this.chart, xAxisMarks = _a.xAxisMarks, yAxisMarks = _a.yAxisMarks;
-                        var items = xAxisMarks.getItems();
-                        for (var markName in items) {
-                            this.createAxisMark(items[markName]);
-                        }
-                        items = yAxisMarks.getItems();
-                        for (var markName in items) {
-                            this.createAxisMark(items[markName]);
-                        }
-                        this.bindEvents();
+                var EventEmmiter_1 = __webpack_require__(12);
+                var UniqCollectionItem = function() {
+                    function UniqCollectionItem() {}
+                    UniqCollectionItem.prototype.getId = function() {
+                        return this._id;
                     };
-                    AxisMarksWidget.prototype.createAxisMark = function(axisMark) {
-                        var axisMarkWidget = new AxisMarkWidget(this.chart, axisMark);
-                        this.axisMarksWidgets.push(axisMarkWidget);
-                        this.object3D.add(axisMarkWidget.getObject3D());
-                    };
-                    AxisMarksWidget.prototype.bindEvents = function() {
-                        var _this = this;
-                        this.bindEvent(this.chart.screen.onTransformationFrame(function() {
-                            return _this.updateMarksPositions();
-                        }), this.chart.onResize(function() {
-                            return _this.updateMarksPositions();
-                        }));
-                    };
-                    AxisMarksWidget.prototype.updateMarksPositions = function() {
-                        for (var _i = 0, _a = this.axisMarksWidgets; _i < _a.length; _i++) {
-                            var widget = _a[_i];
-                            widget.updatePosition();
-                        }
-                    };
-                    AxisMarksWidget.prototype.getObject3D = function() {
-                        return this.object3D;
-                    };
-                    AxisMarksWidget.widgetName = "AxisMarks";
-                    return AxisMarksWidget;
-                }(Widget_1.ChartWidget);
-                exports.AxisMarksWidget = AxisMarksWidget;
-                var DEFAULT_INDICATOR_RENDER_FUNCTION = function(axisMarkWidget, ctx) {
-                    var axisMark = axisMarkWidget.axisMark;
-                    ctx.fillStyle = axisMark.options.lineColor;
-                    ctx.clearRect(0, 0, axisMarkWidget.indicatorWidth, axisMarkWidget.indicatorHeight);
-                    var xCoord = 15;
-                    if (axisMark.axisType == interfaces_1.AXIS_TYPE.Y) {
-                        ctx.textAlign = "end";
-                        xCoord = axisMarkWidget.indicatorWidth;
-                    }
-                    ctx.fillText(axisMark.options.title, xCoord, 20);
-                    if (!axisMark.options.showValue) return;
-                    ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-                    ctx.fillText(axisMark.getDisplayedVal(), 16, 34);
-                };
-                var INDICATOR_POS_Z = .1;
-                var AxisMarkWidget = function() {
-                    function AxisMarkWidget(chartState, axisMark) {
-                        this.indicatorWidth = 128;
-                        this.indicatorHeight = 64;
-                        this.indicatorRenderFunction = DEFAULT_INDICATOR_RENDER_FUNCTION;
-                        this.chartState = chartState;
-                        this.axisMark = axisMark;
-                        this.axisType = axisMark.axisType;
-                        this.frameValue = axisMark.options.value;
-                        this.object3D = new Object3D();
-                        this.object3D.position.setZ(-.1);
-                        this.line = this.createLine();
-                        this.object3D.add(this.line);
-                        this.indicator = this.createIndicator();
-                        this.object3D.add(this.indicator);
-                        this.renderIndicator();
-                        this.updatePosition();
-                        this.bindEvents();
-                    }
-                    AxisMarkWidget.prototype.getObject3D = function() {
-                        return this.object3D;
-                    };
-                    AxisMarkWidget.prototype.createLine = function() {
-                        var _a = this.axisMark.options, lineWidth = _a.lineWidth, lineColor = _a.lineColor;
-                        var lineGeometry = new Geometry();
-                        lineGeometry.vertices.push(new Vector3(0, 0, 0), new Vector3(0, 0, 0));
-                        return new Line(lineGeometry, new LineBasicMaterial({
-                            color: new Color_1.Color(lineColor).value,
-                            linewidth: lineWidth
-                        }));
-                    };
-                    AxisMarkWidget.prototype.createIndicator = function() {
-                        var _a = this, width = _a.indicatorWidth, height = _a.indicatorHeight;
-                        var texture = Utils_1.Utils.createNearestTexture(width, height, function(ctx) {
-                            ctx.beginPath();
-                            ctx.font = "10px Arial";
-                        });
-                        var material = new THREE.MeshBasicMaterial({
-                            map: texture,
-                            side: THREE.FrontSide
-                        });
-                        material.transparent = true;
-                        return new Mesh(new THREE.PlaneGeometry(width, height), material);
-                    };
-                    AxisMarkWidget.prototype.renderIndicator = function() {
-                        var texture = this.indicator.material.map;
-                        var ctx = texture.image.getContext("2d");
-                        DEFAULT_INDICATOR_RENDER_FUNCTION(this, ctx);
-                        texture.needsUpdate = true;
-                    };
-                    AxisMarkWidget.prototype.bindEvents = function() {
-                        var _this = this;
-                        this.axisMark.onDisplayedValueChange(function() {
-                            return _this.renderIndicator();
-                        });
-                        this.axisMark.onValueChange(function() {
-                            return _this.onValueChangeHandler();
-                        });
-                    };
-                    AxisMarkWidget.prototype.onValueChangeHandler = function() {
-                        var _this = this;
-                        if (this.moveAnimation) this.moveAnimation.kill();
-                        var animations = this.chartState.state.animations;
-                        var targetValue = this.axisMark.options.value;
-                        var cb = function() {
-                            _this.updatePosition();
-                        };
-                        if (animations.enabled) {
-                            this.moveAnimation = TweenLite.to(this, animations.trendChangeSpeed, {
-                                frameValue: targetValue,
-                                ease: animations.trendChangeEase
-                            });
-                            this.moveAnimation.eventCallback("onUpdate", cb);
-                        } else {
-                            this.frameValue = targetValue;
-                            cb();
-                        }
-                    };
-                    AxisMarkWidget.prototype.updatePosition = function() {
-                        var chartState = this.chartState;
-                        var screen = chartState.screen;
-                        var isXAxis = this.axisType == interfaces_1.AXIS_TYPE.X;
-                        var lineGeometry = this.line.geometry;
-                        var hasStickMode = this.axisMark.options.stickToEdges;
-                        var _a = this.chartState.state, width = _a.width, height = _a.height;
-                        if (isXAxis) {
-                            this.object3D.position.x = screen.getPointOnXAxis(this.frameValue);
-                            this.object3D.position.y = screen.getBottom();
-                            lineGeometry.vertices[1].setY(height);
-                            this.indicator.position.set(this.indicatorWidth / 2, chartState.state.height - this.indicatorHeight / 2, INDICATOR_POS_Z);
-                        } else {
-                            var val = this.frameValue;
-                            var bottomVal = screen.getBottomVal();
-                            var topVal = screen.getTopVal();
-                            var needToStickOnTop = hasStickMode && val > topVal;
-                            var needToStickOnBottom = hasStickMode && val < bottomVal;
-                            var centerYVal = screen.getCenterYVal();
-                            this.object3D.position.x = screen.getLeft();
-                            if (needToStickOnTop) {
-                                this.object3D.position.y = screen.getTop();
-                            } else if (needToStickOnBottom) {
-                                this.object3D.position.y = screen.getBottom();
-                            } else {
-                                this.object3D.position.y = screen.getPointOnYAxis(this.frameValue);
-                            }
-                            lineGeometry.vertices[1].setX(width);
-                            var indicatorPosY = val > centerYVal ? -35 : 10;
-                            this.indicator.position.set(width - this.indicatorWidth / 2 - 50, indicatorPosY, INDICATOR_POS_Z);
-                        }
-                        lineGeometry.verticesNeedUpdate = true;
-                    };
-                    AxisMarkWidget.typeName = "simple";
-                    return AxisMarkWidget;
+                    return UniqCollectionItem;
                 }();
+                exports.UniqCollectionItem = UniqCollectionItem;
+                var ID_KEY = "_id";
+                var EVENTS = {
+                    CREATE: "create",
+                    UPDATE: "update",
+                    REMOVE: "remove"
+                };
+                var UniqCollection = function() {
+                    function UniqCollection(options) {
+                        this.items = [];
+                        this.ee = new EventEmmiter_1.EventEmitter();
+                        this.options = options;
+                    }
+                    UniqCollection.prototype.patch = function(models) {
+                        var options = this.options;
+                        for (var _i = 0, models_1 = models; _i < models_1.length; _i++) {
+                            var model = models_1[_i];
+                            var id = model[ID_KEY];
+                            if (!id) Utils_1.Utils.error("Collection item without id detected");
+                            var ind = this.getItemInd(id);
+                            var item = this.items[ind];
+                            var justCreated = false;
+                            if (!item) {
+                                justCreated = true;
+                                item = options.createInstance(model);
+                                this.items.push(item);
+                            }
+                            if (Object.keys(model).length > 1) {
+                                var prevProps = {};
+                                Utils_1.Utils.copyProps(item, prevProps, model);
+                                Utils_1.Utils.patch(item, model);
+                                justCreated && this.ee.emit(EVENTS.CREATE, item);
+                                this.ee.emit(EVENTS.UPDATE, item, model, prevProps);
+                            } else {
+                                this.items.splice(ind, 1);
+                                this.ee.emit(EVENTS.REMOVE, item);
+                            }
+                        }
+                    };
+                    UniqCollection.prototype.getItem = function(id) {
+                        return this.items[this.getItemInd(id)];
+                    };
+                    UniqCollection.prototype.getLast = function() {
+                        return this.items[this.items.length - 1];
+                    };
+                    UniqCollection.prototype.forEach = function(cb) {
+                        for (var key in this.items) cb(this.items[key]);
+                    };
+                    UniqCollection.prototype.filter = function(cb) {
+                        var result = [];
+                        this.forEach(function(item) {
+                            return cb(item) && result.push(item);
+                        });
+                        return result;
+                    };
+                    UniqCollection.prototype.onCreate = function(cb) {
+                        return this.ee.subscribe(EVENTS.CREATE, cb);
+                    };
+                    UniqCollection.prototype.onUpdate = function(cb) {
+                        return this.ee.subscribe(EVENTS.UPDATE, cb);
+                    };
+                    UniqCollection.prototype.onRemove = function(cb) {
+                        return this.ee.subscribe(EVENTS.REMOVE, cb);
+                    };
+                    UniqCollection.prototype.getItemInd = function(id) {
+                        return Utils_1.Utils.binarySearchInd(this.items, id, ID_KEY);
+                    };
+                    return UniqCollection;
+                }();
+                exports.UniqCollection = UniqCollection;
             }, function(module, exports, __webpack_require__) {
                 "use strict";
                 function __export(m) {
                     for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
                 }
+                __export(__webpack_require__(23));
                 __export(__webpack_require__(24));
-                __export(__webpack_require__(25));
-                __export(__webpack_require__(28));
-                __export(__webpack_require__(29));
                 __export(__webpack_require__(27));
-                __export(__webpack_require__(31));
+                __export(__webpack_require__(28));
+                __export(__webpack_require__(26));
             } ]);
         });
     }, function(module, exports, __webpack_require__) {
@@ -5102,8 +4926,8 @@
         function __export(m) {
             for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
         }
+        __export(__webpack_require__(35));
         __export(__webpack_require__(36));
-        __export(__webpack_require__(37));
     }, function(module, exports, __webpack_require__) {
         "use strict";
         var __extends = this && this.__extends || function(d, b) {
@@ -5113,9 +4937,9 @@
             }
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
-        var three_charts_1 = __webpack_require__(33);
-        var TrendsMarksWidget_1 = __webpack_require__(37);
-        var Easing_1 = __webpack_require__(22);
+        var three_charts_1 = __webpack_require__(32);
+        var TrendsMarksWidget_1 = __webpack_require__(36);
+        var Easing_1 = __webpack_require__(21);
         (function(TREND_MARK_SIDE) {
             TREND_MARK_SIDE[TREND_MARK_SIDE["TOP"] = 0] = "TOP";
             TREND_MARK_SIDE[TREND_MARK_SIDE["BOTTOM"] = 1] = "BOTTOM";
@@ -5156,11 +4980,8 @@
                 this.onMarksChangeHandler();
                 this.bindEvents();
             };
-            TrendsMarksPlugin.prototype.onStateChanged = function() {
+            TrendsMarksPlugin.prototype.onStateChangedHandler = function() {
                 this.onMarksChangeHandler();
-            };
-            TrendsMarksPlugin.prototype.getOptions = function() {
-                return _super.prototype.getOptions.call(this);
             };
             TrendsMarksPlugin.prototype.getItems = function() {
                 return this.items;
@@ -5337,8 +5158,8 @@
             }
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
-        var three_charts_1 = __webpack_require__(33);
-        var TrendsMarksPlugin_1 = __webpack_require__(36);
+        var three_charts_1 = __webpack_require__(32);
+        var TrendsMarksPlugin_1 = __webpack_require__(35);
         var Mesh = THREE.Mesh;
         var Object3D = THREE.Object3D;
         var LinearFilter = THREE.LinearFilter;
@@ -5440,13 +5261,17 @@
                 switch (options.textureFilter) {
                   case TrendsMarksPlugin_1.TEXTURE_FILTER.AUTO:
                     texture.magFilter = this.chart.screen.transformationInProgress ? LinearFilter : NearestFilter;
+                    break;
 
                   case TrendsMarksPlugin_1.TEXTURE_FILTER.LINEAR:
                     texture.magFilter = LinearFilter;
+                    break;
 
                   case TrendsMarksPlugin_1.TEXTURE_FILTER.NEAREST:
                     texture.magFilter = NearestFilter;
+                    break;
                 }
+                texture.needsUpdate = true;
                 var material = new THREE.MeshBasicMaterial({
                     map: texture,
                     side: THREE.FrontSide
@@ -5480,7 +5305,7 @@
             TrendMarkWidget.prototype.show = function() {
                 if (!this.mark.segment) return;
                 this.updatePosition();
-                this.markMesh.scale.set(.01, .01, 0);
+                this.markMesh.scale.set(.01, .01, 1);
                 this.chart.animationManager.animate(1e3, this.mark.options.ease).from(this.markMesh.scale).to({
                     x: 1,
                     y: 1
@@ -5518,15 +5343,13 @@
             ctx.font = font;
             ctx.fillStyle = "rgba(250, 250, 250, 0.8)";
             ctx.fillText(options.title, Math.round(textPosX), Math.round(textPosY));
-            ctx.rect(0, 0, width, height);
-            ctx.stroke();
         };
     }, function(module, exports, __webpack_require__) {
         "use strict";
         function __export(m) {
             for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
         }
-        __export(__webpack_require__(39));
+        __export(__webpack_require__(38));
     }, function(module, exports, __webpack_require__) {
         "use strict";
         var __extends = this && this.__extends || function(d, b) {
@@ -5539,7 +5362,7 @@
         var Mesh = THREE.Mesh;
         var PlaneBufferGeometry = THREE.PlaneBufferGeometry;
         var MeshBasicMaterial = THREE.MeshBasicMaterial;
-        var three_charts_1 = __webpack_require__(33);
+        var three_charts_1 = __webpack_require__(32);
         var ANIMATION_TIME = 1e3;
         var ANIMATION_DELAY = 300;
         var TrendsBeaconWidget = function(_super) {
@@ -5663,7 +5486,7 @@
         function __export(m) {
             for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
         }
-        __export(__webpack_require__(41));
+        __export(__webpack_require__(40));
     }, function(module, exports, __webpack_require__) {
         "use strict";
         var __extends = this && this.__extends || function(d, b) {
@@ -5676,7 +5499,7 @@
         var Mesh = THREE.Mesh;
         var PlaneBufferGeometry = THREE.PlaneBufferGeometry;
         var MeshBasicMaterial = THREE.MeshBasicMaterial;
-        var three_charts_1 = __webpack_require__(33);
+        var three_charts_1 = __webpack_require__(32);
         var TrendsLoadingWidget = function(_super) {
             __extends(TrendsLoadingWidget, _super);
             function TrendsLoadingWidget() {
@@ -5778,7 +5601,7 @@
         function __export(m) {
             for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
         }
-        __export(__webpack_require__(43));
+        __export(__webpack_require__(42));
     }, function(module, exports, __webpack_require__) {
         "use strict";
         var __extends = this && this.__extends || function(d, b) {
@@ -5789,7 +5612,7 @@
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
         var Mesh = THREE.Mesh;
-        var three_charts_1 = __webpack_require__(33);
+        var three_charts_1 = __webpack_require__(32);
         var CANVAS_WIDTH = 150;
         var CANVAS_HEIGHT = 64;
         var OFFSET_X = 15;
@@ -5869,6 +5692,290 @@
             return TrendIndicator;
         }(three_charts_1.TrendWidget);
         exports.TrendIndicator = TrendIndicator;
+    }, function(module, exports, __webpack_require__) {
+        "use strict";
+        var __extends = this && this.__extends || function(d, b) {
+            for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+            function __() {
+                this.constructor = d;
+            }
+            d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+        };
+        var three_charts_1 = __webpack_require__(32);
+        var AxisMarksWidget_1 = __webpack_require__(44);
+        var AXIS_MARK_DEFAULT_OPTIONS = {
+            lineWidth: 3,
+            width: 200,
+            value: 0,
+            stickToEdges: false,
+            color: "rgba(#45a9e1, 0.6)",
+            title: "",
+            ease: three_charts_1.EASING.Quadratic.Out,
+            easeSpeed: 500,
+            opacity: 1
+        };
+        var AxisMark = function(_super) {
+            __extends(AxisMark, _super);
+            function AxisMark(axisMarkPlugin, chart) {
+                _super.call(this);
+                this.axisMarkPlugin = axisMarkPlugin;
+                this.chart = chart;
+                three_charts_1.Utils.patch(this, AXIS_MARK_DEFAULT_OPTIONS);
+            }
+            AxisMark.prototype.remove = function() {
+                this.chart.setState({
+                    pluginsState: (_a = {}, _a[AxisMarksPlugin.NAME] = [ {
+                        _id: this.getId()
+                    } ], _a)
+                });
+                var _a;
+            };
+            AxisMark.prototype.update = function(newOptions) {
+                var options = three_charts_1.Utils.deepMerge({
+                    _id: this.getId()
+                }, newOptions);
+                this.chart.setState({
+                    pluginsState: (_a = {}, _a[AxisMarksPlugin.NAME] = [ options ], _a)
+                });
+                var _a;
+            };
+            return AxisMark;
+        }(three_charts_1.UniqCollectionItem);
+        exports.AxisMark = AxisMark;
+        var AxisMarksPlugin = function(_super) {
+            __extends(AxisMarksPlugin, _super);
+            function AxisMarksPlugin(axisMarksPluginOptions) {
+                var _this = this;
+                _super.call(this, axisMarksPluginOptions);
+                this.marksCollection = new three_charts_1.UniqCollection({
+                    createInstance: function() {
+                        return new AxisMark(_this, _this.chart);
+                    }
+                });
+            }
+            AxisMarksPlugin.prototype.onInitialStateAppliedHandler = function() {
+                this.onStateChangedHandler(this.getOptions());
+            };
+            AxisMarksPlugin.prototype.onStateChangedHandler = function(axisMarksOptions) {
+                this.marksCollection.patch(axisMarksOptions);
+            };
+            AxisMarksPlugin.prototype.createMark = function(markOptions) {
+                this.chart.setState({
+                    pluginsState: (_a = {}, _a[this.name] = [ markOptions ], _a)
+                });
+                return this.marksCollection.getLast();
+                var _a;
+            };
+            AxisMarksPlugin.NAME = "AxisMarks";
+            AxisMarksPlugin.providedWidgets = [ AxisMarksWidget_1.AxisMarksWidget ];
+            return AxisMarksPlugin;
+        }(three_charts_1.ChartPlugin);
+        exports.AxisMarksPlugin = AxisMarksPlugin;
+    }, function(module, exports, __webpack_require__) {
+        "use strict";
+        var __extends = this && this.__extends || function(d, b) {
+            for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+            function __() {
+                this.constructor = d;
+            }
+            d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+        };
+        var Object3D = THREE.Object3D;
+        var Mesh = THREE.Mesh;
+        var MeshBasicMaterial = THREE.MeshBasicMaterial;
+        var three_charts_1 = __webpack_require__(32);
+        var AxisMarksPlugin_1 = __webpack_require__(43);
+        var AxisMarksWidget = function(_super) {
+            __extends(AxisMarksWidget, _super);
+            function AxisMarksWidget() {
+                _super.apply(this, arguments);
+                this.axisMarksWidgets = [];
+            }
+            AxisMarksWidget.prototype.onReadyHandler = function() {
+                var _this = this;
+                this.object3D = new Object3D();
+                this.axisMarksPlugin = this.chart.getPlugin(AxisMarksPlugin_1.AxisMarksPlugin.NAME);
+                this.axisMarksPlugin.marksCollection.forEach(function(mark) {
+                    return _this.createAxisMarkWidget(mark);
+                });
+                this.bindEvents();
+            };
+            AxisMarksWidget.prototype.createAxisMarkWidget = function(axisMark) {
+                var axisMarkWidget = new AxisMarkWidget(this.chart, axisMark);
+                this.axisMarksWidgets.push(axisMarkWidget);
+                this.object3D.add(axisMarkWidget.getObject3D());
+            };
+            AxisMarksWidget.prototype.bindEvents = function() {
+                var _this = this;
+                var marksCollection = this.axisMarksPlugin.marksCollection;
+                this.bindEvent(this.chart.screen.onTransformationFrame(function() {
+                    return _this.updateMarksPositions();
+                }), this.chart.onResize(function() {
+                    return _this.updateMarksPositions();
+                }), this.chart.onChange(function(changedProps) {
+                    return _this.onStateChangeHandler(changedProps);
+                }), marksCollection.onCreate(function(mark) {
+                    return _this.createAxisMarkWidget(mark);
+                }), marksCollection.onUpdate(function(mark, changedOptions) {
+                    return _this.onMarkUpdateHandler(mark, changedOptions);
+                }), marksCollection.onRemove(function(mark) {
+                    return _this.onMarkRemoveHandler(mark);
+                }));
+            };
+            AxisMarksWidget.prototype.onMarkUpdateHandler = function(mark, changedOptions) {
+                var widget = this.axisMarksWidgets.find(function(widget) {
+                    return widget.axisMark.getId() == mark.getId();
+                });
+                widget.update(changedOptions);
+            };
+            AxisMarksWidget.prototype.onMarkRemoveHandler = function(mark) {
+                var ind = this.axisMarksWidgets.findIndex(function(widget) {
+                    return widget.axisMark.getId() == mark.getId();
+                });
+                var widget = this.axisMarksWidgets[ind];
+                this.object3D.remove(widget.getObject3D());
+                this.axisMarksWidgets.splice(ind, 1);
+            };
+            AxisMarksWidget.prototype.updateMarksPositions = function() {
+                for (var _i = 0, _a = this.axisMarksWidgets; _i < _a.length; _i++) {
+                    var widget = _a[_i];
+                    widget.updatePosition();
+                }
+            };
+            AxisMarksWidget.prototype.onStateChangeHandler = function(changedProps) {
+                for (var _i = 0, _a = this.axisMarksWidgets; _i < _a.length; _i++) {
+                    var widget = _a[_i];
+                    widget.onStateChangeHandler(changedProps);
+                }
+            };
+            AxisMarksWidget.prototype.getObject3D = function() {
+                return this.object3D;
+            };
+            AxisMarksWidget.widgetName = "AxisMarks";
+            return AxisMarksWidget;
+        }(three_charts_1.ChartWidget);
+        exports.AxisMarksWidget = AxisMarksWidget;
+        exports.DEFAULT_AXIS_MARK_RENDERER = function(axisMarkWidget, ctx, width, height, chart) {
+            var markOptions = axisMarkWidget.axisMark;
+            var color = new three_charts_1.Color(markOptions.color);
+            var font = chart.state.font.l;
+            var offset = parseInt(font);
+            ctx.clearRect(0, 0, width, height);
+            ctx.beginPath();
+            ctx.strokeStyle = color.rgbaStr;
+            ctx.fillStyle = color.rgbaStr;
+            ctx.lineWidth = markOptions.lineWidth;
+            ctx.font = font;
+            if (markOptions.axisType == three_charts_1.AXIS_TYPE.X) {
+                ctx.moveTo(width / 2, 0);
+                ctx.lineTo(width / 2, height);
+                ctx.stroke();
+                ctx.fillText(markOptions.title, width / 2 + offset, offset * 2);
+                if (axisMarkWidget.displayedValue) {
+                    ctx.fillText(axisMarkWidget.displayedValue, width / 2 + offset, offset * 4);
+                }
+            } else {
+                ctx.moveTo(0, height / 2);
+                ctx.lineTo(width, height / 2);
+                ctx.stroke();
+                ctx.fillText(markOptions.title, offset, height / 2 + (axisMarkWidget.isStickOnBottom ? -offset * 2 : offset * 2));
+            }
+        };
+        var AxisMarkWidget = function() {
+            function AxisMarkWidget(chart, axisMark) {
+                this.isStickOnTop = false;
+                this.isStickOnBottom = false;
+                this.displayedValue = "";
+                this.height = 0;
+                this.width = 0;
+                this.frameValue = 0;
+                this.frameOpacity = 0;
+                this.chart = chart;
+                this.axisMark = axisMark;
+                this.frameOpacity = axisMark.opacity;
+                this.frameValue = axisMark.value;
+                this.initObject();
+                this.updatePosition();
+            }
+            AxisMarkWidget.prototype.getObject3D = function() {
+                return this.object3D;
+            };
+            AxisMarkWidget.prototype.initObject = function() {
+                this.width = this.chart.state.width;
+                this.height = this.chart.state.height;
+                var markOptions = this.axisMark;
+                if (markOptions.axisType == three_charts_1.AXIS_TYPE.X) {
+                    this.width = markOptions.width;
+                } else {
+                    this.height = markOptions.width;
+                }
+                var texture = three_charts_1.Utils.createNearestTexture(this.width, this.height);
+                this.object3D = new Mesh(new THREE.PlaneGeometry(this.width, this.height), new MeshBasicMaterial({
+                    map: texture,
+                    transparent: true
+                }));
+                this.render();
+            };
+            AxisMarkWidget.prototype.onStateChangeHandler = function(changedProps) {
+                var needRender = this.axisMark.needRender && this.axisMark.needRender(this, changedProps, this.chart);
+                needRender && this.render();
+            };
+            AxisMarkWidget.prototype.render = function() {
+                var markOptions = this.axisMark;
+                var mesh = this.getObject3D();
+                var texture = mesh.material.map;
+                var ctx = texture.image.getContext("2d");
+                var renderer = markOptions.renderer ? markOptions.renderer : exports.DEFAULT_AXIS_MARK_RENDERER;
+                if (markOptions.displayedValue) this.displayedValue = markOptions.displayedValue(this, this.chart);
+                renderer(this, ctx, this.width, this.height, this.chart);
+                texture.needsUpdate = true;
+            };
+            AxisMarkWidget.prototype.update = function(options) {
+                var _this = this;
+                var mark = this.axisMark;
+                this.animation && this.animation.stop();
+                this.animation = this.chart.animationManager.animate(mark.easeSpeed, mark.ease).from([ this.frameValue, this.frameOpacity ]).to([ mark.value, mark.opacity ]).onTick(function(arr) {
+                    _this.frameValue = arr[0];
+                    _this.frameOpacity = arr[1];
+                    _this.updatePosition();
+                });
+            };
+            AxisMarkWidget.prototype.updatePosition = function() {
+                var chart = this.chart;
+                var screen = chart.screen;
+                var mark = this.axisMark;
+                var isXAxis = mark.axisType == three_charts_1.AXIS_TYPE.X;
+                var hasStickMode = mark.stickToEdges;
+                var _a = chart.state, width = _a.width, height = _a.height;
+                var val = this.frameValue;
+                var opactity = this.frameOpacity;
+                var material = this.object3D.material;
+                material.opacity = opactity;
+                if (isXAxis) {
+                    this.object3D.position.x = screen.getPointOnXAxis(val);
+                    this.object3D.position.y = screen.options.scrollY + height / 2;
+                } else {
+                    var bottomVal = screen.getBottomVal();
+                    var topVal = screen.getTopVal();
+                    var needToStickOnTop = hasStickMode && val > topVal;
+                    var needToStickOnBottom = hasStickMode && val < bottomVal;
+                    var centerYVal = screen.getCenterYVal();
+                    this.object3D.position.x = screen.options.scrollX + width / 2;
+                    if (needToStickOnTop) {
+                        this.isStickOnTop = true;
+                        this.object3D.position.y = screen.getTop();
+                    } else if (needToStickOnBottom) {
+                        this.isStickOnBottom = true;
+                        this.object3D.position.y = screen.getBottom();
+                    } else {
+                        this.isStickOnBottom = this.isStickOnTop = false;
+                        this.object3D.position.y = screen.getPointOnYAxis(val);
+                    }
+                }
+            };
+            return AxisMarkWidget;
+        }();
+        exports.AxisMarkWidget = AxisMarkWidget;
     } ]);
 });
 

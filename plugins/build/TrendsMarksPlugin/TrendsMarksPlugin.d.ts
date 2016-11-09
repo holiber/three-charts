@@ -37,15 +37,14 @@ export interface ITrendMarkOptions {
     easeSpeed?: number;
     userData?: any;
 }
-export declare class TrendsMarksPlugin extends ChartPlugin {
+export declare class TrendsMarksPlugin extends ChartPlugin<TTrendsMarksPluginOptions> {
     static NAME: string;
     static providedWidgets: typeof ChartWidget[];
     private items;
     private rects;
     constructor(trendsMarksPluginOptions: TTrendsMarksPluginOptions);
     protected onInitialStateAppliedHandler(): void;
-    protected onStateChanged(): void;
-    getOptions(): TTrendsMarksPluginOptions;
+    protected onStateChangedHandler(): void;
     getItems(): {
         [name: string]: TrendMark;
     };
