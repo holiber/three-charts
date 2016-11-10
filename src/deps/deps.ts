@@ -17,4 +17,4 @@ export { Promise } from '../polyfills/es6-promise';
 
 export * from './ResizeSensor';
 export const ResizeSensor = require('css-element-queries/src/ResizeSensor') as ResizeSensorType;
-
+export const deepExtend = require('deep-extend') as <T>(dst: T, ...src: T[]) => T;

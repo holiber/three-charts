@@ -297,19 +297,6 @@ export class Chart {
 			Utils.error('You have tried to change state of destroyed Chart instance');
 		}
 
-		let stateData = this.state as {[key: string]: any};
-		let newStateObj = newState as {[key: string]: any};
-
-		var changedProps: {[key: string]: any} = {};
-		for (let key in newStateObj) {
-			if (stateData[key] !== newStateObj[key]) {
-				changedProps[key] = newStateObj[key] as any;
-			}
-		}
-
-		this.savePrevState(changedProps as IChartState);
-
-
 		// temporary remove trends state from newState by performance reasons
 		let trendsData: {[trendName: string]: ITrendData} = {};
 		if (newState.trends) for (let trendName in newState.trends) {
@@ -319,12 +306,26 @@ export class Chart {
 		}
 		let newStateContainsData = Object.keys(trendsData).length > 0;
 
+
 		// setup ids to array items
 		newState = Utils.deepMerge({}, newState);
 		Utils.setIdsToArrayItems(newState);
+
+		let currentStateData = this.state as {[key: string]: any};
+		let newStateObj = newState as {[key: string]: any};
+
+		var changedProps: {[key: string]: any} = {};
+		for (let key in newStateObj) {
+			if (currentStateData[key] !== newStateObj[key]) {
+				changedProps[key] = newStateObj[key] as any;
+			}
+		}
+
+		this.savePrevState(changedProps as IChartState);
 		this.state = Utils.patch(this.state, newState); //Utils.deepMerge(this.state, newState, false);
 
-		// return state to state
+
+		// return trends to state
 		if (newStateContainsData) for (let trendName in trendsData) {
 			this.state.trends[trendName].data = trendsData[trendName];
 		}
@@ -482,7 +483,7 @@ export class Chart {
 		plugins.forEach(plugin => {
 			let PluginClass = plugin.constructor as typeof ChartPlugin;
 			let pluginName = PluginClass.NAME;
-			initialState.pluginsState[pluginName] = Utils.deepMerge({}, plugin.initialState);
+			initialState.pluginsState[pluginName] = plugin.initialState;
 			this.plugins[pluginName] = plugin;
 			plugin.setupChart(this);
 		});

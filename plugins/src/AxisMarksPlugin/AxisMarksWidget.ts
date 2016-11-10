@@ -29,7 +29,7 @@ export class AxisMarksWidget extends ChartWidget {
 		this.bindEvents();
 	}
 
-	private createAxisMarkWidget(axisMark: AxisMark) {
+	protected createAxisMarkWidget(axisMark: AxisMark) {
 		var axisMarkWidget = new AxisMarkWidget(this.chart, axisMark);
 		this.axisMarksWidgets.push(axisMarkWidget);
 		this.object3D.add(axisMarkWidget.getObject3D());
@@ -39,7 +39,7 @@ export class AxisMarksWidget extends ChartWidget {
 		let marksCollection = this.axisMarksPlugin.marksCollection;
 		this.bindEvent(
 			this.chart.screen.onTransformationFrame(() => this.updateMarksPositions()),
-			this.chart.onResize(() => this.updateMarksPositions()),
+			this.chart.onResize(() => this.onResizeHandler()),
 			this.chart.onChange((changedProps) => this.onStateChangeHandler(changedProps)),
 			marksCollection.onCreate((mark) => this.createAxisMarkWidget(mark)),
 			marksCollection.onUpdate((mark, changedOptions) => this.onMarkUpdateHandler(mark, changedOptions)),
@@ -59,12 +59,23 @@ export class AxisMarksWidget extends ChartWidget {
 		this.axisMarksWidgets.splice(ind, 1);
 	}
 
-	private updateMarksPositions() {
-		for (let widget of this.axisMarksWidgets) widget.updatePosition();
+	protected updateMarksPositions() {
+		this.forEach(widget => widget.updatePosition());
 	}
 
-	private onStateChangeHandler(changedProps: IChartState) {
-		for (let widget of this.axisMarksWidgets) widget.onStateChangeHandler(changedProps);
+	protected onStateChangeHandler(changedProps: IChartState) {
+		this.forEach(widget => widget.onStateChangeHandler(changedProps));
+	}
+
+	protected onResizeHandler() {
+		this.forEach(widget => {
+			widget.resize();
+			widget.updatePosition();
+		});
+	}
+
+	forEach(fn: (widget: AxisMarkWidget) => any) {
+		for (let widget of this.axisMarksWidgets) fn(widget);
 	}
 
 	getObject3D() {
@@ -98,9 +109,6 @@ export const DEFAULT_AXIS_MARK_RENDERER = (
 		ctx.lineTo(width / 2, height);
 		ctx.stroke();
 		ctx.fillText(markOptions.title, width / 2 + offset, offset * 2);
-		if (axisMarkWidget.displayedValue) {
-			ctx.fillText(axisMarkWidget.displayedValue, width / 2 + offset, offset * 4)
-		}
 	} else {
 		ctx.moveTo(0, height / 2);
 		ctx.lineTo(width, height / 2);
@@ -123,6 +131,7 @@ export class AxisMarkWidget {
 	frameOpacity = 0;
 	animation: Animation<number[]>;
 	protected object3D: Object3D;
+	protected mesh: Mesh;
 	protected chart: Chart;
 
 
@@ -131,6 +140,7 @@ export class AxisMarkWidget {
 		this.axisMark = axisMark;
 		this.frameOpacity = axisMark.opacity;
 		this.frameValue = axisMark.value;
+		this.object3D = new Object3D();
 		this.initObject();
 		this.updatePosition();
 	}
@@ -150,28 +160,33 @@ export class AxisMarkWidget {
 		}
 		let texture = Utils.createNearestTexture(this.width, this.height);
 
-		this.object3D = new Mesh(
+		this.mesh = new Mesh(
 			new THREE.PlaneGeometry(this.width, this.height),
 			new MeshBasicMaterial({map: texture, transparent: true})
 		);
-
+		this.object3D.add(this.mesh);
 		this.render();
 	}
 
 	onStateChangeHandler(changedProps: IChartState) {
-		let needRender = this.axisMark.needRender && this.axisMark.needRender(this, changedProps, this.chart);
+		let needRender = this.axisMark.needRender && this.axisMark.needRender(this, this.chart, changedProps);
 		needRender && this.render();
 	}
 
 	render() {
 		let markOptions = this.axisMark;
-		let mesh = this.getObject3D() as Mesh;
+		let mesh = this.mesh
 		let texture = (mesh.material as MeshBasicMaterial).map;
 		let ctx = (texture.image as HTMLCanvasElement).getContext('2d');
 		let renderer = markOptions.renderer ? markOptions.renderer : DEFAULT_AXIS_MARK_RENDERER;
 		if (markOptions.displayedValue) this.displayedValue = markOptions.displayedValue(this, this.chart);
 		renderer(this, ctx, this.width, this.height, this.chart);
 		texture.needsUpdate = true;
+	}
+
+	resize() {
+		this.object3D.remove(this.mesh);
+		this.initObject();
 	}
 
 	update(options: IAxisMarkOptions) {
@@ -184,7 +199,7 @@ export class AxisMarkWidget {
 				this.frameValue = arr[0];
 				this.frameOpacity = arr[1];
 				this.updatePosition();
-			})
+			});
 	}
 
 	updatePosition()  {
@@ -196,30 +211,30 @@ export class AxisMarkWidget {
 		let {width, height} = chart.state;
 		let val = this.frameValue;
 		let opactity = this.frameOpacity;
-		let material = (this.object3D as Mesh).material;
+		let material = (this.mesh as Mesh).material;
 
 		material.opacity = opactity;
 
 		if (isXAxis) {
 			// TODO: make stickToEdges mode for AXIS_TYPE.X
-			this.object3D.position.x = screen.getPointOnXAxis(val);
-			this.object3D.position.y = screen.options.scrollY + height / 2;
+			this.mesh.position.x = screen.getPointOnXAxis(val);
+			this.mesh.position.y = screen.options.scrollY + height / 2;
 		} else {
 			let bottomVal = screen.getBottomVal();
 			let topVal = screen.getTopVal();
 			let needToStickOnTop = hasStickMode && val > topVal;
 			let needToStickOnBottom = hasStickMode && val < bottomVal;
 			let centerYVal = screen.getCenterYVal();
-			this.object3D.position.x = screen.options.scrollX + width / 2;
+			this.mesh.position.x = screen.options.scrollX + width / 2;
 			if (needToStickOnTop) {
 				this.isStickOnTop = true;
-				this.object3D.position.y = screen.getTop();
+				this.mesh.position.y = screen.getTop();
 			} else if (needToStickOnBottom) {
 				this.isStickOnBottom = true;
-				this.object3D.position.y = screen.getBottom();
+				this.mesh.position.y = screen.getBottom();
 			} else {
 				this.isStickOnBottom = this.isStickOnTop = false;
-				this.object3D.position.y = screen.getPointOnYAxis(val);
+				this.mesh.position.y = screen.getPointOnYAxis(val);
 			}
 		}
 	}

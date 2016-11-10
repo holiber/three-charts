@@ -6,6 +6,7 @@
   "dependencies": {
     "createjs-tweenjs": "^0.6.0",
     "css-element-queries": "^0.3.2",
+    "deep-extend": "^0.4.1",
     "es6-promise": "^3.2.1",
     "eventemitter2": "^0.4.11",
     "gsap": "^1.18.4",

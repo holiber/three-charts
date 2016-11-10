@@ -7,6 +7,7 @@ import { TrendsBeaconWidget } from '../plugins/src/TrendsBeaconWidget';
 import { TrendsLoadingWidget } from '../plugins/src/TrendsLoadingWidget';
 import { TrendsIndicatorWidget } from '../plugins/src/TrendsIndicatorWidget';
 import { AxisMarksPlugin } from "../plugins/src/AxisMarksPlugin/AxisMarksPlugin";
+import { ZonesPlugin } from "../plugins/src/ZonesPlugin/ZonesPlugin";
 ChartView.preinstalledWidgets.push(TrendsLoadingWidget, TrendsBeaconWidget, TrendsIndicatorWidget);
 
 var chartView: ChartView;
@@ -155,11 +156,12 @@ window.onload = function () {
 	document.querySelector('.chart')
 		,
 	[
+		new ZonesPlugin([]),
 		new TrendsMarksPlugin({items: [MarksSource.generate(now + 3000), MarksSource.generate(now + 3000), MarksSource.generate(now + 4000)]}),
 		new AxisMarksPlugin([
-			{axisType: AXIS_TYPE.X, value: dsMain.startTime, name: 'test', title: 'DEADLINE'},
+			{axisType: AXIS_TYPE.X, value: dsMain.startTime, name: 'test', title: 'DEADLINE', userData: {feel: 'aa'}},
 			{axisType: AXIS_TYPE.X, value: dsMain.endTime + 30000, name: 'deadline', title: 'DEADLINE', color: '#ff6600'},
-			{axisType: AXIS_TYPE.X, value: dsMain.endTime + 40000, name: 'close', title: 'CLOSE', color: '#005187', displayedValue: () => String((new Date()).getSeconds()), needRender: () => true},
+			{axisType: AXIS_TYPE.X, value: dsMain.endTime + 40000, name: 'close', title: 'CLOSE', color: '#005187'},
 
 		])
 	]
@@ -167,11 +169,14 @@ window.onload = function () {
 
 
 	let axisMarks = chartView.chart.getPlugin(AxisMarksPlugin.NAME) as AxisMarksPlugin;
+	let zones = chartView.chart.getPlugin(ZonesPlugin.NAME) as ZonesPlugin;
 
 	setTimeout(() => {
+		let zone = zones.create({position: {startXVal: dsMain.startTime, endXVal: dsMain.startTime + 5000}});
 		let mark = axisMarks.createMark({axisType: AXIS_TYPE.Y, value: dsMain.data[0].yVal, name: 'openprice', title: 'OPEN PRICE', color: '#29874b', stickToEdges: true});
 		setInterval(() => {
-			mark.update({value: mark.value + 1})
+			mark.update({value: mark.value + 1});
+			zone.update({position: {startXVal: zone.position.startXVal + 1000}})
 		}, 1000);
 	}, 1000);
 	

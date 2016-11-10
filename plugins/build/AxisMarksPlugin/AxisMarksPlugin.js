@@ -147,7 +147,7 @@
                 this.bindEvent(this.chart.screen.onTransformationFrame(function() {
                     return _this.updateMarksPositions();
                 }), this.chart.onResize(function() {
-                    return _this.updateMarksPositions();
+                    return _this.onResizeHandler();
                 }), this.chart.onChange(function(changedProps) {
                     return _this.onStateChangeHandler(changedProps);
                 }), marksCollection.onCreate(function(mark) {
@@ -173,15 +173,25 @@
                 this.axisMarksWidgets.splice(ind, 1);
             };
             AxisMarksWidget.prototype.updateMarksPositions = function() {
-                for (var _i = 0, _a = this.axisMarksWidgets; _i < _a.length; _i++) {
-                    var widget = _a[_i];
-                    widget.updatePosition();
-                }
+                this.forEach(function(widget) {
+                    return widget.updatePosition();
+                });
             };
             AxisMarksWidget.prototype.onStateChangeHandler = function(changedProps) {
+                this.forEach(function(widget) {
+                    return widget.onStateChangeHandler(changedProps);
+                });
+            };
+            AxisMarksWidget.prototype.onResizeHandler = function() {
+                this.forEach(function(widget) {
+                    widget.resize();
+                    widget.updatePosition();
+                });
+            };
+            AxisMarksWidget.prototype.forEach = function(fn) {
                 for (var _i = 0, _a = this.axisMarksWidgets; _i < _a.length; _i++) {
                     var widget = _a[_i];
-                    widget.onStateChangeHandler(changedProps);
+                    fn(widget);
                 }
             };
             AxisMarksWidget.prototype.getObject3D = function() {
@@ -207,9 +217,6 @@
                 ctx.lineTo(width / 2, height);
                 ctx.stroke();
                 ctx.fillText(markOptions.title, width / 2 + offset, offset * 2);
-                if (axisMarkWidget.displayedValue) {
-                    ctx.fillText(axisMarkWidget.displayedValue, width / 2 + offset, offset * 4);
-                }
             } else {
                 ctx.moveTo(0, height / 2);
                 ctx.lineTo(width, height / 2);
@@ -230,6 +237,7 @@
                 this.axisMark = axisMark;
                 this.frameOpacity = axisMark.opacity;
                 this.frameValue = axisMark.value;
+                this.object3D = new Object3D();
                 this.initObject();
                 this.updatePosition();
             }
@@ -246,25 +254,30 @@
                     this.height = markOptions.width;
                 }
                 var texture = three_charts_1.Utils.createNearestTexture(this.width, this.height);
-                this.object3D = new Mesh(new THREE.PlaneGeometry(this.width, this.height), new MeshBasicMaterial({
+                this.mesh = new Mesh(new THREE.PlaneGeometry(this.width, this.height), new MeshBasicMaterial({
                     map: texture,
                     transparent: true
                 }));
+                this.object3D.add(this.mesh);
                 this.render();
             };
             AxisMarkWidget.prototype.onStateChangeHandler = function(changedProps) {
-                var needRender = this.axisMark.needRender && this.axisMark.needRender(this, changedProps, this.chart);
+                var needRender = this.axisMark.needRender && this.axisMark.needRender(this, this.chart, changedProps);
                 needRender && this.render();
             };
             AxisMarkWidget.prototype.render = function() {
                 var markOptions = this.axisMark;
-                var mesh = this.getObject3D();
+                var mesh = this.mesh;
                 var texture = mesh.material.map;
                 var ctx = texture.image.getContext("2d");
                 var renderer = markOptions.renderer ? markOptions.renderer : exports.DEFAULT_AXIS_MARK_RENDERER;
                 if (markOptions.displayedValue) this.displayedValue = markOptions.displayedValue(this, this.chart);
                 renderer(this, ctx, this.width, this.height, this.chart);
                 texture.needsUpdate = true;
+            };
+            AxisMarkWidget.prototype.resize = function() {
+                this.object3D.remove(this.mesh);
+                this.initObject();
             };
             AxisMarkWidget.prototype.update = function(options) {
                 var _this = this;
@@ -285,27 +298,27 @@
                 var _a = chart.state, width = _a.width, height = _a.height;
                 var val = this.frameValue;
                 var opactity = this.frameOpacity;
-                var material = this.object3D.material;
+                var material = this.mesh.material;
                 material.opacity = opactity;
                 if (isXAxis) {
-                    this.object3D.position.x = screen.getPointOnXAxis(val);
-                    this.object3D.position.y = screen.options.scrollY + height / 2;
+                    this.mesh.position.x = screen.getPointOnXAxis(val);
+                    this.mesh.position.y = screen.options.scrollY + height / 2;
                 } else {
                     var bottomVal = screen.getBottomVal();
                     var topVal = screen.getTopVal();
                     var needToStickOnTop = hasStickMode && val > topVal;
                     var needToStickOnBottom = hasStickMode && val < bottomVal;
                     var centerYVal = screen.getCenterYVal();
-                    this.object3D.position.x = screen.options.scrollX + width / 2;
+                    this.mesh.position.x = screen.options.scrollX + width / 2;
                     if (needToStickOnTop) {
                         this.isStickOnTop = true;
-                        this.object3D.position.y = screen.getTop();
+                        this.mesh.position.y = screen.getTop();
                     } else if (needToStickOnBottom) {
                         this.isStickOnBottom = true;
-                        this.object3D.position.y = screen.getBottom();
+                        this.mesh.position.y = screen.getBottom();
                     } else {
                         this.isStickOnBottom = this.isStickOnTop = false;
-                        this.object3D.position.y = screen.getPointOnYAxis(val);
+                        this.mesh.position.y = screen.getPointOnYAxis(val);
                     }
                 }
             };

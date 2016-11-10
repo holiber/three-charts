@@ -5,3 +5,4 @@ export declare const EE2: typeof EventEmitter2;
 export { Promise } from '../polyfills/es6-promise';
 export * from './ResizeSensor';
 export declare const ResizeSensor: ResizeSensorType;
+export declare const deepExtend: <T>(dst: T, ...src: T[]) => T;

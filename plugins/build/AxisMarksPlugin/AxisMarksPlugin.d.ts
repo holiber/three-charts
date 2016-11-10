@@ -13,7 +13,7 @@ export interface IAxisMarkOptions {
     value?: number;
     displayedValue?: (axisMarkWidget: AxisMarkWidget, chart: Chart) => string;
     userData?: any;
-    needRender?: (axisMarkWidget: AxisMarkWidget, changedProps: IChartState, chart: Chart) => boolean;
+    needRender?: (axisMarkWidget: AxisMarkWidget, chart: Chart, changedProps?: IChartState) => boolean;
     ease?: TEase;
     easeSpeed?: number;
     opacity?: number;
@@ -34,7 +34,7 @@ export declare class AxisMark extends UniqCollectionItem implements IAxisMarkOpt
     opacity: number;
     displayedValue: (axisMarkWidget: AxisMarkWidget, chart: Chart) => string;
     userData: any;
-    needRender: (axisMarkWidget: AxisMarkWidget, changedProps: IChartState, chart: Chart) => boolean;
+    needRender: (axisMarkWidget: AxisMarkWidget, chart: Chart, changedProps?: IChartState) => boolean;
     ease?: TEase;
     easeSpeed?: number;
     renderer: (axisMarkWidget: AxisMarkWidget, ctx: CanvasRenderingContext2D, width: number, height: number, chart: Chart) => any;

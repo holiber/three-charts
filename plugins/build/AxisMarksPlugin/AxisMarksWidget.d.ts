@@ -1,4 +1,5 @@
 import Object3D = THREE.Object3D;
+import Mesh = THREE.Mesh;
 import { ChartWidget, Chart, IChartState, Animation } from 'three-charts';
 import { AxisMark, AxisMarksPlugin, IAxisMarkOptions } from "./AxisMarksPlugin";
 /**
@@ -10,12 +11,14 @@ export declare class AxisMarksWidget extends ChartWidget {
     protected axisMarksWidgets: AxisMarkWidget[];
     protected axisMarksPlugin: AxisMarksPlugin;
     onReadyHandler(): void;
-    private createAxisMarkWidget(axisMark);
+    protected createAxisMarkWidget(axisMark: AxisMark): void;
     protected bindEvents(): void;
     protected onMarkUpdateHandler(mark: AxisMark, changedOptions: IAxisMarkOptions): void;
     protected onMarkRemoveHandler(mark: AxisMark): void;
-    private updateMarksPositions();
-    private onStateChangeHandler(changedProps);
+    protected updateMarksPositions(): void;
+    protected onStateChangeHandler(changedProps: IChartState): void;
+    protected onResizeHandler(): void;
+    forEach(fn: (widget: AxisMarkWidget) => any): void;
     getObject3D(): Object3D;
 }
 export declare const DEFAULT_AXIS_MARK_RENDERER: (axisMarkWidget: AxisMarkWidget, ctx: CanvasRenderingContext2D, width: number, height: number, chart: Chart) => void;
@@ -30,12 +33,14 @@ export declare class AxisMarkWidget {
     frameOpacity: number;
     animation: Animation<number[]>;
     protected object3D: Object3D;
+    protected mesh: Mesh;
     protected chart: Chart;
     constructor(chart: Chart, axisMark: AxisMark);
     getObject3D(): Object3D;
     initObject(): void;
     onStateChangeHandler(changedProps: IChartState): void;
     render(): void;
+    resize(): void;
     update(options: IAxisMarkOptions): void;
     updatePosition(): void;
 }

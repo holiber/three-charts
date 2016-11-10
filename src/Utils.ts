@@ -1,50 +1,53 @@
 import Texture = THREE.Texture;
 import Color = THREE.Color;
 import { TIteralable, IIteralable } from "./interfaces";
-import { isPlainObject } from './deps/deps';
+import { isPlainObject, deepExtend } from './deps';
 
-function deepmerge(target: any, src: any, mergeArrays = true) {
-	var array = Array.isArray(src);
-	var dst: any = array && [] || {};
-
-	if (array) {
-		target = target || [];
-		if (mergeArrays) {
-			dst = dst.concat(target);
-		}
-		src.forEach(function(e: any, i: any) {
-			if (typeof dst[i] === 'undefined') {
-				dst[i] = e;
-			} else if (typeof e === 'object') {
-				dst[i] = deepmerge(target[i], e, mergeArrays);
-			} else {
-				if (target.indexOf(e) === -1) {
-					dst.push(e);
-				}
-			}
-		});
-	} else {
-		if (target && typeof target === 'object') {
-			Object.keys(target).forEach(function (key) {
-				dst[key] = target[key];
-			})
-		}
-		Object.keys(src).forEach(function (key) {
-			if (typeof src[key] !== 'object' || !src[key]) {
-				dst[key] = src[key];
-			}
-			else {
-				if (!target[key]) {
-					dst[key] = src[key];
-				} else {
-					dst[key] = deepmerge(target[key], src[key], mergeArrays);
-				}
-			}
-		});
-	}
-
-	return dst;
-}
+// function deepmerge(target: any, src: any, mergeArrays = true) {
+//
+// 	return deepExtend(target, src);
+//
+// 	// var array = Array.isArray(src);
+// 	// var dst: any = array && [] || {};
+//     //
+// 	// if (array) {
+// 	// 	target = target || [];
+// 	// 	if (mergeArrays) {
+// 	// 		dst = dst.concat(target);
+// 	// 	}
+// 	// 	src.forEach(function(e: any, i: any) {
+// 	// 		if (typeof dst[i] === 'undefined') {
+// 	// 			dst[i] = e;
+// 	// 		} else if (typeof e === 'object') {
+// 	// 			dst[i] = deepmerge(target[i], e, mergeArrays);
+// 	// 		} else {
+// 	// 			if (target.indexOf(e) === -1) {
+// 	// 				dst.push(e);
+// 	// 			}
+// 	// 		}
+// 	// 	});
+// 	// } else {
+// 	// 	if (target && typeof target === 'object') {
+// 	// 		Object.keys(target).forEach(function (key) {
+// 	// 			dst[key] = target[key];
+// 	// 		})
+// 	// 	}
+// 	// 	Object.keys(src).forEach(function (key) {
+// 	// 		if (typeof src[key] !== 'object' || !src[key]) {
+// 	// 			dst[key] = src[key];
+// 	// 		}
+// 	// 		else {
+// 	// 			if (!target[key]) {
+// 	// 				dst[key] = src[key];
+// 	// 			} else {
+// 	// 				dst[key] = deepmerge(target[key], src[key], mergeArrays);
+// 	// 			}
+// 	// 		}
+// 	// 	});
+// 	// }
+//     //
+// 	// return dst;
+// }
 
 
 
@@ -61,7 +64,7 @@ export class Utils {
 	 * deepMerge based on https://www.npmjs.com/package/deepmerge
 	 */
 	static deepMerge<T> (obj1: T, obj2: T, mergeArrays?: boolean) {
-		return deepmerge(obj1, obj2, mergeArrays) as T;
+		return deepExtend({}, obj1, obj2) as T;
 	}
 
 	/**
@@ -268,7 +271,7 @@ export class Utils {
 				return hi;
 			}
 		}
-		return -1;
+		return (arr[lo] && arr[lo][key] == num) ? lo : -1;
 	}
 
 	static binarySearch<ArrayItem>(arr: ArrayItem[], num: number, key: string): ArrayItem {

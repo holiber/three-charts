@@ -358,11 +358,11 @@ export class Screen {
 	}
 
 	getTop(): number {
-		return this.getPointByScreenY(this.chart.state.height);
+		return this.options.scrollY + this.chart.state.height;
 	}
 	
 	getBottom(): number {
-		return this.getPointByScreenY(0);
+		return this.options.scrollY;
 	}
 
 	getLeft(): number {
