@@ -160,8 +160,8 @@ window.onload = function () {
 		new TrendsMarksPlugin({items: [MarksSource.generate(now + 3000), MarksSource.generate(now + 3000), MarksSource.generate(now + 4000)]}),
 		new AxisMarksPlugin([
 			{axisType: AXIS_TYPE.X, value: dsMain.startTime, name: 'test', title: 'DEADLINE', userData: {feel: 'aa'}},
-			{axisType: AXIS_TYPE.X, value: dsMain.endTime + 30000, name: 'deadline', title: 'DEADLINE', color: '#ff6600'},
-			{axisType: AXIS_TYPE.X, value: dsMain.endTime + 40000, name: 'close', title: 'CLOSE', color: '#005187'},
+			{axisType: AXIS_TYPE.X, value: dsMain.endTime + 30000, name: 'deadline', title: 'DEADLINE', lineColor: '#ff6600'},
+			{axisType: AXIS_TYPE.X, value: dsMain.endTime + 40000, name: 'close', title: 'CLOSE', lineColor: '#005187'},
 
 		])
 	]
@@ -173,10 +173,10 @@ window.onload = function () {
 
 	setTimeout(() => {
 		let zone = zones.create({position: {startXVal: dsMain.startTime, endXVal: dsMain.startTime + 5000}});
-		let mark = axisMarks.createMark({axisType: AXIS_TYPE.Y, value: dsMain.data[0].yVal, name: 'openprice', title: 'OPEN PRICE', color: '#29874b', stickToEdges: true});
+		let mark = axisMarks.createMark({axisType: AXIS_TYPE.Y, value: dsMain.data[0].yVal, name: 'openprice', title: 'OPEN PRICE', lineColor: '#29874b', stickToEdges: true});
 		setInterval(() => {
 			mark.update({value: mark.value + 1});
-			zone.update({position: {startXVal: zone.position.startXVal + 1000}})
+			//zone.update({position: {startXVal: zone.position.startXVal + 1000}})
 		}, 1000);
 	}, 1000);
 	

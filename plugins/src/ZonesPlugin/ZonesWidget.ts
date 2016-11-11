@@ -127,6 +127,7 @@ export class ZoneWidget {
 			geometry,
 			new MeshBasicMaterial({transparent: true, color: bgColor.value, opacity: bgColor.a})
 		);
+		this.mesh.frustumCulled = false;
 		this.object3D.add(this.mesh);
 	}
 

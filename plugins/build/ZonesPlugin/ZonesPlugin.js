@@ -222,6 +222,7 @@
                     color: bgColor.value,
                     opacity: bgColor.a
                 }));
+                this.mesh.frustumCulled = false;
                 this.object3D.add(this.mesh);
             };
             ZoneWidget.prototype.update = function(options) {

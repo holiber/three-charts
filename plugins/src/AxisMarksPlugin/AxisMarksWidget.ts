@@ -94,13 +94,14 @@ export const DEFAULT_AXIS_MARK_RENDERER = (
 	chart: Chart
 ) => {
 	let markOptions = axisMarkWidget.axisMark;
-	let color = new Color(markOptions.color);
+	let lineColor = new Color(markOptions.lineColor);
+	let textColor = new Color(markOptions.textColor);
 	let font = chart.state.font.l;
 	let offset = parseInt(font);
 	ctx.clearRect(0,0, width, height);
 	ctx.beginPath();
-	ctx.strokeStyle = color.rgbaStr;
-	ctx.fillStyle = color.rgbaStr;
+	ctx.strokeStyle = lineColor.rgbaStr;
+	ctx.fillStyle = lineColor.rgbaStr;
 	ctx.lineWidth = markOptions.lineWidth;
 	ctx.font = font;
 
@@ -108,11 +109,13 @@ export const DEFAULT_AXIS_MARK_RENDERER = (
 		ctx.moveTo(width / 2, 0);
 		ctx.lineTo(width / 2, height);
 		ctx.stroke();
+		ctx.fillStyle = textColor.rgbaStr;
 		ctx.fillText(markOptions.title, width / 2 + offset, offset * 2);
 	} else {
 		ctx.moveTo(0, height / 2);
 		ctx.lineTo(width, height / 2);
 		ctx.stroke();
+		ctx.fillStyle = textColor.rgbaStr;
 		ctx.fillText(markOptions.title, offset,
 			height / 2 + (axisMarkWidget.isStickOnBottom ? -offset * 2 : offset * 2)
 		);

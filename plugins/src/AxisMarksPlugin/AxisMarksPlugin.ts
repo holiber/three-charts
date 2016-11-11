@@ -12,7 +12,8 @@ export interface IAxisMarkOptions {
 	title?: string;
 	description?: string;
 	axisType?: AXIS_TYPE;
-	color?: TColor;
+	lineColor?: TColor;
+	textColor?: TColor;
 	lineWidth?: number;
 	width?: number;
 	stickToEdges?: boolean;
@@ -37,7 +38,8 @@ const AXIS_MARK_DEFAULT_OPTIONS: IAxisMarkOptions = {
 	width: 200,
 	value: 0,
 	stickToEdges: false,
-	color: 'rgba(#45a9e1, 0.6)',
+	textColor: 'rgba(#45a9e1, 0.8)',
+	lineColor: 'rgba(#45a9e1, 0.6)',
 	title: '',
 	ease: EASING.Quadratic.Out,
 	easeSpeed: 500,
@@ -49,7 +51,8 @@ export class AxisMark extends UniqCollectionItem implements IAxisMarkOptions {
 	title: string;
 	description: string;
 	axisType: AXIS_TYPE;
-	color: TColor;
+	textColor?: TColor;
+	lineColor?: TColor;
 	lineWidth: number;
 	width: number;
 	stickToEdges: boolean;

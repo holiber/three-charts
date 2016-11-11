@@ -6,7 +6,8 @@ export interface IAxisMarkOptions {
     title?: string;
     description?: string;
     axisType?: AXIS_TYPE;
-    color?: TColor;
+    lineColor?: TColor;
+    textColor?: TColor;
     lineWidth?: number;
     width?: number;
     stickToEdges?: boolean;
@@ -26,7 +27,8 @@ export declare class AxisMark extends UniqCollectionItem implements IAxisMarkOpt
     title: string;
     description: string;
     axisType: AXIS_TYPE;
-    color: TColor;
+    textColor?: TColor;
+    lineColor?: TColor;
     lineWidth: number;
     width: number;
     stickToEdges: boolean;

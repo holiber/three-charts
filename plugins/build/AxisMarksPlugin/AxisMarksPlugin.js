@@ -42,7 +42,8 @@
             width: 200,
             value: 0,
             stickToEdges: false,
-            color: "rgba(#45a9e1, 0.6)",
+            textColor: "rgba(#45a9e1, 0.8)",
+            lineColor: "rgba(#45a9e1, 0.6)",
             title: "",
             ease: three_charts_1.EASING.Quadratic.Out,
             easeSpeed: 500,
@@ -203,24 +204,27 @@
         exports.AxisMarksWidget = AxisMarksWidget;
         exports.DEFAULT_AXIS_MARK_RENDERER = function(axisMarkWidget, ctx, width, height, chart) {
             var markOptions = axisMarkWidget.axisMark;
-            var color = new three_charts_1.Color(markOptions.color);
+            var lineColor = new three_charts_1.Color(markOptions.lineColor);
+            var textColor = new three_charts_1.Color(markOptions.textColor);
             var font = chart.state.font.l;
             var offset = parseInt(font);
             ctx.clearRect(0, 0, width, height);
             ctx.beginPath();
-            ctx.strokeStyle = color.rgbaStr;
-            ctx.fillStyle = color.rgbaStr;
+            ctx.strokeStyle = lineColor.rgbaStr;
+            ctx.fillStyle = lineColor.rgbaStr;
             ctx.lineWidth = markOptions.lineWidth;
             ctx.font = font;
             if (markOptions.axisType == three_charts_1.AXIS_TYPE.X) {
                 ctx.moveTo(width / 2, 0);
                 ctx.lineTo(width / 2, height);
                 ctx.stroke();
+                ctx.fillStyle = textColor.rgbaStr;
                 ctx.fillText(markOptions.title, width / 2 + offset, offset * 2);
             } else {
                 ctx.moveTo(0, height / 2);
                 ctx.lineTo(width, height / 2);
                 ctx.stroke();
+                ctx.fillStyle = textColor.rgbaStr;
                 ctx.fillText(markOptions.title, offset, height / 2 + (axisMarkWidget.isStickOnBottom ? -offset * 2 : offset * 2));
             }
         };
