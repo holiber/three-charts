@@ -3472,6 +3472,7 @@
                     ZOOM: "zoom",
                     RESIZE: "resize",
                     SCROLL: "scroll",
+                    VIEWPORT_CHANGE: "viewportChange",
                     DRAG_STATE_CHAGED: "scrollStop",
                     PLUGINS_STATE_CHANGED: "pluginsStateChanged"
                 };
@@ -3588,7 +3589,7 @@
                             pluginsState: {},
                             eventEmitterMaxListeners: 20,
                             maxVisibleSegments: 1280,
-                            inertialScroll: true
+                            inertialScroll: false
                         };
                         this.plugins = {};
                         this.isReady = false;
@@ -3647,6 +3648,9 @@
                     };
                     Chart.prototype.onResize = function(cb) {
                         return this.ee.subscribe(CHART_STATE_EVENTS.RESIZE, cb);
+                    };
+                    Chart.prototype.onViewportChange = function(cb) {
+                        return this.ee.subscribe(CHART_STATE_EVENTS.VIEWPORT_CHANGE, cb);
                     };
                     Chart.prototype.onPluginsStateChange = function(cb) {
                         return this.ee.subscribe(CHART_STATE_EVENTS.PLUGINS_STATE_CHANGED, cb);
@@ -3779,6 +3783,8 @@
                         zoomEventsNeeded && this.ee.emit(CHART_STATE_EVENTS.ZOOM, changedProps);
                         var resizeEventNeeded = changedProps.width || changedProps.height;
                         resizeEventNeeded && this.ee.emit(CHART_STATE_EVENTS.RESIZE, changedProps);
+                        var viewportChangeEventNeeded = scrollChangeEventsNeeded || zoomEventsNeeded || resizeEventNeeded;
+                        if (viewportChangeEventNeeded) this.ee.emit(CHART_STATE_EVENTS.VIEWPORT_CHANGE, changedProps);
                         var pluginStateChangedEventNeeded = !!changedProps.pluginsState;
                         pluginStateChangedEventNeeded && this.ee.emit(CHART_STATE_EVENTS.PLUGINS_STATE_CHANGED, changedProps.pluginsState);
                     };
@@ -5024,12 +5030,10 @@
                         return this.chart.state.yAxis.range.zeroVal + this.options.scrollYVal + this.pxToValueByYAxis(y);
                     };
                     Screen.prototype.getScreenXByValue = function(xVal) {
-                        var _a = this.chart.state.xAxis.range, scroll = _a.scroll, zeroVal = _a.zeroVal;
-                        return this.valueToPxByXAxis(xVal - zeroVal - scroll);
+                        return this.getPointOnXAxis(xVal) - this.options.scrollX;
                     };
                     Screen.prototype.getScreenYByValue = function(yVal) {
-                        var _a = this.chart.state.yAxis.range, scroll = _a.scroll, zeroVal = _a.zeroVal;
-                        return this.valueToPxByYAxis(yVal - zeroVal - scroll);
+                        return this.getPointOnYAxis(yVal) - this.options.scrollY;
                     };
                     Screen.prototype.getScreenXByPoint = function(xVal) {
                         return this.getScreenXByValue(this.getValueOnXAxis(xVal));

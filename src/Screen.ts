@@ -32,6 +32,7 @@ export class Screen {
 	// TODO: !!! rename point coordinates to world coordinates
 	// TODO: move all Chart metrics functions here
 
+	// TODO: rename to interpolation state
 	options: IScreenTransformOptions = {scrollXVal: 0, scrollX: 0, scrollYVal: 0, scrollY: 0, zoomX: 1, zoomY: 1};
 	transformationInProgress = false;
 	private chart: Chart;
@@ -329,13 +330,11 @@ export class Screen {
 	
 
 	getScreenXByValue(xVal: number): number {
-		var {scroll, zeroVal} = this.chart.state.xAxis.range;
-		return this.valueToPxByXAxis(xVal - zeroVal - scroll)
+		return this.getPointOnXAxis(xVal) - this.options.scrollX;
 	}
 
 	getScreenYByValue(yVal: number): number {
-		var {scroll, zeroVal} = this.chart.state.yAxis.range;
-		return this.valueToPxByYAxis(yVal - zeroVal - scroll)
+		return this.getPointOnYAxis(yVal) - this.options.scrollY;
 	}
 
 	getScreenXByPoint(xVal: number): number {
