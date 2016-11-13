@@ -28,6 +28,7 @@ const CHART_STATE_EVENTS = {
 	ZOOM: 'zoom',
 	RESIZE: 'resize',
 	SCROLL: 'scroll',
+	VIEWPORT_CHANGE: 'viewportChange',
 	DRAG_STATE_CHAGED: 'scrollStop',
 	PLUGINS_STATE_CHANGED: 'pluginsStateChanged'
 };
@@ -184,7 +185,7 @@ export class Chart {
 		pluginsState: {},
 		eventEmitterMaxListeners: 20,
 		maxVisibleSegments: 1280,
-		inertialScroll: true
+		inertialScroll: false
 	};
 	plugins: {[pluginName: string]: ChartPlugin<any>} = {};
 	trendsManager: TrendsManager;
@@ -277,6 +278,10 @@ export class Chart {
 
 	onResize(cb: (changedProps: IChartState) => void) {
 		return this.ee.subscribe(CHART_STATE_EVENTS.RESIZE, cb);
+	}
+
+	onViewportChange(cb: (changedProps: IChartState) => void) {
+		return this.ee.subscribe(CHART_STATE_EVENTS.VIEWPORT_CHANGE, cb);
 	}
 
 	onPluginsStateChange(cb: (changedPluginsStates: {[pluginName: string]: Plugin}) => any) {
@@ -469,6 +474,9 @@ export class Chart {
 
 		let resizeEventNeeded = (changedProps.width || changedProps.height);
 		resizeEventNeeded && this.ee.emit(CHART_STATE_EVENTS.RESIZE, changedProps);
+
+		let viewportChangeEventNeeded = scrollChangeEventsNeeded || zoomEventsNeeded || resizeEventNeeded;
+		if (viewportChangeEventNeeded) this.ee.emit(CHART_STATE_EVENTS.VIEWPORT_CHANGE, changedProps);
 
 		let pluginStateChangedEventNeeded = !!(changedProps.pluginsState);
 		pluginStateChangedEventNeeded && this.ee.emit(CHART_STATE_EVENTS.PLUGINS_STATE_CHANGED, changedProps.pluginsState);

@@ -107,6 +107,7 @@ export declare class Chart {
     }) => void): Function;
     onZoom(cb: (changedProps: IChartState) => void): Function;
     onResize(cb: (changedProps: IChartState) => void): Function;
+    onViewportChange(cb: (changedProps: IChartState) => void): Function;
     onPluginsStateChange(cb: (changedPluginsStates: {
         [pluginName: string]: Plugin;
     }) => any): Function;
