@@ -189,11 +189,11 @@ class CandleWidget {
 		leftBottom.set(-width / 2, -height / 2, 0);
 		rightBottom.set(width / 2, -height / 2, 0);
 
-		// prevent to draw bars with height < 1px
-		if (Utils.getDistance(leftTop.y, leftBottom.y) < 1) {
-			leftBottom.setY(leftBottom.y + 1);
-			rightBottom.setY(rightBottom.y + 1);
-		}
+		// // prevent to draw bars with height < 1px
+		// if (Utils.getDistance(leftTop.y, leftBottom.y) < 1) {
+		// 	leftBottom.setY(leftBottom.y + 1);
+		// 	rightBottom.setY(rightBottom.y + 1);
+		// }
 
 		material.color.set(color);
 		geometry.verticesNeedUpdate = true;

@@ -5765,7 +5765,6 @@
         var PlaneGeometry = THREE.PlaneGeometry;
         var Trend_1 = __webpack_require__(20);
         var LineBasicMaterial = THREE.LineBasicMaterial;
-        var Utils_1 = __webpack_require__(16);
         var RISE_COLOR = 2927680;
         var FALL_COLOR = 15619379;
         var MARGIN_PERCENT = .3;
@@ -5899,10 +5898,6 @@
                 rightTop.set(width / 2, height / 2, 0);
                 leftBottom.set(-width / 2, -height / 2, 0);
                 rightBottom.set(width / 2, -height / 2, 0);
-                if (Utils_1.Utils.getDistance(leftTop.y, leftBottom.y) < 1) {
-                    leftBottom.setY(leftBottom.y + 1);
-                    rightBottom.setY(rightBottom.y + 1);
-                }
                 material.color.set(color);
                 geometry.verticesNeedUpdate = true;
                 var vLineGeometry = this.vLine.geometry;
