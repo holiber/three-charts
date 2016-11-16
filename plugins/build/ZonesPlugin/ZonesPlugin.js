@@ -156,7 +156,7 @@
             ZonesWidget.prototype.bindEvents = function() {
                 var _this = this;
                 var zones = this.zonesPlugin.items;
-                this.bindEvent(this.chart.screen.onTransformationFrame(function() {
+                this.bindEvent(this.chart.interpolatedViewport.onInterpolation(function() {
                     return _this.updateZonesPositions();
                 }), zones.onCreate(function(item) {
                     return _this.createZoneWidget(item);
@@ -241,13 +241,13 @@
             };
             ZoneWidget.prototype.updatePosition = function() {
                 var chart = this.chart;
-                var screen = chart.screen;
+                var viewport = chart.interpolatedViewport;
                 var zone = this.zone;
                 var _a = this.animatedProps, startXVal = _a.startXVal, startYVal = _a.startYVal, endXVal = _a.endXVal, endYVal = _a.endYVal, opacity = _a.opacity;
-                var startY = isFinite(startYVal) ? screen.getPointOnYAxis(startYVal) : screen.getBottom();
-                var endY = isFinite(endYVal) ? screen.getPointOnYAxis(endYVal) : screen.getTop();
-                var startX = screen.getPointOnXAxis(startXVal);
-                var endX = screen.getPointOnXAxis(endXVal);
+                var startY = isFinite(startYVal) ? viewport.getWorldYByVal(startYVal) : viewport.getBottom();
+                var endY = isFinite(endYVal) ? viewport.getWorldYByVal(endYVal) : viewport.getTop();
+                var startX = viewport.getWorldXByVal(startXVal);
+                var endX = viewport.getWorldXByVal(endXVal);
                 var geometry = this.mesh.geometry;
                 var material = this.mesh.material;
                 var verts = geometry.vertices;

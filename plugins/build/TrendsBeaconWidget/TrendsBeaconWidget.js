@@ -145,15 +145,16 @@
                     xVal = currentAnimationState.xVal;
                     yVal = currentAnimationState.endYVal;
                 }
-                var endPointVector = chart.screen.getPointOnChart(xVal, yVal);
+                var viewport = chart.interpolatedViewport;
+                var x = viewport.getWorldXByVal(xVal);
+                var y = viewport.getWorldYByVal(yVal);
                 var screenWidth = chart.state.width;
-                var x = endPointVector.x;
-                var screenX = chart.screen.getScreenXByPoint(endPointVector.x);
+                var screenX = viewport.getViewportXByWorldX(x);
                 if (screenX < 0) {
-                    x = chart.screen.getPointByScreenX(0);
+                    x = viewport.getLeft();
                 }
-                if (screenX > screenWidth) x = chart.screen.getPointByScreenX(screenWidth);
-                this.mesh.position.set(x, endPointVector.y, .1);
+                if (screenX > screenWidth) x = viewport.getRight();
+                this.mesh.position.set(x, y, .1);
             };
             return TrendBeacon;
         }(three_charts_1.TrendWidget);

@@ -145,7 +145,7 @@
             AxisMarksWidget.prototype.bindEvents = function() {
                 var _this = this;
                 var marksCollection = this.axisMarksPlugin.marksCollection;
-                this.bindEvent(this.chart.screen.onTransformationFrame(function() {
+                this.bindEvent(this.chart.interpolatedViewport.onInterpolation(function() {
                     return _this.updateMarksPositions();
                 }), this.chart.onResize(function() {
                     return _this.onResizeHandler();
@@ -295,7 +295,7 @@
             };
             AxisMarkWidget.prototype.updatePosition = function() {
                 var chart = this.chart;
-                var screen = chart.screen;
+                var screen = chart.interpolatedViewport;
                 var mark = this.axisMark;
                 var isXAxis = mark.axisType == three_charts_1.AXIS_TYPE.X;
                 var hasStickMode = mark.stickToEdges;
@@ -305,15 +305,14 @@
                 var material = this.mesh.material;
                 material.opacity = opactity;
                 if (isXAxis) {
-                    this.mesh.position.x = screen.getPointOnXAxis(val);
-                    this.mesh.position.y = screen.options.scrollY + height / 2;
+                    this.mesh.position.x = screen.getWorldXByVal(val);
+                    this.mesh.position.y = screen.params.scrollY + height / 2;
                 } else {
                     var bottomVal = screen.getBottomVal();
                     var topVal = screen.getTopVal();
                     var needToStickOnTop = hasStickMode && val > topVal;
                     var needToStickOnBottom = hasStickMode && val < bottomVal;
-                    var centerYVal = screen.getCenterYVal();
-                    this.mesh.position.x = screen.options.scrollX + width / 2;
+                    this.mesh.position.x = screen.params.scrollX + width / 2;
                     if (needToStickOnTop) {
                         this.isStickOnTop = true;
                         this.mesh.position.y = screen.getTop();
@@ -322,7 +321,7 @@
                         this.mesh.position.y = screen.getBottom();
                     } else {
                         this.isStickOnBottom = this.isStickOnTop = false;
-                        this.mesh.position.y = screen.getPointOnYAxis(val);
+                        this.mesh.position.y = screen.getWorldYByVal(val);
                     }
                 }
             };

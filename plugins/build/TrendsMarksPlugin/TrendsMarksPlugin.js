@@ -107,7 +107,7 @@
                 this.chart.trendsManager.onSegmentsRebuilded(function() {
                     _this.updateMarksSegments();
                 });
-                this.chart.screen.onZoomFrame(function() {
+                this.chart.interpolatedViewport.onZoomInterpolation(function() {
                     return _this.calclulateMarksPositions();
                 });
             };
@@ -146,8 +146,8 @@
                 var chart = this.chart;
                 var options = mark.options;
                 var width = options.width, height = options.height, name = options.name;
-                var left = chart.getPointOnXAxis(mark.xVal) - width / 2;
-                var top = chart.getPointOnYAxis(mark.yVal);
+                var left = chart.viewport.getWorldXByVal(mark.xVal) - width / 2;
+                var top = chart.viewport.getWorldYByVal(mark.yVal);
                 var isTopSideMark = options.orientation == TREND_MARK_SIDE.TOP;
                 var newOffset;
                 var row = 0;
@@ -171,9 +171,9 @@
                     }
                 } while (hasIntersection);
                 if (isTopSideMark) {
-                    newOffset = markRect[1] - markRect[3] - chart.getPointOnYAxis(mark.yVal);
+                    newOffset = markRect[1] - markRect[3] - chart.viewport.getWorldYByVal(mark.yVal);
                 } else {
-                    newOffset = chart.getPointOnYAxis(mark.yVal) - markRect[1];
+                    newOffset = chart.viewport.getWorldYByVal(mark.yVal) - markRect[1];
                 }
                 mark._setOffset(newOffset);
                 mark._setRow(row);
@@ -293,8 +293,8 @@
                 this.bindEvent(this.getTrendsMarksPlugin().onChange(function() {
                     return _this.onMarksChange();
                 }));
-                this.bindEvent(this.chart.screen.onTransformationEvent(function(event) {
-                    return _this.onScreenTransformationEvent(event);
+                this.bindEvent(this.chart.interpolatedViewport.onInterpolationEvent(function(event) {
+                    return _this.onViewportInterpolationEvent(event);
                 }));
             };
             TrendMarksWidget.prototype.getTrendsMarksPlugin = function() {
@@ -323,7 +323,7 @@
                 this.object3D.remove(this.marksWidgets[markName].getObject3D());
                 delete this.marksWidgets[markName];
             };
-            TrendMarksWidget.prototype.onScreenTransformationEvent = function(event) {
+            TrendMarksWidget.prototype.onViewportInterpolationEvent = function(event) {
                 var widgets = this.marksWidgets;
                 for (var markName in widgets) {
                     widgets[markName].onScreenTransformationEventHandler(event);
@@ -360,7 +360,7 @@
                 });
                 switch (options.textureFilter) {
                   case TrendsMarksPlugin_1.TEXTURE_FILTER.AUTO:
-                    texture.magFilter = this.chart.screen.transformationInProgress ? LinearFilter : NearestFilter;
+                    texture.magFilter = this.chart.interpolatedViewport.interpolationInProgress ? LinearFilter : NearestFilter;
                     break;
 
                   case TrendsMarksPlugin_1.TEXTURE_FILTER.LINEAR:
@@ -391,15 +391,15 @@
             TrendMarkWidget.prototype.onScreenTransformationEventHandler = function(event) {
                 var texture = this.markMesh.material.map;
                 if (this.mark.options.textureFilter !== TrendsMarksPlugin_1.TEXTURE_FILTER.AUTO) return;
-                texture.magFilter = event == three_charts_1.TRANSFORMATION_EVENT.STARTED ? LinearFilter : NearestFilter;
+                texture.magFilter = event == three_charts_1.INTERPOLATION_EVENT.STARTED ? LinearFilter : NearestFilter;
                 texture.needsUpdate = true;
             };
             TrendMarkWidget.prototype.updatePosition = function() {
                 if (!this.mark.segment) return;
                 var mark = this.mark;
-                var screen = this.chart.screen;
-                var posX = screen.getPointOnXAxis(mark.xVal);
-                var posY = screen.getPointOnYAxis(mark.yVal);
+                var viewport = this.chart.interpolatedViewport;
+                var posX = viewport.getWorldXByVal(mark.xVal);
+                var posY = viewport.getWorldYByVal(mark.yVal);
                 this.markMesh.position.set(posX, posY, 0);
             };
             TrendMarkWidget.prototype.show = function() {

@@ -1,4 +1,4 @@
-import { Chart, TrendsWidget, TrendWidget, TRANSFORMATION_EVENT } from 'three-charts';
+import { Chart, TrendsWidget, TrendWidget, INTERPOLATION_EVENT } from 'three-charts';
 import { TrendMark } from "./TrendsMarksPlugin";
 import Mesh = THREE.Mesh;
 import Object3D = THREE.Object3D;
@@ -22,7 +22,7 @@ export declare class TrendMarksWidget extends TrendWidget {
     private onMarksChange();
     private createMarkWidget(mark);
     private destroyMarkWidget(markName);
-    private onScreenTransformationEvent(event);
+    private onViewportInterpolationEvent(event);
     protected onZoomFrame(): void;
     protected onSegmentsAnimate(): void;
 }
@@ -38,7 +38,7 @@ export declare class TrendMarkWidget {
     getObject3D(): Mesh;
     onSegmentsAnimate(): void;
     onZoomFrameHandler(): void;
-    onScreenTransformationEventHandler(event: TRANSFORMATION_EVENT): void;
+    onScreenTransformationEventHandler(event: INTERPOLATION_EVENT): void;
     private updatePosition();
     private show();
 }

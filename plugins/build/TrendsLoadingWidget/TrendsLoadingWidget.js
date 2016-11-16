@@ -130,8 +130,8 @@
                     x = segment.currentAnimationState.xVal - segment.maxLength;
                     y = segment.currentAnimationState.yVal;
                 }
-                var pointVector = this.chart.screen.getPointOnChart(x, y);
-                this.mesh.position.set(pointVector.x, pointVector.y, 0);
+                var viewport = this.chart.interpolatedViewport;
+                this.mesh.position.set(viewport.getWorldXByVal(x), viewport.getWorldYByVal(y), 0);
             };
             return TrendLoading;
         }(three_charts_1.TrendWidget);
