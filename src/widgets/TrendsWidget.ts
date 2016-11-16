@@ -6,7 +6,7 @@ import {ITrendOptions, ITrendData, Trend} from "../Trend";
 import Vector2 = THREE.Vector2;
 import Vector3 = THREE.Vector3;
 import {TrendSegmentsManager} from "../TrendSegmentsManager";
-import {IScreenTransformOptions} from "../Screen";
+import {IViewportParams} from "../Viewport";
 
 
 export interface ITrendWidgetClass<TrendWidgetType> {
@@ -108,9 +108,9 @@ export abstract class TrendWidget {
 	}
 	protected onSegmentsAnimate(segments: TrendSegmentsManager) {
 	}
-	protected onZoomFrame(options: IScreenTransformOptions) {
+	protected onZoomFrame(options: IViewportParams) {
 	}
-	protected onTransformationFrame(options: IScreenTransformOptions) {
+	protected onTransformationFrame(options: IViewportParams) {
 	}
 	protected onZoom() {
 	}
@@ -122,11 +122,11 @@ export abstract class TrendWidget {
 			(trendPoints: TrendSegmentsManager) => this.onSegmentsAnimate(trendPoints)
 		));
 
-		this.bindEvent(this.chart.screen.onTransformationFrame(
+		this.bindEvent(this.chart.interpolatedViewport.onInterpolation(
 			(options) => this.onTransformationFrame(options)
 		));
 		
-		this.bindEvent(this.chart.screen.onZoomFrame(
+		this.bindEvent(this.chart.interpolatedViewport.onZoomInterpolation(
 			(options) => this.onZoomFrame(options)
 		));
 

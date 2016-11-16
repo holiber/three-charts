@@ -7,7 +7,7 @@ import Line = THREE.Line;
 import { ChartWidget } from "../Widget";
 import LineSegments = THREE.LineSegments;
 import { Utils } from "../Utils";
-import { IScreenTransformOptions } from "../Screen";
+import { IViewportParams } from "../Viewport";
 import { IAxisOptions } from "../interfaces";
 import { Color } from "../Color";
 
@@ -40,10 +40,10 @@ export class GridWidget extends ChartWidget{
 	}
 
 	bindEvents() {
-		// grid is bigger then screen, so it's no need to update it on each scroll event
+		// grid is bigger then interpolatedViewport, so it's no need to update it on each scroll event
 		let updateGridThrottled = Utils.throttle(() => this.updateGrid(), 1000);
 		this.bindEvent(this.chart.onScroll(() => updateGridThrottled()),
-			this.chart.screen.onZoomFrame((options) => {
+			this.chart.interpolatedViewport.onZoomInterpolation((options) => {
 				updateGridThrottled();
 				this.onZoomFrame(options);
 			}),
@@ -114,7 +114,7 @@ export class GridWidget extends ChartWidget{
 	private getHorizontalLineSegment(yVal: number, scrollXVal: number, scrollYVal: number): Vector3[] {
 		var chartState = this.chart;
 		var localYVal = yVal - chartState.state.yAxis.range.zeroVal - scrollYVal;
-		var widthVal = chartState.pxToValueByXAxis(chartState.state.width);
+		var widthVal = chartState.viewport.pxToValByXAxis(chartState.state.width);
 		return [
 			new THREE.Vector3(widthVal * 2 + scrollXVal, localYVal, 0 ),
 			new THREE.Vector3( -widthVal + scrollXVal, localYVal, 0 )
@@ -122,16 +122,16 @@ export class GridWidget extends ChartWidget{
 	}
 
 	private getVerticalLineSegment(xVal: number, scrollXVal: number, scrollYVal: number): Vector3[] {
-		var chartState = this.chart;
-		var localXVal = xVal - chartState.state.xAxis.range.zeroVal - scrollXVal;
-		var heightVal = chartState.pxToValueByYAxis(chartState.state.height);
+		let chart = this.chart;
+		let localXVal = xVal - chart.state.xAxis.range.zeroVal - scrollXVal;
+		let heightVal = chart.viewport.pxToValByYAxis(chart.state.height);
 		return [
 			new THREE.Vector3(localXVal, heightVal * 2 + scrollYVal, 0 ),
 			new THREE.Vector3(localXVal, -heightVal + scrollYVal, 0 )
 		];
 	}
 
-	private onZoomFrame(options: IScreenTransformOptions) {
+	private onZoomFrame(options: IViewportParams) {
 		var {xAxis, yAxis} = this.chart.state;
 		if (options.zoomX) this.lineSegments.scale.setX(xAxis.range.scaleFactor * options.zoomX);
 		if (options.zoomY) this.lineSegments.scale.setY(yAxis.range.scaleFactor * options.zoomY);

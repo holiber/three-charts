@@ -2,7 +2,7 @@ import { Chart } from "../Chart";
 import { TrendsWidget, TrendWidget } from "./TrendsWidget";
 import { TrendSegmentsManager } from "../TrendSegmentsManager";
 import LineSegments = THREE.LineSegments;
-import { IScreenTransformOptions } from "../Screen";
+import { IViewportParams } from "../Viewport";
 import { ITrendOptions } from '../Trend';
 /**
  * widget for drawing trends lines
@@ -26,7 +26,7 @@ export declare class TrendLine extends TrendWidget {
     private setupSegment(segmentId, segmentState);
     private destroySegments();
     private destroySegment(segmentId);
-    protected onZoomFrame(options: IScreenTransformOptions): void;
+    protected onZoomFrame(options: IViewportParams): void;
     protected onSegmentsAnimate(trendSegments: TrendSegmentsManager): void;
     private toLocalX(xVal);
     private toLocalY(yVal);

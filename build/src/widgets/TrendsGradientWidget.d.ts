@@ -2,7 +2,7 @@ import Object3D = THREE.Object3D;
 import { Chart } from "../Chart";
 import { ITrendOptions } from "../Trend";
 import { TrendsWidget, TrendWidget } from "./TrendsWidget";
-import { IScreenTransformOptions } from '../Screen';
+import { IViewportParams } from '../Viewport';
 import { TrendSegmentsManager } from '../TrendSegmentsManager';
 export declare class TrendsGradientWidget extends TrendsWidget<TrendGradient> {
     static widgetName: string;
@@ -17,7 +17,7 @@ export declare class TrendGradient extends TrendWidget {
     protected bindEvents(): void;
     getObject3D(): Object3D;
     initGradient(): void;
-    protected onZoomFrame(options: IScreenTransformOptions): void;
+    protected onZoomFrame(options: IViewportParams): void;
     protected onSegmentsAnimate(trendSegmentsManager: TrendSegmentsManager): void;
     private updateSegments();
     /**

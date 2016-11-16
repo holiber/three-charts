@@ -183,15 +183,9 @@ window.onload = function () {
 	(<any>window)['chartView'] = chartView;
 
 	var mainTrend = chartView.getTrend('main');
-	// var deadlineMark = chartView.chart.xAxisMarks.getItem('deadline');
-	// var closeMark = chartView.chart.xAxisMarks.getItem('close');
 
 	mainTrend.onDataChange(() => {
-		// var closeValue = closeMark.options.value;
-		// if (mainTrend.getLastItem().xVal >= closeValue) {
-		// 	deadlineMark.setOptions({value: closeValue + 10000});
-		// 	closeMark.setOptions({value: closeValue + 20000})
-		// }
+
 		var markOptions = MarksSource.getNext(mainTrend.getLastItem().xVal);
 		if (markOptions) setTimeout(() => {
 			let trendsMarks = chartView.chart.getPlugin(TrendsMarksPlugin.NAME) as TrendsMarksPlugin;

@@ -10,7 +10,7 @@ import Object3D = THREE.Object3D;
 import { Chart, IChartState } from "./Chart";
 import { ChartWidget, IChartWidgetConstructor } from "./Widget";
 import { Utils } from "./Utils";
-import { IScreenTransformOptions } from "./Screen";
+import { IViewportParams } from "./Viewport";
 import { AxisWidget } from "./widgets/AxisWidget";
 import { GridWidget } from "./widgets/GridWidget";
 import { TrendsGradientWidget } from "./widgets/TrendsGradientWidget";
@@ -217,7 +217,7 @@ export class ChartBlankView {
 		}
 
 		this.unsubscribers = [
-			this.chart.screen.onTransformationFrame((options) => this.onScreenTransformHandler(options)),
+			this.chart.interpolatedViewport.onInterpolation((options) => this.onScreenTransformHandler(options)),
 			this.chart.onResize((options) => this.onChartResize())
 		];
 	}
@@ -235,7 +235,7 @@ export class ChartBlankView {
 	}
 
 	private setupCamera() {
-		let camSettings = this.chart.screen.getCameraSettings();
+		let camSettings = this.chart.viewport.getCameraSettings();
 		if (!this.camera) {
 			this.camera = new PerspectiveCamera(camSettings.FOV, camSettings.aspect, camSettings.near, camSettings.far);
 			this.scene.add(this.camera);
@@ -248,10 +248,10 @@ export class ChartBlankView {
 		}
 		this.camera.position.set(camSettings.x, camSettings.y, camSettings.z);
 		this.cameraInitialPosition = this.camera.position.clone();
-		this.onScreenTransformHandler(this.chart.screen.options);
+		this.onScreenTransformHandler(this.chart.interpolatedViewport.params);
 	}
 
-	private onScreenTransformHandler(options: IScreenTransformOptions) {
+	private onScreenTransformHandler(options: IViewportParams) {
 		if (options.scrollX != void 0) {
 			let scrollX = this.cameraInitialPosition.x + options.scrollX;
 			this.camera.position.setX(scrollX);

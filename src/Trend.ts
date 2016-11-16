@@ -168,7 +168,7 @@ export class Trend {
 		if (this.prependRequest) return;
 		var chartState = this.chart;
 		var minXVal = chartState.state.computedData.trends.minXVal;
-		var minScreenX = chartState.getScreenXByValue(minXVal);
+		var minScreenX = chartState.viewport.getViewportYByVal(minXVal);
 		var needToRequest = minScreenX > 0;
 		var {from, to} = chartState.state.xAxis.range;
 		var requestedDataLength = to - from;

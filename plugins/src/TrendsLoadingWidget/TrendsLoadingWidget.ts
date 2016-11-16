@@ -105,7 +105,7 @@ export class TrendLoading extends TrendWidget {
 			x = segment.currentAnimationState.xVal - segment.maxLength;
 			y = segment.currentAnimationState.yVal
 		}
-		let pointVector = this.chart.screen.getPointOnChart(x, y);
-		this.mesh.position.set(pointVector.x, pointVector.y, 0);
+		let viewport = this.chart.interpolatedViewport;
+		this.mesh.position.set(viewport.getWorldXByVal(x), viewport.getWorldYByVal(y), 0);
 	}
 }

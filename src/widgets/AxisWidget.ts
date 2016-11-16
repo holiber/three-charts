@@ -14,7 +14,7 @@ import {Utils} from "../Utils";
 import PlaneGeometry = THREE.PlaneGeometry;
 import MeshBasicMaterial = THREE.MeshBasicMaterial;
 import OrthographicCamera = THREE.OrthographicCamera;
-import {IScreenTransformOptions} from "../Screen";
+import {IViewportParams} from "../Viewport";
 import {AXIS_TYPE, AXIS_DATA_TYPE, IAxisOptions} from "../interfaces";
 import { Color } from "../Color";
 
@@ -42,8 +42,8 @@ export class AxisWidget extends ChartWidget {
 		this.updateAxisXRequest = Utils.throttle(() => this.updateAxis(AXIS_TYPE.X), 1000);
 
 		this.onScrollChange(
-			this.chart.screen.options.scrollX,
-			this.chart.screen.options.scrollY
+			this.chart.interpolatedViewport.params.scrollX,
+			this.chart.interpolatedViewport.params.scrollY
 		);
 		this.bindEvents();
 	}
@@ -52,10 +52,10 @@ export class AxisWidget extends ChartWidget {
 		var state = this.chart;
 
 		this.bindEvent(
-			state.screen.onTransformationFrame((options) => {
+			state.interpolatedViewport.onInterpolation((options) => {
 				this.onScrollChange(options.scrollX, options.scrollY);
 			}),
-			state.screen.onZoomFrame((options) => {this.onZoomFrame(options)}),
+			state.interpolatedViewport.onZoomInterpolation((options) => {this.onZoomFrame(options)}),
 			state.onDestroy(() => this.onDestroy()),
 			state.onResize(() => this.onResize())
 		);
@@ -142,7 +142,7 @@ export class AxisWidget extends ChartWidget {
 		if (this.isDestroyed) return;
 		var isXAxis = orientation == AXIS_TYPE.X;
 		var {width: visibleWidth, height: visibleHeight} = this.chart.state;
-		var {scrollX, scrollY, zoomX, zoomY} = this.chart.screen.options;
+		var {scrollX, scrollY, zoomX, zoomY} = this.chart.interpolatedViewport.params;
 		var axisOptions: IAxisOptions;
 		var axisMesh: Mesh;
 		var axisGridParams: IGridParamsForAxis;
@@ -178,7 +178,7 @@ export class AxisWidget extends ChartWidget {
 		for (let val = startVal; val <= endVal; val += axisGridParams.step) {
 			let displayedValue = '';
 			if (isXAxis) {
-				let pxVal = this.chart.screen.getPointOnXAxis(val) - scrollX + visibleWidth;
+				let pxVal = this.chart.interpolatedViewport.getWorldXByVal(val) - scrollX + visibleWidth;
 				ctx.textAlign = "center";
 				// uncomment for dots
 				// ctx.moveTo(pxVal + 0.5, canvasHeight);
@@ -191,7 +191,7 @@ export class AxisWidget extends ChartWidget {
 
 				ctx.fillText(displayedValue, pxVal, canvasHeight - 10);
 			} else {
-				let pxVal = canvasHeight - this.chart.screen.getPointOnYAxis(val) + scrollY;
+				let pxVal = canvasHeight - this.chart.interpolatedViewport.getWorldYByVal(val) + scrollY;
 				ctx.textAlign = "right";
 				// uncomment for dots
 				// ctx.moveTo(canvasWidth, pxVal + 0.5);
@@ -214,7 +214,7 @@ export class AxisWidget extends ChartWidget {
 		texture.needsUpdate = true;
 	}
 
-	private onZoomFrame(options: IScreenTransformOptions) {
+	private onZoomFrame(options: IViewportParams) {
 		if (options.zoomX) {
 			this.updateAxis(AXIS_TYPE.X);
 			//this.temporaryHideAxis(AXIS_ORIENTATION.H)

@@ -1,17 +1,18 @@
 import Vector3 = THREE.Vector3;
 import { ITrendOptions, Trend, ITrendData, TREND_TYPE } from "./Trend";
-import {EventEmitter} from './EventEmmiter';
-import {Utils} from './Utils';
-import {TrendsManager, ITrendsOptions} from "./TrendsManager";
-import {Screen} from "./Screen";
+import { EventEmitter } from './EventEmmiter';
+import { Utils } from './Utils';
+import { TrendsManager, ITrendsOptions } from "./TrendsManager";
+import { Viewport } from "./Viewport";
+import { InterpolatedViewport } from "./InterpolatedViewport";
+import { Promise } from './deps/deps';
+import { ChartPlugin } from './Plugin';
+import { TColor } from "./Color";
+import { AnimationManager } from "./AnimationManager";
+import { EASING } from './Easing';
 import {
 	AXIS_TYPE, AXIS_DATA_TYPE, IAxisOptions, IAnimationsOptions, AXIS_RANGE_TYPE
 } from "./interfaces";
-import { Promise } from './deps/deps';
-import { ChartPlugin } from './Plugin';
-import {TColor} from "./Color";
-import { AnimationManager } from "./AnimationManager";
-import { EASING } from './Easing';
 
 interface IRecalculatedStateResult {
 	changedProps: IChartState,
@@ -190,7 +191,8 @@ export class Chart {
 	plugins: {[pluginName: string]: ChartPlugin<any>} = {};
 	trendsManager: TrendsManager;
 	animationManager: AnimationManager;
-	screen: Screen;
+	viewport: Viewport;
+	interpolatedViewport: InterpolatedViewport;
 
 	/**
 	 * true then state was initialized and ready to use
@@ -212,14 +214,19 @@ export class Chart {
 		this.trendsManager = new TrendsManager(this, initialState);
 		initialState.trends = this.trendsManager.calculatedOptions;
 		initialState = this.installPlugins(plugins, initialState);
+
+		this.animationManager = new AnimationManager();
+		this.animationManager.setAimationsEnabled(this.state.animations.enabled);
+		this.viewport = new Viewport(this);
+
 		this.setState(initialState);
 		this.setState({computedData: this.getComputedData()});
 		this.savePrevState();
 
-		this.animationManager = new AnimationManager();
-		this.animationManager.setAimationsEnabled(this.state.animations.enabled);
-		this.screen = new Screen(this);
+		this.interpolatedViewport = new InterpolatedViewport(this);
 		this.bindEvents();
+
+
 		
 		// message to other modules that Chart.state is ready for use
 		this.ee.emit(CHART_STATE_EVENTS.INITIAL_STATE_APPLIED, initialState);
@@ -353,14 +360,14 @@ export class Chart {
 		var patch: IChartState = {};
 		var actualData = Utils.patch({}, data); //Utils.deepMerge({}, data);
 
-		// recalculate scroll position by changed cursor options
+		// recalculate scroll position by changed cursor params
 		var cursorOptions = changedProps.cursor;
 		var isMouseDrag = cursorOptions && data.cursor.dragMode && data.prevState.cursor.dragMode;
 		if (isMouseDrag) {
 			var oldX = data.prevState.cursor.x;
 			var currentX =  cursorOptions.x;
 			var currentScroll = data.xAxis.range.scroll;
-			var deltaXVal = this.pxToValueByXAxis(oldX - currentX);
+			var deltaXVal = this.viewport.pxToValByXAxis(oldX - currentX);
 			patch.xAxis = {range: {scroll: currentScroll + deltaXVal}};
 			actualData = Utils.patch(actualData, {xAxis: patch.xAxis} as IChartState);//Utils.deepMerge(actualData, {xAxis: patch.xAxis} as IChartState)
 		}
@@ -484,7 +491,7 @@ export class Chart {
 
 
 	/**
-	 * init plugins and save plugins options in initialState
+	 * init plugins and save plugins params in initialState
 	 */
 	private installPlugins(plugins: ChartPlugin<any>[], initialState: IChartState): IChartState {
 		initialState.pluginsState = {};
@@ -534,13 +541,13 @@ export class Chart {
 		let trendsMaxXDelta = state.computedData.trends.maxXVal - oldTrendsMaxX;
 
 		if (trendsMaxXDelta > 0) {
-			let maxVisibleXVal = this.screen.getScreenRightVal();
-			let paddingRightVal = this.getValueByScreenX(
+			let maxVisibleXVal = this.viewport.getRightVal();
+			let paddingRightVal = this.viewport.getValByViewportX(
 				this.state.width -
 				state.xAxis.range.padding.end -
 				state.xAxis.range.margin.end
 			);
-			let marginRightVal = this.getValueByScreenX(
+			let marginRightVal = this.viewport.getValByViewportX(
 				this.state.width -
 				state.xAxis.range.margin.end
 			);
@@ -693,8 +700,8 @@ export class Chart {
 			scaleFactor = yAxisRange.scaleFactor;
 			zeroVal = yAxisRange.zeroVal;
 
-			let maxScreenY = Math.round(this.getScreenYByValue(maxY));
-			let minScreenY = Math.round(this.getScreenYByValue(minY));
+			let maxScreenY = Math.round(this.viewport.getViewportYByVal(maxY));
+			let minScreenY = Math.round(this.viewport.getViewportYByVal(minY));
 			needToZoom = (
 				maxScreenY > actualData.height - margin.end ||
 				maxScreenY < actualData.height - padding.end ||
@@ -741,8 +748,8 @@ export class Chart {
 		let endXVal = this.trendsManager.getEndXVal();
 		let range = state.xAxis.range;
 		let scroll = (
-			endXVal - this.pxToValueByXAxis(state.width) +
-			this.pxToValueByXAxis(range.padding.end + range.margin.end) -
+			endXVal - this.viewport.pxToValByXAxis(state.width) +
+			this.viewport.pxToValByXAxis(range.padding.end + range.margin.end) -
 			range.zeroVal
 		);
 		this.setState({xAxis: {range: {scroll: scroll}}});
@@ -751,131 +758,5 @@ export class Chart {
 			setTimeout(resolve, animationTime);
 		});
 	}
-
-	/**
-	 *  returns offset in pixels from xAxis.range.zeroVal to xVal
-	 */
-	getPointOnXAxis(xVal: number): number {
-		var {scaleFactor, zoom, zeroVal} = this.state.xAxis.range;
-		return (xVal - zeroVal) * scaleFactor * zoom;
-	}
-
-	/**
-	 *  returns offset in pixels from yAxis.range.zeroVal to yVal
-	 */
-	getPointOnYAxis(yVal: number): number {
-		var {scaleFactor, zoom, zeroVal} = this.state.yAxis.range;
-		return (yVal - zeroVal) * scaleFactor * zoom;
-	}
-
-	/**
-	 * returns xVal by offset in pixels from xAxis.range.zeroVal
-	 */
-	getValueOnXAxis(x: number): number {
-		return this.state.xAxis.range.zeroVal + this.pxToValueByXAxis(x);
-	}
-
-
-	/**
-	 *  convert xVal to pixels by using settings from xAxis.range
-	 */
-	valueToPxByXAxis(xVal: number) {
-		return xVal * this.state.xAxis.range.scaleFactor * this.state.xAxis.range.zoom;
-	}
-
-
-	/**
-	 *  convert xVal to pixels by using settings from yAxis.range
-	 */
-	valueToPxByYAxis(yVal: number) {
-		return yVal * this.state.yAxis.range.scaleFactor * this.state.yAxis.range.zoom;
-	}
-
-	/**
-	 *  convert pixels to xVal by using settings from xAxis.range
-	 */
-	pxToValueByXAxis(xVal: number) {
-		return xVal / this.state.xAxis.range.scaleFactor / this.state.xAxis.range.zoom;
-	}
-
-
-	/**
-	 *  convert pixels to xVal by using settings from yAxis.range
-	 */
-	pxToValueByYAxis(yVal: number) {
-		return yVal / this.state.yAxis.range.scaleFactor / this.state.yAxis.range.zoom;
-	}
-
-
-	/**
-	 *  returns x xVal by screen x coordinate
-	 */
-	getValueByScreenX(x: number): number {
-		var {zeroVal, scroll} = this.state.xAxis.range;
-		return zeroVal + scroll + this.pxToValueByXAxis(x);
-	}
-
-
-	/**
-	 *  returns y xVal by screen y coordinate
-	 */
-	getValueByScreenY(y: number): number {
-		var {zeroVal, scroll} = this.state.yAxis.range;
-		return zeroVal + scroll + this.pxToValueByYAxis(y);
-	}
-
-
-	/**
-	 *  returns screen x xVal by screen y coordinate
-	 */
-	getScreenXByValue(xVal: number): number {
-		var {scroll, zeroVal} = this.state.xAxis.range;
-		return this.valueToPxByXAxis(xVal - zeroVal - scroll)
-	}
-
-	/**
-	 *  returns screen y xVal by screen y coordinate
-	 */
-	getScreenYByValue(yVal: number): number {
-		var {scroll, zeroVal} = this.state.yAxis.range;
-		return this.valueToPxByYAxis(yVal - zeroVal - scroll)
-	}
-
-
-	/**
-	 * returns screen x coordinate by offset in pixels from xAxis.range.zeroVal xVal
-	 */
-	getScreenXByPoint(xVal: number): number {
-		return this.getScreenXByValue(this.getValueOnXAxis(xVal));
-	}
-
-
-	/**
-	 * returns offset in pixels from xAxis.range.zeroVal xVal by screen x coordinate
-	 */
-	getPointByScreenX(screenX: number): number {
-		return this.getPointOnXAxis(this.getValueByScreenX(screenX));
-	}
-
-
-	getPointOnChart(xVal: number, yVal: number): Vector3 {
-		return new Vector3(this.getPointOnXAxis(xVal), this.getPointOnYAxis(yVal), 0);
-	}
-
-
-	getScreenLeftVal() {
-		return this.getValueByScreenX(0);
-	}
-
-
-	getScreenRightVal() {
-		return this.getValueByScreenX(this.state.width);
-	}
-
-
-	// getPaddingRight(): number {
-	// 	return this.getValueByScreenX(
-	// 		this.state.width - this.state.xAxis.range.padding.end);
-	// }
 
 }

@@ -1,4 +1,4 @@
-import {Chart, Utils, TrendsWidget, TrendWidget, TRANSFORMATION_EVENT, Color } from 'three-charts';
+import {Chart, Utils, TrendsWidget, TrendWidget, INTERPOLATION_EVENT, Color } from 'three-charts';
 import { TrendMark, TREND_MARK_SIDE, TrendsMarksPlugin, TEXTURE_FILTER } from "./TrendsMarksPlugin";
 import Geometry = THREE.Geometry;
 import Mesh = THREE.Mesh;
@@ -48,7 +48,9 @@ export class TrendMarksWidget extends TrendWidget {
 	protected bindEvents() {
 		super.bindEvents();
 		this.bindEvent(this.getTrendsMarksPlugin().onChange(() => this.onMarksChange()));
-		this.bindEvent(this.chart.screen.onTransformationEvent((event) => this.onScreenTransformationEvent(event)));
+		this.bindEvent(
+			this.chart.interpolatedViewport.onInterpolationEvent((event) => this.onViewportInterpolationEvent(event))
+		);
 	}
 
 	private getTrendsMarksPlugin(): TrendsMarksPlugin {
@@ -82,7 +84,7 @@ export class TrendMarksWidget extends TrendWidget {
 		delete this.marksWidgets[markName];
 	}
 
-	private onScreenTransformationEvent(event: TRANSFORMATION_EVENT) {
+	private onViewportInterpolationEvent(event: INTERPOLATION_EVENT) {
 		var widgets = this.marksWidgets;
 		for (let markName in widgets) {
 			widgets[markName].onScreenTransformationEventHandler(event);
@@ -128,10 +130,10 @@ export class TrendMarkWidget {
 			options.onRender(this, ctx, this.chart);
 		});
 
-		// make text sharp when screen is not transforming
+		// make text sharp when interpolatedViewport is not transforming
 		switch (options.textureFilter) {
 			case TEXTURE_FILTER.AUTO:
-				texture.magFilter = this.chart.screen.transformationInProgress ? LinearFilter : NearestFilter;
+				texture.magFilter = this.chart.interpolatedViewport.interpolationInProgress ? LinearFilter : NearestFilter;
 				break;
 			case TEXTURE_FILTER.LINEAR:
 				texture.magFilter = LinearFilter;
@@ -166,22 +168,22 @@ export class TrendMarkWidget {
 		this.updatePosition();
 	}
 
-	onScreenTransformationEventHandler(event: TRANSFORMATION_EVENT) {
+	onScreenTransformationEventHandler(event: INTERPOLATION_EVENT) {
 		let texture = (this.markMesh.material as MeshBasicMaterial).map;
 
-		// make text sharp when screen is not transforming
+		// make text sharp when interpolatedViewport is not transforming
 		if (this.mark.options.textureFilter !== TEXTURE_FILTER.AUTO) return;
-		texture.magFilter = (event == TRANSFORMATION_EVENT.STARTED) ? LinearFilter : NearestFilter;
+		texture.magFilter = (event == INTERPOLATION_EVENT.STARTED) ? LinearFilter : NearestFilter;
 		texture.needsUpdate = true;
 	}
 
 	private updatePosition() {
 		if (!this.mark.segment) return;
 		let mark = this.mark;
-		let screen = this.chart.screen;
+		let viewport = this.chart.interpolatedViewport;
 
-		let posX = screen.getPointOnXAxis(mark.xVal);
-		let posY = screen.getPointOnYAxis(mark.yVal);
+		let posX = viewport.getWorldXByVal(mark.xVal);
+		let posY = viewport.getWorldYByVal(mark.yVal);
 
 		this.markMesh.position.set(posX, posY, 0);
 	}

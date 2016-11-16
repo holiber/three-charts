@@ -63,7 +63,7 @@ export class TrendIndicator extends TrendWidget {
 		var color = new Color(this.trend.getOptions().lineColor);
 		var texture = Utils.createPixelPerfectTexture(CANVAS_WIDTH, CANVAS_HEIGHT, (ctx) => {
 			ctx.beginPath();
-			ctx.font = "15px Arial";
+			ctx.font = this.chart.state.font.l;
 			ctx.fillStyle = color.rgbaStr;
 			ctx.strokeStyle = "rgba(255,255,255,0.95)";
 		});
@@ -90,18 +90,19 @@ export class TrendIndicator extends TrendWidget {
 	}
 
 	private updatePosition() {
-		var chart = this.chart;
-		var {endXVal: segmentEndXVal, endYVal: segmentEndYVal} = this.segment.currentAnimationState;
-		var endPointVector = chart.screen.getPointOnChart(segmentEndXVal, segmentEndYVal);
-		var screenWidth = chart.state.width;
-		var x = endPointVector.x + OFFSET_X;
-		var y = endPointVector.y;
+		let	chart = this.chart;
+		let {endXVal: segmentEndXVal, endYVal: segmentEndYVal} = this.segment.currentAnimationState;
+		let viewport = chart.interpolatedViewport;
+		let screenWidth = chart.state.width;
 
-		var screenX = chart.screen.getScreenXByPoint(endPointVector.x);
-		var indicatorIsOutOfScreen = screenX < 0 || screenX > screenWidth;
+		let x = viewport.getWorldXByVal(segmentEndXVal) + OFFSET_X;
+		let y = viewport.getWorldYByVal(segmentEndYVal);
+
+		let screenX = viewport.getViewportXByWorldX(x);
+		let indicatorIsOutOfScreen = screenX < 0 || screenX > screenWidth;
 		if (indicatorIsOutOfScreen) {
-			if (screenX < 0) x = chart.screen.getPointByScreenX(0) + 20;
-			if (screenX > screenWidth) x = chart.screen.getPointByScreenX(screenWidth) - CANVAS_WIDTH / 2 - 10;
+			if (screenX < 0) x = viewport.getLeft() + 20;
+			if (screenX > screenWidth) x = viewport.getRight() - CANVAS_WIDTH / 2 - 10;
 			y -= 25;
 		}
 		this.mesh.position.set(x + CANVAS_WIDTH / 2, y + CANVAS_HEIGHT / 2 - 30, 0.1);

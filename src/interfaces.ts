@@ -10,6 +10,8 @@
  */
 import {TColor} from "./Color";
 import { TEase } from "./Easing";
+import Vector3 = THREE.Vector3;
+import Vector = THREE.Vector;
 export enum AXIS_RANGE_TYPE {
 	FIXED,
 	RELATIVE_END,
@@ -32,6 +34,10 @@ export interface IAxisRange {
 	from?: number,
 	to?: number,
 	zoom?: number,
+
+	/**
+	 * scroll value
+	 */
 	scroll?: number,
 
 	/**

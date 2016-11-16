@@ -4,7 +4,7 @@ import { TrendsWidget, TrendWidget } from './TrendsWidget';
 import { Chart } from '../Chart';
 import Object3D = THREE.Object3D;
 import Geometry = THREE.Geometry;
-import { IScreenTransformOptions } from '../Screen';
+import { IViewportParams } from '../Viewport';
 import { TrendSegmentsManager, ITrendSegmentState } from '../TrendSegmentsManager';
 import Vector3 = THREE.Vector3;
 import Mesh = THREE.Mesh;
@@ -113,7 +113,7 @@ export class TrendCandlesWidget extends TrendWidget {
 		delete this.candles[segmentId];
 	}
 
-	protected onZoomFrame(options: IScreenTransformOptions) {
+	protected onZoomFrame(options: IViewportParams) {
 		var currentScale = this.object3D.scale;
 		if (options.zoomX) currentScale.setX(this.scaleXFactor * options.zoomX);
 		if (options.zoomY) currentScale.setY(this.scaleYFactor * options.zoomY);

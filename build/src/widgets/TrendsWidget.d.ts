@@ -3,7 +3,7 @@ import Object3D = THREE.Object3D;
 import { Chart } from "../Chart";
 import { ITrendOptions, ITrendData, Trend } from "../Trend";
 import { TrendSegmentsManager } from "../TrendSegmentsManager";
-import { IScreenTransformOptions } from "../Screen";
+import { IViewportParams } from "../Viewport";
 export interface ITrendWidgetClass<TrendWidgetType> {
     new (chart: Chart, trendName: string): TrendWidgetType;
     widgetIsEnabled(trendOptions: ITrendOptions, chart: Chart): boolean;
@@ -41,8 +41,8 @@ export declare abstract class TrendWidget {
     onTrendChange(changedOptions?: ITrendOptions): void;
     onDestroy(): void;
     protected onSegmentsAnimate(segments: TrendSegmentsManager): void;
-    protected onZoomFrame(options: IScreenTransformOptions): void;
-    protected onTransformationFrame(options: IScreenTransformOptions): void;
+    protected onZoomFrame(options: IViewportParams): void;
+    protected onTransformationFrame(options: IViewportParams): void;
     protected onZoom(): void;
     protected bindEvents(): void;
     protected bindEvent(unbind: Function): void;

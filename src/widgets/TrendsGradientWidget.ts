@@ -13,7 +13,7 @@ import {ITrendOptions} from "../Trend";
 import {Utils} from "../Utils";
 import {TrendsWidget, TrendWidget} from "./TrendsWidget";
 import PlaneGeometry = THREE.PlaneGeometry;
-import { IScreenTransformOptions } from '../Screen';
+import { IViewportParams } from '../Viewport';
 import { TrendSegmentsManager, ITrendSegmentState } from '../TrendSegmentsManager';
 import { Color } from '../Color';
 
@@ -104,7 +104,7 @@ export class TrendGradient extends TrendWidget {
 	}
 
 
-	protected onZoomFrame(options: IScreenTransformOptions) {
+	protected onZoomFrame(options: IViewportParams) {
 		let state = this.chart.state;
 		let scaleXFactor = state.xAxis.range.scaleFactor;
 		let scaleYFactor = state.yAxis.range.scaleFactor;
@@ -168,8 +168,8 @@ export class TrendGradient extends TrendWidget {
 		let	bottomRight = vertices[gradientSegmentInd + 2];
 		let	topRight = vertices[gradientSegmentInd + 3];
 		let screenHeightVal = Math.max(
-			this.chart.pxToValueByYAxis(this.chart.state.height),
-			this.chart.screen.pxToValueByYAxis(this.chart.state.height)
+			this.chart.viewport.pxToValByYAxis(this.chart.state.height),
+			this.chart.interpolatedViewport.pxToValByYAxis(this.chart.state.height)
 		);
 
 		if (segmentState) {

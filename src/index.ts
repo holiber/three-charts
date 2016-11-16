@@ -1,7 +1,7 @@
 require('./deps/deps');
 export * from './ChartView';
 export * from './interfaces';
-export * from './Screen';
+export * from './InterpolatedViewport';
 export * from './Chart';
 export * from './Trend';
 export * from './TrendSegmentsManager';

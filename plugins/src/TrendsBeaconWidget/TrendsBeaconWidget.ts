@@ -149,14 +149,15 @@ export class TrendBeacon extends TrendWidget {
 			xVal = currentAnimationState.xVal;
 			yVal = currentAnimationState.endYVal;
 		}
-		var endPointVector = chart.screen.getPointOnChart(xVal, yVal);
-		var screenWidth = chart.state.width;
-		var x = endPointVector.x;
-		var screenX = chart.screen.getScreenXByPoint(endPointVector.x);
+		let viewport = chart.interpolatedViewport;
+		let x = viewport.getWorldXByVal(xVal);
+		let y = viewport.getWorldYByVal(yVal);
+		let screenWidth = chart.state.width;
+		let screenX = viewport.getViewportXByWorldX(x);
 		if (screenX < 0) {
-			x = chart.screen.getPointByScreenX(0);
+			x = viewport.getLeft();
 		}
-		if (screenX > screenWidth) x = chart.screen.getPointByScreenX(screenWidth);
-		this.mesh.position.set(x, endPointVector.y, 0.1);
+		if (screenX > screenWidth) x = viewport.getRight();
+		this.mesh.position.set(x, y, 0.1);
 	}
 }

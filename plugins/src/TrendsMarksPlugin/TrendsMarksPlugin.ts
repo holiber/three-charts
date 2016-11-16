@@ -95,7 +95,7 @@ export class TrendsMarksPlugin extends ChartPlugin<TTrendsMarksPluginOptions> {
 		this.chart.trendsManager.onSegmentsRebuilded(() => {
 			this.updateMarksSegments()
 		});
-		this.chart.screen.onZoomFrame(() => this.calclulateMarksPositions());
+		this.chart.interpolatedViewport.onZoomInterpolation(() => this.calclulateMarksPositions());
 	}
 
 	private onMarksChangeHandler() {
@@ -142,8 +142,8 @@ export class TrendsMarksPlugin extends ChartPlugin<TTrendsMarksPluginOptions> {
 		let chart = this.chart;
 		let options = mark.options;
 		let {width, height, name} = options;
-		let left = chart.getPointOnXAxis(mark.xVal) - width / 2;
-		let top = chart.getPointOnYAxis(mark.yVal);
+		let left = chart.viewport.getWorldXByVal(mark.xVal) - width / 2;
+		let top = chart.viewport.getWorldYByVal(mark.yVal);
 		let isTopSideMark = options.orientation == TREND_MARK_SIDE.TOP;
 		let newOffset: number;
 		let row = 0;
@@ -170,9 +170,9 @@ export class TrendsMarksPlugin extends ChartPlugin<TTrendsMarksPluginOptions> {
 		} while (hasIntersection);
 
 		if (isTopSideMark) {
-			newOffset = markRect[1] - markRect[3] - chart.getPointOnYAxis(mark.yVal);
+			newOffset = markRect[1] - markRect[3] - chart.viewport.getWorldYByVal(mark.yVal);
 		} else {
-			newOffset = chart.getPointOnYAxis(mark.yVal) - markRect[1];
+			newOffset = chart.viewport.getWorldYByVal(mark.yVal) - markRect[1];
 		}
 
 		mark._setOffset(newOffset);

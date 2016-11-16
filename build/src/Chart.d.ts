@@ -1,12 +1,12 @@
-import Vector3 = THREE.Vector3;
 import { ITrendOptions, Trend, ITrendData } from "./Trend";
 import { TrendsManager, ITrendsOptions } from "./TrendsManager";
-import { Screen } from "./Screen";
-import { IAxisOptions, IAnimationsOptions } from "./interfaces";
+import { Viewport } from "./Viewport";
+import { InterpolatedViewport } from "./InterpolatedViewport";
 import { Promise } from './deps/deps';
 import { ChartPlugin } from './Plugin';
 import { TColor } from "./Color";
 import { AnimationManager } from "./AnimationManager";
+import { IAxisOptions, IAnimationsOptions } from "./interfaces";
 /**
  * readonly computed state state
  * calculated after recalculateState() call
@@ -83,7 +83,8 @@ export declare class Chart {
     };
     trendsManager: TrendsManager;
     animationManager: AnimationManager;
-    screen: Screen;
+    viewport: Viewport;
+    interpolatedViewport: InterpolatedViewport;
     /**
      * true then state was initialized and ready to use
      */
@@ -122,7 +123,7 @@ export declare class Chart {
     private savePrevState(changedProps?);
     private emitChangedStateEvents(changedProps, eventData);
     /**
-     * init plugins and save plugins options in initialState
+     * init plugins and save plugins params in initialState
      */
     private installPlugins(plugins, initialState);
     /**
@@ -138,59 +139,4 @@ export declare class Chart {
     zoom(zoomValue: number, origin?: number): Promise<void>;
     zoomToRange(range: number, origin?: number): Promise<void>;
     scrollToEnd(): Promise<void>;
-    /**
-     *  returns offset in pixels from xAxis.range.zeroVal to xVal
-     */
-    getPointOnXAxis(xVal: number): number;
-    /**
-     *  returns offset in pixels from yAxis.range.zeroVal to yVal
-     */
-    getPointOnYAxis(yVal: number): number;
-    /**
-     * returns xVal by offset in pixels from xAxis.range.zeroVal
-     */
-    getValueOnXAxis(x: number): number;
-    /**
-     *  convert xVal to pixels by using settings from xAxis.range
-     */
-    valueToPxByXAxis(xVal: number): number;
-    /**
-     *  convert xVal to pixels by using settings from yAxis.range
-     */
-    valueToPxByYAxis(yVal: number): number;
-    /**
-     *  convert pixels to xVal by using settings from xAxis.range
-     */
-    pxToValueByXAxis(xVal: number): number;
-    /**
-     *  convert pixels to xVal by using settings from yAxis.range
-     */
-    pxToValueByYAxis(yVal: number): number;
-    /**
-     *  returns x xVal by screen x coordinate
-     */
-    getValueByScreenX(x: number): number;
-    /**
-     *  returns y xVal by screen y coordinate
-     */
-    getValueByScreenY(y: number): number;
-    /**
-     *  returns screen x xVal by screen y coordinate
-     */
-    getScreenXByValue(xVal: number): number;
-    /**
-     *  returns screen y xVal by screen y coordinate
-     */
-    getScreenYByValue(yVal: number): number;
-    /**
-     * returns screen x coordinate by offset in pixels from xAxis.range.zeroVal xVal
-     */
-    getScreenXByPoint(xVal: number): number;
-    /**
-     * returns offset in pixels from xAxis.range.zeroVal xVal by screen x coordinate
-     */
-    getPointByScreenX(screenX: number): number;
-    getPointOnChart(xVal: number, yVal: number): Vector3;
-    getScreenLeftVal(): number;
-    getScreenRightVal(): number;
 }

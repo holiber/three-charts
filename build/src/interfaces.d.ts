@@ -33,6 +33,9 @@ export interface IAxisRange {
     from?: number;
     to?: number;
     zoom?: number;
+    /**
+     * scroll value
+     */
     scroll?: number;
     /**
      * Mode only for Y axis. When true displayed center of Y axis never changed. To use set range.zeroVal as center value.

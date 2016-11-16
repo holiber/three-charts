@@ -38,7 +38,7 @@ export class AxisMarksWidget extends ChartWidget {
 	protected bindEvents() {
 		let marksCollection = this.axisMarksPlugin.marksCollection;
 		this.bindEvent(
-			this.chart.screen.onTransformationFrame(() => this.updateMarksPositions()),
+			this.chart.interpolatedViewport.onInterpolation(() => this.updateMarksPositions()),
 			this.chart.onResize(() => this.onResizeHandler()),
 			this.chart.onChange((changedProps) => this.onStateChangeHandler(changedProps)),
 			marksCollection.onCreate((mark) => this.createAxisMarkWidget(mark)),
@@ -207,7 +207,7 @@ export class AxisMarkWidget {
 
 	updatePosition()  {
 		let chart = this.chart;
-		let screen = chart.screen;
+		let screen = chart.interpolatedViewport;
 		let mark = this.axisMark;
 		let isXAxis = mark.axisType == AXIS_TYPE.X;
 		let hasStickMode = mark.stickToEdges;
@@ -220,15 +220,14 @@ export class AxisMarkWidget {
 
 		if (isXAxis) {
 			// TODO: make stickToEdges mode for AXIS_TYPE.X
-			this.mesh.position.x = screen.getPointOnXAxis(val);
-			this.mesh.position.y = screen.options.scrollY + height / 2;
+			this.mesh.position.x = screen.getWorldXByVal(val);
+			this.mesh.position.y = screen.params.scrollY + height / 2;
 		} else {
 			let bottomVal = screen.getBottomVal();
 			let topVal = screen.getTopVal();
 			let needToStickOnTop = hasStickMode && val > topVal;
 			let needToStickOnBottom = hasStickMode && val < bottomVal;
-			let centerYVal = screen.getCenterYVal();
-			this.mesh.position.x = screen.options.scrollX + width / 2;
+			this.mesh.position.x = screen.params.scrollX + width / 2;
 			if (needToStickOnTop) {
 				this.isStickOnTop = true;
 				this.mesh.position.y = screen.getTop();
@@ -237,7 +236,7 @@ export class AxisMarkWidget {
 				this.mesh.position.y = screen.getBottom();
 			} else {
 				this.isStickOnBottom = this.isStickOnTop = false;
-				this.mesh.position.y = screen.getPointOnYAxis(val);
+				this.mesh.position.y = screen.getWorldYByVal(val);
 			}
 		}
 	}

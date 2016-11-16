@@ -125,15 +125,15 @@ export class TrendSegmentsManager {
 		let segmentLength = this.maxSegmentLength;
 
 		// call toFixed(2) to prevent floating segment error compare
-		let currentSegmentLengthInPx = Number(this.chart.valueToPxByXAxis(segmentLength).toFixed(2));
-		let currentMaxSegmentLengthInPx = Number(this.chart.valueToPxByXAxis(this.maxSegmentLength).toFixed(2));
+		let currentSegmentLengthInPx = Number(this.chart.viewport.valToPxByXAxis(segmentLength).toFixed(2));
+		let currentMaxSegmentLengthInPx = Number(this.chart.viewport.valToPxByXAxis(this.maxSegmentLength).toFixed(2));
 
 		if (currentSegmentLengthInPx < minSegmentLengthInPx) {
 			needToRebuild = true;
-			segmentLength = Math.ceil(this.chart.pxToValueByXAxis(maxSegmentLengthInPx));
+			segmentLength = Math.ceil(this.chart.viewport.pxToValByXAxis(maxSegmentLengthInPx));
 		} else if (currentMaxSegmentLengthInPx > maxSegmentLengthInPx) {
 			needToRebuild = true;
-			segmentLength = this.chart.pxToValueByXAxis(minSegmentLengthInPx);
+			segmentLength = this.chart.viewport.pxToValByXAxis(minSegmentLengthInPx);
 		}
 
 		if (!needToRebuild) return false;
@@ -595,11 +595,6 @@ export class TrendSegment implements ITrendSegmentState {
 	getFrameVal(): Vector3 {
 		let {xVal, yVal} = this.createAnimationState();
 		return new Vector3(xVal, yVal, 0);
-	}
-
-	getFramePoint(): Vector3 {
-		var frameVal = this.getFrameVal();
-		return this.trendSegments.chart.screen.getPointOnChart(frameVal.x, frameVal.y);
 	}
 
 }

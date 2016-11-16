@@ -12,7 +12,7 @@ import Vector2 = THREE.Vector2;
 import {TrendsWidget, TrendWidget} from "./TrendsWidget";
 import { TrendSegmentsManager, ITrendSegmentState } from "../TrendSegmentsManager";
 import LineSegments = THREE.LineSegments;
-import {IScreenTransformOptions} from "../Screen";
+import { IViewportParams } from "../Viewport";
 import { ITrendOptions, TREND_TYPE } from '../Trend';
 import { Utils } from '../Utils';
 
@@ -137,7 +137,7 @@ export class TrendLine extends TrendWidget {
 	}
 
 
-	protected onZoomFrame(options: IScreenTransformOptions) {
+	protected onZoomFrame(options: IViewportParams) {
 		var currentScale = this.lineSegments.scale;
 		let state = this.chart.state;
 		let scaleXFactor = state.xAxis.range.scaleFactor;

@@ -35,7 +35,7 @@ export class ZonesWidget extends ChartWidget {
 	protected bindEvents() {
 		let zones = this.zonesPlugin.items;
 		this.bindEvent(
-			this.chart.screen.onTransformationFrame(() => this.updateZonesPositions()),
+			this.chart.interpolatedViewport.onInterpolation(() => this.updateZonesPositions()),
 			zones.onCreate(item => this.createZoneWidget(item)),
 			zones.onUpdate((item, changedOptions) => this.onZoneUpdateHandler(item, changedOptions)),
 			zones.onRemove(item => this.onZoneRemoveHandler(item))
@@ -147,13 +147,13 @@ export class ZoneWidget {
 	}
 	updatePosition()  {
 		let chart = this.chart;
-		let screen = chart.screen;
+		let viewport = chart.interpolatedViewport;
 		let zone = this.zone;
 		let {startXVal, startYVal, endXVal, endYVal, opacity} = this.animatedProps;
-		let startY = isFinite(startYVal) ? screen.getPointOnYAxis(startYVal) : screen.getBottom();
-		let endY = isFinite(endYVal) ? screen.getPointOnYAxis(endYVal) : screen.getTop();
-		let startX = screen.getPointOnXAxis(startXVal);
-		let endX = screen.getPointOnXAxis(endXVal);
+		let startY = isFinite(startYVal) ? viewport.getWorldYByVal(startYVal) : viewport.getBottom();
+		let endY = isFinite(endYVal) ? viewport.getWorldYByVal(endYVal) : viewport.getTop();
+		let startX = viewport.getWorldXByVal(startXVal);
+		let endX = viewport.getWorldXByVal(endXVal);
 		let geometry = this.mesh.geometry as Geometry;
 		let material = this.mesh.material as MeshBasicMaterial;
 		let verts = geometry.vertices;

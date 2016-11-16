@@ -96,5 +96,4 @@ export declare class TrendSegment implements ITrendSegmentState {
     getNext(): TrendSegment;
     getPrev(): TrendSegment;
     getFrameVal(): Vector3;
-    getFramePoint(): Vector3;
 }
