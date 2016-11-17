@@ -35,11 +35,15 @@ export class Viewport {
 	}
 
 	getCameraSettings() {
-		let {width: w, height: h} = this.chart.state;
+		let {width, height} = this.chart.state;
+		// move 0,0 to left-bottom corner
 		return {
-			// move 0,0 to left-bottom corner
-			x: w / 2,
-			y: h / 2
+			left: 0,
+			right: width,
+			top: height,
+			bottom: 0,
+			near: -500,
+			far: 1000
 		}
 	}
 

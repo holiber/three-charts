@@ -235,20 +235,27 @@ export class ChartBlankView {
 	}
 
 	private setupCamera() {
-		let state = this.chart.state;
 		let camSettings = this.chart.viewport.getCameraSettings();
 		if (!this.camera) {
 			this.camera = new OrthographicCamera(
-				camSettings.x,
-				camSettings.x + state.width,
-				camSettings.y,
-				camSettings.y + state.height
+				camSettings.left,
+				camSettings.right,
+				camSettings.top,
+				camSettings.bottom,
+				camSettings.near,
+				camSettings.far
 			);
 			this.scene.add(this.camera);
 		} else {
+			this.camera.left = camSettings.left;
+			this.camera.right = camSettings.right;
+			this.camera.top = camSettings.top;
+			this.camera.bottom = camSettings.bottom;
+			this.camera.near = camSettings.near;
+			this.camera.far = camSettings.far;
 			this.camera.updateProjectionMatrix();
 		}
-		this.camera.position.set(camSettings.x, camSettings.y, 0);
+		this.camera.position.set(camSettings.left, camSettings.bottom, 0);
 		this.cameraInitialPosition = this.camera.position.clone();
 		this.onScreenTransformHandler(this.chart.interpolatedViewport.params);
 	}

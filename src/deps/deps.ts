@@ -7,8 +7,8 @@ import { ResizeSensorType } from './ResizeSensor';
 (<any>window).Stats = require('three/examples/js/libs/stats.min');
 
 // require('gsap/src/uncompressed/easing/EasePack.js');
-// require('three/examples/js/renderers/CanvasRenderer.js');
-// require('three/examples/js/renderers/Projector.js');
+require('three/examples/js/renderers/CanvasRenderer.js');
+require('three/examples/js/renderers/Projector.js');
 export const isPlainObject = require('is-plain-object') as Function;
 export const EE2 = require('eventemitter2') as typeof EventEmitter2;
 

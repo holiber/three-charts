@@ -222,7 +222,7 @@ class CandleWidget {
 	private initObject() {
 		this.rect = new Mesh(
 			new PlaneGeometry(1, 1),
-			new MeshBasicMaterial()
+			new MeshBasicMaterial({side: THREE.DoubleSide})
 		);
 		let vLineGeometry = new Geometry();
 		let hLineGeometry = new Geometry();

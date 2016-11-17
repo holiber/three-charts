@@ -114,8 +114,11 @@ export class AxisWidget extends ChartWidget {
 		});
 
 
-		var material = new THREE.MeshBasicMaterial( {map: texture, side: THREE.FrontSide} );
+		var material = new THREE.MeshBasicMaterial( {map: texture, side: THREE.DoubleSide} );
 		material.transparent = true;
+
+		//var material = new THREE.MeshBasicMaterial( {color: 0xFF00FF, side: THREE.DoubleSide} );
+
 
 		var axisMesh = new Mesh(
 			new THREE.PlaneGeometry(canvasWidth, canvasHeight),
@@ -160,13 +163,15 @@ export class AxisWidget extends ChartWidget {
 		var geometry = axisMesh.geometry as PlaneGeometry;
 		var canvasWidth = geometry.parameters.width;
 		var canvasHeight = geometry.parameters.height;
+		if (isXAxis) {
+			axisMesh.position.x = canvasWidth / 2 - visibleWidth + scrollX;
+		}
+
 		var texture = (axisMesh.material as MeshBasicMaterial).map;
 		var ctx = texture.image.getContext('2d');
 		ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
-		if (isXAxis) {
-			axisMesh.position.x = canvasWidth / 2 - visibleWidth + scrollX;
-		}
+
 
 
 		// TODO: draw text and lines in different loops

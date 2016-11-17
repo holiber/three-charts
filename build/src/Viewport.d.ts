@@ -14,8 +14,12 @@ export declare class Viewport {
     protected bindEvents(): void;
     protected updateParams(): void;
     getCameraSettings(): {
-        x: number;
-        y: number;
+        left: number;
+        right: number;
+        top: number;
+        bottom: number;
+        near: number;
+        far: number;
     };
     getWorldXByVal(xVal: number): number;
     getWorldYByVal(yVal: number): number;

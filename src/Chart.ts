@@ -147,7 +147,7 @@ export class Chart {
 		},
 		autoRender: {enabled: true, fps: 0},
 		autoResize: true,
-		renderer: 'WebGLRenderer',
+		renderer: 'WebGLRenderer',//'WebGLRenderer',
 		autoScroll: true,
 		controls: {enabled: true},
 		trendDefaultState: {
