@@ -61,7 +61,7 @@ export class TrendIndicator extends TrendWidget {
 
 	private initObject() {
 		var color = new Color(this.trend.getOptions().lineColor);
-		var texture = Utils.createPixelPerfectTexture(CANVAS_WIDTH, CANVAS_HEIGHT, (ctx) => {
+		var texture = Utils.createNearestTexture(CANVAS_WIDTH, CANVAS_HEIGHT, (ctx) => {
 			ctx.beginPath();
 			ctx.font = this.chart.state.font.l;
 			ctx.fillStyle = color.rgbaStr;

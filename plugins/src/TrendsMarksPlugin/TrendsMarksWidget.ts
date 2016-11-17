@@ -130,20 +130,20 @@ export class TrendMarkWidget {
 			options.onRender(this, ctx, this.chart);
 		});
 
-		// make text sharp when interpolatedViewport is not transforming
-		switch (options.textureFilter) {
-			case TEXTURE_FILTER.AUTO:
-				texture.magFilter = this.chart.interpolatedViewport.interpolationInProgress ? LinearFilter : NearestFilter;
-				break;
-			case TEXTURE_FILTER.LINEAR:
-				texture.magFilter = LinearFilter;
-				break;
-			case TEXTURE_FILTER.NEAREST:
-				texture.magFilter = NearestFilter;
-				break;
-		}
-
-		texture.needsUpdate = true;
+		// // make text sharp when interpolatedViewport is not transforming
+		// switch (options.textureFilter) {
+		// 	case TEXTURE_FILTER.AUTO:
+		// 		texture.magFilter = this.chart.interpolatedViewport.interpolationInProgress ? LinearFilter : NearestFilter;
+		// 		break;
+		// 	case TEXTURE_FILTER.LINEAR:
+		// 		texture.magFilter = LinearFilter;
+		// 		break;
+		// 	case TEXTURE_FILTER.NEAREST:
+		// 		texture.magFilter = NearestFilter;
+		// 		break;
+		// }
+        //
+		// texture.needsUpdate = true;
 
 		var material = new THREE.MeshBasicMaterial( {map: texture, side: THREE.FrontSide} );
 		material.transparent = true;
@@ -172,9 +172,9 @@ export class TrendMarkWidget {
 		let texture = (this.markMesh.material as MeshBasicMaterial).map;
 
 		// make text sharp when interpolatedViewport is not transforming
-		if (this.mark.options.textureFilter !== TEXTURE_FILTER.AUTO) return;
-		texture.magFilter = (event == INTERPOLATION_EVENT.STARTED) ? LinearFilter : NearestFilter;
-		texture.needsUpdate = true;
+		// if (this.mark.options.textureFilter !== TEXTURE_FILTER.AUTO) return;
+		// texture.magFilter = (event == INTERPOLATION_EVENT.STARTED) ? LinearFilter : NearestFilter;
+		// texture.needsUpdate = true;
 	}
 
 	private updatePosition() {

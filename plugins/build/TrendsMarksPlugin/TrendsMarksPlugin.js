@@ -262,8 +262,6 @@
         var TrendsMarksPlugin_1 = __webpack_require__(7);
         var Mesh = THREE.Mesh;
         var Object3D = THREE.Object3D;
-        var LinearFilter = THREE.LinearFilter;
-        var NearestFilter = THREE.NearestFilter;
         var TrendsMarksWidget = function(_super) {
             __extends(TrendsMarksWidget, _super);
             function TrendsMarksWidget() {
@@ -358,20 +356,6 @@
                 var texture = three_charts_1.Utils.createNearestTexture(width, height, function(ctx) {
                     options.onRender(_this, ctx, _this.chart);
                 });
-                switch (options.textureFilter) {
-                  case TrendsMarksPlugin_1.TEXTURE_FILTER.AUTO:
-                    texture.magFilter = this.chart.interpolatedViewport.interpolationInProgress ? LinearFilter : NearestFilter;
-                    break;
-
-                  case TrendsMarksPlugin_1.TEXTURE_FILTER.LINEAR:
-                    texture.magFilter = LinearFilter;
-                    break;
-
-                  case TrendsMarksPlugin_1.TEXTURE_FILTER.NEAREST:
-                    texture.magFilter = NearestFilter;
-                    break;
-                }
-                texture.needsUpdate = true;
                 var material = new THREE.MeshBasicMaterial({
                     map: texture,
                     side: THREE.FrontSide
@@ -390,9 +374,6 @@
             };
             TrendMarkWidget.prototype.onScreenTransformationEventHandler = function(event) {
                 var texture = this.markMesh.material.map;
-                if (this.mark.options.textureFilter !== TrendsMarksPlugin_1.TEXTURE_FILTER.AUTO) return;
-                texture.magFilter = event == three_charts_1.INTERPOLATION_EVENT.STARTED ? LinearFilter : NearestFilter;
-                texture.needsUpdate = true;
             };
             TrendMarkWidget.prototype.updatePosition = function() {
                 if (!this.mark.segment) return;

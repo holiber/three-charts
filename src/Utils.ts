@@ -179,6 +179,7 @@ export class Utils {
 		fn && fn(ctx, width, height);
 		var texture = new THREE.Texture(canvas);
 		texture.needsUpdate = true;
+		texture.anisotropy = 16;
 		return texture;
 	}
 
@@ -190,16 +191,17 @@ export class Utils {
 	 */
 	static createNearestTexture(width: number, height: number, fn?: (ctx: CanvasRenderingContext2D) => void ): Texture{
 		var texture = this.createTexture(width, height, fn);
-		texture.minFilter = THREE.NearestFilter;
+		texture.minFilter = THREE.NearestFilter;//THREE.NearestFilter;
+		//texture.generateMipmaps = false;
 		return texture;
 	}
 
-	static createPixelPerfectTexture(width: number, height: number, fn?: (ctx: CanvasRenderingContext2D) => void ): Texture{
-		var texture = this.createTexture(width, height, fn);
-		texture.magFilter = THREE.NearestFilter;
-		texture.minFilter = THREE.NearestFilter;
-		return texture;
-	}
+	// static createPixelPerfectTexture(width: number, height: number, fn?: (ctx: CanvasRenderingContext2D) => void ): Texture{
+	// 	var texture = this.createTexture(width, height, fn);
+	// 	texture.magFilter = THREE.NearestFilter;
+	// 	texture.minFilter = THREE.NearestFilter;
+	// 	return texture;
+	// }
 
 	/**
 	 * throw error

@@ -78,7 +78,7 @@
             TrendIndicator.prototype.initObject = function() {
                 var _this = this;
                 var color = new three_charts_1.Color(this.trend.getOptions().lineColor);
-                var texture = three_charts_1.Utils.createPixelPerfectTexture(CANVAS_WIDTH, CANVAS_HEIGHT, function(ctx) {
+                var texture = three_charts_1.Utils.createNearestTexture(CANVAS_WIDTH, CANVAS_HEIGHT, function(ctx) {
                     ctx.beginPath();
                     ctx.font = _this.chart.state.font.l;
                     ctx.fillStyle = color.rgbaStr;
