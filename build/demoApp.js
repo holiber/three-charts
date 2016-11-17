@@ -2830,7 +2830,7 @@
                     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
                 };
                 var Plugin_1 = __webpack_require__(15);
-                var PerspectiveCamera = THREE.PerspectiveCamera;
+                var OrthographicCamera = THREE.OrthographicCamera;
                 var Chart_1 = __webpack_require__(19);
                 var Widget_1 = __webpack_require__(28);
                 var Utils_1 = __webpack_require__(16);
@@ -3010,18 +3010,15 @@
                         });
                     };
                     ChartBlankView.prototype.setupCamera = function() {
+                        var state = this.chart.state;
                         var camSettings = this.chart.viewport.getCameraSettings();
                         if (!this.camera) {
-                            this.camera = new PerspectiveCamera(camSettings.FOV, camSettings.aspect, camSettings.near, camSettings.far);
+                            this.camera = new OrthographicCamera(camSettings.x, camSettings.x + state.width, camSettings.y, camSettings.y + state.height);
                             this.scene.add(this.camera);
                         } else {
-                            this.camera.fov = camSettings.FOV;
-                            this.camera.aspect = camSettings.aspect;
-                            this.camera.far = camSettings.far;
-                            this.camera.near = camSettings.near;
                             this.camera.updateProjectionMatrix();
                         }
-                        this.camera.position.set(camSettings.x, camSettings.y, camSettings.z);
+                        this.camera.position.set(camSettings.x, camSettings.y, 0);
                         this.cameraInitialPosition = this.camera.position.clone();
                         this.onScreenTransformHandler(this.chart.interpolatedViewport.params);
                     };
@@ -4783,14 +4780,7 @@
                     };
                     Viewport.prototype.getCameraSettings = function() {
                         var _a = this.chart.state, w = _a.width, h = _a.height;
-                        var FOV = 75;
-                        var vFOV = FOV * (Math.PI / 180);
                         return {
-                            FOV: FOV,
-                            aspect: w / h,
-                            near: .1,
-                            far: 5e3,
-                            z: h / (2 * Math.tan(vFOV / 2)),
                             x: w / 2,
                             y: h / 2
                         };

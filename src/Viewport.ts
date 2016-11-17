@@ -35,20 +35,8 @@ export class Viewport {
 	}
 
 	getCameraSettings() {
-
-		var {width: w, height: h} = this.chart.state;
-
-		// settings for pixel-perfect camera
-		var FOV = 75;
-		var vFOV = FOV * (Math.PI / 180);
-
+		let {width: w, height: h} = this.chart.state;
 		return {
-			FOV: FOV,
-			aspect: w / h,
-			near: 0.1,
-			far: 5000,
-			z: h / (2 * Math.tan(vFOV / 2) ),
-
 			// move 0,0 to left-bottom corner
 			x: w / 2,
 			y: h / 2

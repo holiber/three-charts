@@ -14,11 +14,6 @@ export declare class Viewport {
     protected bindEvents(): void;
     protected updateParams(): void;
     getCameraSettings(): {
-        FOV: number;
-        aspect: number;
-        near: number;
-        far: number;
-        z: number;
         x: number;
         y: number;
     };

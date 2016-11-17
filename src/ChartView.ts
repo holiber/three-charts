@@ -6,6 +6,7 @@ import PerspectiveCamera = THREE.PerspectiveCamera;
 import Scene = THREE.Scene;
 import Renderer = THREE.Renderer;
 import WebGLRenderer = THREE.WebGLRenderer;
+import OrthographicCamera = THREE.OrthographicCamera;
 import Object3D = THREE.Object3D;
 import { Chart, IChartState } from "./Chart";
 import { ChartWidget, IChartWidgetConstructor } from "./Widget";
@@ -17,7 +18,6 @@ import { TrendsGradientWidget } from "./widgets/TrendsGradientWidget";
 import { TrendsLineWidget } from "./widgets/TrendsLineWidget";
 import { TrendsCandlesWidget } from './widgets/TrendsCandleWidget';
 import { ResizeSensor, ResizeSensorType } from './deps';
-import OrthographicCamera = THREE.OrthographicCamera;
 import {Color} from "./Color";
 
 
@@ -37,7 +37,7 @@ export class ChartBlankView {
 	private $el: HTMLElement;
 	private renderer: Renderer;
 	private scene: Scene;
-	private camera: PerspectiveCamera;
+	private camera: OrthographicCamera;
 	private cameraInitialPosition: Vector3;
 	private widgets: Array<ChartWidget> = [];
 	private stats: Stats;
@@ -235,18 +235,20 @@ export class ChartBlankView {
 	}
 
 	private setupCamera() {
+		let state = this.chart.state;
 		let camSettings = this.chart.viewport.getCameraSettings();
 		if (!this.camera) {
-			this.camera = new PerspectiveCamera(camSettings.FOV, camSettings.aspect, camSettings.near, camSettings.far);
+			this.camera = new OrthographicCamera(
+				camSettings.x,
+				camSettings.x + state.width,
+				camSettings.y,
+				camSettings.y + state.height
+			);
 			this.scene.add(this.camera);
 		} else {
-			this.camera.fov = camSettings.FOV;
-			this.camera.aspect = camSettings.aspect;
-			this.camera.far = camSettings.far;
-			this.camera.near = camSettings.near;
 			this.camera.updateProjectionMatrix();
 		}
-		this.camera.position.set(camSettings.x, camSettings.y, camSettings.z);
+		this.camera.position.set(camSettings.x, camSettings.y, 0);
 		this.cameraInitialPosition = this.camera.position.clone();
 		this.onScreenTransformHandler(this.chart.interpolatedViewport.params);
 	}

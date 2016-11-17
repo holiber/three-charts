@@ -7,7 +7,6 @@ import Vector3 = THREE.Vector3;
 import {
 	Utils,
 	Chart,
-	IChartState,
 	TrendsWidget,
 	TrendWidget,
 	TrendSegment,
